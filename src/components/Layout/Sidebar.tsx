@@ -30,24 +30,23 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
 
     const roleSpecificItems = {
       'Super Admin': [
+        { path: '/user-management', icon: Users, label: 'User Management', roles: ['Super Admin'] },
         { path: '/schools', icon: School, label: 'Schools', roles: ['Super Admin'] },
         { path: '/create-school', icon: Settings, label: 'Create School', roles: ['Super Admin'] }
       ],
       'Admin': [
-        { path: '/admin-center', icon: Settings, label: 'Admin Center', roles: ['Admin'], hasSubmenu: true },
-        { path: '/manage-teachers', icon: Users, label: 'Manage Teachers', roles: ['Admin'], isSubmenu: true },
-        { path: '/create-students', icon: User, label: 'Create Students', roles: ['Admin'], isSubmenu: true },
-        { path: '/manage-students', icon: GraduationCap, label: 'Manage Students', roles: ['Admin'], isSubmenu: true },
-        { path: '/create-class', icon: BookOpen, label: 'Create Class', roles: ['Admin'], isSubmenu: true },
-        { path: '/manage-class', icon: BookOpen, label: 'Manage Class', roles: ['Admin'], isSubmenu: true },
+        { path: '/user-management', icon: Users, label: 'User Management', roles: ['Admin'] },
+        { path: '/classes', icon: BookOpen, label: 'Classes', roles: ['Admin'] },
+        { path: '/teachers', icon: Users, label: 'Teachers', roles: ['Admin'] },
+        { path: '/students', icon: GraduationCap, label: 'Students', roles: ['Admin'] },
         { path: '/dashboards', icon: BarChart3, label: 'Dashboards', roles: ['Admin'] },
         { path: '/calendar', icon: Calendar, label: 'Calendar', roles: ['Admin'] },
         { path: '/support', icon: HelpCircle, label: 'Support', roles: ['Admin'] }
       ],
       'Teacher': [
-        { path: '/my-classes', icon: BookOpen, label: 'My Classes', roles: ['Teacher'] },
-        { path: '/students', icon: Users, label: 'Students', roles: ['Teacher'] },
-        { path: '/edit-requests', icon: User, label: 'Edit Requests', roles: ['Teacher'] }
+        { path: '/user-management', icon: Users, label: 'User Management', roles: ['Teacher'] },
+        { path: '/classes', icon: BookOpen, label: 'Classes', roles: ['Teacher'] },
+        { path: '/students', icon: GraduationCap, label: 'Students', roles: ['Teacher'] }
       ],
       'Student': [
         { path: '/profile', icon: User, label: 'My Profile', roles: ['Student'] },
@@ -91,7 +90,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
                       isActive(item.path) 
                         ? 'bg-white/20 text-white' 
                         : 'text-white/80 hover:bg-white/10 hover:text-white'
-                    } ${item.isSubmenu ? 'ml-8 text-sm' : ''}`}
+                    }`}
                   >
                     <Icon className="w-5 h-5 flex-shrink-0" />
                     {!isCollapsed && (
