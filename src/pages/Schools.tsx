@@ -2,15 +2,23 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
+import Breadcrumb from '../components/Layout/Breadcrumb';
 import { getSchools } from '../data/schools';
 import { Edit, MapPin, Mail, Phone } from 'lucide-react';
 
 const Schools: React.FC = () => {
   const schools = getSchools();
 
+  const breadcrumbItems = [
+    { label: 'User Management', path: '/user-management' },
+    { label: 'Schools' }
+  ];
+
   return (
     <MainLayout pageTitle="Schools">
       <div className="space-y-6">
+        <Breadcrumb items={breadcrumbItems} />
+        
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-800">Schools</h1>
           <Link
@@ -23,18 +31,22 @@ const Schools: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {schools.map((school) => (
-            <div
+            <Link
               key={school.id}
+              to={`/school-details/${school.id}`}
               className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-800">{school.name}</h3>
-                <Link
-                  to={`/edit-school/${school.id}`}
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    // Handle edit action
+                  }}
                   className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
                 >
                   <Edit className="w-4 h-4" />
-                </Link>
+                </button>
               </div>
               
               <div className="space-y-3">
@@ -60,7 +72,7 @@ const Schools: React.FC = () => {
                   <span className="text-gray-500">Teachers: 32</span>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

@@ -3,6 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
+import Breadcrumb from '../components/Layout/Breadcrumb';
 import { getClasses } from '../data/classes';
 import { Users, Plus } from 'lucide-react';
 
@@ -10,9 +11,16 @@ const Classes: React.FC = () => {
   const { user } = useAuth();
   const classes = getClasses();
 
+  const breadcrumbItems = [
+    { label: 'User Management', path: '/user-management' },
+    { label: 'Classes' }
+  ];
+
   return (
     <MainLayout pageTitle="Classes">
       <div className="space-y-6">
+        <Breadcrumb items={breadcrumbItems} />
+        
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-800">Classes</h1>
           {user?.role === 'Admin' && (

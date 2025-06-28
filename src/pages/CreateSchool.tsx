@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
+import Breadcrumb from '../components/Layout/Breadcrumb';
 import { addSchool } from '../data/schools';
 
 const CreateSchool: React.FC = () => {
@@ -15,6 +16,11 @@ const CreateSchool: React.FC = () => {
     adminEmail: '',
     adminPassword: ''
   });
+
+  const breadcrumbItems = [
+    { label: 'User Management', path: '/user-management' },
+    { label: 'Create School' }
+  ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -52,6 +58,8 @@ const CreateSchool: React.FC = () => {
   return (
     <MainLayout pageTitle="Create School">
       <div className="max-w-2xl mx-auto">
+        <Breadcrumb items={breadcrumbItems} />
+        
         <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200">
           <h1 className="text-2xl font-bold text-gray-800 mb-6">Create New School</h1>
           

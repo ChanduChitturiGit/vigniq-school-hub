@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { 
@@ -12,7 +12,9 @@ import {
   BookOpen,
   GraduationCap,
   School,
-  HelpCircle
+  HelpCircle,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -22,6 +24,14 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
   const { user } = useAuth();
   const location = useLocation();
+  const [expandedMenus, setExpandedMenus] = useState<{ [key: string]: boolean }>({});
+
+  const toggleMenu = (menuKey: string) => {
+    setExpandedMenus(prev => ({
+      ...prev,
+      [menuKey]: !prev[menuKey]
+    }));
+  };
 
   const getMenuItems = () => {
     const baseItems = [
@@ -30,23 +40,49 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
 
     const roleSpecificItems = {
       'Super Admin': [
-        { path: '/user-management', icon: Users, label: 'User Management', roles: ['Super Admin'] },
-        { path: '/schools', icon: School, label: 'Schools', roles: ['Super Admin'] },
-        { path: '/create-school', icon: Settings, label: 'Create School', roles: ['Super Admin'] }
+        {
+          key: 'user-management',
+          icon: Users,
+          label: 'User Management',
+          roles: ['Super Admin'],
+          isDropdown: true,
+          subItems: [
+            { path: '/schools', label: 'Schools' },
+            { path: '/create-school', label: 'Create School' }
+          ]
+        },
+        { path: '/support', icon: HelpCircle, label: 'Support', roles: ['Super Admin'] },
+        { path: '/requests', icon: Settings, label: 'Requests', roles: ['Super Admin'] }
       ],
       'Admin': [
-        { path: '/user-management', icon: Users, label: 'User Management', roles: ['Admin'] },
-        { path: '/classes', icon: BookOpen, label: 'Classes', roles: ['Admin'] },
-        { path: '/teachers', icon: Users, label: 'Teachers', roles: ['Admin'] },
-        { path: '/students', icon: GraduationCap, label: 'Students', roles: ['Admin'] },
+        {
+          key: 'user-management',
+          icon: Users,
+          label: 'User Management',
+          roles: ['Admin'],
+          isDropdown: true,
+          subItems: [
+            { path: '/classes', label: 'Classes' },
+            { path: '/teachers', label: 'Teachers' },
+            { path: '/students', label: 'Students' }
+          ]
+        },
         { path: '/dashboards', icon: BarChart3, label: 'Dashboards', roles: ['Admin'] },
         { path: '/calendar', icon: Calendar, label: 'Calendar', roles: ['Admin'] },
         { path: '/support', icon: HelpCircle, label: 'Support', roles: ['Admin'] }
       ],
       'Teacher': [
-        { path: '/user-management', icon: Users, label: 'User Management', roles: ['Teacher'] },
-        { path: '/classes', icon: BookOpen, label: 'Classes', roles: ['Teacher'] },
-        { path: '/students', icon: GraduationCap, label: 'Students', roles: ['Teacher'] }
+        {
+          key: 'user-management',
+          icon: Users,
+          label: 'User Management',
+          roles: ['Teacher'],
+          isDropdown: true,
+          subItems: [
+            { path: '/classes', label: 'Classes' },
+            { path: '/students', label: 'Students' }
+          ]
+        }
       ],
       'Student': [
         { path: '/profile', icon: User, label: 'My Profile', roles: ['Student'] },
@@ -80,25 +116,66 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
       <nav className="flex-1 py-4">
         <ul className="space-y-1">
           {getMenuItems().map((item) => {
-            if (item.roles.includes(user?.role || '')) {
+            if (item.roles && item.roles.includes(user?.role || '')) {
               const Icon = item.icon;
-              return (
-                <li key={item.path}>
-                  <Link
-                    to={item.path}
-                    className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${
-                      isActive(item.path) 
-                        ? 'bg-white/20 text-white' 
-                        : 'text-white/80 hover:bg-white/10 hover:text-white'
-                    }`}
-                  >
-                    <Icon className="w-5 h-5 flex-shrink-0" />
-                    {!isCollapsed && (
-                      <span className="truncate">{item.label}</span>
+              
+              if (item.isDropdown) {
+                const isExpanded = expandedMenus[item.key];
+                return (
+                  <li key={item.key}>
+                    <button
+                      onClick={() => toggleMenu(item.key)}
+                      className="w-full flex items-center justify-between gap-3 px-4 py-3 mx-2 rounded-lg transition-colors text-white/80 hover:bg-white/10 hover:text-white"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon className="w-5 h-5 flex-shrink-0" />
+                        {!isCollapsed && (
+                          <span className="truncate">{item.label}</span>
+                        )}
+                      </div>
+                      {!isCollapsed && (
+                        isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
+                      )}
+                    </button>
+                    {isExpanded && !isCollapsed && item.subItems && (
+                      <ul className="ml-8 mt-1 space-y-1">
+                        {item.subItems.map((subItem) => (
+                          <li key={subItem.path}>
+                            <Link
+                              to={subItem.path}
+                              className={`block px-4 py-2 rounded-lg transition-colors ${
+                                isActive(subItem.path) 
+                                  ? 'bg-white/20 text-white' 
+                                  : 'text-white/70 hover:bg-white/10 hover:text-white'
+                              }`}
+                            >
+                              {subItem.label}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
                     )}
-                  </Link>
-                </li>
-              );
+                  </li>
+                );
+              } else {
+                return (
+                  <li key={item.path}>
+                    <Link
+                      to={item.path}
+                      className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${
+                        isActive(item.path) 
+                          ? 'bg-white/20 text-white' 
+                          : 'text-white/80 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      <Icon className="w-5 h-5 flex-shrink-0" />
+                      {!isCollapsed && (
+                        <span className="truncate">{item.label}</span>
+                      )}
+                    </Link>
+                  </li>
+                );
+              }
             }
             return null;
           })}

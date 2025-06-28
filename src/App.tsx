@@ -46,6 +46,14 @@ const App: React.FC = () => {
             }
           />
           <Route
+            path="/school-details/:id"
+            element={
+              <ProtectedRoute allowedRoles={['Super Admin']}>
+                <SchoolDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/create-school"
             element={
               <ProtectedRoute allowedRoles={['Super Admin']}>
@@ -90,6 +98,14 @@ const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <Support />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/requests"
+            element={
+              <ProtectedRoute allowedRoles={['Super Admin']}>
+                <Requests />
               </ProtectedRoute>
             }
           />

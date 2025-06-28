@@ -3,6 +3,7 @@ import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
+import Breadcrumb from '../components/Layout/Breadcrumb';
 import { School, Users, GraduationCap, BookOpen } from 'lucide-react';
 
 const UserManagement: React.FC = () => {
@@ -10,8 +11,8 @@ const UserManagement: React.FC = () => {
 
   const getSuperAdminOptions = () => [
     {
-      title: 'School Management',
-      description: 'Manage schools and create new institutions',
+      title: 'Schools',
+      description: 'Manage all schools in the system',
       icon: School,
       link: '/schools',
       color: 'bg-blue-500'
@@ -81,9 +82,15 @@ const UserManagement: React.FC = () => {
 
   const options = getOptions();
 
+  const breadcrumbItems = [
+    { label: 'User Management' }
+  ];
+
   return (
     <MainLayout pageTitle="User Management">
       <div className="space-y-6">
+        <Breadcrumb items={breadcrumbItems} />
+        
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
           <div className="text-sm text-gray-500">
