@@ -85,8 +85,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
             { path: '/students', label: 'Students' }
           ]
         },
+        {
+          key: 'school-management',
+          icon: School,
+          label: 'School Management',
+          roles: ['Admin'],
+          isDropdown: true,
+          subItems: [
+            { path: '/admin-school', label: 'My School' }
+          ]
+        },
         { path: '/dashboards', icon: BarChart3, label: 'Dashboards', roles: ['Admin'] },
         { path: '/calendar', icon: Calendar, label: 'Calendar', roles: ['Admin'] },
+        { path: '/admin-requests', icon: Settings, label: 'Requests', roles: ['Admin'] },
         { path: '/support', icon: HelpCircle, label: 'Support', roles: ['Admin'] }
       ],
       'Teacher': [
