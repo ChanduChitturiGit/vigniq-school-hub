@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -7,12 +6,14 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import UserManagement from './pages/UserManagement';
 import Schools from './pages/Schools';
+import SchoolDetails from './pages/SchoolDetails';
 import CreateSchool from './pages/CreateSchool';
 import Classes from './pages/Classes';
 import Teachers from './pages/Teachers';
 import Students from './pages/Students';
 import ManageStudents from './pages/ManageStudents';
 import Support from './pages/Support';
+import Requests from './pages/Requests';
 
 const App: React.FC = () => {
   return (

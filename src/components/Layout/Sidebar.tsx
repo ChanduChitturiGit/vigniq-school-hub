@@ -21,6 +21,24 @@ interface SidebarProps {
   isCollapsed: boolean;
 }
 
+interface BaseMenuItem {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  roles: string[];
+}
+
+interface RegularMenuItem extends BaseMenuItem {
+  path: string;
+}
+
+interface DropdownMenuItem extends BaseMenuItem {
+  key: string;
+  isDropdown: true;
+  subItems: { path: string; label: string }[];
+}
+
+type MenuItem = RegularMenuItem | DropdownMenuItem;
+
 const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
   const { user } = useAuth();
   const location = useLocation();
@@ -33,12 +51,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
     }));
   };
 
-  const getMenuItems = () => {
-    const baseItems = [
+  const getMenuItems = (): MenuItem[] => {
+    const baseItems: MenuItem[] = [
       { path: '/dashboard', icon: Home, label: 'Home', roles: ['Super Admin', 'Admin', 'Teacher', 'Student'] }
     ];
 
-    const roleSpecificItems = {
+    const roleSpecificItems: { [key: string]: MenuItem[] } = {
       'Super Admin': [
         {
           key: 'user-management',
@@ -119,7 +137,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
             if (item.roles && item.roles.includes(user?.role || '')) {
               const Icon = item.icon;
               
-              if (item.isDropdown) {
+              if ('isDropdown' in item && item.isDropdown) {
                 const isExpanded = expandedMenus[item.key];
                 return (
                   <li key={item.key}>
