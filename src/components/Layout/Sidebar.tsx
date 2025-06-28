@@ -113,6 +113,30 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
   };
 
   const isActive = (path: string) => location.pathname === path;
+  
+  const isDropdownActive = (subItems: { path: string; label: string }[]) => {
+    return subItems.some(subItem => isActive(subItem.path));
+  };
+
+  const isDropdownPathActive = (item: DropdownMenuItem) => {
+    return item.subItems.some(subItem => location.pathname.startsWith(subItem.path));
+  };
+
+  // Auto-expand dropdown if current path matches any subItem
+  React.useEffect(() => {
+    const menuItems = getMenuItems();
+    menuItems.forEach((item) => {
+      if ('isDropdown' in item && item.isDropdown) {
+        const shouldExpand = isDropdownPathActive(item);
+        if (shouldExpand && !expandedMenus[item.key]) {
+          setExpandedMenus(prev => ({
+            ...prev,
+            [item.key]: true
+          }));
+        }
+      }
+    });
+  }, [location.pathname]);
 
   return (
     <div className={`bg-gradient-to-b from-blue-400 to-blue-500 text-white h-screen transition-all duration-300 ${
@@ -139,11 +163,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
               
               if ('isDropdown' in item && item.isDropdown) {
                 const isExpanded = expandedMenus[item.key];
+                const isDropdownHighlighted = isDropdownActive(item.subItems);
+                
                 return (
                   <li key={item.key}>
                     <button
                       onClick={() => toggleMenu(item.key)}
-                      className="w-full flex items-center justify-between gap-3 px-4 py-3 mx-2 rounded-lg transition-colors text-white/80 hover:bg-white/10 hover:text-white"
+                      className={`w-full flex items-center justify-between gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${
+                        isDropdownHighlighted 
+                          ? 'bg-white/20 text-white' 
+                          : 'text-white/80 hover:bg-white/10 hover:text-white'
+                      }`}
                     >
                       <div className="flex items-center gap-3">
                         <Icon className="w-5 h-5 flex-shrink-0" />
@@ -163,7 +193,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
                               to={subItem.path}
                               className={`block px-4 py-2 rounded-lg transition-colors ${
                                 isActive(subItem.path) 
-                                  ? 'bg-white/20 text-white' 
+                                  ? 'bg-white/20 text-white font-medium' 
                                   : 'text-white/70 hover:bg-white/10 hover:text-white'
                               }`}
                             >
@@ -176,19 +206,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
                   </li>
                 );
               } else {
+                const regularItem = item as RegularMenuItem;
                 return (
-                  <li key={item.path}>
+                  <li key={regularItem.path}>
                     <Link
-                      to={item.path}
+                      to={regularItem.path}
                       className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${
-                        isActive(item.path) 
+                        isActive(regularItem.path) 
                           ? 'bg-white/20 text-white' 
                           : 'text-white/80 hover:bg-white/10 hover:text-white'
                       }`}
                     >
                       <Icon className="w-5 h-5 flex-shrink-0" />
                       {!isCollapsed && (
-                        <span className="truncate">{item.label}</span>
+                        <span className="truncate">{regularItem.label}</span>
                       )}
                     </Link>
                   </li>

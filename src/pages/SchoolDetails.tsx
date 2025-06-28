@@ -12,7 +12,6 @@ const SchoolDetails: React.FC = () => {
   const school = schools.find(s => s.id === id);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState<any>(null);
-  const [selectedClass, setSelectedClass] = useState<any>(null);
 
   if (!school) {
     return <MainLayout pageTitle="School Not Found"><div>School not found</div></MainLayout>;
@@ -32,15 +31,9 @@ const SchoolDetails: React.FC = () => {
   ];
 
   const classes = [
-    { id: '1', name: 'Grade 10A', section: 'A', students: 25, teacher: 'John Smith' },
-    { id: '2', name: 'Grade 10B', section: 'B', students: 28, teacher: 'Sarah Johnson' },
-    { id: '3', name: 'Grade 11A', section: 'A', students: 22, teacher: 'Mike Wilson' }
-  ];
-
-  const students = [
-    { id: '1', name: 'Alice Brown', class: 'Grade 10A', rollNo: '001', email: 'alice@student.com' },
-    { id: '2', name: 'Bob Davis', class: 'Grade 10A', rollNo: '002', email: 'bob@student.com' },
-    { id: '3', name: 'Carol White', class: 'Grade 10A', rollNo: '003', email: 'carol@student.com' }
+    { id: '1', name: 'Class 10', section: 'A', students: 25, teacher: 'John Smith' },
+    { id: '2', name: 'Class 10', section: 'B', students: 28, teacher: 'Sarah Johnson' },
+    { id: '3', name: 'Class 11', section: 'A', students: 22, teacher: 'Mike Wilson' }
   ];
 
   const TeacherModal = ({ teacher, onClose }: { teacher: any, onClose: () => void }) => (
@@ -210,14 +203,13 @@ const SchoolDetails: React.FC = () => {
             {classes.map((classItem) => (
               <Link
                 key={classItem.id}
-                to={`/class-students/${classItem.id}`}
+                to={`/class-details/${classItem.id}`}
                 className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
               >
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-gray-800">{classItem.name}</h3>
+                  <h3 className="font-semibold text-gray-800">{classItem.name} - {classItem.section}</h3>
                   <BookOpen className="w-5 h-5 text-blue-500" />
                 </div>
-                <p className="text-sm text-gray-600">Section: {classItem.section}</p>
                 <p className="text-sm text-gray-600">Students: {classItem.students}</p>
                 <p className="text-sm text-gray-500">Teacher: {classItem.teacher}</p>
               </Link>
