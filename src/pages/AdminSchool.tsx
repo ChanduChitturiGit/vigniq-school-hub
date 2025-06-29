@@ -1,305 +1,389 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, MapPin, Mail, Phone, Users, GraduationCap, Calendar, X } from 'lucide-react';
+import { Edit, Search, Plus, BookOpen, X } from 'lucide-react';
 
 const AdminSchool: React.FC = () => {
-  const [selectedTeacher, setSelectedTeacher] = useState<any>(null);
-  
-  // Mock admin's school data
-  const schoolData = {
+  const navigate = useNavigate();
+  const [isEditing, setIsEditing] = useState(false);
+  const [teacherSearchTerm, setTeacherSearchTerm] = useState('');
+  const [classSearchTerm, setClassSearchTerm] = useState('');
+  const [showAddClassForm, setShowAddClassForm] = useState(false);
+  const [newClassData, setNewClassData] = useState({
+    name: '',
+    section: '',
+    teacher: ''
+  });
+  const [schoolData, setSchoolData] = useState({
+    name: 'Greenwood High School',
+    email: 'admin@greenwood.edu',
+    phone: '+1 234-567-8900',
+    address: '123 Education Street, Learning City, LC 12345'
+  });
+
+  // Mock data for admin's school
+  const school = {
     id: '1',
     name: 'Greenwood High School',
-    address: '123 Education St, Knowledge City, KC 12345',
-    phone: '+1 (555) 123-4567',
-    email: 'info@greenwoodhigh.edu',
-    principal: 'Dr. Sarah Johnson',
-    establishedYear: '1985',
-    totalStudents: 450,
-    totalTeachers: 32,
-    totalClasses: 15
+    email: 'admin@greenwood.edu',
+    phone: '+1 234-567-8900',
+    address: '123 Education Street, Learning City, LC 12345'
   };
 
-  // Mock teachers data
-  const teachers = [
-    {
-      id: '1',
-      name: 'John Smith',
-      subject: 'Mathematics',
-      email: 'john.smith@greenwoodhigh.edu',
-      phone: '+1 (555) 234-5678',
-      experience: '8 years',
-      qualification: 'M.Sc Mathematics',
-      classes: ['Class 9-A', 'Class 10-B'],
-      joiningDate: '2016-08-15'
-    },
-    {
-      id: '2',
-      name: 'Emily Johnson',
-      subject: 'English Literature',
-      email: 'emily.johnson@greenwoodhigh.edu',
-      phone: '+1 (555) 345-6789',
-      experience: '12 years',
-      qualification: 'M.A English',
-      classes: ['Class 8-A', 'Class 9-B'],
-      joiningDate: '2012-07-20'
-    },
-    {
-      id: '3',
-      name: 'Michael Brown',
-      subject: 'Science',
-      email: 'michael.brown@greenwoodhigh.edu',
-      phone: '+1 (555) 456-7890',
-      experience: '6 years',
-      qualification: 'M.Sc Physics',
-      classes: ['Class 7-A', 'Class 8-B'],
-      joiningDate: '2018-09-10'
-    }
-  ];
-
-  // Mock classes data
-  const classes = [
-    {
-      id: '1',
-      name: 'Class 10',
-      section: 'A',
-      teacher: 'John Smith',
-      students: 25,
-      subject: 'Mathematics'
-    },
-    {
-      id: '2',
-      name: 'Class 9',
-      section: 'B',
-      teacher: 'Emily Johnson',
-      students: 28,
-      subject: 'English'
-    },
-    {
-      id: '3',
-      name: 'Class 8',
-      section: 'A',
-      teacher: 'Michael Brown',
-      students: 22,
-      subject: 'Science'
-    }
-  ];
-
   const breadcrumbItems = [
-    { label: 'School Management', path: '/school-management' },
+    { label: 'Dashboard', path: '/dashboard' },
     { label: 'My School' }
   ];
 
-  const TeacherModal = ({ teacher, onClose }: { teacher: any, onClose: () => void }) => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-semibold">Teacher Details</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-        
-        <div className="space-y-6">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-xl font-semibold">{teacher.name.charAt(0)}</span>
-            </div>
-            <div>
-              <h4 className="text-xl font-semibold text-gray-800">{teacher.name}</h4>
-              <p className="text-gray-600">{teacher.subject}</p>
-            </div>
-          </div>
+  // Mock data for teachers and classes
+  const teachers = [
+    { id: '1', name: 'John Smith', subject: 'Mathematics', email: 'john@school.com', phone: '+1234567890' },
+    { id: '2', name: 'Sarah Johnson', subject: 'English', email: 'sarah@school.com', phone: '+1234567891' },
+    { id: '3', name: 'Mike Wilson', subject: 'Science', email: 'mike@school.com', phone: '+1234567892' },
+    { id: '4', name: 'Emily Davis', subject: 'History', email: 'emily@school.com', phone: '+1234567893' },
+    { id: '5', name: 'Robert Brown', subject: 'Geography', email: 'robert@school.com', phone: '+1234567894' },
+    { id: '6', name: 'Lisa White', subject: 'Physics', email: 'lisa@school.com', phone: '+1234567895' },
+    { id: '7', name: 'David Green', subject: 'Chemistry', email: 'david@school.com', phone: '+1234567896' }
+  ];
 
+  const classes = [
+    { id: '1', name: 'Class 10', section: 'A', students: 25, teacher: 'John Smith' },
+    { id: '2', name: 'Class 10', section: 'B', students: 28, teacher: 'Sarah Johnson' },
+    { id: '3', name: 'Class 11', section: 'A', students: 22, teacher: 'Mike Wilson' },
+    { id: '4', name: 'Class 11', section: 'B', students: 26, teacher: 'Emily Davis' },
+    { id: '5', name: 'Class 12', section: 'A', students: 24, teacher: 'Robert Brown' },
+    { id: '6', name: 'Class 12', section: 'B', students: 23, teacher: 'Lisa White' },
+    { id: '7', name: 'Class 9', section: 'A', students: 30, teacher: 'David Green' }
+  ];
+
+  const filteredTeachers = teachers.filter(teacher =>
+    teacher.name.toLowerCase().includes(teacherSearchTerm.toLowerCase()) ||
+    teacher.subject.toLowerCase().includes(teacherSearchTerm.toLowerCase())
+  );
+
+  const filteredClasses = classes.filter(classItem =>
+    classItem.name.toLowerCase().includes(classSearchTerm.toLowerCase()) ||
+    classItem.section.toLowerCase().includes(classSearchTerm.toLowerCase()) ||
+    classItem.teacher.toLowerCase().includes(classSearchTerm.toLowerCase())
+  );
+
+  const handleSchoolInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setSchoolData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSaveSchool = () => {
+    console.log('Saving school data:', schoolData);
+    setIsEditing(false);
+    alert('School information updated successfully!');
+  };
+
+  const handleAddClass = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newClassData.name || !newClassData.section || !newClassData.teacher) {
+      alert('Please fill in all required fields');
+      return;
+    }
+    
+    console.log('Adding new class:', newClassData);
+    setShowAddClassForm(false);
+    setNewClassData({ name: '', section: '', teacher: '' });
+    alert('Class added successfully!');
+  };
+
+  const handleClassInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setNewClassData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleTeacherClick = (teacherId: string) => {
+    navigate(`/teacher-details/${teacherId}`);
+  };
+
+  return (
+    <MainLayout pageTitle={`My School - ${school.name}`}>
+      <div className="space-y-6">
+        <Breadcrumb items={breadcrumbItems} />
+
+        {/* School Details Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-gray-800">School Information</h2>
+            <button
+              onClick={() => setIsEditing(!isEditing)}
+              className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+            >
+              <Edit className="w-4 h-4" />
+              {isEditing ? 'Cancel' : 'Edit'}
+            </button>
+          </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h5 className="font-semibold text-gray-800 mb-3">Contact Information</h5>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm">{teacher.email}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm">{teacher.phone}</span>
-                </div>
-              </div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">School Name</label>
+              {isEditing ? (
+                <input
+                  type="text"
+                  name="name"
+                  value={schoolData.name}
+                  onChange={handleSchoolInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              ) : (
+                <p className="text-gray-900">{schoolData.name}</p>
+              )}
             </div>
-
+            
             <div>
-              <h5 className="font-semibold text-gray-800 mb-3">Professional Details</h5>
-              <div className="space-y-2">
-                <div>
-                  <span className="text-sm font-medium text-gray-600">Experience:</span>
-                  <p className="text-sm">{teacher.experience}</p>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-gray-600">Qualification:</span>
-                  <p className="text-sm">{teacher.qualification}</p>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-gray-600">Joining Date:</span>
-                  <p className="text-sm">{new Date(teacher.joiningDate).toLocaleDateString()}</p>
-                </div>
-              </div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+              {isEditing ? (
+                <input
+                  type="email"
+                  name="email"
+                  value={schoolData.email}
+                  onChange={handleSchoolInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              ) : (
+                <p className="text-gray-900">{schoolData.email}</p>
+              )}
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+              {isEditing ? (
+                <input
+                  type="tel"
+                  name="phone"
+                  value={schoolData.phone}
+                  onChange={handleSchoolInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              ) : (
+                <p className="text-gray-900">{schoolData.phone}</p>
+              )}
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+              {isEditing ? (
+                <textarea
+                  name="address"
+                  value={schoolData.address}
+                  onChange={handleSchoolInputChange}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              ) : (
+                <p className="text-gray-900">{schoolData.address}</p>
+              )}
+            </div>
+          </div>
+          
+          {isEditing && (
+            <div className="flex gap-2 mt-6">
+              <button 
+                onClick={handleSaveSchool}
+                className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600"
+              >
+                Save Changes
+              </button>
+              <button
+                onClick={() => setIsEditing(false)}
+                className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Teachers Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-gray-800">Teachers</h2>
+            <Link
+              to="/admin-add-teacher"
+              className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Add Teacher
+            </Link>
+          </div>
+          
+          <div className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search teachers by name or subject..."
+                value={teacherSearchTerm}
+                onChange={(e) => setTeacherSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
           </div>
 
-          <div>
-            <h5 className="font-semibold text-gray-800 mb-3">Assigned Classes</h5>
-            <div className="flex flex-wrap gap-2">
-              {teacher.classes.map((cls: string, index: number) => (
-                <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                  {cls}
-                </span>
+          <div className="max-h-96 overflow-y-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredTeachers.slice(0, 6).map((teacher) => (
+                <div
+                  key={teacher.id}
+                  onClick={() => handleTeacherClick(teacher.id)}
+                  className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer"
+                >
+                  <h3 className="font-semibold text-gray-800">{teacher.name}</h3>
+                  <p className="text-sm text-gray-600">{teacher.subject}</p>
+                  <p className="text-sm text-gray-500">{teacher.email}</p>
+                </div>
               ))}
             </div>
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
-          <button
-            onClick={onClose}
-            className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors"
-          >
-            Close
-          </button>
-          <button className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
-            Edit Teacher
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <MainLayout pageTitle="My School">
-      <div className="space-y-6">
-        <Breadcrumb items={breadcrumbItems} />
-        
-        {/* School Details Section */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">{schoolData.name}</h1>
-              <p className="text-gray-600">Established {schoolData.establishedYear}</p>
-            </div>
-            <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2">
-              <Edit className="w-4 h-4" />
-              Edit School
+        {/* Classes Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-gray-800">Classes</h2>
+            <button
+              onClick={() => setShowAddClassForm(true)}
+              className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Add Class
             </button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="space-y-3">
-              <div className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-gray-600">{schoolData.address}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-gray-400" />
-                <p className="text-sm text-gray-600">{schoolData.phone}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-gray-400" />
-                <p className="text-sm text-gray-600">{schoolData.email}</p>
-              </div>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">
-                <span className="font-medium">Principal:</span> {schoolData.principal}
-              </p>
+          <div className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search classes by name, section or teacher..."
+                value={classSearchTerm}
+                onChange={(e) => setClassSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <Users className="w-5 h-5 text-blue-600" />
-                <p className="text-sm text-blue-600">Total Students</p>
-              </div>
-              <p className="text-2xl font-bold text-blue-800">{schoolData.totalStudents}</p>
-            </div>
-            <div className="bg-green-50 p-4 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <GraduationCap className="w-5 h-5 text-green-600" />
-                <p className="text-sm text-green-600">Total Teachers</p>
-              </div>
-              <p className="text-2xl font-bold text-green-800">{schoolData.totalTeachers}</p>
-            </div>
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <Calendar className="w-5 h-5 text-purple-600" />
-                <p className="text-sm text-purple-600">Total Classes</p>
-              </div>
-              <p className="text-2xl font-bold text-purple-800">{schoolData.totalClasses}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Teachers Section */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Teachers</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {teachers.map((teacher) => (
-              <div
-                key={teacher.id}
-                onClick={() => setSelectedTeacher(teacher)}
-                className="bg-gray-50 p-4 rounded-lg hover:shadow-md transition-shadow cursor-pointer"
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                    <span className="text-white font-semibold">{teacher.name.charAt(0)}</span>
+          <div className="max-h-96 overflow-y-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredClasses.slice(0, 6).map((classItem) => (
+                <Link
+                  key={classItem.id}
+                  to={`/class-details/${classItem.id}`}
+                  className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-semibold text-gray-800">{classItem.name} - {classItem.section}</h3>
+                    <BookOpen className="w-5 h-5 text-blue-500" />
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800">{teacher.name}</h3>
-                    <p className="text-sm text-gray-600">{teacher.subject}</p>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-gray-500">Experience: {teacher.experience}</p>
-                  <p className="text-xs text-gray-500">Classes: {teacher.classes.length}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Classes Section */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Classes</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {classes.map((classItem) => (
-              <Link
-                key={classItem.id}
-                to={`/class-details/${classItem.id}`}
-                className="bg-gray-50 p-4 rounded-lg hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-gray-800">
-                    {classItem.name} - {classItem.section}
-                  </h3>
-                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                    {classItem.students} students
-                  </span>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-gray-600">Teacher: {classItem.teacher}</p>
-                  <p className="text-sm text-gray-600">Subject: {classItem.subject}</p>
-                </div>
-              </Link>
-            ))}
+                  <p className="text-sm text-gray-600">Students: {classItem.students}</p>
+                  <p className="text-sm text-gray-500">Teacher: {classItem.teacher}</p>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
-      {selectedTeacher && (
-        <TeacherModal
-          teacher={selectedTeacher}
-          onClose={() => setSelectedTeacher(null)}
-        />
+      {/* Add Class Modal */}
+      {showAddClassForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Add New Class</h3>
+              <button 
+                onClick={() => setShowAddClassForm(false)} 
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleAddClass} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Class Name *</label>
+                <select
+                  name="name"
+                  value={newClassData.name}
+                  onChange={handleClassInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select Class</option>
+                  <option value="Class 6">Class 6</option>
+                  <option value="Class 7">Class 7</option>
+                  <option value="Class 8">Class 8</option>
+                  <option value="Class 9">Class 9</option>
+                  <option value="Class 10">Class 10</option>
+                  <option value="Class 11">Class 11</option>
+                  <option value="Class 12">Class 12</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Section *</label>
+                <select
+                  name="section"
+                  value={newClassData.section}
+                  onChange={handleClassInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select Section</option>
+                  <option value="A">A</option>
+                  <option value="B">B</option>
+                  <option value="C">C</option>
+                  <option value="D">D</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Assign Teacher *</label>
+                <select
+                  name="teacher"
+                  value={newClassData.teacher}
+                  onChange={handleClassInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select Teacher</option>
+                  {teachers.map(teacher => (
+                    <option key={teacher.id} value={teacher.name}>
+                      {teacher.name} - {teacher.subject}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="flex gap-2 pt-4">
+                <button
+                  type="submit"
+                  className="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600"
+                >
+                  Add Class
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddClassForm(false)}
+                  className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </MainLayout>
   );

@@ -22,6 +22,7 @@ import StudentDetails from './pages/StudentDetails';
 import TeacherDetails from './pages/TeacherDetails';
 import AddTeacher from './pages/AddTeacher';
 import AddStudent from './pages/AddStudent';
+import AdminAddTeacher from './pages/AdminAddTeacher';
 
 const App: React.FC = () => {
   return (
@@ -73,8 +74,16 @@ const App: React.FC = () => {
           <Route
             path="/add-teacher"
             element={
-              <ProtectedRoute allowedRoles={['Super Admin', 'Admin']}>
+              <ProtectedRoute allowedRoles={['Super Admin']}>
                 <AddTeacher />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin-add-teacher"
+            element={
+              <ProtectedRoute allowedRoles={['Admin']}>
+                <AdminAddTeacher />
               </ProtectedRoute>
             }
           />
