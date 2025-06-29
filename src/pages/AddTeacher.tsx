@@ -3,14 +3,16 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
+import { X } from 'lucide-react';
 
 const AddTeacher: React.FC = () => {
   const navigate = useNavigate();
+  const [subjects, setSubjects] = useState<string[]>([]);
+  const [currentSubject, setCurrentSubject] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    subject: '',
     qualification: '',
     experience: '',
     address: '',
@@ -25,7 +27,7 @@ const AddTeacher: React.FC = () => {
     { label: 'Add Teacher' }
   ];
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -33,11 +35,38 @@ const AddTeacher: React.FC = () => {
     }));
   };
 
+  const handleAddSubject = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && currentSubject.trim() && !subjects.includes(currentSubject.trim())) {
+      e.preventDefault();
+      setSubjects(prev => [...prev, currentSubject.trim()]);
+      setCurrentSubject('');
+    }
+  };
+
+  const handleRemoveSubject = (subjectToRemove: string) => {
+    setSubjects(prev => prev.filter(subject => subject !== subjectToRemove));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Adding teacher:', formData);
-    // Add API call here
-    navigate('/school-details/1');
+    
+    if (subjects.length === 0) {
+      alert('Please add at least one subject');
+      return;
+    }
+
+    const teacherData = {
+      ...formData,
+      subjects: subjects
+    };
+    
+    console.log('Adding teacher:', teacherData);
+    
+    // Simulate API call with success
+    setTimeout(() => {
+      alert('Teacher added successfully!');
+      navigate('/school-details/1');
+    }, 500);
   };
 
   return (
@@ -87,27 +116,6 @@ const AddTeacher: React.FC = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Subject *</label>
-                <select
-                  name="subject"
-                  value={formData.subject}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select Subject</option>
-                  <option value="Mathematics">Mathematics</option>
-                  <option value="English">English</option>
-                  <option value="Science">Science</option>
-                  <option value="History">History</option>
-                  <option value="Geography">Geography</option>
-                  <option value="Physics">Physics</option>
-                  <option value="Chemistry">Chemistry</option>
-                  <option value="Biology">Biology</option>
-                </select>
-              </div>
-              
-              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Qualification *</label>
                 <input
                   type="text"
@@ -153,6 +161,35 @@ const AddTeacher: React.FC = () => {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+              </div>
+            </div>
+
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Subjects *</label>
+              <input
+                type="text"
+                value={currentSubject}
+                onChange={(e) => setCurrentSubject(e.target.value)}
+                onKeyDown={handleAddSubject}
+                placeholder="Type subject and press Enter to add"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <div className="flex flex-wrap gap-2 mt-2">
+                {subjects.map((subject, index) => (
+                  <div
+                    key={index}
+                    className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+                  >
+                    {subject}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveSubject(subject)}
+                      className="ml-1 text-blue-600 hover:text-blue-800"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
             

@@ -39,9 +39,22 @@ const AddStudent: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validation
+    if (!formData.name || !formData.class || !formData.section || !formData.rollNo || 
+        !formData.dateOfBirth || !formData.gender || !formData.parentName || 
+        !formData.parentPhone || !formData.admissionDate) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
     console.log('Adding student:', formData);
-    // Add API call here
-    navigate('/school-details/1');
+    
+    // Simulate API call with success
+    setTimeout(() => {
+      alert('Student added successfully!');
+      navigate('/school-details/1');
+    }, 500);
   };
 
   return (
