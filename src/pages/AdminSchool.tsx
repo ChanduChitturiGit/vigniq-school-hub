@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Search, Plus, BookOpen, X } from 'lucide-react';
+import { Edit, Search, Plus, BookOpen, X, Users } from 'lucide-react';
 
 const AdminSchool: React.FC = () => {
   const navigate = useNavigate();
