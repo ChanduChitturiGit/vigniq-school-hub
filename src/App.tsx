@@ -19,6 +19,9 @@ import Support from './pages/Support';
 import Requests from './pages/Requests';
 import ClassDetails from './pages/ClassDetails';
 import StudentDetails from './pages/StudentDetails';
+import TeacherDetails from './pages/TeacherDetails';
+import AddTeacher from './pages/AddTeacher';
+import AddStudent from './pages/AddStudent';
 
 const App: React.FC = () => {
   return (
@@ -56,6 +59,30 @@ const App: React.FC = () => {
             element={
               <ProtectedRoute allowedRoles={['Super Admin']}>
                 <SchoolDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teacher-details/:id"
+            element={
+              <ProtectedRoute allowedRoles={['Super Admin', 'Admin']}>
+                <TeacherDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/add-teacher"
+            element={
+              <ProtectedRoute allowedRoles={['Super Admin', 'Admin']}>
+                <AddTeacher />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/add-student"
+            element={
+              <ProtectedRoute allowedRoles={['Super Admin', 'Admin']}>
+                <AddStudent />
               </ProtectedRoute>
             }
           />

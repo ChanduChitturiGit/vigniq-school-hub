@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { School, Users, TrendingUp, Activity } from 'lucide-react';
 import { getSchools } from '../../data/schools';
 
@@ -12,28 +13,32 @@ const SuperAdminDashboard: React.FC = () => {
       value: schools.length,
       icon: School,
       color: 'bg-blue-500',
-      change: '+2 this month'
+      change: '+2 this month',
+      link: '/schools'
     },
     {
       title: 'Total Students',
       value: '1,250',
       icon: Users,
       color: 'bg-green-500',
-      change: '+15% from last month'
+      change: '+15% from last month',
+      link: '/schools'
     },
     {
       title: 'Active Teachers',
       value: '89',
       icon: Activity,
       color: 'bg-purple-500',
-      change: '+5 this month'
+      change: '+5 this month',
+      link: '/schools'
     },
     {
       title: 'System Usage',
       value: '94.5%',
       icon: TrendingUp,
       color: 'bg-orange-500',
-      change: '+2.1% from last week'
+      change: '+2.1% from last week',
+      link: '/schools'
     }
   ];
 
@@ -51,7 +56,11 @@ const SuperAdminDashboard: React.FC = () => {
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <div key={index} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <Link
+              key={index}
+              to={stat.link}
+              className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer"
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">{stat.title}</p>
@@ -62,7 +71,7 @@ const SuperAdminDashboard: React.FC = () => {
                   <Icon className="w-6 h-6 text-white" />
                 </div>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>
