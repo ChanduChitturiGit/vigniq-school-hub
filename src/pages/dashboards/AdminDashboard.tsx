@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { Users, BookOpen, Calendar, TrendingUp, MapPin, Phone, Mail } from 'lucide-react';
+import { Users, BookOpen, Calendar, TrendingUp, MapPin, Phone, Mail, School } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { getSchools } from '../../data/schools';
 
 const AdminDashboard: React.FC = () => {
@@ -13,14 +14,24 @@ const AdminDashboard: React.FC = () => {
       value: '9',
       icon: Users,
       color: 'bg-blue-500',
-      change: '12% from last month'
+      change: '12% from last month',
+      link: '/teachers'
     },
     {
       title: 'Classes',
       value: '5',
       icon: BookOpen,
       color: 'bg-green-500',
-      change: '5% from last month'
+      change: '5% from last month',
+      link: '/classes'
+    },
+    {
+      title: 'My School',
+      value: '1',
+      icon: School,
+      color: 'bg-purple-500',
+      change: 'Manage school details',
+      link: '/admin-school'
     }
   ];
 
@@ -50,11 +61,15 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <div key={index} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <Link
+              key={index}
+              to={stat.link}
+              className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-lg hover:scale-105 transition-all duration-200 cursor-pointer"
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">{stat.title}</p>
@@ -68,7 +83,7 @@ const AdminDashboard: React.FC = () => {
                   <Icon className="w-8 h-8 text-white" />
                 </div>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>

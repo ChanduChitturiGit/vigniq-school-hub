@@ -117,7 +117,12 @@ const AdminSchool: React.FC = () => {
         {/* School Details Section */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">School Information</h2>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <BookOpen className="w-6 h-6 text-blue-600" />
+              </div>
+              <h2 className="text-xl font-semibold text-gray-800">School Information</h2>
+            </div>
             <button
               onClick={() => setIsEditing(!isEditing)}
               className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -210,7 +215,12 @@ const AdminSchool: React.FC = () => {
         {/* Teachers Section */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">Teachers</h2>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <Users className="w-6 h-6 text-green-600" />
+              </div>
+              <h2 className="text-xl font-semibold text-gray-800">Teachers</h2>
+            </div>
             <Link
               to="/admin-add-teacher"
               className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
@@ -253,7 +263,12 @@ const AdminSchool: React.FC = () => {
         {/* Classes Section */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">Classes</h2>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <BookOpen className="w-6 h-6 text-purple-600" />
+              </div>
+              <h2 className="text-xl font-semibold text-gray-800">Classes</h2>
+            </div>
             <button
               onClick={() => setShowAddClassForm(true)}
               className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"

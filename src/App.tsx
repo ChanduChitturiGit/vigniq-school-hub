@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -23,6 +22,7 @@ import TeacherDetails from './pages/TeacherDetails';
 import AddTeacher from './pages/AddTeacher';
 import AddStudent from './pages/AddStudent';
 import AdminAddTeacher from './pages/AdminAddTeacher';
+import Profile from './pages/Profile';
 
 const App: React.FC = () => {
   return (
@@ -36,6 +36,14 @@ const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
               </ProtectedRoute>
             }
           />

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -74,25 +73,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
       ],
       'Admin': [
         {
-          key: 'user-management',
-          icon: Users,
-          label: 'User Management',
-          roles: ['Admin'],
-          isDropdown: true,
-          subItems: [
-            { path: '/classes', label: 'Classes' },
-            { path: '/teachers', label: 'Teachers' },
-            { path: '/students', label: 'Students' }
-          ]
-        },
-        {
           key: 'school-management',
           icon: School,
           label: 'School Management',
           roles: ['Admin'],
           isDropdown: true,
           subItems: [
-            { path: '/admin-school', label: 'My School' }
+            { path: '/admin-school', label: 'My School' },
+            { path: '/classes', label: 'Classes' },
+            { path: '/teachers', label: 'Teachers' },
+            { path: '/students', label: 'Students' }
           ]
         },
         { path: '/dashboards', icon: BarChart3, label: 'Dashboards', roles: ['Admin'] },
@@ -133,7 +123,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
     return item.subItems.some(subItem => location.pathname.startsWith(subItem.path));
   };
 
-  // Auto-expand dropdown if current path matches any subItem
   React.useEffect(() => {
     const menuItems = getMenuItems();
     menuItems.forEach((item) => {
