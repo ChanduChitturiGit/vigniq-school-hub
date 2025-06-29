@@ -1,10 +1,13 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
-import { Edit, Search, Plus } from 'lucide-react';
+import Breadcrumb from '../components/Layout/Breadcrumb';
+import { Edit, Search, Plus, GraduationCap } from 'lucide-react';
 
 const Students: React.FC = () => {
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
 
   // Mock student data
@@ -38,27 +41,57 @@ const Students: React.FC = () => {
       parentName: 'David Brown',
       phone: '+91 98765 43212',
       status: 'Active'
+    },
+    {
+      id: '4',
+      name: 'Diana Prince',
+      email: 'diana.prince@greenwood.edu',
+      class: 'Class 11-A',
+      rollNumber: '003',
+      parentName: 'Steve Prince',
+      phone: '+91 98765 43213',
+      status: 'Active'
     }
   ];
 
   const filteredStudents = allStudents.filter(student =>
     student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     student.class.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.rollNumber.includes(searchTerm)
+    student.rollNumber.includes(searchTerm) ||
+    student.parentName.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const breadcrumbItems = user?.role === 'Admin' 
+    ? [
+        { label: 'School Management', path: '/admin-school' },
+        { label: 'Students' }
+      ]
+    : [
+        { label: 'User Management', path: '/user-management' },
+        { label: 'Students' }
+      ];
 
   return (
     <MainLayout pageTitle="Students">
       <div className="space-y-6">
+        <Breadcrumb items={breadcrumbItems} />
+        
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-800">Students</h1>
-          <Link
-            to="/create-student"
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add Student
-          </Link>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <GraduationCap className="w-6 h-6 text-purple-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-800">Students</h1>
+          </div>
+          {user?.role === 'Admin' && (
+            <Link
+              to="/add-student"
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add Student
+            </Link>
+          )}
         </div>
 
         {/* Search Bar */}
@@ -68,7 +101,7 @@ const Students: React.FC = () => {
           </div>
           <input
             type="text"
-            placeholder="Search students by name, class, or roll number..."
+            placeholder="Search students by name, class, roll number or parent name..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -77,9 +110,10 @@ const Students: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredStudents.map((student) => (
-            <div
+            <Link
               key={student.id}
-              className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+              to={`/student-details/${student.id}`}
+              className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -93,12 +127,6 @@ const Students: React.FC = () => {
                     <p className="text-sm text-gray-500">{student.class}</p>
                   </div>
                 </div>
-                <Link
-                  to={`/edit-student/${student.id}`}
-                  className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                >
-                  <Edit className="w-4 h-4" />
-                </Link>
               </div>
               
               <div className="space-y-2">
@@ -121,7 +149,7 @@ const Students: React.FC = () => {
                   {student.status}
                 </span>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

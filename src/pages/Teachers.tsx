@@ -1,10 +1,15 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
-import { Edit, Plus, Mail, Phone } from 'lucide-react';
+import Breadcrumb from '../components/Layout/Breadcrumb';
+import { Edit, Plus, Mail, Phone, Search, Users as UsersIcon } from 'lucide-react';
 
 const Teachers: React.FC = () => {
+  const { user } = useAuth();
+  const [searchTerm, setSearchTerm] = useState('');
+
   // Mock teacher data
   const teachers = [
     {
@@ -24,28 +29,76 @@ const Teachers: React.FC = () => {
       subject: 'English',
       classes: ['Class 8-A', 'Class 7-B'],
       status: 'Active'
+    },
+    {
+      id: '3',
+      name: 'Sarah Wilson',
+      email: 'sarah.wilson@greenwood.edu',
+      phone: '+91 98765 43212',
+      subject: 'Science',
+      classes: ['Class 9-A', 'Class 8-B'],
+      status: 'Active'
     }
   ];
+
+  const filteredTeachers = teachers.filter(teacher =>
+    teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    teacher.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    teacher.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const breadcrumbItems = user?.role === 'Admin' 
+    ? [
+        { label: 'School Management', path: '/admin-school' },
+        { label: 'Teachers' }
+      ]
+    : [
+        { label: 'User Management', path: '/user-management' },
+        { label: 'Teachers' }
+      ];
 
   return (
     <MainLayout pageTitle="Teachers">
       <div className="space-y-6">
+        <Breadcrumb items={breadcrumbItems} />
+        
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-800">Teachers</h1>
-          <Link
-            to="/create-teacher"
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add Teacher
-          </Link>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-green-100 rounded-lg">
+              <UsersIcon className="w-6 h-6 text-green-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-800">Teachers</h1>
+          </div>
+          {user?.role === 'Admin' && (
+            <Link
+              to="/admin-add-teacher"
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add Teacher
+            </Link>
+          )}
+        </div>
+
+        <div className="mb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search teachers by name, subject or email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {teachers.map((teacher) => (
-            <div
+          {filteredTeachers.map((teacher) => (
+            <Link
               key={teacher.id}
-              className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+              to={`/teacher-details/${teacher.id}`}
+              className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -59,12 +112,6 @@ const Teachers: React.FC = () => {
                     <p className="text-sm text-gray-500">{teacher.subject}</p>
                   </div>
                 </div>
-                <Link
-                  to={`/edit-teacher/${teacher.id}`}
-                  className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                >
-                  <Edit className="w-4 h-4" />
-                </Link>
               </div>
               
               <div className="space-y-3">
@@ -98,7 +145,7 @@ const Teachers: React.FC = () => {
                   {teacher.status}
                 </span>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

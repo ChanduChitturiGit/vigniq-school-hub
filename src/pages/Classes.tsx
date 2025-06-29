@@ -1,20 +1,32 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { getClasses } from '../data/classes';
-import { Users, Plus } from 'lucide-react';
+import { Users, Plus, Search, BookOpen } from 'lucide-react';
 
 const Classes: React.FC = () => {
   const { user } = useAuth();
+  const [searchTerm, setSearchTerm] = useState('');
   const classes = getClasses();
 
-  const breadcrumbItems = [
-    { label: 'User Management', path: '/user-management' },
-    { label: 'Classes' }
-  ];
+  const filteredClasses = classes.filter(classItem =>
+    classItem.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    classItem.section.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    classItem.academicYear.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const breadcrumbItems = user?.role === 'Admin' 
+    ? [
+        { label: 'School Management', path: '/admin-school' },
+        { label: 'Classes' }
+      ]
+    : [
+        { label: 'User Management', path: '/user-management' },
+        { label: 'Classes' }
+      ];
 
   return (
     <MainLayout pageTitle="Classes">
@@ -31,11 +43,24 @@ const Classes: React.FC = () => {
           )}
         </div>
 
+        <div className="mb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search classes by name, section or academic year..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {classes.map((classItem) => (
+          {filteredClasses.map((classItem) => (
             <Link
               key={classItem.id}
-              to={`/class-students/${classItem.id}`}
+              to={`/class-details/${classItem.id}`}
               className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between mb-4">
@@ -46,7 +71,7 @@ const Classes: React.FC = () => {
                   <p className="text-sm text-gray-500">{classItem.academicYear}</p>
                 </div>
                 <div className="p-2 bg-blue-100 rounded-lg">
-                  <Users className="w-5 h-5 text-blue-600" />
+                  <BookOpen className="w-5 h-5 text-blue-600" />
                 </div>
               </div>
               

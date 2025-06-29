@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -16,6 +17,7 @@ import Students from './pages/Students';
 import ManageStudents from './pages/ManageStudents';
 import Support from './pages/Support';
 import Requests from './pages/Requests';
+import Responses from './pages/Responses';
 import ClassDetails from './pages/ClassDetails';
 import StudentDetails from './pages/StudentDetails';
 import TeacherDetails from './pages/TeacherDetails';
@@ -122,8 +124,16 @@ const App: React.FC = () => {
           <Route
             path="/admin-requests"
             element={
-              <ProtectedRoute allowedRoles={['Admin']}>
+              <ProtectedRoute allowedRoles={['Admin', 'Teacher']}>
                 <AdminRequests />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/responses"
+            element={
+              <ProtectedRoute>
+                <Responses />
               </ProtectedRoute>
             }
           />

@@ -13,7 +13,9 @@ import {
   School,
   HelpCircle,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  MessageSquare,
+  FileText
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -69,7 +71,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
           ]
         },
         { path: '/support', icon: HelpCircle, label: 'Support', roles: ['Super Admin'] },
-        { path: '/requests', icon: Settings, label: 'Requests', roles: ['Super Admin'] }
+        { path: '/requests', icon: Settings, label: 'Requests', roles: ['Super Admin'] },
+        { path: '/responses', icon: MessageSquare, label: 'Responses', roles: ['Super Admin'] }
       ],
       'Admin': [
         {
@@ -88,7 +91,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
         { path: '/dashboards', icon: BarChart3, label: 'Dashboards', roles: ['Admin'] },
         { path: '/calendar', icon: Calendar, label: 'Calendar', roles: ['Admin'] },
         { path: '/admin-requests', icon: Settings, label: 'Requests', roles: ['Admin'] },
-        { path: '/support', icon: HelpCircle, label: 'Support', roles: ['Admin'] }
+        { path: '/responses', icon: MessageSquare, label: 'Responses', roles: ['Admin'] }
       ],
       'Teacher': [
         {
@@ -101,16 +104,34 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
             { path: '/classes', label: 'Classes' },
             { path: '/students', label: 'Students' }
           ]
-        }
+        },
+        { path: '/admin-requests', icon: Settings, label: 'Requests', roles: ['Teacher'] },
+        { path: '/responses', icon: MessageSquare, label: 'Responses', roles: ['Teacher'] }
       ],
       'Student': [
         { path: '/profile', icon: User, label: 'My Profile', roles: ['Student'] },
         { path: '/timetable', icon: Calendar, label: 'Timetable', roles: ['Student'] },
-        { path: '/grades', icon: BarChart3, label: 'Grades', roles: ['Student'] }
+        { path: '/grades', icon: BarChart3, label: 'Grades', roles: ['Student'] },
+        { path: '/responses', icon: MessageSquare, label: 'Responses', roles: ['Student'] }
       ]
     };
 
-    return [...baseItems, ...(roleSpecificItems[user?.role as keyof typeof roleSpecificItems] || [])];
+    const helpItems: MenuItem[] = [
+      {
+        key: 'help',
+        icon: HelpCircle,
+        label: 'Help',
+        roles: ['Super Admin', 'Admin', 'Teacher', 'Student'],
+        isDropdown: true,
+        subItems: [
+          { path: '/support', label: 'Support' },
+          ...(user?.role !== 'Student' ? [{ path: '/admin-requests', label: 'Requests' }] : []),
+          { path: '/responses', label: 'Responses' }
+        ]
+      }
+    ];
+
+    return [...baseItems, ...(roleSpecificItems[user?.role as keyof typeof roleSpecificItems] || []), ...helpItems];
   };
 
   const isActive = (path: string) => location.pathname === path;
