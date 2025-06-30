@@ -3,17 +3,20 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { MessageSquare, CheckCircle, Clock, AlertCircle, Search, Calendar, CalendarIcon, MoreHorizontal } from 'lucide-react';
+import { MessageSquare, CheckCircle, Clock, AlertCircle, Search, Calendar, CalendarIcon, MoreHorizontal, ChevronDown } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Calendar as CalendarComponent } from '../components/ui/calendar';
-import { format, subMonths, isWithinInterval, parseISO } from 'date-fns';
+import { format, subMonths, isWithinInterval, parseISO, startOfDay, endOfDay, subDays, startOfYear, subYears, endOfYear } from 'date-fns';
+
+type TimeFilter = 'today' | 'last7days' | 'last30days' | 'currentyear' | 'lastyear' | 'customdate';
 
 const Responses: React.FC = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [fromDate, setFromDate] = useState<Date | undefined>(subMonths(new Date(), 3));
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>('last30days');
+  const [fromDate, setFromDate] = useState<Date | undefined>(subMonths(new Date(), 1));
   const [toDate, setToDate] = useState<Date | undefined>(new Date());
   const [showMoreFilters, setShowMoreFilters] = useState(false);
 
@@ -63,15 +66,36 @@ const Responses: React.FC = () => {
 
   const responses = getResponsesData();
 
+  const getDateRangeFromFilter = (filter: TimeFilter): [Date, Date] => {
+    const now = new Date();
+    
+    switch (filter) {
+      case 'today':
+        return [startOfDay(now), endOfDay(now)];
+      case 'last7days':
+        return [subDays(now, 7), now];
+      case 'last30days':
+        return [subDays(now, 30), now];
+      case 'currentyear':
+        return [startOfYear(now), now];
+      case 'lastyear':
+        const lastYear = subYears(now, 1);
+        return [startOfYear(lastYear), endOfYear(lastYear)];
+      default:
+        return fromDate && toDate ? [fromDate, toDate] : [subMonths(now, 1), now];
+    }
+  };
+
   const filteredAndSortedResponses = responses
     .filter(response => {
       const responseDate = parseISO(response.responseDate);
+      const [startDate, endDate] = getDateRangeFromFilter(timeFilter);
       
       const matchesSearch = response.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            response.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            response.respondedBy.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'all' || response.status.toLowerCase() === statusFilter.toLowerCase();
-      const matchesDateRange = (!fromDate || !toDate) || isWithinInterval(responseDate, { start: fromDate, end: toDate });
+      const matchesDateRange = isWithinInterval(responseDate, { start: startDate, end: endDate });
       
       return matchesSearch && matchesStatus && matchesDateRange;
     })
@@ -106,8 +130,33 @@ const Responses: React.FC = () => {
   };
 
   const formatDateRange = () => {
-    if (!fromDate || !toDate) return 'All time';
-    return `${format(fromDate, 'MMM dd, yyyy')} - ${format(toDate, 'MMM dd, yyyy')}`;
+    if (timeFilter === 'customdate') {
+      return null; // Don't show time period bar for custom date
+    }
+    
+    const [startDate, endDate] = getDateRangeFromFilter(timeFilter);
+    return `${format(startDate, 'MMM dd, yyyy')} - ${format(endDate, 'MMM dd, yyyy')}`;
+  };
+
+  const getTimeFilterLabel = (filter: TimeFilter) => {
+    switch (filter) {
+      case 'today': return 'Today';
+      case 'last7days': return 'Last 7 Days';
+      case 'last30days': return 'Last 30 Days';
+      case 'currentyear': return 'Current Year';
+      case 'lastyear': return 'Last Year';
+      case 'customdate': return 'Custom Date';
+      default: return 'Last 30 Days';
+    }
+  };
+
+  const handleTimeFilterChange = (filter: TimeFilter) => {
+    setTimeFilter(filter);
+    if (filter !== 'customdate') {
+      const [startDate, endDate] = getDateRangeFromFilter(filter);
+      setFromDate(startDate);
+      setToDate(endDate);
+    }
   };
 
   const breadcrumbItems = [
@@ -145,49 +194,86 @@ const Responses: React.FC = () => {
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4">
-          {/* Time Period Display - Always Visible */}
-          <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
-            <Calendar className="w-4 h-4 text-blue-600" />
-            <span className="text-sm font-medium text-blue-800">
-              {formatDateRange()}
-            </span>
-          </div>
+          {/* Time Period Display - Visible only when not custom date */}
+          {timeFilter !== 'customdate' && formatDateRange() && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+              <Calendar className="w-4 h-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-800">
+                {formatDateRange()}
+              </span>
+            </div>
+          )}
 
           {/* Desktop Filters */}
           <div className="hidden sm:flex items-center gap-2">
+            {/* Time Filter Dropdown */}
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="justify-start text-left font-normal">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  From Date
+                  <Calendar className="mr-2 h-4 w-4" />
+                  {getTimeFilterLabel(timeFilter)}
+                  <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <CalendarComponent
-                  mode="single"
-                  selected={fromDate}
-                  onSelect={setFromDate}
-                  className="rounded-md border pointer-events-auto"
-                />
+              <PopoverContent className="w-48 p-0" align="start">
+                <div className="p-2">
+                  {(['today', 'last7days', 'last30days', 'currentyear', 'lastyear', 'customdate'] as TimeFilter[]).map((filter) => (
+                    <button
+                      key={filter}
+                      onClick={() => handleTimeFilterChange(filter)}
+                      className={`w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-100 ${
+                        timeFilter === filter ? 'bg-blue-50 text-blue-700' : ''
+                      }`}
+                    >
+                      {getTimeFilterLabel(filter)}
+                    </button>
+                  ))}
+                </div>
               </PopoverContent>
             </Popover>
 
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="justify-start text-left font-normal">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  To Date
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <CalendarComponent
-                  mode="single"
-                  selected={toDate}
-                  onSelect={setToDate}
-                  className="rounded-md border pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
+            {/* Custom Date Inputs - Show only when custom date is selected */}
+            {timeFilter === 'customdate' && (
+              <>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="justify-start text-left font-normal">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {fromDate ? format(fromDate, 'MMM dd, yyyy') : 'From Date'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={fromDate}
+                      onSelect={(date) => {
+                        setFromDate(date);
+                      }}
+                      className="rounded-md border pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="justify-start text-left font-normal">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {toDate ? format(toDate, 'MMM dd, yyyy') : 'To Date'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={toDate}
+                      onSelect={(date) => {
+                        setToDate(date);
+                      }}
+                      className="rounded-md border pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </>
+            )}
 
             <select
               value={statusFilter}
@@ -213,46 +299,66 @@ const Responses: React.FC = () => {
               <PopoverContent className="w-80 p-4" align="start">
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium mb-2 block">From Date</label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start">
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {fromDate ? format(fromDate, 'PPP') : 'Select From Date'}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <CalendarComponent
-                          mode="single"
-                          selected={fromDate}
-                          onSelect={setFromDate}
-                          initialFocus
-                          className="pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <label className="text-sm font-medium mb-2 block">Time Period</label>
+                    <select
+                      value={timeFilter}
+                      onChange={(e) => handleTimeFilterChange(e.target.value as TimeFilter)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="today">Today</option>
+                      <option value="last7days">Last 7 Days</option>
+                      <option value="last30days">Last 30 Days</option>
+                      <option value="currentyear">Current Year</option>
+                      <option value="lastyear">Last Year</option>
+                      <option value="customdate">Custom Date</option>
+                    </select>
                   </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">To Date</label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start">
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {toDate ? format(toDate, 'PPP') : 'Select To Date'}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <CalendarComponent
-                          mode="single"
-                          selected={toDate}
-                          onSelect={setToDate}
-                          initialFocus
-                          className="pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
+
+                  {timeFilter === 'customdate' && (
+                    <>
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">From Date</label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start">
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {fromDate ? format(fromDate, 'PPP') : 'Select From Date'}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                            <CalendarComponent
+                              mode="single"
+                              selected={fromDate}
+                              onSelect={setFromDate}
+                              initialFocus
+                              className="pointer-events-auto"
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                      
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">To Date</label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start">
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {toDate ? format(toDate, 'PPP') : 'Select To Date'}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                            <CalendarComponent
+                              mode="single"
+                              selected={toDate}
+                              onSelect={setToDate}
+                              initialFocus
+                              className="pointer-events-auto"
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    </>
+                  )}
                   
                   <div>
                     <label className="text-sm font-medium mb-2 block">Status</label>

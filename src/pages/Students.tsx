@@ -80,6 +80,10 @@ const Students: React.FC = () => {
     }
   };
 
+  const getAddStudentPath = () => {
+    return user?.role === 'Teacher' ? '/add-student-teacher' : '/add-student';
+  };
+
   return (
     <MainLayout pageTitle="Students">
       <div className="space-y-6">
@@ -94,7 +98,7 @@ const Students: React.FC = () => {
           </div>
           {(user?.role === 'Admin' || user?.role === 'Teacher') && (
             <Link
-              to="/add-student"
+              to={getAddStudentPath()}
               className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />

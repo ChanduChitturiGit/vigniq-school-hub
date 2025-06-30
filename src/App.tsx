@@ -1,211 +1,89 @@
 
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import { Toaster } from './components/ui/sonner';
+
+// Page imports
+import Index from './pages/Index';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Profile from './pages/Profile';
+import Requests from './pages/Requests';
+import Responses from './pages/Responses';
+import Support from './pages/Support';
 import UserManagement from './pages/UserManagement';
+import Students from './pages/Students';
+import AddStudent from './pages/AddStudent';
+import AddStudentTeacher from './pages/AddStudentTeacher';
+import StudentDetails from './pages/StudentDetails';
+import Teachers from './pages/Teachers';
+import AddTeacher from './pages/AddTeacher';
+import TeacherDetails from './pages/TeacherDetails';
+import Classes from './pages/Classes';
+import ClassDetails from './pages/ClassDetails';
 import Schools from './pages/Schools';
 import SchoolDetails from './pages/SchoolDetails';
 import CreateSchool from './pages/CreateSchool';
 import AdminSchool from './pages/AdminSchool';
-import AdminRequests from './pages/AdminRequests';
-import Classes from './pages/Classes';
-import Teachers from './pages/Teachers';
-import Students from './pages/Students';
-import ManageStudents from './pages/ManageStudents';
-import Support from './pages/Support';
-import Requests from './pages/Requests';
-import Responses from './pages/Responses';
-import ClassDetails from './pages/ClassDetails';
-import StudentDetails from './pages/StudentDetails';
-import TeacherDetails from './pages/TeacherDetails';
-import AddTeacher from './pages/AddTeacher';
-import AddStudent from './pages/AddStudent';
 import AdminAddTeacher from './pages/AdminAddTeacher';
-import Profile from './pages/Profile';
+import AdminRequests from './pages/AdminRequests';
+import ManageStudents from './pages/ManageStudents';
+import NotFound from './pages/NotFound';
 
-const App: React.FC = () => {
+const queryClient = new QueryClient();
+
+function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/user-management"
-            element={
-              <ProtectedRoute>
-                <UserManagement />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/schools"
-            element={
-              <ProtectedRoute allowedRoles={['Super Admin']}>
-                <Schools />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/school-details/:id"
-            element={
-              <ProtectedRoute allowedRoles={['Super Admin']}>
-                <SchoolDetails />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/teacher-details/:id"
-            element={
-              <ProtectedRoute allowedRoles={['Super Admin', 'Admin']}>
-                <TeacherDetails />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/add-teacher"
-            element={
-              <ProtectedRoute allowedRoles={['Super Admin']}>
-                <AddTeacher />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin-add-teacher"
-            element={
-              <ProtectedRoute allowedRoles={['Admin']}>
-                <AdminAddTeacher />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/add-student"
-            element={
-              <ProtectedRoute allowedRoles={['Super Admin', 'Admin']}>
-                <AddStudent />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/create-school"
-            element={
-              <ProtectedRoute allowedRoles={['Super Admin']}>
-                <CreateSchool />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin-school"
-            element={
-              <ProtectedRoute allowedRoles={['Admin']}>
-                <AdminSchool />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin-requests"
-            element={
-              <ProtectedRoute allowedRoles={['Admin', 'Teacher']}>
-                <AdminRequests />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/responses"
-            element={
-              <ProtectedRoute>
-                <Responses />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/class-details/:id"
-            element={
-              <ProtectedRoute allowedRoles={['Super Admin', 'Admin', 'Teacher']}>
-                <ClassDetails />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/student-details/:id"
-            element={
-              <ProtectedRoute allowedRoles={['Super Admin', 'Admin', 'Teacher']}>
-                <StudentDetails />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/classes"
-            element={
-              <ProtectedRoute allowedRoles={['Admin', 'Teacher']}>
-                <Classes />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/teachers"
-            element={
-              <ProtectedRoute allowedRoles={['Admin']}>
-                <Teachers />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/students"
-            element={
-              <ProtectedRoute allowedRoles={['Admin', 'Teacher']}>
-                <Students />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/manage-students"
-            element={
-              <ProtectedRoute allowedRoles={['Admin']}>
-                <ManageStudents />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/support"
-            element={
-              <ProtectedRoute>
-                <Support />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/requests"
-            element={
-              <ProtectedRoute allowedRoles={['Super Admin']}>
-                <Requests />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <Router>
+          <div className="min-h-screen bg-gray-50">
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              
+              {/* Protected Routes */}
+              <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/requests" element={<ProtectedRoute><Requests /></ProtectedRoute>} />
+              <Route path="/responses" element={<ProtectedRoute><Responses /></ProtectedRoute>} />
+              <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
+              
+              {/* User Management Routes */}
+              <Route path="/user-management" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
+              <Route path="/students" element={<ProtectedRoute><Students /></ProtectedRoute>} />
+              <Route path="/add-student" element={<ProtectedRoute><AddStudent /></ProtectedRoute>} />
+              <Route path="/add-student-teacher" element={<ProtectedRoute><AddStudentTeacher /></ProtectedRoute>} />
+              <Route path="/student-details/:id" element={<ProtectedRoute><StudentDetails /></ProtectedRoute>} />
+              <Route path="/teachers" element={<ProtectedRoute><Teachers /></ProtectedRoute>} />
+              <Route path="/add-teacher" element={<ProtectedRoute><AddTeacher /></ProtectedRoute>} />
+              <Route path="/teacher-details/:id" element={<ProtectedRoute><TeacherDetails /></ProtectedRoute>} />
+              
+              {/* Class Management Routes */}
+              <Route path="/classes" element={<ProtectedRoute><Classes /></ProtectedRoute>} />
+              <Route path="/class-details/:id" element={<ProtectedRoute><ClassDetails /></ProtectedRoute>} />
+              
+              {/* School Management Routes */}
+              <Route path="/schools" element={<ProtectedRoute><Schools /></ProtectedRoute>} />
+              <Route path="/school-details/:id" element={<ProtectedRoute><SchoolDetails /></ProtectedRoute>} />
+              <Route path="/create-school" element={<ProtectedRoute><CreateSchool /></ProtectedRoute>} />
+              <Route path="/admin-school" element={<ProtectedRoute><AdminSchool /></ProtectedRoute>} />
+              <Route path="/admin-add-teacher" element={<ProtectedRoute><AdminAddTeacher /></ProtectedRoute>} />
+              <Route path="/admin-requests" element={<ProtectedRoute><AdminRequests /></ProtectedRoute>} />
+              <Route path="/manage-students" element={<ProtectedRoute><ManageStudents /></ProtectedRoute>} />
+              
+              {/* 404 Route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </div>
+          <Toaster />
+        </Router>
+      </AuthProvider>
+    </QueryClientProvider>
   );
-};
+}
 
 export default App;
