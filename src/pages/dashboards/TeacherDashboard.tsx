@@ -11,7 +11,6 @@ const TeacherDashboard: React.FC = () => {
       subValue: '85 total students',
       icon: BookOpen,
       color: 'bg-blue-500',
-      hoverColor: 'hover:bg-blue-600',
       link: '/classes'
     },
     {
@@ -20,7 +19,6 @@ const TeacherDashboard: React.FC = () => {
       subValue: 'across all classes',
       icon: Users,
       color: 'bg-green-500',
-      hoverColor: 'hover:bg-green-600',
       link: '/students'
     },
     {
@@ -29,8 +27,7 @@ const TeacherDashboard: React.FC = () => {
       subValue: 'from students',
       icon: Clock,
       color: 'bg-yellow-500',
-      hoverColor: 'hover:bg-yellow-600',
-      link: '/support'
+      link: '/support?tab=requests'
     },
     {
       title: 'Completed Today',
@@ -38,8 +35,7 @@ const TeacherDashboard: React.FC = () => {
       subValue: 'tasks completed',
       icon: CheckCircle,
       color: 'bg-purple-500',
-      hoverColor: 'hover:bg-purple-600',
-      link: '#'
+      link: '/support?tab=requests'
     }
   ];
 
@@ -122,7 +118,7 @@ const TeacherDashboard: React.FC = () => {
             <Link
               key={index}
               to={stat.link}
-              className={`bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer ${stat.hoverColor}`}
+              className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300 cursor-pointer group"
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -130,7 +126,7 @@ const TeacherDashboard: React.FC = () => {
                   <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
                   <p className="text-xs text-gray-500 mt-1">{stat.subValue}</p>
                 </div>
-                <div className={`p-3 rounded-lg ${stat.color}`}>
+                <div className={`p-3 rounded-lg ${stat.color} group-hover:scale-110 transition-transform duration-300`}>
                   <Icon className="w-6 h-6 text-white" />
                 </div>
               </div>
@@ -146,7 +142,7 @@ const TeacherDashboard: React.FC = () => {
           <div className="p-6 border-b border-gray-200 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-800">Recent Requests</h2>
             <Link 
-              to="/support"
+              to="/support?tab=requests"
               className="text-blue-600 hover:text-blue-700 p-2 hover:bg-blue-50 rounded-lg transition-colors"
               title="View all requests"
             >
@@ -158,7 +154,7 @@ const TeacherDashboard: React.FC = () => {
               {recentRequests.map((request) => (
                 <Link
                   key={request.id}
-                  to={`/support?request=${request.id}`}
+                  to={`/support?tab=requests&request=${request.id}`}
                   className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                 >
                   <div className="flex-1">

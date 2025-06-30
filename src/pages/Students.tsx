@@ -61,20 +61,29 @@ const Students: React.FC = () => {
     student.parentName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const breadcrumbItems = user?.role === 'Admin' 
-    ? [
+  const getBreadcrumbItems = () => {
+    if (user?.role === 'Admin') {
+      return [
         { label: 'School Management', path: '/admin-school' },
         { label: 'Students' }
-      ]
-    : [
+      ];
+    } else if (user?.role === 'Teacher') {
+      return [
         { label: 'User Management', path: '/user-management' },
         { label: 'Students' }
       ];
+    } else {
+      return [
+        { label: 'User Management', path: '/user-management' },
+        { label: 'Students' }
+      ];
+    }
+  };
 
   return (
     <MainLayout pageTitle="Students">
       <div className="space-y-6">
-        <Breadcrumb items={breadcrumbItems} />
+        <Breadcrumb items={getBreadcrumbItems()} />
         
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -83,7 +92,7 @@ const Students: React.FC = () => {
             </div>
             <h1 className="text-2xl font-bold text-gray-800">Students</h1>
           </div>
-          {user?.role === 'Admin' && (
+          {(user?.role === 'Admin' || user?.role === 'Teacher') && (
             <Link
               to="/add-student"
               className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
@@ -152,6 +161,18 @@ const Students: React.FC = () => {
             </Link>
           ))}
         </div>
+
+        {filteredStudents.length === 0 && (
+          <div className="text-center py-12">
+            <GraduationCap className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No students found</h3>
+            <p className="text-gray-500">
+              {searchTerm 
+                ? 'Try adjusting your search terms' 
+                : 'No students have been added yet.'}
+            </p>
+          </div>
+        )}
       </div>
     </MainLayout>
   );
