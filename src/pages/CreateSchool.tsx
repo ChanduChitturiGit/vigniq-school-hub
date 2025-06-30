@@ -3,7 +3,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
+import PasswordInput from '../components/ui/password-input';
 import { addSchool } from '../data/schools';
+import { X } from 'lucide-react';
 
 const CreateSchool: React.FC = () => {
   const navigate = useNavigate();
@@ -17,6 +19,12 @@ const CreateSchool: React.FC = () => {
     adminPassword: ''
   });
 
+  const [boards, setBoards] = useState<string[]>([]);
+  const [boardInput, setBoardInput] = useState('');
+  const [showBoardSuggestions, setShowBoardSuggestions] = useState(false);
+
+  const boardSuggestions = ['State Board', 'CBSE', 'ICSE', 'IGCSE', 'IB'];
+
   const breadcrumbItems = [
     { label: 'User Management', path: '/user-management' },
     { label: 'Create School' }
@@ -27,6 +35,41 @@ const CreateSchool: React.FC = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handlePasswordChange = (value: string) => {
+    setFormData(prev => ({ ...prev, adminPassword: value }));
+  };
+
+  const handleBoardInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setBoardInput(value);
+    setShowBoardSuggestions(value.length > 0);
+  };
+
+  const addBoard = (board: string) => {
+    if (board.trim() && !boards.includes(board.trim())) {
+      setBoards([...boards, board.trim()]);
+    }
+    setBoardInput('');
+    setShowBoardSuggestions(false);
+  };
+
+  const removeBoard = (boardToRemove: string) => {
+    setBoards(boards.filter(board => board !== boardToRemove));
+  };
+
+  const handleBoardKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addBoard(boardInput);
+    }
+  };
+
+  const filteredSuggestions = boardSuggestions.filter(
+    suggestion => 
+      suggestion.toLowerCase().includes(boardInput.toLowerCase()) &&
+      !boards.includes(suggestion)
+  );
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -36,7 +79,8 @@ const CreateSchool: React.FC = () => {
       address: formData.address,
       phone: formData.phone,
       email: formData.email,
-      adminId: Date.now().toString()
+      adminId: Date.now().toString(),
+      boards: boards
     });
 
     // Create admin user
@@ -78,6 +122,56 @@ const CreateSchool: React.FC = () => {
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Board</label>
+                <div className="space-y-2">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={boardInput}
+                      onChange={handleBoardInputChange}
+                      onKeyPress={handleBoardKeyPress}
+                      placeholder="Type board name (e.g., CBSE, State Board)"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {showBoardSuggestions && filteredSuggestions.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+                        {filteredSuggestions.map((suggestion, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => addBoard(suggestion)}
+                            className="w-full px-3 py-2 text-left hover:bg-gray-100 transition-colors first:rounded-t-lg last:rounded-b-lg"
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {boards.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {boards.map((board, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                        >
+                          {board}
+                          <button
+                            type="button"
+                            onClick={() => removeBoard(board)}
+                            className="ml-1 hover:text-blue-600"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
               
               <div>
@@ -150,13 +244,11 @@ const CreateSchool: React.FC = () => {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Admin Password</label>
-                  <input
-                    type="password"
-                    name="adminPassword"
+                  <PasswordInput
                     value={formData.adminPassword}
-                    onChange={handleChange}
+                    onChange={handlePasswordChange}
+                    placeholder="Enter admin password"
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>

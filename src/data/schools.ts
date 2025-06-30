@@ -6,35 +6,50 @@ export interface School {
   phone: string;
   email: string;
   adminId: string;
+  boards?: string[];
 }
 
-export const defaultSchools: School[] = [
+let schools: School[] = [
   {
     id: '1',
-    name: 'Greenwood High International School',
-    address: '123 Education Lane, Bengaluru, Karnataka 560001',
-    phone: '+91 80 1234 5678',
-    email: 'info@greenwoodhigh.edu',
-    adminId: '2'
+    name: 'Greenwood High School',
+    address: '123 Education Street, Learning City, LC 12345',
+    phone: '+1 (555) 123-4567',
+    email: 'info@greenwood.edu',
+    adminId: '2',
+    boards: ['CBSE', 'State Board']
+  },
+  {
+    id: '2',
+    name: 'Riverside Academy',
+    address: '456 Knowledge Avenue, Study Town, ST 67890',
+    phone: '+1 (555) 987-6543',
+    email: 'contact@riverside.edu',
+    adminId: '3',
+    boards: ['ICSE', 'IB']
   }
 ];
 
 export const getSchools = (): School[] => {
-  const schools = localStorage.getItem('vigniq_schools');
-  if (!schools) {
-    localStorage.setItem('vigniq_schools', JSON.stringify(defaultSchools));
-    return defaultSchools;
+  const stored = localStorage.getItem('vigniq_schools');
+  if (stored) {
+    schools = JSON.parse(stored);
+  } else {
+    localStorage.setItem('vigniq_schools', JSON.stringify(schools));
   }
-  return JSON.parse(schools);
+  return schools;
 };
 
 export const addSchool = (school: Omit<School, 'id'>): School => {
-  const schools = getSchools();
-  const newSchool = {
+  const newSchool: School = {
     ...school,
     id: Date.now().toString()
   };
   schools.push(newSchool);
   localStorage.setItem('vigniq_schools', JSON.stringify(schools));
   return newSchool;
+};
+
+export const getSchoolById = (id: string): School | undefined => {
+  return getSchools().find(school => school.id === id);
 };

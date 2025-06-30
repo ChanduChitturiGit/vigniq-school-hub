@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -15,7 +16,8 @@ import {
   ChevronDown,
   ChevronRight,
   MessageSquare,
-  FileText
+  FileText,
+  UserPlus
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -35,7 +37,7 @@ interface RegularMenuItem extends BaseMenuItem {
 interface DropdownMenuItem extends BaseMenuItem {
   key: string;
   isDropdown: true;
-  subItems: { path: string; label: string }[];
+  subItems: { path: string; label: string; icon?: React.ComponentType<{ className?: string }> }[];
 }
 
 type MenuItem = RegularMenuItem | DropdownMenuItem;
@@ -66,13 +68,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
           roles: ['Super Admin'],
           isDropdown: true,
           subItems: [
-            { path: '/schools', label: 'Schools' },
-            { path: '/create-school', label: 'Create School' }
+            { path: '/schools', label: 'Schools', icon: School },
+            { path: '/create-school', label: 'Create School', icon: UserPlus }
           ]
-        },
-        { path: '/support', icon: HelpCircle, label: 'Support', roles: ['Super Admin'] },
-        { path: '/requests', icon: Settings, label: 'Requests', roles: ['Super Admin'] },
-        { path: '/responses', icon: MessageSquare, label: 'Responses', roles: ['Super Admin'] }
+        }
       ],
       'Admin': [
         {
@@ -82,16 +81,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
           roles: ['Admin'],
           isDropdown: true,
           subItems: [
-            { path: '/admin-school', label: 'My School' },
-            { path: '/classes', label: 'Classes' },
-            { path: '/teachers', label: 'Teachers' },
-            { path: '/students', label: 'Students' }
+            { path: '/admin-school', label: 'My School', icon: School },
+            { path: '/classes', label: 'Classes', icon: BookOpen },
+            { path: '/teachers', label: 'Teachers', icon: GraduationCap },
+            { path: '/students', label: 'Students', icon: Users }
           ]
         },
         { path: '/dashboards', icon: BarChart3, label: 'Dashboards', roles: ['Admin'] },
-        { path: '/calendar', icon: Calendar, label: 'Calendar', roles: ['Admin'] },
-        { path: '/admin-requests', icon: Settings, label: 'Requests', roles: ['Admin'] },
-        { path: '/responses', icon: MessageSquare, label: 'Responses', roles: ['Admin'] }
+        { path: '/calendar', icon: Calendar, label: 'Calendar', roles: ['Admin'] }
       ],
       'Teacher': [
         {
@@ -101,20 +98,30 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
           roles: ['Teacher'],
           isDropdown: true,
           subItems: [
-            { path: '/classes', label: 'Classes' },
-            { path: '/students', label: 'Students' }
+            { path: '/classes', label: 'Classes', icon: BookOpen },
+            { path: '/students', label: 'Students', icon: Users }
           ]
-        },
-        { path: '/admin-requests', icon: Settings, label: 'Requests', roles: ['Teacher'] },
-        { path: '/responses', icon: MessageSquare, label: 'Responses', roles: ['Teacher'] }
+        }
       ],
       'Student': [
         { path: '/profile', icon: User, label: 'My Profile', roles: ['Student'] },
         { path: '/timetable', icon: Calendar, label: 'Timetable', roles: ['Student'] },
-        { path: '/grades', icon: BarChart3, label: 'Grades', roles: ['Student'] },
-        { path: '/responses', icon: MessageSquare, label: 'Responses', roles: ['Student'] }
+        { path: '/grades', icon: BarChart3, label: 'Grades', roles: ['Student'] }
       ]
     };
+
+    // Help dropdown for all users
+    const helpSubItems: { path: string; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+      { path: '/support', label: 'Support', icon: HelpCircle }
+    ];
+
+    // Add requests for non-students
+    if (user?.role !== 'Student') {
+      helpSubItems.push({ path: '/admin-requests', label: 'Requests', icon: FileText });
+    }
+
+    // Add responses for all users
+    helpSubItems.push({ path: '/responses', label: 'Responses', icon: MessageSquare });
 
     const helpItems: MenuItem[] = [
       {
@@ -123,11 +130,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
         label: 'Help',
         roles: ['Super Admin', 'Admin', 'Teacher', 'Student'],
         isDropdown: true,
-        subItems: [
-          { path: '/support', label: 'Support' },
-          ...(user?.role !== 'Student' ? [{ path: '/admin-requests', label: 'Requests' }] : []),
-          { path: '/responses', label: 'Responses' }
-        ]
+        subItems: helpSubItems
       }
     ];
 
@@ -208,20 +211,24 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
                     </button>
                     {isExpanded && !isCollapsed && item.subItems && (
                       <ul className="ml-8 mt-1 space-y-1">
-                        {item.subItems.map((subItem) => (
-                          <li key={subItem.path}>
-                            <Link
-                              to={subItem.path}
-                              className={`block px-4 py-2 rounded-lg transition-colors ${
-                                isActive(subItem.path) 
-                                  ? 'bg-white/20 text-white font-medium' 
-                                  : 'text-white/70 hover:bg-white/10 hover:text-white'
-                              }`}
-                            >
-                              {subItem.label}
-                            </Link>
-                          </li>
-                        ))}
+                        {item.subItems.map((subItem) => {
+                          const SubIcon = subItem.icon;
+                          return (
+                            <li key={subItem.path}>
+                              <Link
+                                to={subItem.path}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                                  isActive(subItem.path) 
+                                    ? 'bg-white/20 text-white font-medium' 
+                                    : 'text-white/70 hover:bg-white/10 hover:text-white'
+                                }`}
+                              >
+                                {SubIcon && <SubIcon className="w-4 h-4" />}
+                                {subItem.label}
+                              </Link>
+                            </li>
+                          );
+                        })}
                       </ul>
                     )}
                   </li>
