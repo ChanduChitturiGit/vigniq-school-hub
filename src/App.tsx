@@ -140,7 +140,7 @@ const App: React.FC = () => {
           <Route
             path="/class-details/:id"
             element={
-              <ProtectedRoute allowedRoles={['Super Admin', 'Admin']}>
+              <ProtectedRoute allowedRoles={['Super Admin', 'Admin', 'Teacher']}>
                 <ClassDetails />
               </ProtectedRoute>
             }
