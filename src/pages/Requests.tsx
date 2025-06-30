@@ -3,24 +3,11 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Clock, CheckCircle, XCircle, User, Calendar, Search, Filter, MoreHorizontal, CalendarIcon } from 'lucide-react';
+import { MessageSquare, CheckCircle, Clock, AlertCircle, Search, Calendar, CalendarIcon, MoreHorizontal } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Calendar as CalendarComponent } from '../components/ui/calendar';
-import { cn } from '../lib/utils';
-import { format, subMonths, isWithinInterval } from 'date-fns';
-
-interface Request {
-  id: string;
-  title: string;
-  description: string;
-  status: 'pending' | 'approved' | 'rejected';
-  requestedBy: string;
-  requestedByRole: string;
-  schoolName?: string;
-  createdAt: string;
-  priority: 'low' | 'medium' | 'high';
-}
+import { format, subMonths, isWithinInterval, parseISO } from 'date-fns';
 
 const Requests: React.FC = () => {
   const { user } = useAuth();
@@ -30,146 +17,146 @@ const Requests: React.FC = () => {
   const [toDate, setToDate] = useState<Date | undefined>(new Date());
   const [showMoreFilters, setShowMoreFilters] = useState(false);
 
-  // Mock requests data - in real app this would come from API
-  const getAllRequests = (): Request[] => {
+  // Mock requests data based on user role
+  const getRequestsData = () => {
     if (user?.role === 'Super Admin') {
       return [
         {
           id: '1',
-          title: 'New Teacher Addition Request',
-          description: 'Request to add a new Mathematics teacher for Class 10',
-          status: 'pending',
-          requestedBy: 'John Smith',
-          requestedByRole: 'Admin',
-          schoolName: 'Greenwood High School',
-          createdAt: '2024-01-15T10:30:00Z',
-          priority: 'high'
+          requestId: 'REQ-001',
+          subject: 'New Teacher Addition Request',
+          description: 'Need approval to add 3 new math teachers for the upcoming semester',
+          requestedBy: 'Admin John Smith - Greenwood High School',
+          requestDate: '2024-01-15',
+          status: 'Pending',
+          priority: 'High'
         },
         {
           id: '2',
-          title: 'Infrastructure Upgrade',
-          description: 'Request for laboratory equipment upgrade',
-          status: 'approved',
-          requestedBy: 'Sarah Wilson',
-          requestedByRole: 'Admin',
-          schoolName: 'Riverside Academy',
-          createdAt: '2024-01-14T14:20:00Z',
-          priority: 'medium'
-        },
-        {
-          id: '3',
-          title: 'Student Transfer Request',
-          description: 'Request to transfer student to different section',
-          status: 'pending',
-          requestedBy: 'Mike Johnson',
-          requestedByRole: 'Teacher',
-          schoolName: 'Greenwood High School',
-          createdAt: '2024-01-13T09:15:00Z',
-          priority: 'low'
+          requestId: 'REQ-002',
+          subject: 'Budget Approval Request',
+          description: 'Requesting budget approval for new laboratory equipment',
+          requestedBy: 'Admin Sarah Johnson - Oak Valley School',
+          requestDate: '2024-01-14',
+          status: 'In Review',
+          priority: 'Medium'
         }
       ];
     } else if (user?.role === 'Admin') {
       return [
         {
           id: '1',
-          title: 'Technical Issue - Projector',
-          description: 'Projector in classroom 201 not working',
-          status: 'pending',
-          requestedBy: 'John Smith',
-          requestedByRole: 'Teacher',
-          createdAt: '2024-01-15T10:30:00Z',
-          priority: 'high'
+          requestId: 'REQ-001',
+          subject: 'Class Schedule Change',
+          description: 'Request to change math class timing from 10 AM to 2 PM',
+          requestedBy: 'Teacher Alice Brown',
+          requestDate: '2024-01-15',
+          status: 'Pending',
+          priority: 'Medium'
         },
         {
           id: '2',
-          title: 'Resource Request',
-          description: 'Need additional science equipment',
-          status: 'approved',
-          requestedBy: 'Michael Brown',
-          requestedByRole: 'Teacher',
-          createdAt: '2024-01-14T14:20:00Z',
-          priority: 'medium'
+          requestId: 'REQ-002',
+          subject: 'Additional Resources',
+          description: 'Need additional teaching materials for advanced mathematics',
+          requestedBy: 'Teacher Robert Green',
+          requestDate: '2024-01-14',
+          status: 'Approved',
+          priority: 'Low'
         }
       ];
     } else if (user?.role === 'Teacher') {
       return [
         {
           id: '1',
-          title: 'Profile Update Request',
-          description: 'Update contact information',
-          status: 'pending',
-          requestedBy: 'Alice Johnson',
-          requestedByRole: 'Student',
-          createdAt: '2024-01-15T10:30:00Z',
-          priority: 'medium'
+          requestId: 'REQ-001',
+          subject: 'Grade Review Request',
+          description: 'Student requesting review of final exam grade',
+          requestedBy: 'Student Alice Johnson',
+          requestDate: '2024-01-15',
+          status: 'Pending',
+          priority: 'Medium'
         },
         {
           id: '2',
-          title: 'Grade Review Request',
-          description: 'Review grade for Mathematics test',
-          status: 'approved',
-          requestedBy: 'Bob Wilson',
-          requestedByRole: 'Student',
-          createdAt: '2024-01-14T14:20:00Z',
-          priority: 'high'
+          requestId: 'REQ-002',
+          subject: 'Assignment Extension',
+          description: 'Request for 2-day extension on math assignment due to illness',
+          requestedBy: 'Student Bob Wilson',
+          requestDate: '2024-01-14',
+          status: 'Approved',
+          priority: 'Low'
+        }
+      ];
+    } else {
+      return [
+        {
+          id: '1',
+          requestId: 'REQ-001',
+          subject: 'Grade Correction Request',
+          description: 'My grade for the final exam seems incorrect. Please review.',
+          requestedBy: 'You',
+          requestDate: '2024-01-15',
+          status: 'Pending',
+          priority: 'High'
+        },
+        {
+          id: '2',
+          requestId: 'REQ-002',
+          subject: 'Class Transfer Request',
+          description: 'Request to transfer from Section A to Section B',
+          requestedBy: 'You',
+          requestDate: '2024-01-14',
+          status: 'In Review',
+          priority: 'Medium'
         }
       ];
     }
-    return [];
   };
 
-  const allRequests = getAllRequests();
+  const requests = getRequestsData();
 
-  const filteredRequests = allRequests.filter(request => {
-    const requestDate = new Date(request.createdAt);
-    
-    const matchesSearch = request.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         request.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         request.requestedBy.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
-    const matchesDateRange = (!fromDate || !toDate) || isWithinInterval(requestDate, { start: fromDate, end: toDate });
-    
-    return matchesSearch && matchesStatus && matchesDateRange;
-  });
+  const filteredAndSortedRequests = requests
+    .filter(request => {
+      const requestDate = parseISO(request.requestDate);
+      
+      const matchesSearch = request.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           request.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           request.requestedBy.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || request.status.toLowerCase() === statusFilter.toLowerCase();
+      const matchesDateRange = (!fromDate || !toDate) || isWithinInterval(requestDate, { start: fromDate, end: toDate });
+      
+      return matchesSearch && matchesStatus && matchesDateRange;
+    })
+    .sort((a, b) => {
+      // Sort by date, latest first
+      return parseISO(b.requestDate).getTime() - parseISO(a.requestDate).getTime();
+    });
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'pending':
-        return <Clock className="w-4 h-4 text-yellow-500" />;
-      case 'approved':
+      case 'Approved':
         return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'rejected':
-        return <XCircle className="w-4 h-4 text-red-500" />;
+      case 'Pending':
+      case 'In Review':
+        return <Clock className="w-4 h-4 text-yellow-500" />;
+      case 'Rejected':
+        return <AlertCircle className="w-4 h-4 text-red-500" />;
       default:
         return <Clock className="w-4 h-4 text-gray-500" />;
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const baseClasses = "px-2 py-1 text-xs font-semibold rounded-full";
-    switch (status) {
-      case 'pending':
-        return `${baseClasses} bg-yellow-100 text-yellow-800`;
-      case 'approved':
-        return `${baseClasses} bg-green-100 text-green-800`;
-      case 'rejected':
-        return `${baseClasses} bg-red-100 text-red-800`;
-      default:
-        return `${baseClasses} bg-gray-100 text-gray-800`;
-    }
-  };
-
-  const getPriorityBadge = (priority: string) => {
-    const baseClasses = "px-2 py-1 text-xs font-medium rounded";
+  const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high':
-        return `${baseClasses} bg-red-50 text-red-700 border border-red-200`;
-      case 'medium':
-        return `${baseClasses} bg-yellow-50 text-yellow-700 border border-yellow-200`;
-      case 'low':
-        return `${baseClasses} bg-blue-50 text-blue-700 border border-blue-200`;
+      case 'High':
+        return 'bg-red-100 text-red-800';
+      case 'Medium':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Low':
+        return 'bg-green-100 text-green-800';
       default:
-        return `${baseClasses} bg-gray-50 text-gray-700 border border-gray-200`;
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -179,7 +166,6 @@ const Requests: React.FC = () => {
   };
 
   const breadcrumbItems = [
-    { label: 'Help', path: '/support' },
     { label: 'Requests' }
   ];
 
@@ -188,12 +174,13 @@ const Requests: React.FC = () => {
       <div className="space-y-6">
         <Breadcrumb items={breadcrumbItems} />
         
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-800">
-            {user?.role === 'Super Admin' ? 'All Requests' : 'Requests'}
-          </h1>
-          <div className="text-sm text-gray-500">
-            {filteredRequests.length} total requests
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-purple-100 rounded-lg">
+            <MessageSquare className="w-6 h-6 text-purple-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-800">Requests</h1>
+          <div className="ml-auto text-sm text-gray-500">
+            {filteredAndSortedRequests.length} total requests
           </div>
         </div>
 
@@ -214,9 +201,9 @@ const Requests: React.FC = () => {
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4">
           {/* Time Period Display - Always Visible */}
-          <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
-            <Calendar className="w-4 h-4 text-blue-600" />
-            <span className="text-sm font-medium text-blue-800">
+          <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 border border-purple-200 rounded-lg">
+            <Calendar className="w-4 h-4 text-purple-600" />
+            <span className="text-sm font-medium text-purple-800">
               {formatDateRange()}
             </span>
           </div>
@@ -227,30 +214,33 @@ const Requests: React.FC = () => {
               <PopoverTrigger asChild>
                 <Button variant="outline" className="justify-start text-left font-normal">
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  Date Range
+                  From Date
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <div className="p-4 space-y-4">
-                  <div>
-                    <label className="text-sm font-medium">From Date</label>
-                    <CalendarComponent
-                      mode="single"
-                      selected={fromDate}
-                      onSelect={setFromDate}
-                      className="rounded-md border"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">To Date</label>
-                    <CalendarComponent
-                      mode="single"
-                      selected={toDate}
-                      onSelect={setToDate}
-                      className="rounded-md border"
-                    />
-                  </div>
-                </div>
+                <CalendarComponent
+                  mode="single"
+                  selected={fromDate}
+                  onSelect={setFromDate}
+                  className="rounded-md border pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="justify-start text-left font-normal">
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  To Date
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={toDate}
+                  onSelect={setToDate}
+                  className="rounded-md border pointer-events-auto"
+                />
               </PopoverContent>
             </Popover>
 
@@ -262,6 +252,7 @@ const Requests: React.FC = () => {
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
               <option value="approved">Approved</option>
+              <option value="in review">In Review</option>
               <option value="rejected">Rejected</option>
             </select>
           </div>
@@ -278,41 +269,45 @@ const Requests: React.FC = () => {
               <PopoverContent className="w-80 p-4" align="start">
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium mb-2 block">Date Range</label>
-                    <div className="space-y-2">
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full justify-start">
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {fromDate ? format(fromDate, 'PPP') : 'From Date'}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <CalendarComponent
-                            mode="single"
-                            selected={fromDate}
-                            onSelect={setFromDate}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full justify-start">
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {toDate ? format(toDate, 'PPP') : 'To Date'}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <CalendarComponent
-                            mode="single"
-                            selected={toDate}
-                            onSelect={setToDate}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
+                    <label className="text-sm font-medium mb-2 block">From Date</label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start">
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {fromDate ? format(fromDate, 'PPP') : 'Select From Date'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <CalendarComponent
+                          mode="single"
+                          selected={fromDate}
+                          onSelect={setFromDate}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">To Date</label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start">
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {toDate ? format(toDate, 'PPP') : 'Select To Date'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <CalendarComponent
+                          mode="single"
+                          selected={toDate}
+                          onSelect={setToDate}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   
                   <div>
@@ -325,6 +320,7 @@ const Requests: React.FC = () => {
                       <option value="all">All Status</option>
                       <option value="pending">Pending</option>
                       <option value="approved">Approved</option>
+                      <option value="in review">In Review</option>
                       <option value="rejected">Rejected</option>
                     </select>
                   </div>
@@ -334,73 +330,57 @@ const Requests: React.FC = () => {
           </div>
         </div>
 
-        {/* Requests List */}
         <div className="space-y-4">
-          {filteredRequests.map((request) => (
+          {filteredAndSortedRequests.map((request) => (
             <div
               key={request.id}
-              className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+              className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="text-lg font-semibold text-gray-800">{request.subject}</h3>
                     {getStatusIcon(request.status)}
-                    <h3 className="text-lg font-semibold text-gray-800">{request.title}</h3>
-                    <span className={getPriorityBadge(request.priority)}>
-                      {request.priority} priority
-                    </span>
                   </div>
-                  <p className="text-gray-600 mb-3">{request.description}</p>
-                  
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <User className="w-4 h-4" />
-                      <span>{request.requestedBy} ({request.requestedByRole})</span>
-                    </div>
-                    {request.schoolName && (
-                      <div className="flex items-center gap-1">
-                        <span>•</span>
-                        <span>{request.schoolName}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      <span>{new Date(request.createdAt).toLocaleDateString()}</span>
-                    </div>
-                  </div>
+                  <p className="text-sm text-gray-500 mb-2">Request ID: {request.requestId}</p>
                 </div>
-                
-                <div className="flex flex-col items-end gap-2">
-                  <span className={getStatusBadge(request.status)}>
-                    {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                <div className="flex items-center gap-2">
+                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(request.priority)}`}>
+                    {request.priority}
                   </span>
-                  
-                  {request.status === 'pending' && (
-                    <div className="flex gap-2">
-                      <button className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 transition-colors">
-                        Approve
-                      </button>
-                      <button className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors">
-                        Reject
-                      </button>
-                    </div>
-                  )}
+                  <span className="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                    {request.status}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                <p className="text-gray-700">{request.description}</p>
+              </div>
+              
+              <div className="flex items-center justify-between text-sm text-gray-500">
+                <div>
+                  <span className="font-medium">Requested by:</span> {request.requestedBy}
+                </div>
+                <div>
+                  <span className="font-medium">Date:</span> {format(parseISO(request.requestDate), 'MMM dd, yyyy')}
                 </div>
               </div>
             </div>
           ))}
-          
-          {filteredRequests.length === 0 && (
-            <div className="text-center py-12">
-              <div className="text-gray-500 mb-2">No requests found</div>
-              <div className="text-sm text-gray-400">
-                {searchTerm || statusFilter !== 'all' 
-                  ? 'Try adjusting your search or filters' 
-                  : 'No requests have been submitted yet'}
-              </div>
-            </div>
-          )}
         </div>
+
+        {filteredAndSortedRequests.length === 0 && (
+          <div className="text-center py-12">
+            <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No requests found</h3>
+            <p className="text-gray-500">
+              {searchTerm || statusFilter !== 'all' 
+                ? 'Try adjusting your search or filters' 
+                : 'You don\'t have any requests yet.'}
+            </p>
+          </div>
+        )}
       </div>
     </MainLayout>
   );

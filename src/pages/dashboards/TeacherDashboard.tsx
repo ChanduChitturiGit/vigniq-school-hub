@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, Users, Clock, CheckCircle, ArrowRight, ExternalLink } from 'lucide-react';
@@ -27,7 +26,7 @@ const TeacherDashboard: React.FC = () => {
       subValue: 'from students',
       icon: Clock,
       color: 'bg-yellow-500',
-      link: '/support?tab=requests'
+      link: '/requests'
     },
     {
       title: 'Completed Today',
@@ -35,7 +34,7 @@ const TeacherDashboard: React.FC = () => {
       subValue: 'tasks completed',
       icon: CheckCircle,
       color: 'bg-purple-500',
-      link: '/support?tab=requests'
+      link: '/requests'
     }
   ];
 
@@ -142,7 +141,7 @@ const TeacherDashboard: React.FC = () => {
           <div className="p-6 border-b border-gray-200 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-800">Recent Requests</h2>
             <Link 
-              to="/support?tab=requests"
+              to="/requests"
               className="text-blue-600 hover:text-blue-700 p-2 hover:bg-blue-50 rounded-lg transition-colors"
               title="View all requests"
             >
@@ -154,7 +153,7 @@ const TeacherDashboard: React.FC = () => {
               {recentRequests.map((request) => (
                 <Link
                   key={request.id}
-                  to={`/support?tab=requests&request=${request.id}`}
+                  to={`/requests?request=${request.id}`}
                   className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                 >
                   <div className="flex-1">

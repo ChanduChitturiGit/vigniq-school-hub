@@ -7,7 +7,7 @@ import { MessageSquare, CheckCircle, Clock, AlertCircle, Search, Calendar, Calen
 import { Button } from '../components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Calendar as CalendarComponent } from '../components/ui/calendar';
-import { format, subMonths, isWithinInterval } from 'date-fns';
+import { format, subMonths, isWithinInterval, parseISO } from 'date-fns';
 
 const Responses: React.FC = () => {
   const { user } = useAuth();
@@ -63,17 +63,22 @@ const Responses: React.FC = () => {
 
   const responses = getResponsesData();
 
-  const filteredResponses = responses.filter(response => {
-    const responseDate = new Date(response.responseDate);
-    
-    const matchesSearch = response.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         response.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         response.respondedBy.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || response.status.toLowerCase() === statusFilter.toLowerCase();
-    const matchesDateRange = (!fromDate || !toDate) || isWithinInterval(responseDate, { start: fromDate, end: toDate });
-    
-    return matchesSearch && matchesStatus && matchesDateRange;
-  });
+  const filteredAndSortedResponses = responses
+    .filter(response => {
+      const responseDate = parseISO(response.responseDate);
+      
+      const matchesSearch = response.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           response.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           response.respondedBy.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || response.status.toLowerCase() === statusFilter.toLowerCase();
+      const matchesDateRange = (!fromDate || !toDate) || isWithinInterval(responseDate, { start: fromDate, end: toDate });
+      
+      return matchesSearch && matchesStatus && matchesDateRange;
+    })
+    .sort((a, b) => {
+      // Sort by date, latest first
+      return parseISO(b.responseDate).getTime() - parseISO(a.responseDate).getTime();
+    });
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -120,7 +125,7 @@ const Responses: React.FC = () => {
           </div>
           <h1 className="text-2xl font-bold text-gray-800">Responses</h1>
           <div className="ml-auto text-sm text-gray-500">
-            {filteredResponses.length} total responses
+            {filteredAndSortedResponses.length} total responses
           </div>
         </div>
 
@@ -154,30 +159,33 @@ const Responses: React.FC = () => {
               <PopoverTrigger asChild>
                 <Button variant="outline" className="justify-start text-left font-normal">
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  Date Range
+                  From Date
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <div className="p-4 space-y-4">
-                  <div>
-                    <label className="text-sm font-medium">From Date</label>
-                    <CalendarComponent
-                      mode="single"
-                      selected={fromDate}
-                      onSelect={setFromDate}
-                      className="rounded-md border"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">To Date</label>
-                    <CalendarComponent
-                      mode="single"
-                      selected={toDate}
-                      onSelect={setToDate}
-                      className="rounded-md border"
-                    />
-                  </div>
-                </div>
+                <CalendarComponent
+                  mode="single"
+                  selected={fromDate}
+                  onSelect={setFromDate}
+                  className="rounded-md border pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="justify-start text-left font-normal">
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  To Date
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={toDate}
+                  onSelect={setToDate}
+                  className="rounded-md border pointer-events-auto"
+                />
               </PopoverContent>
             </Popover>
 
@@ -205,41 +213,45 @@ const Responses: React.FC = () => {
               <PopoverContent className="w-80 p-4" align="start">
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium mb-2 block">Date Range</label>
-                    <div className="space-y-2">
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full justify-start">
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {fromDate ? format(fromDate, 'PPP') : 'From Date'}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <CalendarComponent
-                            mode="single"
-                            selected={fromDate}
-                            onSelect={setFromDate}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full justify-start">
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {toDate ? format(toDate, 'PPP') : 'To Date'}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <CalendarComponent
-                            mode="single"
-                            selected={toDate}
-                            onSelect={setToDate}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
+                    <label className="text-sm font-medium mb-2 block">From Date</label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start">
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {fromDate ? format(fromDate, 'PPP') : 'Select From Date'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <CalendarComponent
+                          mode="single"
+                          selected={fromDate}
+                          onSelect={setFromDate}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">To Date</label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start">
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {toDate ? format(toDate, 'PPP') : 'Select To Date'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <CalendarComponent
+                          mode="single"
+                          selected={toDate}
+                          onSelect={setToDate}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   
                   <div>
@@ -262,7 +274,7 @@ const Responses: React.FC = () => {
         </div>
 
         <div className="space-y-4">
-          {filteredResponses.map((response) => (
+          {filteredAndSortedResponses.map((response) => (
             <div
               key={response.id}
               className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
@@ -294,14 +306,14 @@ const Responses: React.FC = () => {
                   <span className="font-medium">Responded by:</span> {response.respondedBy}
                 </div>
                 <div>
-                  <span className="font-medium">Date:</span> {response.responseDate}
+                  <span className="font-medium">Date:</span> {format(parseISO(response.responseDate), 'MMM dd, yyyy')}
                 </div>
               </div>
             </div>
           ))}
         </div>
 
-        {filteredResponses.length === 0 && (
+        {filteredAndSortedResponses.length === 0 && (
           <div className="text-center py-12">
             <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No responses found</h3>
