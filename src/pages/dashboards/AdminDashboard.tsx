@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Users, BookOpen, Calendar, TrendingUp, MapPin, Phone, Mail, School } from 'lucide-react';
+import { Users, BookOpen, School, MapPin, Phone, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getSchools } from '../../data/schools';
 
@@ -74,8 +74,7 @@ const AdminDashboard: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-gray-600">{stat.title}</p>
                   <p className="text-3xl font-bold text-gray-900 mt-2">{stat.value}</p>
-                  <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
-                    <TrendingUp className="w-3 h-3" />
+                  <p className="text-xs text-green-600 mt-2">
                     {stat.change}
                   </p>
                 </div>

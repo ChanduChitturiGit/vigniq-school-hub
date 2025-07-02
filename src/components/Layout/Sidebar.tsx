@@ -86,9 +86,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
             { path: '/teachers', label: 'Teachers', icon: GraduationCap },
             { path: '/students', label: 'Students', icon: Users }
           ]
-        },
-        { path: '/dashboards', icon: BarChart3, label: 'Dashboards', roles: ['Admin'] },
-        { path: '/calendar', icon: Calendar, label: 'Calendar', roles: ['Admin'] }
+        }
       ],
       'Teacher': [
         {
