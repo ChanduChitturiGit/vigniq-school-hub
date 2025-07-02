@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { User, Lock, LogIn, Eye, EyeOff } from 'lucide-react';
-import { toast } from 'sonner';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -13,7 +12,6 @@ const Login: React.FC = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotStep, setForgotStep] = useState(1);
   const [forgotEmail, setForgotEmail] = useState('');
-  const [validationCode, setValidationCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -53,25 +51,8 @@ const Login: React.FC = () => {
       if (userExists) {
         setForgotStep(2);
         setError('');
-        // Show toast notification
-        toast.success('Verification code sent to your email. Please check your inbox.', {
-          position: 'bottom-right',
-          duration: 4000,
-        });
       } else {
         setError('Email not found in our system.');
-      }
-    } else if (forgotStep === 2) {
-      // Validate code
-      if (validationCode === '123') {
-        setForgotStep(3);
-        setError('');
-        toast.success('Code verified successfully!', {
-          position: 'bottom-right',
-          duration: 3000,
-        });
-      } else {
-        setError('Invalid validation code. Please try again.');
       }
     } else {
       // Update password
@@ -95,14 +76,10 @@ const Login: React.FC = () => {
         setShowForgotPassword(false);
         setForgotStep(1);
         setForgotEmail('');
-        setValidationCode('');
         setNewPassword('');
         setConfirmPassword('');
         setError('');
-        toast.success('Password updated successfully! You can now log in with your new password.', {
-          position: 'bottom-right',
-          duration: 5000,
-        });
+        alert('Password updated successfully! You can now log in with your new password.');
       }
     }
   };
@@ -139,7 +116,8 @@ const Login: React.FC = () => {
               <p className="text-gray-600">
                 {showForgotPassword 
                   ? 'Enter your details to reset your password.' 
-                  : 'Login to continue your AI learning journey.'}
+                  : 'Login to continue your AI learning journey.'
+                }
               </p>
             </div>
 
@@ -240,26 +218,6 @@ const Login: React.FC = () => {
                       />
                     </div>
                   </div>
-                ) : forgotStep === 2 ? (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Validation Code
-                    </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                      <input
-                        type="text"
-                        value={validationCode}
-                        onChange={(e) => setValidationCode(e.target.value)}
-                        placeholder="Enter validation code (123)"
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                        required
-                      />
-                    </div>
-                    <p className="text-sm text-gray-500 mt-2">
-                      Please check your email for the validation code
-                    </p>
-                  </div>
                 ) : (
                   <>
                     <div>
@@ -317,7 +275,7 @@ const Login: React.FC = () => {
                     type="submit"
                     className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
                   >
-                    {forgotStep === 1 ? 'Verify Email' : forgotStep === 2 ? 'Verify Code' : 'Reset Password'}
+                    {forgotStep === 1 ? 'Verify Email' : 'Reset Password'}
                   </button>
                   <button
                     type="button"
@@ -325,7 +283,6 @@ const Login: React.FC = () => {
                       setShowForgotPassword(false);
                       setForgotStep(1);
                       setForgotEmail('');
-                      setValidationCode('');
                       setNewPassword('');
                       setConfirmPassword('');
                       setError('');
