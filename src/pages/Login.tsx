@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { User, Lock, LogIn, Eye, EyeOff } from 'lucide-react';
+import { toast } from '../components/ui/sonner';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -12,6 +12,7 @@ const Login: React.FC = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotStep, setForgotStep] = useState(1);
   const [forgotEmail, setForgotEmail] = useState('');
+  const [validationCode, setValidationCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -51,8 +52,21 @@ const Login: React.FC = () => {
       if (userExists) {
         setForgotStep(2);
         setError('');
+        // Show toast notification
+        toast("📬 A verification code has been sent to your email. Please check.", {
+          duration: 4000,
+          position: "bottom-right"
+        });
       } else {
         setError('Email not found in our system.');
+      }
+    } else if (forgotStep === 2) {
+      // Validate code
+      if (validationCode === '123') {
+        setForgotStep(3);
+        setError('');
+      } else {
+        setError('Invalid validation code. Please enter 123.');
       }
     } else {
       // Update password
@@ -76,10 +90,14 @@ const Login: React.FC = () => {
         setShowForgotPassword(false);
         setForgotStep(1);
         setForgotEmail('');
+        setValidationCode('');
         setNewPassword('');
         setConfirmPassword('');
         setError('');
-        alert('Password updated successfully! You can now log in with your new password.');
+        toast("✅ Password updated successfully! You can now log in with your new password.", {
+          duration: 4000,
+          position: "bottom-right"
+        });
       }
     }
   };
@@ -218,6 +236,40 @@ const Login: React.FC = () => {
                       />
                     </div>
                   </div>
+                ) : forgotStep === 2 ? (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Email Address
+                      </label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                        <input
+                          type="email"
+                          value={forgotEmail}
+                          disabled
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Validation Code
+                      </label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                        <input
+                          type="text"
+                          value={validationCode}
+                          onChange={(e) => setValidationCode(e.target.value)}
+                          placeholder="Enter validation code"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                          required
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Enter 123 to proceed</p>
+                    </div>
+                  </>
                 ) : (
                   <>
                     <div>
@@ -275,7 +327,7 @@ const Login: React.FC = () => {
                     type="submit"
                     className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
                   >
-                    {forgotStep === 1 ? 'Verify Email' : 'Reset Password'}
+                    {forgotStep === 1 ? 'Verify Email' : forgotStep === 2 ? 'Verify Code' : 'Reset Password'}
                   </button>
                   <button
                     type="button"
@@ -283,6 +335,7 @@ const Login: React.FC = () => {
                       setShowForgotPassword(false);
                       setForgotStep(1);
                       setForgotEmail('');
+                      setValidationCode('');
                       setNewPassword('');
                       setConfirmPassword('');
                       setError('');
