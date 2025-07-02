@@ -1,11 +1,12 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
+import PasswordInput from '../components/ui/password-input';
 
 const AddStudent: React.FC = () => {
   const navigate = useNavigate();
+  const [password, setPassword] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -43,12 +44,17 @@ const AddStudent: React.FC = () => {
     // Validation
     if (!formData.name || !formData.class || !formData.section || !formData.rollNo || 
         !formData.dateOfBirth || !formData.gender || !formData.parentName || 
-        !formData.parentPhone || !formData.admissionDate) {
-      alert('Please fill in all required fields');
+        !formData.parentPhone || !formData.admissionDate || !password) {
+      alert('Please fill in all required fields including password');
       return;
     }
 
-    console.log('Adding student:', formData);
+    const studentData = {
+      ...formData,
+      password: password
+    };
+
+    console.log('Adding student:', studentData);
     
     // Simulate API call with success
     setTimeout(() => {
@@ -87,6 +93,17 @@ const AddStudent: React.FC = () => {
                   value={formData.email}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Password *</label>
+                <PasswordInput
+                  value={password}
+                  onChange={setPassword}
+                  placeholder="Enter password"
+                  required
+                  showGenerator
                 />
               </div>
               

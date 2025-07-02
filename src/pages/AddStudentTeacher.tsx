@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
+import PasswordInput from '../components/ui/password-input';
 import { UserPlus, Save, ArrowLeft } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { toast } from '../hooks/use-toast';
@@ -11,6 +11,7 @@ import { toast } from '../hooks/use-toast';
 const AddStudentTeacher: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [password, setPassword] = useState('');
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -51,8 +52,26 @@ const AddStudentTeacher: React.FC = () => {
     setLoading(true);
 
     try {
+      // Basic validation including password
+      if (!formData.fullName || !formData.email || !formData.class || !formData.rollNumber || 
+          !formData.dateOfBirth || !formData.parentName || !formData.parentPhone || !password) {
+        toast({
+          title: "Error",
+          description: "Please fill in all required fields including password.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const studentData = {
+        ...formData,
+        password: password
+      };
+
+      console.log('Adding student:', studentData);
       
       toast({
         title: "Success!",
@@ -130,6 +149,18 @@ const AddStudentTeacher: React.FC = () => {
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Password <span className="text-red-500">*</span>
+                  </label>
+                  <PasswordInput
+                    value={password}
+                    onChange={setPassword}
+                    placeholder="Enter password"
+                    required
+                    showGenerator
                   />
                 </div>
                 <div>

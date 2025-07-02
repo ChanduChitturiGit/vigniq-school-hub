@@ -1,14 +1,15 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
+import PasswordInput from '../components/ui/password-input';
 import { X } from 'lucide-react';
 
 const AdminAddTeacher: React.FC = () => {
   const navigate = useNavigate();
   const [subjects, setSubjects] = useState<string[]>([]);
   const [currentSubject, setCurrentSubject] = useState('');
+  const [password, setPassword] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -49,8 +50,8 @@ const AdminAddTeacher: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.email || !formData.phone || !formData.qualification || !formData.joiningDate) {
-      alert('Please fill in all required fields');
+    if (!formData.name || !formData.email || !formData.phone || !formData.qualification || !formData.joiningDate || !password) {
+      alert('Please fill in all required fields including password');
       return;
     }
     
@@ -61,7 +62,8 @@ const AdminAddTeacher: React.FC = () => {
 
     const teacherData = {
       ...formData,
-      subjects: subjects
+      subjects: subjects,
+      password: password
     };
     
     console.log('Adding teacher:', teacherData);
@@ -104,6 +106,17 @@ const AdminAddTeacher: React.FC = () => {
                   onChange={handleInputChange}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Password *</label>
+                <PasswordInput
+                  value={password}
+                  onChange={setPassword}
+                  placeholder="Enter password"
+                  required
+                  showGenerator
                 />
               </div>
               

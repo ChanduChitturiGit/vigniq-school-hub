@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
@@ -9,15 +8,15 @@ import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popove
 import { Calendar as CalendarComponent } from '../components/ui/calendar';
 import { format, subMonths, isWithinInterval, parseISO, startOfDay, endOfDay, subDays, startOfYear, subYears, endOfYear } from 'date-fns';
 
-type TimeFilter = 'today' | 'last7days' | 'last30days' | 'currentyear' | 'lastyear' | 'customdate';
+type TimeFilter = 'all' | 'today' | 'last7days' | 'last30days' | 'currentyear' | 'lastyear' | 'customdate';
 
 const Responses: React.FC = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>('last30days');
-  const [fromDate, setFromDate] = useState<Date | undefined>(subMonths(new Date(), 1));
-  const [toDate, setToDate] = useState<Date | undefined>(new Date());
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>('all');
+  const [fromDate, setFromDate] = useState<Date | undefined>(undefined);
+  const [toDate, setToDate] = useState<Date | undefined>(undefined);
   const [showMoreFilters, setShowMoreFilters] = useState(false);
 
   // Mock responses data based on user role
@@ -66,7 +65,9 @@ const Responses: React.FC = () => {
 
   const responses = getResponsesData();
 
-  const getDateRangeFromFilter = (filter: TimeFilter): [Date, Date] => {
+  const getDateRangeFromFilter = (filter: TimeFilter): [Date, Date] | null => {
+    if (filter === 'all') return null;
+    
     const now = new Date();
     
     switch (filter) {
@@ -82,20 +83,20 @@ const Responses: React.FC = () => {
         const lastYear = subYears(now, 1);
         return [startOfYear(lastYear), endOfYear(lastYear)];
       default:
-        return fromDate && toDate ? [fromDate, toDate] : [subMonths(now, 1), now];
+        return fromDate && toDate ? [fromDate, toDate] : null;
     }
   };
 
   const filteredAndSortedResponses = responses
     .filter(response => {
       const responseDate = parseISO(response.responseDate);
-      const [startDate, endDate] = getDateRangeFromFilter(timeFilter);
+      const dateRange = getDateRangeFromFilter(timeFilter);
       
       const matchesSearch = response.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            response.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            response.respondedBy.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'all' || response.status.toLowerCase() === statusFilter.toLowerCase();
-      const matchesDateRange = isWithinInterval(responseDate, { start: startDate, end: endDate });
+      const matchesDateRange = dateRange === null || isWithinInterval(responseDate, { start: dateRange[0], end: dateRange[1] });
       
       return matchesSearch && matchesStatus && matchesDateRange;
     })
@@ -130,32 +131,42 @@ const Responses: React.FC = () => {
   };
 
   const formatDateRange = () => {
-    if (timeFilter === 'customdate') {
-      return null; // Don't show time period bar for custom date
+    if (timeFilter === 'customdate' || timeFilter === 'all') {
+      return null; // Don't show time period bar for custom date or all
     }
     
-    const [startDate, endDate] = getDateRangeFromFilter(timeFilter);
+    const dateRange = getDateRangeFromFilter(timeFilter);
+    if (!dateRange) return null;
+    
+    const [startDate, endDate] = dateRange;
     return `${format(startDate, 'MMM dd, yyyy')} - ${format(endDate, 'MMM dd, yyyy')}`;
   };
 
   const getTimeFilterLabel = (filter: TimeFilter) => {
     switch (filter) {
+      case 'all': return 'All Time';
       case 'today': return 'Today';
       case 'last7days': return 'Last 7 Days';
       case 'last30days': return 'Last 30 Days';
       case 'currentyear': return 'Current Year';
       case 'lastyear': return 'Last Year';
       case 'customdate': return 'Custom Date';
-      default: return 'Last 30 Days';
+      default: return 'All Time';
     }
   };
 
   const handleTimeFilterChange = (filter: TimeFilter) => {
     setTimeFilter(filter);
-    if (filter !== 'customdate') {
-      const [startDate, endDate] = getDateRangeFromFilter(filter);
-      setFromDate(startDate);
-      setToDate(endDate);
+    if (filter !== 'customdate' && filter !== 'all') {
+      const dateRange = getDateRangeFromFilter(filter);
+      if (dateRange) {
+        const [startDate, endDate] = dateRange;
+        setFromDate(startDate);
+        setToDate(endDate);
+      }
+    } else if (filter === 'all') {
+      setFromDate(undefined);
+      setToDate(undefined);
     }
   };
 
@@ -194,8 +205,8 @@ const Responses: React.FC = () => {
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4">
-          {/* Time Period Display - Visible only when not custom date */}
-          {timeFilter !== 'customdate' && formatDateRange() && (
+          {/* Time Period Display - Visible only when not custom date or all */}
+          {timeFilter !== 'customdate' && timeFilter !== 'all' && formatDateRange() && (
             <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
               <Calendar className="w-4 h-4 text-blue-600" />
               <span className="text-sm font-medium text-blue-800">
@@ -217,7 +228,7 @@ const Responses: React.FC = () => {
               </PopoverTrigger>
               <PopoverContent className="w-48 p-0" align="start">
                 <div className="p-2">
-                  {(['today', 'last7days', 'last30days', 'currentyear', 'lastyear', 'customdate'] as TimeFilter[]).map((filter) => (
+                  {(['all', 'today', 'last7days', 'last30days', 'currentyear', 'lastyear', 'customdate'] as TimeFilter[]).map((filter) => (
                     <button
                       key={filter}
                       onClick={() => handleTimeFilterChange(filter)}
@@ -305,6 +316,7 @@ const Responses: React.FC = () => {
                       onChange={(e) => handleTimeFilterChange(e.target.value as TimeFilter)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
+                      <option value="all">All Time</option>
                       <option value="today">Today</option>
                       <option value="last7days">Last 7 Days</option>
                       <option value="last30days">Last 30 Days</option>
