@@ -37,7 +37,6 @@ const queryClient = new QueryClient();
 
 function App() {
   return (
-    //testing git..
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Router>
