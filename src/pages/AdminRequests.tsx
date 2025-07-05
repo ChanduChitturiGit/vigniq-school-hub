@@ -1,8 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { X, Calendar, User, Mail, School, GraduationCap } from 'lucide-react';
+import { X, Calendar, User, Mail, School, GraduationCap, Search, MoreHorizontal } from 'lucide-react';
+import { Button } from '../components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
+import { Calendar as CalendarComponent } from '../components/ui/calendar';
+import { format, subMonths, isWithinInterval, parseISO } from 'date-fns';
 
 interface TeacherRequest {
   id: string;
@@ -16,61 +21,142 @@ interface TeacherRequest {
   className: string;
   createdAt: string;
   status: string;
+  schoolName?: string;
+  adminName?: string;
 }
 
 const AdminRequests: React.FC = () => {
+  const { user } = useAuth();
   const [requests, setRequests] = useState<TeacherRequest[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<TeacherRequest | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [fromDate, setFromDate] = useState<Date | undefined>(subMonths(new Date(), 3));
+  const [toDate, setToDate] = useState<Date | undefined>(new Date());
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
 
   const breadcrumbItems = [
     { label: 'Requests' }
   ];
 
   useEffect(() => {
-    // Mock teacher requests for the admin's school
-    const mockRequests: TeacherRequest[] = [
-      {
-        id: '1',
-        issueType: 'Technical Issue',
-        section: 'Classroom Technology',
-        description: 'The projector in classroom 201 is not working properly. Students cannot see the presentations clearly.',
-        expectedOutcome: 'Repair or replace the projector to ensure smooth teaching.',
-        teacherName: 'John Smith',
-        email: 'john.smith@greenwoodhigh.edu',
-        subject: 'Mathematics',
-        className: 'Class 10-A',
-        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        status: 'Open'
-      },
-      {
-        id: '2',
-        issueType: 'Resource Request',
-        section: 'Laboratory Equipment',
-        description: 'Need additional science equipment for physics experiments. Current equipment is insufficient for all students.',
-        expectedOutcome: 'Purchase new equipment to conduct practical sessions effectively.',
-        teacherName: 'Michael Brown',
-        email: 'michael.brown@greenwoodhigh.edu',
-        subject: 'Physics',
-        className: 'Class 9-B',
-        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        status: 'In Progress'
-      },
-      {
-        id: '3',
-        issueType: 'Student Behavior',
-        section: 'Classroom Management',
-        description: 'Having difficulty managing disruptive behavior in class. Need guidance on effective strategies.',
-        expectedOutcome: 'Receive training or support to improve classroom management skills.',
-        teacherName: 'Emily Johnson',
-        email: 'emily.johnson@greenwoodhigh.edu',
-        subject: 'English Literature',
-        className: 'Class 8-A',
-        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-        status: 'Resolved'
+    // Mock requests data - different based on user role
+    const getMockRequests = (): TeacherRequest[] => {
+      if (user?.role === 'Super Admin') {
+        // Super Admin sees requests from all admins/schools
+        return [
+          {
+            id: '1',
+            issueType: 'New Teacher Approval',
+            section: 'Human Resources',
+            description: 'Need approval to hire 2 new mathematics teachers for the upcoming semester. Budget has been allocated.',
+            expectedOutcome: 'Get approval to proceed with hiring process.',
+            teacherName: 'Admin John Smith',
+            email: 'admin.john@greenwoodhigh.edu',
+            subject: 'Administration',
+            className: 'N/A',
+            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+            status: 'Open',
+            schoolName: 'Greenwood High School',
+            adminName: 'John Smith'
+          },
+          {
+            id: '2',
+            issueType: 'Infrastructure Request',
+            section: 'Facilities',
+            description: 'Laboratory equipment needs urgent replacement. Current equipment is outdated and affecting student learning.',
+            expectedOutcome: 'Budget approval for new laboratory equipment purchase.',
+            teacherName: 'Admin Sarah Johnson',
+            email: 'admin.sarah@oakvalley.edu',
+            subject: 'Administration',
+            className: 'N/A',
+            createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+            status: 'In Progress',
+            schoolName: 'Oak Valley School',
+            adminName: 'Sarah Johnson'
+          },
+          {
+            id: '3',
+            issueType: 'Curriculum Update',
+            section: 'Academic Affairs',
+            description: 'Request to update mathematics curriculum to align with new educational standards.',
+            expectedOutcome: 'Approval to implement new curriculum changes.',
+            teacherName: 'Admin Michael Brown',
+            email: 'admin.michael@riverside.edu',
+            subject: 'Administration',
+            className: 'N/A',
+            createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+            status: 'Resolved',
+            schoolName: 'Riverside Academy',
+            adminName: 'Michael Brown'
+          }
+        ];
+      } else {
+        // Regular admin sees teacher requests from their school
+        return [
+          {
+            id: '1',
+            issueType: 'Technical Issue',
+            section: 'Classroom Technology',
+            description: 'The projector in classroom 201 is not working properly. Students cannot see the presentations clearly.',
+            expectedOutcome: 'Repair or replace the projector to ensure smooth teaching.',
+            teacherName: 'John Smith',
+            email: 'john.smith@greenwoodhigh.edu',
+            subject: 'Mathematics',
+            className: 'Class 10-A',
+            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+            status: 'Open'
+          },
+          {
+            id: '2',
+            issueType: 'Resource Request',
+            section: 'Laboratory Equipment',
+            description: 'Need additional science equipment for physics experiments. Current equipment is insufficient for all students.',
+            expectedOutcome: 'Purchase new equipment to conduct practical sessions effectively.',
+            teacherName: 'Michael Brown',
+            email: 'michael.brown@greenwoodhigh.edu',
+            subject: 'Physics',
+            className: 'Class 9-B',
+            createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+            status: 'In Progress'
+          },
+          {
+            id: '3',
+            issueType: 'Student Behavior',
+            section: 'Classroom Management',
+            description: 'Having difficulty managing disruptive behavior in class. Need guidance on effective strategies.',
+            expectedOutcome: 'Receive training or support to improve classroom management skills.',
+            teacherName: 'Emily Johnson',
+            email: 'emily.johnson@greenwoodhigh.edu',
+            subject: 'English Literature',
+            className: 'Class 8-A',
+            createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+            status: 'Resolved'
+          }
+        ];
       }
-    ];
-    setRequests(mockRequests);
-  }, []);
+    };
+
+    setRequests(getMockRequests());
+  }, [user?.role]);
+
+  // Filter and sort requests
+  const filteredAndSortedRequests = requests
+    .filter(request => {
+      const requestDate = parseISO(request.createdAt);
+      
+      const matchesSearch = request.issueType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           request.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           request.teacherName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (request.schoolName && request.schoolName.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchesStatus = statusFilter === 'all' || request.status.toLowerCase() === statusFilter.toLowerCase();
+      const matchesDateRange = (!fromDate || !toDate) || isWithinInterval(requestDate, { start: fromDate, end: toDate });
+      
+      return matchesSearch && matchesStatus && matchesDateRange;
+    })
+    .sort((a, b) => {
+      return parseISO(b.createdAt).getTime() - parseISO(a.createdAt).getTime();
+    });
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -97,6 +183,11 @@ const AdminRequests: React.FC = () => {
     });
   };
 
+  const formatDateRange = () => {
+    if (!fromDate || !toDate) return 'All time';
+    return `${format(fromDate, 'MMM dd, yyyy')} - ${format(toDate, 'MMM dd, yyyy')}`;
+  };
+
   const updateRequestStatus = (requestId: string, newStatus: string) => {
     const updatedRequests = requests.map(req => 
       req.id === requestId ? { ...req, status: newStatus } : req
@@ -112,16 +203,20 @@ const AdminRequests: React.FC = () => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-semibold">Teacher Request Details</h3>
+          <h3 className="text-xl font-semibold">
+            {user?.role === 'Super Admin' ? 'Admin Request Details' : 'Teacher Request Details'}
+          </h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X className="w-6 h-6" />
           </button>
         </div>
         
         <div className="space-y-6">
-          {/* Teacher Information */}
+          {/* Requester Information */}
           <div className="border-b pb-4">
-            <h4 className="font-semibold text-gray-800 mb-3">Teacher Information</h4>
+            <h4 className="font-semibold text-gray-800 mb-3">
+              {user?.role === 'Super Admin' ? 'Admin Information' : 'Teacher Information'}
+            </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-center gap-2">
                 <User className="w-4 h-4 text-gray-400" />
@@ -133,16 +228,27 @@ const AdminRequests: React.FC = () => {
                 <span className="text-sm text-gray-600">Email:</span>
                 <span className="text-sm font-medium">{request.email}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <GraduationCap className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-gray-600">Subject:</span>
-                <span className="text-sm font-medium">{request.subject}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <School className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-gray-600">Class:</span>
-                <span className="text-sm font-medium">{request.className}</span>
-              </div>
+              {user?.role === 'Super Admin' && request.schoolName && (
+                <div className="flex items-center gap-2">
+                  <School className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-600">School:</span>
+                  <span className="text-sm font-medium">{request.schoolName}</span>
+                </div>
+              )}
+              {user?.role !== 'Super Admin' && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <GraduationCap className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-600">Subject:</span>
+                    <span className="text-sm font-medium">{request.subject}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <School className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-600">Class:</span>
+                    <span className="text-sm font-medium">{request.className}</span>
+                  </div>
+                </>
+              )}
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-gray-400" />
                 <span className="text-sm text-gray-600">Created:</span>
@@ -214,24 +320,172 @@ const AdminRequests: React.FC = () => {
   );
 
   return (
-    <MainLayout pageTitle="Teacher Requests">
+    <MainLayout pageTitle={user?.role === 'Super Admin' ? 'Admin Requests' : 'Teacher Requests'}>
       <div className="space-y-6">
         <Breadcrumb items={breadcrumbItems} />
         
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-800">Teacher Requests</h1>
+          <h1 className="text-2xl font-bold text-gray-800">
+            {user?.role === 'Super Admin' ? 'Admin Requests' : 'Teacher Requests'}
+          </h1>
           <div className="text-sm text-gray-500">
-            Total Requests: {requests.length}
+            Total Requests: {filteredAndSortedRequests.length}
           </div>
         </div>
 
-        {requests.length === 0 ? (
+        {/* Search Bar */}
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search requests..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          {/* Time Period Display */}
+          <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 border border-purple-200 rounded-lg">
+            <Calendar className="w-4 h-4 text-purple-600" />
+            <span className="text-sm font-medium text-purple-800">
+              {formatDateRange()}
+            </span>
+          </div>
+
+          {/* Desktop Filters */}
+          <div className="hidden sm:flex items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="justify-start text-left font-normal">
+                  <Calendar className="mr-2 h-4 w-4" />
+                  From Date
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={fromDate}
+                  onSelect={setFromDate}
+                  className="rounded-md border pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="justify-start text-left font-normal">
+                  <Calendar className="mr-2 h-4 w-4" />
+                  To Date
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={toDate}
+                  onSelect={setToDate}
+                  className="rounded-md border pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">All Status</option>
+              <option value="open">Open</option>
+              <option value="in progress">In Progress</option>
+              <option value="resolved">Resolved</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
+
+          {/* Mobile More Options */}
+          <div className="sm:hidden">
+            <Popover open={showMoreFilters} onOpenChange={setShowMoreFilters}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <MoreHorizontal className="w-4 h-4" />
+                  More
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-4" align="start">
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">From Date</label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start">
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {fromDate ? format(fromDate, 'PPP') : 'Select From Date'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <CalendarComponent
+                          mode="single"
+                          selected={fromDate}
+                          onSelect={setFromDate}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">To Date</label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start">
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {toDate ? format(toDate, 'PPP') : 'Select To Date'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <CalendarComponent
+                          mode="single"
+                          selected={toDate}
+                          onSelect={setToDate}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Status</label>
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="all">All Status</option>
+                      <option value="open">Open</option>
+                      <option value="in progress">In Progress</option>
+                      <option value="resolved">Resolved</option>
+                      <option value="closed">Closed</option>
+                    </select>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
+
+        {filteredAndSortedRequests.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-            <p className="text-gray-500">No teacher requests found.</p>
+            <p className="text-gray-500">No requests found.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {requests.map((request) => (
+            {filteredAndSortedRequests.map((request) => (
               <div
                 key={request.id}
                 onClick={() => setSelectedRequest(request)}
@@ -250,10 +504,17 @@ const AdminRequests: React.FC = () => {
                     <span className="text-sm text-gray-600">{request.teacherName}</span>
                   </div>
                   
-                  <div className="flex items-center gap-2">
-                    <GraduationCap className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-600">{request.subject} - {request.className}</span>
-                  </div>
+                  {user?.role === 'Super Admin' && request.schoolName ? (
+                    <div className="flex items-center gap-2">
+                      <School className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm text-gray-600">{request.schoolName}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <GraduationCap className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm text-gray-600">{request.subject} - {request.className}</span>
+                    </div>
+                  )}
                   
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-gray-400" />
