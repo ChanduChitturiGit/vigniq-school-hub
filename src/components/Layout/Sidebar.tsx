@@ -12,11 +12,8 @@ import {
   BookOpen,
   GraduationCap,
   School,
-  HelpCircle,
   ChevronDown,
   ChevronRight,
-  MessageSquare,
-  FileText,
   UserPlus
 } from 'lucide-react';
 
@@ -62,9 +59,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
     const roleSpecificItems: { [key: string]: MenuItem[] } = {
       'Super Admin': [
         {
-          key: 'user-management',
-          icon: Users,
-          label: 'User Management',
+          key: 'school-management',
+          icon: School,
+          label: 'School Management',
           roles: ['Super Admin'],
           isDropdown: true,
           subItems: [
@@ -108,31 +105,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
       ]
     };
 
-    // Help dropdown for all users
-    const helpSubItems: { path: string; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-      { path: '/support', label: 'Support', icon: HelpCircle }
-    ];
-
-    // Add requests for non-students
-    if (user?.role !== 'Student') {
-      helpSubItems.push({ path: '/admin-requests', label: 'Requests', icon: FileText });
-    }
-
-    // Add responses for all users
-    helpSubItems.push({ path: '/responses', label: 'Responses', icon: MessageSquare });
-
-    const helpItems: MenuItem[] = [
-      {
-        key: 'help',
-        icon: HelpCircle,
-        label: 'Help',
-        roles: ['Super Admin', 'Admin', 'Teacher', 'Student'],
-        isDropdown: true,
-        subItems: helpSubItems
-      }
-    ];
-
-    return [...baseItems, ...(roleSpecificItems[user?.role as keyof typeof roleSpecificItems] || []), ...helpItems];
+    return [...baseItems, ...(roleSpecificItems[user?.role as keyof typeof roleSpecificItems] || [])];
   };
 
   const isActive = (path: string) => location.pathname === path;
