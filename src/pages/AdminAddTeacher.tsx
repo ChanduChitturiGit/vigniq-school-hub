@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
@@ -10,12 +9,9 @@ const AdminAddTeacher: React.FC = () => {
   const navigate = useNavigate();
   const [subjects, setSubjects] = useState<string[]>([]);
   const [currentSubject, setCurrentSubject] = useState('');
-  const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [password, setPassword] = useState('');
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    username: '',
+    name: '',
     email: '',
     phone: '',
     qualification: '',
@@ -24,15 +20,6 @@ const AdminAddTeacher: React.FC = () => {
     joiningDate: '',
     emergencyContact: ''
   });
-
-  const availableClasses = [
-    'Class 1-A', 'Class 1-B', 'Class 2-A', 'Class 2-B',
-    'Class 3-A', 'Class 3-B', 'Class 4-A', 'Class 4-B',
-    'Class 5-A', 'Class 5-B', 'Class 6-A', 'Class 6-B',
-    'Class 7-A', 'Class 7-B', 'Class 8-A', 'Class 8-B',
-    'Class 9-A', 'Class 9-B', 'Class 10-A', 'Class 10-B',
-    'Class 11-A', 'Class 11-B', 'Class 12-A', 'Class 12-B'
-  ];
 
   const breadcrumbItems = [
     { label: 'Dashboard', path: '/dashboard' },
@@ -46,17 +33,6 @@ const AdminAddTeacher: React.FC = () => {
       ...prev,
       [name]: value
     }));
-  };
-
-  const handleClassChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedClass = e.target.value;
-    if (selectedClass && !selectedClasses.includes(selectedClass)) {
-      setSelectedClasses(prev => [...prev, selectedClass]);
-    }
-  };
-
-  const handleRemoveClass = (classToRemove: string) => {
-    setSelectedClasses(prev => prev.filter(cls => cls !== classToRemove));
   };
 
   const handleAddSubject = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -74,8 +50,7 @@ const AdminAddTeacher: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.firstName || !formData.lastName || !formData.username || !formData.email || 
-        !formData.phone || !formData.qualification || !formData.joiningDate || !password) {
+    if (!formData.name || !formData.email || !formData.phone || !formData.qualification || !formData.joiningDate || !password) {
       alert('Please fill in all required fields including password');
       return;
     }
@@ -85,15 +60,9 @@ const AdminAddTeacher: React.FC = () => {
       return;
     }
 
-    if (selectedClasses.length === 0) {
-      alert('Please select at least one class');
-      return;
-    }
-
     const teacherData = {
       ...formData,
       subjects: subjects,
-      classes: selectedClasses,
       password: password
     };
     
@@ -117,35 +86,11 @@ const AdminAddTeacher: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
                 <input
                   type="text"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
-                <input
-                  type="text"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Username *</label>
-                <input
-                  type="text"
-                  name="username"
-                  value={formData.username}
+                  name="name"
+                  value={formData.name}
                   onChange={handleInputChange}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -233,36 +178,6 @@ const AdminAddTeacher: React.FC = () => {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Classes *</label>
-              <select
-                onChange={handleClassChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select Classes</option>
-                {availableClasses.filter(cls => !selectedClasses.includes(cls)).map((cls) => (
-                  <option key={cls} value={cls}>{cls}</option>
-                ))}
-              </select>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {selectedClasses.map((cls, index) => (
-                  <div
-                    key={index}
-                    className="inline-flex items-center gap-1 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm"
-                  >
-                    {cls}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveClass(cls)}
-                      className="ml-1 text-green-600 hover:text-green-800"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
               </div>
             </div>
 
