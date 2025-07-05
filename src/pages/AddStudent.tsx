@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
@@ -8,7 +9,9 @@ const AddStudent: React.FC = () => {
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
+    username: '',
     email: '',
     phone: '',
     class: '',
@@ -42,7 +45,8 @@ const AddStudent: React.FC = () => {
     e.preventDefault();
     
     // Validation
-    if (!formData.name || !formData.class || !formData.section || !formData.rollNo || 
+    if (!formData.firstName || !formData.lastName || !formData.username || 
+        !formData.class || !formData.section || !formData.rollNo || 
         !formData.dateOfBirth || !formData.gender || !formData.parentName || 
         !formData.parentPhone || !formData.admissionDate || !password) {
       alert('Please fill in all required fields including password');
@@ -74,11 +78,35 @@ const AddStudent: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
                 <input
                   type="text"
-                  name="name"
-                  value={formData.name}
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
+                <input
+                  type="text"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Username *</label>
+                <input
+                  type="text"
+                  name="username"
+                  value={formData.username}
                   onChange={handleInputChange}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
