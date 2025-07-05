@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -14,7 +13,9 @@ import {
   School,
   ChevronDown,
   ChevronRight,
-  UserPlus
+  UserPlus,
+  HelpCircle,
+  FileText
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -105,7 +106,22 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
       ]
     };
 
-    return [...baseItems, ...(roleSpecificItems[user?.role as keyof typeof roleSpecificItems] || [])];
+    // Help section for Super Admin only (with requests)
+    const helpItems: MenuItem[] = [];
+    if (user?.role === 'Super Admin') {
+      helpItems.push({
+        key: 'help',
+        icon: HelpCircle,
+        label: 'Help',
+        roles: ['Super Admin'],
+        isDropdown: true,
+        subItems: [
+          { path: '/admin-requests', label: 'Requests', icon: FileText }
+        ]
+      });
+    }
+
+    return [...baseItems, ...(roleSpecificItems[user?.role as keyof typeof roleSpecificItems] || []), ...helpItems];
   };
 
   const isActive = (path: string) => location.pathname === path;
