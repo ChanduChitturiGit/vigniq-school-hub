@@ -1,13 +1,12 @@
+
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Save, X, User, Mail, Phone, MapPin, Calendar, GraduationCap, Lock } from 'lucide-react';
+import { Edit, Save, X, User, Mail, Phone, MapPin, Calendar, GraduationCap } from 'lucide-react';
 
 const Profile: React.FC = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -50,10 +49,6 @@ const Profile: React.FC = () => {
     setIsEditing(false);
   };
 
-  const handleResetPassword = () => {
-    navigate('/reset-password');
-  };
-
   return (
     <MainLayout pageTitle="Profile">
       <div className="space-y-6">
@@ -71,46 +66,36 @@ const Profile: React.FC = () => {
               </div>
             </div>
             
-            <div className="flex gap-2">
-              <button
-                onClick={handleResetPassword}
-                className="flex items-center gap-2 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
-              >
-                <Lock className="w-4 h-4" />
-                Reset Password
-              </button>
-              
-              {user?.role !== 'Student' && (
-                <>
-                  {isEditing ? (
-                    <>
-                      <button
-                        onClick={handleSave}
-                        className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
-                      >
-                        <Save className="w-4 h-4" />
-                        Save
-                      </button>
-                      <button
-                        onClick={handleCancel}
-                        className="flex items-center gap-2 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
-                      >
-                        <X className="w-4 h-4" />
-                        Cancel
-                      </button>
-                    </>
-                  ) : (
+            {user?.role !== 'Student' && (
+              <div className="flex gap-2">
+                {isEditing ? (
+                  <>
                     <button
-                      onClick={() => setIsEditing(true)}
-                      className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                      onClick={handleSave}
+                      className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
                     >
-                      <Edit className="w-4 h-4" />
-                      Edit Profile
+                      <Save className="w-4 h-4" />
+                      Save
                     </button>
-                  )}
-                </>
-              )}
-            </div>
+                    <button
+                      onClick={handleCancel}
+                      className="flex items-center gap-2 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                  >
+                    <Edit className="w-4 h-4" />
+                    Edit Profile
+                  </button>
+                )}
+              </div>
+            )}
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
