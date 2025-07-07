@@ -9,6 +9,7 @@ import { Toaster } from './components/ui/sonner';
 // Page imports
 import Index from './pages/Index';
 import Login from './pages/Login';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import Requests from './pages/Requests';
@@ -44,6 +45,7 @@ function App() {
           <div className="min-h-screen bg-gray-50">
             <Routes>
               <Route path="/login" element={<Login />} />
+              <Route path="/reset-password" element={<ProtectedRoute><ResetPassword /></ProtectedRoute>} />
               
               {/* Protected Routes */}
               <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
