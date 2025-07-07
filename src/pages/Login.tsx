@@ -5,7 +5,7 @@ import { User, Lock, LogIn, Eye, EyeOff } from 'lucide-react';
 import { toast } from '../components/ui/sonner';
 
 const Login: React.FC = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,9 +30,9 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      const success = await login(username, password);
+      const success = await login(email, password);
       if (!success) {
-        setError('Invalid username or password');
+        setError('Invalid email or password');
       }
     } catch (err) {
       setError('Login failed. Please try again.');
@@ -149,15 +149,15 @@ const Login: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Username
+                    Username/Email
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
-                      type="text"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      placeholder="Enter your username"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter your username or email"
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                       required
                     />
@@ -349,10 +349,10 @@ const Login: React.FC = () => {
               <div className="mt-8 p-4 bg-gray-50 rounded-lg">
                 <h3 className="text-sm font-medium text-gray-700 mb-2">Demo Credentials:</h3>
                 <div className="text-xs text-gray-600 space-y-1">
-                  <div><strong>Super Admin:</strong> superadmin / superadmin</div>
-                  <div><strong>Admin:</strong> admin / admin123</div>
-                  <div><strong>Teacher:</strong> teacher / teacher123</div>
-                  <div><strong>Student:</strong> student / student123</div>
+                  <div><strong>Super Admin:</strong> superadmin@gmail.com / superadmin</div>
+                  <div><strong>Admin:</strong> admin@greenwood.edu / admin123</div>
+                  <div><strong>Teacher:</strong> teacher@greenwood.edu / teacher123</div>
+                  <div><strong>Student:</strong> student@greenwood.edu / student123</div>
                 </div>
               </div>
             )}
