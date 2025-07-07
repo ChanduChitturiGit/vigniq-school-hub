@@ -16,6 +16,7 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   register: (userData: Omit<User, 'id'> & { password: string }) => Promise<boolean>;
+  updatePassword: (newPassword: string) => Promise<boolean>;
   isAuthenticated: boolean;
 }
 
@@ -78,7 +79,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const existingUsers = localStorage.getItem('vigniq_users');
     if (!existingUsers) {
       localStorage.setItem('vigniq_users', JSON.stringify(defaultUsers));
-      console.log('Default users initialized in localStorage');
     }
 
     // Check for existing session
@@ -90,31 +90,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const login = async (username: string, password: string): Promise<boolean> => {
-    console.log('Login attempt:', { username, password });
-    
     const users = JSON.parse(localStorage.getItem('vigniq_users') || '[]');
-    console.log('Available users:', users.map((u: any) => ({ username: u.username, password: u.password })));
-    
-    // Trim whitespace and check case-sensitive match
-    const trimmedUsername = username.trim();
-    const trimmedPassword = password.trim();
-    
-    const foundUser = users.find((u: any) => 
-      u.username === trimmedUsername && u.password === trimmedPassword
-    );
-    
-    console.log('User found:', foundUser ? 'Yes' : 'No');
+    const foundUser = users.find((u: any) => u.username === username && u.password === password);
     
     if (foundUser) {
       const { password: _, ...userWithoutPassword } = foundUser;
       setUser(userWithoutPassword);
       setIsAuthenticated(true);
       localStorage.setItem('vigniq_current_user', JSON.stringify(userWithoutPassword));
-      console.log('Login successful');
       return true;
     }
-    
-    console.log('Login failed - credentials do not match');
     return false;
   };
 
@@ -137,8 +122,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return true;
   };
 
+  const updatePassword = async (newPassword: string): Promise<boolean> => {
+    if (!user) return false;
+    
+    const users = JSON.parse(localStorage.getItem('vigniq_users') || '[]');
+    const userIndex = users.findIndex((u: any) => u.id === user.id);
+    
+    if (userIndex !== -1) {
+      users[userIndex].password = newPassword;
+      localStorage.setItem('vigniq_users', JSON.stringify(users));
+      return true;
+    }
+    return false;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, register, isAuthenticated }}>
+    <AuthContext.Provider value={{ user, login, logout, register, updatePassword, isAuthenticated }}>
       {children}
     </AuthContext.Provider>
   );
