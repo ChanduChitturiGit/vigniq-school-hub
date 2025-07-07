@@ -78,6 +78,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const existingUsers = localStorage.getItem('vigniq_users');
     if (!existingUsers) {
       localStorage.setItem('vigniq_users', JSON.stringify(defaultUsers));
+      console.log('Default users initialized in localStorage');
     }
 
     // Check for existing session
@@ -89,16 +90,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const login = async (username: string, password: string): Promise<boolean> => {
+    console.log('Login attempt:', { username, password });
+    
     const users = JSON.parse(localStorage.getItem('vigniq_users') || '[]');
-    const foundUser = users.find((u: any) => u.username === username && u.password === password);
+    console.log('Available users:', users.map((u: any) => ({ username: u.username, password: u.password })));
+    
+    // Trim whitespace and check case-sensitive match
+    const trimmedUsername = username.trim();
+    const trimmedPassword = password.trim();
+    
+    const foundUser = users.find((u: any) => 
+      u.username === trimmedUsername && u.password === trimmedPassword
+    );
+    
+    console.log('User found:', foundUser ? 'Yes' : 'No');
     
     if (foundUser) {
       const { password: _, ...userWithoutPassword } = foundUser;
       setUser(userWithoutPassword);
       setIsAuthenticated(true);
       localStorage.setItem('vigniq_current_user', JSON.stringify(userWithoutPassword));
+      console.log('Login successful');
       return true;
     }
+    
+    console.log('Login failed - credentials do not match');
     return false;
   };
 
