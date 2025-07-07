@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 interface User {
   id: string;
   email: string;
+  username: string;
   name: string;
   role: 'Super Admin' | 'Admin' | 'Teacher' | 'Student';
   schoolId?: string;
@@ -12,7 +13,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   register: (userData: Omit<User, 'id'> & { password: string }) => Promise<boolean>;
   isAuthenticated: boolean;
@@ -32,6 +33,7 @@ const defaultUsers: (User & { password: string })[] = [
   {
     id: '1',
     email: 'superadmin@gmail.com',
+    username: 'superadmin',
     password: 'superadmin',
     name: 'Super Administrator',
     role: 'Super Admin'
@@ -39,6 +41,7 @@ const defaultUsers: (User & { password: string })[] = [
   {
     id: '2',
     email: 'admin@greenwood.edu',
+    username: 'admin',
     password: 'admin123',
     name: 'John Smith',
     role: 'Admin',
@@ -47,6 +50,7 @@ const defaultUsers: (User & { password: string })[] = [
   {
     id: '3',
     email: 'teacher@greenwood.edu',
+    username: 'teacher',
     password: 'teacher123',
     name: 'Jane Doe',
     role: 'Teacher',
@@ -56,6 +60,7 @@ const defaultUsers: (User & { password: string })[] = [
   {
     id: '4',
     email: 'student@greenwood.edu',
+    username: 'student',
     password: 'student123',
     name: 'Alice Johnson',
     role: 'Student',
@@ -83,9 +88,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (username: string, password: string): Promise<boolean> => {
     const users = JSON.parse(localStorage.getItem('vigniq_users') || '[]');
-    const foundUser = users.find((u: any) => u.email === email && u.password === password);
+    const foundUser = users.find((u: any) => u.username === username && u.password === password);
     
     if (foundUser) {
       const { password: _, ...userWithoutPassword } = foundUser;
