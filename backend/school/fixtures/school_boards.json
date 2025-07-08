@@ -1,0 +1,42 @@
+[
+    {
+        "model": "school.schoolboard",
+        "pk": 1,
+        "fields": {
+            "board_name": "State Board",
+            "is_active": true
+        }
+    },
+    {
+        "model": "school.schoolboard",
+        "pk": 2,
+        "fields": {
+            "board_name": "CBSE",
+            "is_active": true
+        }
+    },
+    {
+        "model": "school.schoolboard",
+        "pk": 3,
+        "fields": {
+            "board_name": "ICSE",
+            "is_active": true
+        }
+    },
+    {
+        "model": "school.schoolboard",
+        "pk": 4,
+        "fields": {
+            "board_name": "IGCSE",
+            "is_active": true
+        }
+    },
+    {
+        "model": "school.schoolboard",
+        "pk": 5,
+        "fields": {
+            "board_name": "IB",
+            "is_active": true
+        }
+    }
+]

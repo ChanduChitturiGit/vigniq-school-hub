@@ -1,0 +1,37 @@
+"""Db loader module for managing school databases."""
+
+import logging
+
+from django.conf import settings
+
+logger = logging.getLogger(__name__)
+
+class DbLoader:
+    """Class to handle loading and managing school databases."""
+
+    def __init__(self):
+        pass
+
+    def load_dynamic_databases(self,db_key,engine,name,user,password,host,port):
+        """Load all dynamic databases from the SchoolDbMetadata model."""
+        try:
+            if db_key not in settings.DATABASES:
+                settings.DATABASES[db_key] = {
+                    'ENGINE': engine,
+                    'NAME': name,
+                    'USER': user,
+                    'PASSWORD': password,
+                    'HOST': host,
+                    'PORT': port,
+                    'ATOMIC_REQUESTS': False,
+                    'OPTIONS': {},
+                    'CONN_MAX_AGE': 300,
+                    'TIME_ZONE': settings.TIME_ZONE,
+                    'CONN_HEALTH_CHECKS': True,
+                    'AUTOCOMMIT': True,
+                }
+            else:
+                logger.info(f"Database {db_key} already exists in settings.DATABASES")
+        except Exception as e:
+            logger.error(f"Error loading database {db_key}: {e}")
+            raise e

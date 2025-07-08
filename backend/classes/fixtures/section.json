@@ -1,0 +1,30 @@
+[
+    {
+        "model": "classes.section",
+        "pk": 1,
+        "fields": {
+        "name": "A"
+        }
+    },
+    {
+        "model": "classes.section",
+        "pk": 2,
+        "fields": {
+        "name": "B"
+        }
+    },
+    {
+        "model": "classes.section",
+        "pk": 3,
+        "fields": {
+        "name": "C"
+        }
+    },
+    {
+        "model": "classes.section",
+        "pk": 4,
+        "fields": {
+        "name": "D"
+        }
+    }
+]
