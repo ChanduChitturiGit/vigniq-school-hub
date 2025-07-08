@@ -15,7 +15,11 @@ from core.models import User,Role
 from core.common_modules.db_loader import DbLoader
 from core.common_modules.send_email import EmailService
 from core.common_modules.password_validator import is_valid_password
+
+from teacher.models import Teacher
+
 from school.models import School, SchoolDbMetadata, SchoolBoard, SchoolBoardMapping
+
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +60,8 @@ class SchoolService:
                     name = data.get('school_name'),
                     address = data.get('address'),
                     contact_number = data.get('contact_number'),
-                    school_admin = admin_user
+                    school_admin = admin_user,
+                    email = data.get('school_email', None),
                 )
 
                 board_ids = data.get('boards', [])
@@ -118,8 +123,9 @@ class SchoolService:
                 school = School.objects.get(pk=school_id)
 
                 school.name = data.get('school_name', school.name)
-                school.address = data.get('address', school.address)
+                school.address = data.get('school_address', school.address)
                 school.contact_number = data.get('school_contact_number', school.contact_number)
+                school.email = data.get('school_email', school.email)
                 school.save()
 
                 # Update boards if provided
@@ -152,19 +158,65 @@ class SchoolService:
             schools = School.objects.all()
             schools_data = []
             for school in schools:
-                boards = SchoolBoard.objects.filter(schoolboardmapping__school=school)
+                school_db_metadata = SchoolDbMetadata.objects.filter(school=school).first()
+                if school_db_metadata:
+                    school_db_name = school_db_metadata.db_name
+                else:
+                    school_db_name = None
+                
+                teacher_count = Teacher.objects.using(school_db_name).filter(is_active=True).count()
+
                 schools_data.append({
-                    "id": school.id,
-                    "name": school.name,
-                    "address": school.address,
-                    "contact_number": school.contact_number,
-                    "boards": [{"id": b.id, "name": b.board_name} for b in boards],
-                    "admin_email": school.school_admin.email if school.school_admin else None,
-                    "admin_name": school.school_admin.user_name if school.school_admin else None,
+                    "school_id": school.id,
+                    "school_name": school.name,
+                    "school_address": school.address,
+                    "school_contact_number": school.contact_number,
+                    "school_email": school.email if school.school_admin else None,
+                    "teacher_count": teacher_count,
                 })
             return Response({"schools": schools_data}, status=status.HTTP_200_OK)
         except Exception as e:
             logger.error("Error while fetching schools.")
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def get_school(self,request):
+        """
+        Get details of a specific school.
+        Args:
+            request: The HTTP request containing the school ID.
+        Returns:
+            Response: A response with the school details.
+        """
+        try:
+            school_id = request.query_params.get('school_id')
+            if not school_id:
+                return Response({"error": "School id is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+            school = School.objects.get(pk=school_id)
+            school_db_metadata = SchoolDbMetadata.objects.filter(school=school).first()
+            if school_db_metadata:
+                school_db_name = school_db_metadata.db_name
+            else:
+                school_db_name = None
+            
+
+            school_data = {
+                "school_id": school.id,
+                "school_name": school.name,
+                "school_address": school.address,
+                "school_contact_number": school.contact_number,
+                "school_email": school.email if school.school_admin else None,
+                "school_admin_username" : school.school_admin.user_name if school.school_admin else None,
+                "school_admin_email": school.school_admin.email if school.school_admin else None,
+                "school_admin_full_name" : f"{school.school_admin.first_name} {school.school_admin.last_name}" if school.school_admin else None,
+                "school_admin_phone_number": school.school_admin.phone_number if school.school_admin else None,
+            }
+            return Response({"school": school_data}, status=status.HTTP_200_OK)
+        except School.DoesNotExist:
+            logger.error(f"School with id {school_id} does not exist.")
+            return Response({"error": "School not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error("Error while fetching school details.")
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def get_boards(self, request):

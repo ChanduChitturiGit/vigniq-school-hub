@@ -31,7 +31,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 class PasswordManagerView(APIView):
     
     def get_permissions(self):
-        if self.kwargs.get('action') in ['reset_password', 'verify_and_set_password']:
+        if self.kwargs.get('action') in ['reset_password', 'verify_otp']:
             return [AllowAny()]
         return [IsAuthenticated()]
 
@@ -48,20 +48,19 @@ class PasswordManagerView(APIView):
                     )
 
             return PasswordManagerService().reset_password_send_otp(user_name)
-        elif action == 'verify_and_set_password':
+        elif action == 'verify_otp':
             user_name = request.data.get('user_name')
             otp = request.data.get('otp')
-            password = request.data.get('password')
 
-            if not user_name or not otp or not password:
+            if not user_name or not otp:
                 return Response({"error": "Username, OTP and Password are required."},
                                 status=status.HTTP_400_BAD_REQUEST
                     )
 
-            return PasswordManagerService().reset_password_verify_otp_and_setpassword(
-                    user_name, otp, password
+            return PasswordManagerService().validate_otp(
+                    user_name, otp
                 )
-        elif action == 'change_password':
+        elif action == 'change_or_set_password':
             return PasswordManagerService().change_password(request)
         else:
             return Response({"error": "Invalid action."}, status=status.HTTP_400_BAD_REQUEST)

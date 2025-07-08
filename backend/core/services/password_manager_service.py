@@ -2,9 +2,12 @@
 
 import logging
 import random
+from datetime import timedelta
 
 from django.core.cache import cache
 from django.http import JsonResponse
+
+from rest_framework_simplejwt.tokens import AccessToken
 
 from core.models import User
 from core.common_modules.send_email import EmailService
@@ -59,7 +62,7 @@ class PasswordManagerService:
             logger.error("Error in reset_password_send_otp: %s", e)
             return JsonResponse({"error": "An error occured while sending the password reset link."},status=500)
     
-    def reset_password_verify_otp_and_setpassword(self, user_name, otp,password):
+    def validate_otp(self, user_name, otp):
         """
         Verify the OTP for password reset.
         """
@@ -68,9 +71,10 @@ class PasswordManagerService:
                 logger.error("Username and OTP are required for verification.")
                 return JsonResponse({"error": "Username and OTP are required."}, status=400)
             
-            if not is_valid_password(password):
-                logger.error("Invalid password format.")
-                return JsonResponse({"error": "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character."}, status=400)
+            user = User.objects.filter(user_name=user_name).first()
+            if not user:
+                logger.error(f"User with username {user_name} does not exist.")
+                return JsonResponse({"error": "User does not exist."}, status=404)
 
             cached_otp = cache.get(f"otp_{user_name}")
 
@@ -84,17 +88,21 @@ class PasswordManagerService:
 
             logger.info(f"OTP verified successfully for user: {user_name}")
 
-            user = User.objects.filter(user_name=user_name).first()
-            if not user:
-                logger.error(f"User with username {user_name} does not exist.")
-                return JsonResponse({"error": "User does not exist."}, status=404)
-            user.set_password(password)
-            user.save()
             cache.delete(f"otp_{user_name}")
+            
+            logger.info(f"Otp validation successfully for user: {user_name}")
 
-            logger.info(f"Password updated successfully for user: {user_name}")
+            token = AccessToken.for_user(user)
+            token.set_exp(lifetime=timedelta(seconds=300))
 
-            return JsonResponse({"message": "Password changed successfully."}, status=200)
+            cache.set(f"token_{user_name}", True, timeout=300)
+
+            response = {
+                "message": "Otp validated successfully.",
+                "access_token": str(token),
+            }
+
+            return JsonResponse(response, status=200)
         except Exception as e:
             logger.error("Error in reset_password_verify_otp: %s", e)
             return JsonResponse({"error": "An error occurred while verifying the OTP."}, status=500)
@@ -109,24 +117,35 @@ class PasswordManagerService:
             if not user.is_authenticated:
                 return JsonResponse({"error": "Authentication required."}, status=401)
 
-            old_password = request.data.get('old_password')
+            old_password = request.data.get('old_password',None)
             new_password = request.data.get('new_password')
 
-            if not old_password or not new_password:
-                return JsonResponse({"error": "Old and new passwords are required."}, status=400)
+            if old_password == new_password:
+                return JsonResponse({"error": "New password cannot be the same as old password."},
+                                    status=400)
+
+            temp_token = cache.get(f"token_{user.user_name}")
+
+
+            if not temp_token and not old_password:
+                return JsonResponse({"error": "Old password is required."}, status=400)
+            
+            if not new_password:
+                return JsonResponse({"error": "New password is required."}, status=400)
             
             if not is_valid_password(new_password):
                 logger.error("Invalid password format.")
                 return JsonResponse({"error": "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character."}, status=400)
 
-            if not user.check_password(old_password):
+            if not temp_token and not user.check_password(old_password):
                 return JsonResponse({"error": "Old password is incorrect."}, status=400)
 
             user.set_password(new_password)
             user.save()
-
+            cache.delete(f"token_{user.user_name}")
             return JsonResponse({"message": "Password changed successfully."}, status=200)
         except Exception as e:
             logger.error("Error in change_password: %s", e)
-            return JsonResponse({"error": "An error occurred while changing the password."}, status=500)
+            return JsonResponse({"error": "An error occurred while changing the password."},
+                                status=500)
     

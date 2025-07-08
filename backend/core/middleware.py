@@ -72,7 +72,7 @@ class DatabaseMiddleware:
             "/auth/login/",
             "/auth/token/refresh/",
             "/core/password_manager/reset_password",
-            "/core/password_manager/verify_and_set_password",
+            "/core/password_manager/verify_otp"
         ]
 
     def __call__(self, request):

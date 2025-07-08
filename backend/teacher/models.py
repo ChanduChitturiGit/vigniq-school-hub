@@ -14,6 +14,9 @@ class Subject(models.Model):
 class Teacher(models.Model):
     teacher_id = models.IntegerField()
     subjects = models.ManyToManyField('Subject', through='TeacherSubjectAssignment')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True,null=True)
+    updated_at = models.DateTimeField(auto_now=True,null=True)
 
     class Meta:
         db_table = 'teacher'

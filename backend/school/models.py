@@ -18,6 +18,7 @@ class School(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
+    email = models.EmailField(max_length=255, unique=True, null=True, blank=True)
 
     class Meta:
         db_table = 'school'
