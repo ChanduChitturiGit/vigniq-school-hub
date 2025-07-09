@@ -13,6 +13,10 @@ class Subject(models.Model):
 
 class Teacher(models.Model):
     teacher_id = models.IntegerField()
+    qualification = models.CharField(max_length=255, null=True, blank=True)
+    experience = models.FloatField(null=True, blank=True)
+    joining_date = models.DateField(null=True, blank=True)
+    emergency_contact = models.CharField(max_length=15, null=True, blank=True)
     subjects = models.ManyToManyField('Subject', through='TeacherSubjectAssignment')
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True,null=True)

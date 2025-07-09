@@ -193,12 +193,6 @@ class SchoolService:
                 return Response({"error": "School id is required."}, status=status.HTTP_400_BAD_REQUEST)
 
             school = School.objects.get(pk=school_id)
-            school_db_metadata = SchoolDbMetadata.objects.filter(school=school).first()
-            if school_db_metadata:
-                school_db_name = school_db_metadata.db_name
-            else:
-                school_db_name = None
-            
 
             school_data = {
                 "school_id": school.id,

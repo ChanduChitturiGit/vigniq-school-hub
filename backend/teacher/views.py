@@ -26,8 +26,10 @@ class TeacherActionView(APIView):
             return Response({"error": "You do not have permission to view teachers."},
                             status=status.HTTP_403_FORBIDDEN)
 
-        if action == "teacher_list":
-            return TeacherService().get_teacher_list(request)
+        if action == "getTeachersBySchoolId":
+            return TeacherService().get_teacher_list_by_school_id(request)
+        elif action == "getTeacherById":
+            return TeacherService().get_teacher_by_id(request)
         return Response({"error": "Invalid GET action"}, status=status.HTTP_400_BAD_REQUEST)
     
     def post(self, request, action=None):
@@ -36,8 +38,8 @@ class TeacherActionView(APIView):
             return Response({"error": "You do not have permission to create a teacher."},
                             status=status.HTTP_403_FORBIDDEN)
 
-        if action == "create":
+        if action == "addTeacher":
             return TeacherService().create_teacher(request)
-        elif action == 'edit':
+        elif action == 'updateTeacher':
             return  TeacherService().edit_teacher(request)
         return Response({"error": "Invalid POST action"}, status=status.HTTP_400_BAD_REQUEST)

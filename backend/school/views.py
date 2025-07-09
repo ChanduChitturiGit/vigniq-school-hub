@@ -32,7 +32,7 @@ class SchoolActionView(APIView):
             return SchoolService().get_schools(request)
         elif action == 'board_list':
             return SchoolService().get_boards(request)
-        elif action == 'school':
+        elif action == 'getSchoolById':
             return SchoolService().get_school(request)
         return Response({"error": "Invalid GET action"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -52,7 +52,7 @@ class SchoolActionView(APIView):
             return Response({"error": "You do not have permission to edit a school."},
                             status=status.HTTP_403_FORBIDDEN)
 
-        if action == "edit":
+        if action == "updateSchoolById":
             school_id = request.data.get('school_id')
             if not school_id:
                 return Response({"error": "school_id is required."},

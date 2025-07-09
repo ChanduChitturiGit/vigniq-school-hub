@@ -34,23 +34,34 @@ class TeacherService:
         This method expects the request data to contain:
         """
         try:
-            teacher_name = request.data.get('teacher_name')
+            first_name = request.data.get('first_name')
+            last_name = request.data.get('last_name')
             user_name = request.data.get('user_name')
             password = request.data.get('password')
             email = request.data.get('email')
             phone_number = request.data.get('phone_number')
-            school_id = request.user.school_id
+            school_id = request.data.get('school_id', None)
             gender = request.data.get('gender')
             address = request.data.get('address')
-            assignments = request.data.get('subject_assignments', [])
+            subject_assignments = request.data.get('subject_assignments', [])
 
+            qualification = request.data.get('qualification', None)
+            experience = request.data.get('experience', None)
+            joining_date = request.data.get('joining_date', None)
+            emergency_contact = request.data.get('emergency_contact', None)
+
+            if not school_id:
+                logger.error("School ID is required for teacher creation.")
+                return JsonResponse({"error": "School ID is required."}, status=400)
             role = Role.objects.filter(name='teacher').first()
 
             if not role:
                 logger.error("Role 'teacher' does not exist.")
                 return JsonResponse({"error": "Role 'teacher' does not exist."}, status = 500)
 
-            if not teacher_name or not user_name or not password or not email or not gender:
+            if (not first_name or not last_name or not user_name or not password 
+                or not email or not gender or not phone_number or not qualification
+                or not joining_date):
                 logger.error("Missing required fields for teacher creation.")
                 return JsonResponse({"error": "Missing required fields."}, status=400)
             
@@ -69,15 +80,21 @@ class TeacherService:
                         role=role,
                         school_id=school_id,
                         phone_number=phone_number,
-                        full_name=teacher_name,
+                        first_name=first_name,
+                        last_name=last_name,
                         address=address,
+                        gender=gender
                     )
 
                     teacher = Teacher.objects.using(school_db_name).create(
                         teacher_id = user.id,
+                        qualification=qualification,
+                        experience=experience,
+                        joining_date=joining_date,
+                        emergency_contact=emergency_contact,
                     )
 
-                    for item in assignments:
+                    for item in subject_assignments:
                             try:
                                 subject = Subject.objects.using(school_db_name).get(id=item["subject_id"])
                                 school_class = Class.objects.using(school_db_name).get(id=item["class_id"])
@@ -101,17 +118,15 @@ class TeacherService:
                                 section=section
                             )
 
-                    
-                
                     send_email = EmailService()
                     send_email.send_email(
                         to_email=email,
                         email_type='welcome',
                         user_name=user_name,
-                        name=teacher_name,
+                        name=f"{first_name} {last_name}",
                         password=password
                     )
-                    logger.info(f"Teacher {teacher_name} created successfully with ID {teacher.teacher_id}.")
+                    logger.info(f"Teacher {first_name} {last_name} created successfully with ID {teacher.teacher_id}.")
                     return JsonResponse({"message": "Teacher created successfully."}, status=201)
 
         except NotFound as e:
@@ -132,15 +147,25 @@ class TeacherService:
         """
         try:
             teacher_id = request.data.get('teacher_id')
-            teacher_name = request.data.get('teacher_name')
+            first_name = request.data.get('first_name')
+            last_name = request.data.get('last_name')
             email = request.data.get('email')
             phone_number = request.data.get('phone_number')
             gender = request.data.get('gender')
             address = request.data.get('address')
-            assignments = request.data.get('subject_assignments', [])
+            subject_assignments = request.data.get('subject_assignments', [])
+
+            qualification = request.data.get('qualification', None)
+            experience = request.data.get('experience', None)
+            joining_date = request.data.get('joining_date', None)
+            emergency_contact = request.data.get('emergency_contact', None)
 
             school_id = request.user.school_id
             school_db_name = SchoolDbMetadata.objects.filter(school_id=school_id).first().db_name
+
+            if not teacher_id:
+                logger.error("Teacher ID is required for editing.")
+                return JsonResponse({"error": "Teacher ID is required."}, status=400)
 
             with transaction.atomic(using='default'):
                 with transaction.atomic(using=school_db_name):
@@ -151,8 +176,10 @@ class TeacherService:
                         logger.error(f"User with id {teacher_id} does not exist.")
                         return JsonResponse({"error": "Teacher not found."}, status=404)
 
-                    if teacher_name:
-                        user.full_name = teacher_name
+                    if first_name:
+                        user.first_name = first_name
+                    if last_name:
+                        user.last_name = last_name
                     if email:
                         user.email = email
                     if phone_number:
@@ -170,16 +197,33 @@ class TeacherService:
                         logger.error(f"Teacher with id {teacher_id} does not exist in school DB.")
                         return JsonResponse({"error": "Teacher not found in school DB."}, status=404)
 
+                    if qualification is not None:
+                        teacher.qualification = qualification
+                    if experience is not None:
+                        teacher.experience = experience
+                    if joining_date is not None:
+                        teacher.joining_date = joining_date
+                    if emergency_contact is not None:
+                        teacher.emergency_contact = emergency_contact
+                    teacher.save()
+
                     # Update assignments
-                    if assignments is not None:
+                    if subject_assignments is not None:
                         # Remove old assignments
-                        TeacherSubjectAssignment.objects.using(school_db_name).filter(teacher=teacher).delete()
+                        TeacherSubjectAssignment.objects.using(school_db_name).filter(
+                            teacher=teacher).delete()
                         # Add new assignments
-                        for item in assignments:
+                        for item in subject_assignments:
                             try:
-                                subject = Subject.objects.using(school_db_name).get(id=item["subject_id"])
-                                school_class = Class.objects.using(school_db_name).get(id=item["class_id"])
-                                section = Section.objects.using(school_db_name).get(id=item["section_id"])
+                                subject = Subject.objects.using(school_db_name).get(
+                                    id=item["subject_id"]
+                                )
+                                school_class = Class.objects.using(school_db_name).get(
+                                    id=item["class_id"]
+                                )
+                                section = Section.objects.using(school_db_name).get(
+                                    id=item["section_id"]
+                                )
                             except Subject.DoesNotExist:
                                 logger.error(f"Subject ID {item['subject_id']} not found.")
                                 raise NotFound(f"Subject ID {item['subject_id']} not found.")
@@ -212,18 +256,83 @@ class TeacherService:
             return JsonResponse({"error": str(e)}, status=400)
         except Exception as e:
             logger.error("Error editing teacher: %s", e)
-            return JsonResponse({"error": "An error occurred while editing the teacher."}, status=500)
+            return JsonResponse({"error": "An error occurred while editing the teacher."},
+                                status=500)
     
+    def get_teacher_by_id(self,request):
+        """Get a teacher's details by their ID."""
+        try:
+            teacher_id = request.GET.get('teacher_id', None)
+            school_id = request.GET.get('school_id', None)
 
-    def get_teacher_list(self, request):
+            if not teacher_id:
+                logger.error("Teacher ID is required to fetch teacher details.")
+                return JsonResponse({"error": "Teacher ID is required."}, status=400)
+            if not school_id:
+                logger.error("School ID is required to fetch teacher details.")
+                return JsonResponse({"error": "School ID is required."}, status=400)
+
+            school_db_name = SchoolDbMetadata.objects.filter(school_id=school_id).first().db_name
+
+            try:
+                teacher = Teacher.objects.using(school_db_name).get(teacher_id=teacher_id)
+            except Teacher.DoesNotExist:
+                logger.error(f"Teacher with ID {teacher_id} does not exist.")
+                return JsonResponse({"error": "Teacher not found."}, status=404)
+
+            user = User.objects.get(id=teacher.teacher_id, school_id=school_id)
+
+            subject_assignments = TeacherSubjectAssignment.objects.using(school_db_name).filter(
+                teacher=teacher
+            ).values(
+                'subject__id', 'subject__name', 'school_class__id', 'school_class__name',
+                'section__id', 'section__name'
+            ).distinct()
+
+            renamed_assignments = [
+                {
+                    'subject': {'id': item['subject__id'], 'name': item['subject__name']},
+                    'class': {'id': item['school_class__id'], 'name': item['school_class__name']},
+                    'section': {'id': item['section__id'], 'name': item['section__name']}
+                }
+                for item in subject_assignments
+            ]
+
+            teacher_details = {
+                "teacher_id": teacher.teacher_id,
+                "teacher_first_name": user.first_name,
+                "teacher_last_name": user.last_name,
+                "email": user.email,
+                "phone_number": user.phone_number,
+                "address": user.address,
+                "gender": user.gender,
+                "qualification": teacher.qualification,
+                "experience": teacher.experience,
+                "joining_date": teacher.joining_date,
+                "emergency_contact": teacher.emergency_contact,
+                "subject_assignments": renamed_assignments
+            }
+            return JsonResponse({"data": teacher_details}, status=200)
+        except User.DoesNotExist:
+            logger.error(f"User with ID {teacher_id} does not exist.")
+            return JsonResponse({"error": "User not found."}, status=404)
+        except Exception as e:
+            logger.error("Error fetching teacher details: %s", e)
+            return JsonResponse({"error": "An error occurred while fetching the teacher details."},
+                                status=500)
+
+
+    def get_teacher_list_by_school_id(self, request):
         """
         Get a list of all teachers for the current school, including their assignments.
+        This method expects the request to contain a 'school_id' parameter.
         """
         try:
             school_id = request.GET.get('school_id', None)
 
             if not school_id:
-                school_id = request.user.school_id
+                logger.error("School ID is required to fetch teacher list.")
+                return JsonResponse({"error": "School ID is required."}, status=400)
 
             school_db_name = SchoolDbMetadata.objects.filter(school_id=school_id).first().db_name
 
@@ -236,27 +345,23 @@ class TeacherService:
                 except User.DoesNotExist:
                     continue
 
-                assignments = TeacherSubjectAssignment.objects.using(school_db_name).filter(teacher=teacher)
-                assignment_list = []
-                for assign in assignments:
-                    assignment_list.append({
-                        "subject_id": assign.subject.id,
-                        "subject_name": assign.subject.name,
-                        "class_id": assign.school_class.id,
-                        "class_name": assign.school_class.name,
-                        "section_id": assign.section.id,
-                        "section_name": assign.section.name,
-                    })
+                subject_assignments = TeacherSubjectAssignment.objects.using(school_db_name).filter(
+                    teacher=teacher
+                ).values(
+                    'subject__id', 'subject__name'
+                ).distinct()
+
+                renamed_assignments = [
+                    {'id': item['subject__id'], 'name': item['subject__name']}
+                    for item in subject_assignments
+                ]
 
                 teacher_list.append({
                     "teacher_id": teacher.teacher_id,
-                    "teacher_name": user.full_name,
-                    "user_name": user.user_name,
+                    "teacher_first_name": user.first_name,
+                    "teacher_last_name": user.last_name,
                     "email": user.email,
-                    "phone_number": user.phone_number,
-                    "gender": user.gender,
-                    "address": user.address,
-                    "assignments": assignment_list
+                    "subject_assignments": renamed_assignments
                 })
 
             return JsonResponse({"teachers": teacher_list}, status=200)

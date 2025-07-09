@@ -58,6 +58,8 @@ class User(AbstractBaseUser,PermissionsMixin):
     USERNAME_FIELD = 'user_name'
     REQUIRED_FIELDS = ['email','role']
 
+    def full_name(self):
+        return f"{self.first_name or ''} {self.last_name or ''}".strip()
     class Meta:
         db_table = 'auth_user'
 
