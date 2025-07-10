@@ -12,7 +12,7 @@ class Class(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.name} - {self.class_number}"
+        return f"{self.name} - {self.grade}"
 
 class Section(models.Model):
     school_class = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='sections')
@@ -20,3 +20,6 @@ class Section(models.Model):
 
     class Meta:
         db_table = 'class_section'
+        constraints = [
+            models.UniqueConstraint(fields=['name', 'school_class'], name='unique_name_school_class')
+        ]

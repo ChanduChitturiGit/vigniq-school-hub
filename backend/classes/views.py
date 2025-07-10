@@ -21,3 +21,14 @@ class ClassesActionView(APIView):
             return ClassesService().get_classes(request)
         else:
             return Response({"error": "Invalid GET action"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def post(self, request, action):
+        """
+        Handle POST requests for class and section
+        """
+        if action == 'addClass':
+            return ClassesService().create_class(request)
+        elif action == 'updateClass':
+            return ClassesService().update_class(request)
+        else:
+            return Response({"error": "Invalid POST action"}, status=status.HTTP_400_BAD_REQUEST)
