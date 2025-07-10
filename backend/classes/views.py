@@ -18,8 +18,6 @@ class ClassesActionView(APIView):
         Handle GET requests for class and section
         """
         if action == 'class_list':
-            return ClassesService().get_classes()
-        elif action == 'section_list':
-            return ClassesService().get_sections()
+            return ClassesService().get_classes(request)
         else:
             return Response({"error": "Invalid GET action"}, status=status.HTTP_400_BAD_REQUEST)

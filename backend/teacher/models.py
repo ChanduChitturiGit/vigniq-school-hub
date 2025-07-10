@@ -3,7 +3,7 @@ from django.db import models
 from classes.models import Class, Section
 
 class Subject(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
     
     class Meta:
         db_table = 'subject'
@@ -12,7 +12,7 @@ class Subject(models.Model):
 
 
 class Teacher(models.Model):
-    teacher_id = models.IntegerField()
+    teacher_id = models.IntegerField(unique=True)
     qualification = models.CharField(max_length=255, null=True, blank=True)
     experience = models.FloatField(null=True, blank=True)
     joining_date = models.DateField(null=True, blank=True)

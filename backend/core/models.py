@@ -50,6 +50,7 @@ class User(AbstractBaseUser,PermissionsMixin):
     last_name = models.CharField(max_length=255, null=True, blank=True)
     gender = models.CharField(max_length=10, null=True, blank=True)
     address = models.TextField(null=True, blank=True)
+    date_of_birth = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -34,6 +34,7 @@ class SchoolDbMetadata(models.Model):
     db_password = models.CharField(max_length=100)
     db_host = models.CharField(max_length=100, default='127.0.0.1')
     db_port = models.IntegerField(default=5432)
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

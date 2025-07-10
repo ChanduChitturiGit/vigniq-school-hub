@@ -40,7 +40,7 @@ class TeacherService:
             password = request.data.get('password')
             email = request.data.get('email')
             phone_number = request.data.get('phone_number')
-            school_id = request.data.get('school_id', None)
+            school_id = request.data.get('school_id', request.user.school_id)
             gender = request.data.get('gender')
             address = request.data.get('address')
             subject_assignments = request.data.get('subject_assignments', [])
@@ -96,9 +96,15 @@ class TeacherService:
 
                     for item in subject_assignments:
                             try:
-                                subject = Subject.objects.using(school_db_name).get(id=item["subject_id"])
-                                school_class = Class.objects.using(school_db_name).get(id=item["class_id"])
-                                section = Section.objects.using(school_db_name).get(id=item["section_id"])
+                                subject = Subject.objects.using(school_db_name).get(
+                                    id=item["subject_id"]
+                                )
+                                section = Section.objects.using(school_db_name).get(
+                                    id=item["section_id"]
+                                )
+                                school_class = Class.objects.using(school_db_name).get(
+                                    id=section.school_class.id
+                                )
                             except Subject.DoesNotExist:
                                 logger.error(f"Subject ID {item['subject_id']} not found.")
                                 raise NotFound(f"Subject ID {item['subject_id']} not found.")
@@ -160,7 +166,7 @@ class TeacherService:
             joining_date = request.data.get('joining_date', None)
             emergency_contact = request.data.get('emergency_contact', None)
 
-            school_id = request.user.school_id
+            school_id = request.data.get("school_id",request.user.school_id)
             school_db_name = SchoolDbMetadata.objects.filter(school_id=school_id).first().db_name
 
             if not teacher_id:
@@ -218,11 +224,11 @@ class TeacherService:
                                 subject = Subject.objects.using(school_db_name).get(
                                     id=item["subject_id"]
                                 )
-                                school_class = Class.objects.using(school_db_name).get(
-                                    id=item["class_id"]
-                                )
                                 section = Section.objects.using(school_db_name).get(
                                     id=item["section_id"]
+                                )
+                                school_class = Class.objects.using(school_db_name).get(
+                                    id=section.school_class.id
                                 )
                             except Subject.DoesNotExist:
                                 logger.error(f"Subject ID {item['subject_id']} not found.")
@@ -263,7 +269,7 @@ class TeacherService:
         """Get a teacher's details by their ID."""
         try:
             teacher_id = request.GET.get('teacher_id', None)
-            school_id = request.GET.get('school_id', None)
+            school_id = request.GET.get('school_id', request.user.school_id)
 
             if not teacher_id:
                 logger.error("Teacher ID is required to fetch teacher details.")
@@ -328,7 +334,7 @@ class TeacherService:
         This method expects the request to contain a 'school_id' parameter.
         """
         try:
-            school_id = request.GET.get('school_id', None)
+            school_id = request.GET.get('school_id', request.user.school_id)
 
             if not school_id:
                 logger.error("School ID is required to fetch teacher list.")
@@ -367,4 +373,61 @@ class TeacherService:
             return JsonResponse({"teachers": teacher_list}, status=200)
         except Exception as e:
             logger.error("Error fetching teacher list: %s", e)
-            return JsonResponse({"error": "An error occurred while fetching the teacher list."},status = 500)
+            return JsonResponse({"error": "An error occurred while fetching the teacher list."},
+                                status = 500)
+    
+    def delete_teacher(self,request):
+        """
+        Delete a teacher by their ID.
+        This method expects the request to contain a 'teacher_id' parameter.
+        """
+        try:
+            teacher_id = request.data.get('teacher_id', None)
+            school_id = request.data.get('school_id',request.user.school_id)
+
+            if not teacher_id:
+                logger.error("Teacher ID is required to delete a teacher.")
+                return JsonResponse({"error": "Teacher ID is required."}, status=400)
+            
+            if not school_id:
+                logger.error("School ID is required to delete a teacher.")
+                return JsonResponse({"error": "School ID is required."}, status=400)
+
+            school_db_name = SchoolDbMetadata.objects.filter(school_id=school_id).first().db_name
+
+            with transaction.atomic(using='default'):
+                with transaction.atomic(using=school_db_name):
+                    try:
+                        teacher = Teacher.objects.using(school_db_name).get(
+                            teacher_id=teacher_id,
+                            is_active=True
+                        )
+                    except Teacher.DoesNotExist:
+                        logger.error(f"Teacher with ID {teacher_id} does not exist.")
+                        return JsonResponse({"error": "Teacher not found."}, status=404)
+
+                    # Delete subject assignments    
+                    TeacherSubjectAssignment.objects.using(school_db_name).filter(
+                        teacher=teacher).delete()
+
+                    # deactivate the teacher record
+                    teacher.is_active = False
+                    teacher.save(using=school_db_name)
+                    
+                    # Delete the user record
+                    user = User.objects.filter(id=teacher_id, school_id=school_id)
+                    if not user.exists():
+                        logger.error(f"User with ID {teacher_id} does not exist.")
+                        return JsonResponse({"error": "User not found."}, status=404)
+                    
+                    user = user.first()
+                    user.is_active = False
+                    user.save()
+
+                    logger.info(f"Teacher with ID {teacher_id} deleted successfully.")
+                    return JsonResponse({"message": "Teacher deleted successfully."}, status=200)
+
+        except Exception as e:
+            logger.error("Error deleting teacher: %s", e)
+            return JsonResponse({"error": "An error occurred while deleting the teacher."},
+                                status=500)
