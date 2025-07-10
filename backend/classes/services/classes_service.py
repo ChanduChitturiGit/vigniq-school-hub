@@ -28,9 +28,15 @@ class ClassesService:
             school_db_name = CommonFunctions.get_school_db_name(school_id)
             classes = Class.objects.using(school_db_name).all()
             serializer = ClassSerializer(classes, many=True)
+            
+            data = serializer.data
 
-            logger.info(f"Retrieved {len(serializer.data)} classes.")
-            return JsonResponse({'data': serializer.data},status=200)
+            for item in data:
+                item['sections'] = list(Section.objects.using(school_db_name).filter(
+                    school_class_id=item['id']).values('id', 'name'))
+
+            logger.info(f"Retrieved {len(data)} classes.")
+            return JsonResponse({'data': data},status=200)
         except Exception as e:
             logger.error(f"Error retrieving classes: {e}")
             return JsonResponse({"error": "An error occurred while retrieving classes."},
