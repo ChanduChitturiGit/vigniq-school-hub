@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
@@ -269,6 +268,7 @@ const AdminSchool: React.FC = () => {
                 <Link
                   key={classItem.id}
                   to={`/class-details/${classItem.id}`}
+                  state={{ from: 'admin-school' }}
                   className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-center justify-between mb-2">
