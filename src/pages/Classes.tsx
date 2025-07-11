@@ -36,10 +36,13 @@ const Classes: React.FC = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-800">Classes</h1>
           {user?.role === 'Admin' && (
-            <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2">
+            <Link
+              to="/add-class"
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+            >
               <Plus className="w-4 h-4" />
               Add Class
-            </button>
+            </Link>
           )}
         </div>
 

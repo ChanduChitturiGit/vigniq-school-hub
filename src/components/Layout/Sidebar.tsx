@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -111,8 +112,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
     const helpSubItems: { path: string; label: string; icon: React.ComponentType<{ className?: string }> }[] = [];
 
     if (user?.role === 'Super Admin') {
-      // Super Admin only sees requests (from all admins)
-      helpSubItems.push({ path: '/admin-requests', label: 'Requests', icon: FileText });
+      // Super Admin sees responses (from all admins)
+      helpSubItems.push({ path: '/responses', label: 'Responses', icon: MessageSquare });
     } else {
       // Other roles see support, requests, and responses
       helpSubItems.push({ path: '/support', label: 'Support', icon: HelpCircle });
@@ -121,7 +122,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
         helpSubItems.push({ path: '/admin-requests', label: 'Requests', icon: FileText });
       }
       
-      helpSubItems.push({ path: '/responses', label: 'Responses', icon: MessageSquare });
+      if (user?.role !== 'Super Admin') {
+        helpSubItems.push({ path: '/responses', label: 'Responses', icon: MessageSquare });
+      }
     }
 
     const helpItems: MenuItem[] = [
