@@ -10,7 +10,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from teacher.models import Teacher, TeacherSubjectAssignment, Subject
 
-from classes.models import Class, Section
+from classes.models import Class
 
 from core.models import Role, User
 from core.common_modules.password_validator import is_valid_password
@@ -99,11 +99,8 @@ class TeacherService:
                                 subject = Subject.objects.using(school_db_name).get(
                                     id=item["subject_id"]
                                 )
-                                section = Section.objects.using(school_db_name).get(
-                                    id=item["section_id"]
-                                )
                                 school_class = Class.objects.using(school_db_name).get(
-                                    id=section.school_class.id
+                                    id=item["class_id"]
                                 )
                             except Subject.DoesNotExist:
                                 logger.error(f"Subject ID {item['subject_id']} not found.")
@@ -111,17 +108,13 @@ class TeacherService:
                             except Class.DoesNotExist:
                                 logger.error(f"Class ID {item['class_id']} not found.")
                                 raise NotFound(f"Class ID {item['class_id']} not found.")
-                            except Section.DoesNotExist:
-                                logger.error(f"Section ID {item['section_id']} not found.")
-                                raise NotFound(f"Section ID {item['section_id']} not found.")
                             except ObjectDoesNotExist as e:
                                 raise ValueError(f"Invalid ID in assignment: {e}")
 
                             TeacherSubjectAssignment.objects.using(school_db_name).get_or_create(
                                 teacher=teacher,
                                 subject=subject,
-                                school_class=school_class,
-                                section=section
+                                school_class=school_class
                             )
 
                     send_email = EmailService()
@@ -224,11 +217,8 @@ class TeacherService:
                                 subject = Subject.objects.using(school_db_name).get(
                                     id=item["subject_id"]
                                 )
-                                section = Section.objects.using(school_db_name).get(
-                                    id=item["section_id"]
-                                )
                                 school_class = Class.objects.using(school_db_name).get(
-                                    id=section.school_class.id
+                                    id=item["class_id"]
                                 )
                             except Subject.DoesNotExist:
                                 logger.error(f"Subject ID {item['subject_id']} not found.")
@@ -236,17 +226,13 @@ class TeacherService:
                             except Class.DoesNotExist:
                                 logger.error(f"Class ID {item['class_id']} not found.")
                                 raise NotFound(f"Class ID {item['class_id']} not found.")
-                            except Section.DoesNotExist:
-                                logger.error(f"Section ID {item['section_id']} not found.")
-                                raise NotFound(f"Section ID {item['section_id']} not found.")
                             except ObjectDoesNotExist as e:
                                 raise ValueError(f"Invalid ID in assignment: {e}")
 
                             TeacherSubjectAssignment.objects.using(school_db_name).get_or_create(
                                 teacher=teacher,
                                 subject=subject,
-                                school_class=school_class,
-                                section=section
+                                school_class=school_class
                             )
 
                     logger.info(f"Teacher {teacher_id} updated successfully.")
@@ -292,14 +278,16 @@ class TeacherService:
                 teacher=teacher
             ).values(
                 'subject__id', 'subject__name', 'school_class__id', 'school_class__name',
-                'section__id', 'section__name'
+                'school_class__section'
             ).distinct()
 
             renamed_assignments = [
                 {
                     'subject': {'id': item['subject__id'], 'name': item['subject__name']},
-                    'class': {'id': item['school_class__id'], 'name': item['school_class__name']},
-                    'section': {'id': item['section__id'], 'name': item['section__name']}
+                    'class': {'id': item['school_class__id'],
+                              'class_name': item['school_class__name'],
+                              'section_name': item['school_class__section']
+                    },
                 }
                 for item in subject_assignments
             ]
@@ -354,11 +342,18 @@ class TeacherService:
                 subject_assignments = TeacherSubjectAssignment.objects.using(school_db_name).filter(
                     teacher=teacher
                 ).values(
-                    'subject__id', 'subject__name'
+                    'subject__id', 'subject__name', 'school_class__id', 'school_class__name',
+                    'school_class__section'
                 ).distinct()
 
                 renamed_assignments = [
-                    {'id': item['subject__id'], 'name': item['subject__name']}
+                    {
+                        'subject': {'id': item['subject__id'], 'name': item['subject__name']},
+                        'class': {'id': item['school_class__id'],
+                                'class_name': item['school_class__name'],
+                                'section_name': item['school_class__section']
+                        },
+                    }
                     for item in subject_assignments
                 ]
 

@@ -1,6 +1,6 @@
 from django.db import models
 
-from classes.models import Class, Section
+from classes.models import Class
 
 class Subject(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -29,9 +29,8 @@ class TeacherSubjectAssignment(models.Model):
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     school_class = models.ForeignKey(Class, on_delete=models.CASCADE)
-    section = models.ForeignKey(Section, on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'teacher_subject_assignment'
-        unique_together = ('teacher', 'subject', 'school_class', 'section')
+        unique_together = ('teacher', 'subject', 'school_class')
 

@@ -4,9 +4,5 @@ from .models import Class
 class ClassSerializer(serializers.ModelSerializer):
     class Meta:
         model = Class
-        fields = ['id', 'name','grade']
+        fields = ['id', 'name','section']
 
-class SectionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Class
-        fields = ['id', 'name']

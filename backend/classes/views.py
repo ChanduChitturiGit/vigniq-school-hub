@@ -6,7 +6,7 @@ from rest_framework import status
 from classes.services.classes_service import ClassesService
 
 
-class ClassesActionView(APIView):
+class ClassesManagingView(APIView):
     """
     View to handle actions related to classes and sections.
     """
@@ -17,7 +17,11 @@ class ClassesActionView(APIView):
         """
         Handle GET requests for class and section
         """
-        if action == 'class_list':
+        user = request.user
+        if user.role.id not in (1,2,3):
+            return Response({"error": "You do not have permission view classes"},
+                            status=status.HTTP_403_FORBIDDEN)
+        if action == 'getAvailableClassList':
             return ClassesService().get_classes(request)
         else:
             return Response({"error": "Invalid GET action"}, status=status.HTTP_400_BAD_REQUEST)
@@ -26,9 +30,26 @@ class ClassesActionView(APIView):
         """
         Handle POST requests for class and section
         """
+        user = request.user
+        if user.role.id not in (1,2,3):
+            return Response({"error": "You do not have permission to add classes"},
+                            status=status.HTTP_403_FORBIDDEN)
         if action == 'addClass':
             return ClassesService().create_class(request)
-        elif action == 'updateClass':
-            return ClassesService().update_class(request)
         else:
             return Response({"error": "Invalid POST action"}, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, action):
+        """
+        Handle PUT requests for class and section
+        """
+        user = request.user
+        if user.role.id not in (1,2,3):
+            return Response({"error": "You do not have permission to update classes"},
+                            status=status.HTTP_403_FORBIDDEN)
+        if action == 'updateClass':
+            return ClassesService().update_class(request)
+        else:
+            return Response({"error": "Invalid PUT action"}, status=status.HTTP_400_BAD_REQUEST)
+        
+

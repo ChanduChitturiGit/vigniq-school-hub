@@ -6,7 +6,7 @@ def load_fixture(apps, schema_editor):
     
     db_name = getattr(settings, 'CURRENT_MIGRATION_DB', 'default')
 
-    fixtures = ['class.json','section.json']
+    fixtures = []
     for fixture in fixtures:
         call_command('loaddata', fixture,database=db_name)
 

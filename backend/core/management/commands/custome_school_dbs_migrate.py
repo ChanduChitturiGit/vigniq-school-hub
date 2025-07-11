@@ -36,7 +36,7 @@ class Command(BaseCommand):
 
                 logger.info(f"Applying migrations for {db_key}...")
                 try:
-                    apps = ['teacher','classes']
+                    apps = ['teacher','classes','academics']
                     with override_settings(CURRENT_MIGRATION_DB=db_key):
                         for app in apps:
                             call_command("migrate",app, database=db_key,verbosity=2)

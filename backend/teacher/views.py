@@ -41,9 +41,17 @@ class TeacherActionView(APIView):
 
         if action == "addTeacher":
             return TeacherService().create_teacher(request)
-        elif action == 'updateTeacher':
-            return  TeacherService().edit_teacher(request)
         return Response({"error": "Invalid POST action"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def put(self, request, action=None):
+        user = request.user
+        if user.role.id not in (1,2):
+            return Response({"error": "You do not have permission to update a teacher."},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        if action == "updateTeacherById":
+            return TeacherService().edit_teacher(request)
+        return Response({"error": "Invalid PUT action"}, status=status.HTTP_400_BAD_REQUEST)
     
     def delete(self, request, action=None):
         user = request.user
