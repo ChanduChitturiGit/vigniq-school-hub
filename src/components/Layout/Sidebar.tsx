@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -122,9 +121,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
         helpSubItems.push({ path: '/admin-requests', label: 'Requests', icon: FileText });
       }
       
-      if (user?.role !== 'Super Admin') {
-        helpSubItems.push({ path: '/responses', label: 'Responses', icon: MessageSquare });
-      }
+      helpSubItems.push({ path: '/responses', label: 'Responses', icon: MessageSquare });
     }
 
     const helpItems: MenuItem[] = [
