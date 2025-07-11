@@ -81,6 +81,11 @@ const AdminSchool: React.FC = () => {
     navigate(`/teacher-details/${teacherId}`);
   };
 
+  const handleClassClick = (classId: string) => {
+    // Pass state to indicate this navigation is from My School
+    navigate(`/class-details/${classId}`, { state: { from: 'admin-school' } });
+  };
+
   return (
     <MainLayout pageTitle={`My School - ${school.name}`}>
       <div className="space-y-6">
@@ -266,10 +271,10 @@ const AdminSchool: React.FC = () => {
           <div className="max-h-96 overflow-y-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredClasses.slice(0, 6).map((classItem) => (
-                <Link
+                <div
                   key={classItem.id}
-                  to={`/class-details/${classItem.id}`}
-                  className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                  onClick={() => handleClassClick(classItem.id)}
+                  className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="font-semibold text-gray-800">{classItem.name} - {classItem.section}</h3>
@@ -277,7 +282,7 @@ const AdminSchool: React.FC = () => {
                   </div>
                   <p className="text-sm text-gray-600">Students: {classItem.students}</p>
                   <p className="text-sm text-gray-500">Teacher: {classItem.teacher}</p>
-                </Link>
+                </div>
               ))}
             </div>
           </div>
