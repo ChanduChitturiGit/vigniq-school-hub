@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { ArrowLeft, BookOpen } from 'lucide-react';
+import { ArrowLeft, BookOpen, ChevronDown } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 
 const AddClass: React.FC = () => {
   const navigate = useNavigate();
@@ -14,13 +15,11 @@ const AddClass: React.FC = () => {
   });
   const [suggestions, setSuggestions] = useState({
     name: [] as string[],
-    section: [] as string[],
-    teacher: [] as string[]
+    section: [] as string[]
   });
   const [showSuggestions, setShowSuggestions] = useState({
     name: false,
-    section: false,
-    teacher: false
+    section: false
   });
 
   // Mock data for suggestions
@@ -48,7 +47,7 @@ const AddClass: React.FC = () => {
       [field]: value
     }));
 
-    // Filter suggestions based on input
+    // Filter suggestions based on input (only for name and section)
     let filteredSuggestions: string[] = [];
     if (field === 'name') {
       filteredSuggestions = classOptions.filter(option =>
@@ -58,16 +57,14 @@ const AddClass: React.FC = () => {
       filteredSuggestions = sectionOptions.filter(option =>
         option.toLowerCase().includes(value.toLowerCase())
       );
-    } else if (field === 'teacher') {
-      filteredSuggestions = teacherOptions.filter(option =>
-        option.toLowerCase().includes(value.toLowerCase())
-      );
     }
 
-    setSuggestions(prev => ({
-      ...prev,
-      [field]: filteredSuggestions
-    }));
+    if (field === 'name' || field === 'section') {
+      setSuggestions(prev => ({
+        ...prev,
+        [field]: filteredSuggestions
+      }));
+    }
   };
 
   const handleSuggestionClick = (field: string, suggestion: string) => {
@@ -81,10 +78,17 @@ const AddClass: React.FC = () => {
     }));
   };
 
+  const handleTeacherChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      teacher: value
+    }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.section || !formData.teacher) {
+    if (!formData.name || !formData.section) {
       alert('Please fill in all required fields');
       return;
     }
@@ -195,34 +199,23 @@ const AddClass: React.FC = () => {
               )}
             </div>
 
-            {/* Teacher Field */}
-            <div className="relative">
+            {/* Class Teacher Field */}
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Assign Teacher *
+                Class Teacher
               </label>
-              <input
-                type="text"
-                value={formData.teacher}
-                onChange={(e) => handleInputChange('teacher', e.target.value)}
-                onFocus={() => handleFocus('teacher')}
-                onBlur={() => handleBlur('teacher')}
-                placeholder="Type or select teacher..."
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              {showSuggestions.teacher && suggestions.teacher.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                  {suggestions.teacher.map((suggestion, index) => (
-                    <div
-                      key={index}
-                      onClick={() => handleSuggestionClick('teacher', suggestion)}
-                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                    >
-                      {suggestion}
-                    </div>
+              <Select value={formData.teacher} onValueChange={handleTeacherChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a teacher (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {teacherOptions.map((teacher, index) => (
+                    <SelectItem key={index} value={teacher}>
+                      {teacher}
+                    </SelectItem>
                   ))}
-                </div>
-              )}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Form Actions */}
