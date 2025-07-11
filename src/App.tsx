@@ -1,89 +1,192 @@
 
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import { Toaster } from './components/ui/sonner';
 
-// Page imports
+// Import pages
 import Index from './pages/Index';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
-import Requests from './pages/Requests';
-import Responses from './pages/Responses';
-import Support from './pages/Support';
 import UserManagement from './pages/UserManagement';
-import Students from './pages/Students';
-import AddStudent from './pages/AddStudent';
-import AddStudentTeacher from './pages/AddStudentTeacher';
-import StudentDetails from './pages/StudentDetails';
-import Teachers from './pages/Teachers';
-import AddTeacher from './pages/AddTeacher';
-import TeacherDetails from './pages/TeacherDetails';
-import Classes from './pages/Classes';
-import ClassDetails from './pages/ClassDetails';
 import Schools from './pages/Schools';
 import SchoolDetails from './pages/SchoolDetails';
 import CreateSchool from './pages/CreateSchool';
-import AdminSchool from './pages/AdminSchool';
+import Teachers from './pages/Teachers';
+import TeacherDetails from './pages/TeacherDetails';
+import Students from './pages/Students';
+import StudentDetails from './pages/StudentDetails';
+import Classes from './pages/Classes';
+import ClassDetails from './pages/ClassDetails';
+import AddStudent from './pages/AddStudent';
+import AddTeacher from './pages/AddTeacher';
 import AdminAddTeacher from './pages/AdminAddTeacher';
-import AdminRequests from './pages/AdminRequests';
+import AddStudentTeacher from './pages/AddStudentTeacher';
 import ManageStudents from './pages/ManageStudents';
+import Requests from './pages/Requests';
+import AdminRequests from './pages/AdminRequests';
+import Responses from './pages/Responses';
+import Support from './pages/Support';
 import NotFound from './pages/NotFound';
-
-const queryClient = new QueryClient();
+import AdminSchool from './pages/AdminSchool';
+import AddClass from './pages/AddClass';
 
 function App() {
   return (
-    //testing git.
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router>
-          <div className="min-h-screen bg-gray-50">
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              
-              {/* Protected Routes */}
-              <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-              <Route path="/requests" element={<ProtectedRoute><Requests /></ProtectedRoute>} />
-              <Route path="/responses" element={<ProtectedRoute><Responses /></ProtectedRoute>} />
-              <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
-              
-              {/* User Management Routes */}
-              <Route path="/user-management" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
-              <Route path="/students" element={<ProtectedRoute><Students /></ProtectedRoute>} />
-              <Route path="/add-student" element={<ProtectedRoute><AddStudent /></ProtectedRoute>} />
-              <Route path="/add-student-teacher" element={<ProtectedRoute><AddStudentTeacher /></ProtectedRoute>} />
-              <Route path="/student-details/:id" element={<ProtectedRoute><StudentDetails /></ProtectedRoute>} />
-              <Route path="/teachers" element={<ProtectedRoute><Teachers /></ProtectedRoute>} />
-              <Route path="/add-teacher" element={<ProtectedRoute><AddTeacher /></ProtectedRoute>} />
-              <Route path="/teacher-details/:id" element={<ProtectedRoute><TeacherDetails /></ProtectedRoute>} />
-              
-              {/* Class Management Routes */}
-              <Route path="/classes" element={<ProtectedRoute><Classes /></ProtectedRoute>} />
-              <Route path="/class-details/:id" element={<ProtectedRoute><ClassDetails /></ProtectedRoute>} />
-              
-              {/* School Management Routes */}
-              <Route path="/schools" element={<ProtectedRoute><Schools /></ProtectedRoute>} />
-              <Route path="/school-details/:id" element={<ProtectedRoute><SchoolDetails /></ProtectedRoute>} />
-              <Route path="/create-school" element={<ProtectedRoute><CreateSchool /></ProtectedRoute>} />
-              <Route path="/admin-school" element={<ProtectedRoute><AdminSchool /></ProtectedRoute>} />
-              <Route path="/admin-add-teacher" element={<ProtectedRoute><AdminAddTeacher /></ProtectedRoute>} />
-              <Route path="/admin-requests" element={<ProtectedRoute><AdminRequests /></ProtectedRoute>} />
-              <Route path="/manage-students" element={<ProtectedRoute><ManageStudents /></ProtectedRoute>} />
-              
-              {/* 404 Route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </div>
-          <Toaster />
-        </Router>
-      </AuthProvider>
-    </QueryClientProvider>
+    <AuthProvider>
+      <Router>
+        <div className="min-h-screen bg-gray-50">
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            
+            {/* Protected routes */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } />
+            
+            {/* Super Admin & Admin routes */}
+            <Route path="/user-management" element={
+              <ProtectedRoute allowedRoles={['Super Admin', 'Admin']}>
+                <UserManagement />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/schools" element={
+              <ProtectedRoute allowedRoles={['Super Admin']}>
+                <Schools />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/school-details/:id" element={
+              <ProtectedRoute allowedRoles={['Super Admin']}>
+                <SchoolDetails />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/create-school" element={
+              <ProtectedRoute allowedRoles={['Super Admin']}>
+                <CreateSchool />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/teachers" element={
+              <ProtectedRoute allowedRoles={['Super Admin', 'Admin']}>
+                <Teachers />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/teacher-details/:id" element={
+              <ProtectedRoute allowedRoles={['Super Admin', 'Admin', 'Teacher']}>
+                <TeacherDetails />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/students" element={
+              <ProtectedRoute allowedRoles={['Super Admin', 'Admin', 'Teacher']}>
+                <Students />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/student-details/:id" element={
+              <ProtectedRoute allowedRoles={['Super Admin', 'Admin', 'Teacher']}>
+                <StudentDetails />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/classes" element={
+              <ProtectedRoute allowedRoles={['Super Admin', 'Admin']}>
+                <Classes />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/class-details/:id" element={
+              <ProtectedRoute allowedRoles={['Super Admin', 'Admin', 'Teacher']}>
+                <ClassDetails />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/add-student" element={
+              <ProtectedRoute allowedRoles={['Super Admin']}>
+                <AddStudent />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/add-teacher" element={
+              <ProtectedRoute allowedRoles={['Super Admin']}>
+                <AddTeacher />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/admin-add-teacher" element={
+              <ProtectedRoute allowedRoles={['Admin']}>
+                <AdminAddTeacher />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/add-student-teacher" element={
+              <ProtectedRoute allowedRoles={['Admin', 'Teacher']}>
+                <AddStudentTeacher />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/manage-students" element={
+              <ProtectedRoute allowedRoles={['Teacher']}>
+                <ManageStudents />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/requests" element={
+              <ProtectedRoute allowedRoles={['Teacher', 'Student']}>
+                <Requests />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/admin-requests" element={
+              <ProtectedRoute allowedRoles={['Admin']}>
+                <AdminRequests />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/responses" element={
+              <ProtectedRoute allowedRoles={['Super Admin']}>
+                <Responses />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/support" element={
+              <ProtectedRoute>
+                <Support />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/admin-school" element={
+              <ProtectedRoute allowedRoles={['Admin']}>
+                <AdminSchool />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/add-class" element={
+              <ProtectedRoute allowedRoles={['Admin']}>
+                <AddClass />
+              </ProtectedRoute>
+            } />
+            
+            {/* Catch all route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 
