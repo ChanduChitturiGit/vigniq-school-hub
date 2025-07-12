@@ -69,7 +69,7 @@ const Teachers: React.FC = () => {
             </div>
             <h1 className="text-2xl font-bold text-gray-800">Teachers</h1>
           </div>
-          {(user?.role === 'Admin' || user?.role === 'SuperAdmin') && (
+          {(user?.role === 'Admin' || user?.role === 'Super Admin') && (
             <Link
               to={user?.role === 'Admin' ? "/admin-add-teacher" : "/add-teacher"}
               className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
