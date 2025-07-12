@@ -129,7 +129,7 @@ const Login: React.FC = () => {
                 <span className="text-2xl font-bold text-gray-800">VIGNIQ</span>
               </div>
               <h1 className="text-2xl font-bold text-blue-600 mb-2">
-                {showForgotPassword ? 'Reset Password' : 'Welcome Back!'}
+                {showForgotPassword ? 'Reset Password' : ''}
               </h1>
               <p className="text-gray-600">
                 {showForgotPassword 
