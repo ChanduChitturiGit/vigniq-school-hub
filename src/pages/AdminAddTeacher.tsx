@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
@@ -63,15 +62,10 @@ const AdminAddTeacher: React.FC = () => {
       return;
     }
     
-    // Validate teaching assignments
+    // Filter valid assignments (all three fields must be filled) - now optional
     const validAssignments = teachingAssignments.filter(assignment => 
       assignment.class && assignment.section && assignment.subject
     );
-    
-    if (validAssignments.length === 0) {
-      alert('Please add at least one complete teaching assignment (class, section, and subject)');
-      return;
-    }
 
     const teacherData = {
       ...formData,
@@ -196,7 +190,7 @@ const AdminAddTeacher: React.FC = () => {
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-gray-700">Teaching Assignments *</label>
+                <label className="block text-sm font-medium text-gray-700">Teaching Assignments (Optional)</label>
                 <button
                   type="button"
                   onClick={addNewAssignment}

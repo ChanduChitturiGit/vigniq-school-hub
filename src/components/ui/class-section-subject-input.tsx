@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { X } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 
 interface ClassSectionSubjectData {
   class: string;
@@ -28,6 +29,20 @@ const ClassSectionSubjectInput: React.FC<ClassSectionSubjectInputProps> = ({
     });
   };
 
+  const classes = [
+    'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
+    'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10',
+    'Class 11', 'Class 12'
+  ];
+
+  const sections = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+  const subjects = [
+    'Mathematics', 'English', 'Science', 'Physics', 'Chemistry',
+    'Biology', 'History', 'Geography', 'Hindi', 'Sanskrit',
+    'Computer Science', 'Physical Education', 'Art', 'Music'
+  ];
+
   return (
     <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
       <div className="flex items-center justify-between mb-3">
@@ -46,39 +61,51 @@ const ClassSectionSubjectInput: React.FC<ClassSectionSubjectInputProps> = ({
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Class *</label>
-          <input
-            type="text"
-            value={data.class}
-            onChange={(e) => handleInputChange('class', e.target.value)}
-            placeholder="e.g., Class 6"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
+          <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
+          <Select value={data.class} onValueChange={(value) => handleInputChange('class', value)}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select class" />
+            </SelectTrigger>
+            <SelectContent>
+              {classes.map((cls) => (
+                <SelectItem key={cls} value={cls}>
+                  {cls}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Section *</label>
-          <input
-            type="text"
-            value={data.section}
-            onChange={(e) => handleInputChange('section', e.target.value)}
-            placeholder="e.g., A, B, C"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
+          <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
+          <Select value={data.section} onValueChange={(value) => handleInputChange('section', value)}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select section" />
+            </SelectTrigger>
+            <SelectContent>
+              {sections.map((section) => (
+                <SelectItem key={section} value={section}>
+                  {section}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Subject *</label>
-          <input
-            type="text"
-            value={data.subject}
-            onChange={(e) => handleInputChange('subject', e.target.value)}
-            placeholder="e.g., Math, Science"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
+          <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+          <Select value={data.subject} onValueChange={(value) => handleInputChange('subject', value)}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select subject" />
+            </SelectTrigger>
+            <SelectContent>
+              {subjects.map((subject) => (
+                <SelectItem key={subject} value={subject}>
+                  {subject}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>
