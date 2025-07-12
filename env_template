@@ -1,0 +1,15 @@
+ENVIRONMENT = 'dev'
+
+SECRET_KEY = 'django-insecure-&9chc#qf(k@=zb54)hiy!jvaf^264=85bai=!th#(6x@t78rpj'
+
+##Database details
+
+DB_ENGINE = 'django.db.backends.postgresql'
+DB_NAME = ''
+DB_USER = '' 
+DB_PASSWORD = ''
+DB_HOST = ''
+DB_PORT = ''
+
+EMAIL_HOST_USER = 'sdey04973@gmail.com'
+EMAIL_HOST_PASSWORD='ikzk nchj psjh fpye'
