@@ -15,7 +15,8 @@ class Student(models.Model):
     class Meta:
         db_table = 'student_list'
         constraints = [
-            models.UniqueConstraint(fields=['student_id', 'roll_number'], name='unique_student_id_roll_number')
+            models.UniqueConstraint(fields=['student_id', 'roll_number'],
+                                    name='unique_student_id_roll_number')
         ]
 
 class StudentClassAssignment(models.Model):
@@ -27,5 +28,6 @@ class StudentClassAssignment(models.Model):
         db_table = 'student_class_assignment'
 
         constraints = [
-            models.UniqueConstraint(fields=['student', 'academic_year'], name='unique_student_academic_year')
+            models.UniqueConstraint(fields=['student', 'academic_year'],
+                                    name='unique_student_academic_year')
         ]

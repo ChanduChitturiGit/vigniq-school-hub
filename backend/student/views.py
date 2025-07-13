@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
+from student.services.student_service import StudentService
 class StudentView(APIView):
     """
     View to handle student-related operations.
@@ -34,7 +35,7 @@ class StudentView(APIView):
             return Response({"error": "You do not have permission to add students data."},
                             status=status.HTTP_403_FORBIDDEN)
         if action == "createStudent":
-            pass
+            return StudentService().create_student(request)
         return Response({"error": "Invalid POST action"}, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, action=None):
@@ -46,7 +47,7 @@ class StudentView(APIView):
             return Response({"error": "You do not have permission to update students data."},
                             status=status.HTTP_403_FORBIDDEN)
         if action == "updateStudentById":
-            pass
+            return StudentService().update_student_by_id(request)
         return Response({"error": "Invalid PUT action"}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, action=None):

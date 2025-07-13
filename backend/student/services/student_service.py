@@ -4,12 +4,15 @@ updating, and retrieving student data."""
 
 import logging
 
-from django.db import transaction
+from django.db import transaction,IntegrityError
 from django.http import JsonResponse
 
 from rest_framework import status
 
-from student.models import Student
+from student.models import Student,StudentClassAssignment
+
+from classes.models import Class
+from academics.models import AcademicYear
 
 from core.common_modules.common_functions import CommonFunctions
 from core.models import User,Role
@@ -29,10 +32,10 @@ class StudentService:
             school_id = request.data.get('school_id', request.user.school_id)
             first_name = request.data.get('first_name')
             last_name = request.data.get('last_name')
-            username = request.data.get('username')
+            username = request.data.get('user_name')
             email = request.data.get('email')
             password = request.data.get('password')
-            phone = request.data.get('phone')
+            phone = request.data.get('phone_number')
             class_id = request.data.get('class_id')
             roll_number = request.data.get('roll_number')
             date_of_birth = request.data.get('date_of_birth')
@@ -42,6 +45,7 @@ class StudentService:
             parent_name = request.data.get('parent_name')
             parent_phone = request.data.get('parent_phone')
             parent_email = request.data.get('parent_email')
+            acadamic_year_id = request.data.get('academic_year_id')
 
 
             if not school_id:
@@ -53,7 +57,7 @@ class StudentService:
                                     status=status.HTTP_400_BAD_REQUEST)
             if (not username or not class_id or not password or not roll_number or not date_of_birth
                 or not gender or not address or not addmission_date or not parent_name or not 
-                parent_phone):
+                parent_phone or not acadamic_year_id):
                 return JsonResponse({"error": "All manditory fields are required."},
                                     status=status.HTTP_400_BAD_REQUEST)
 
@@ -65,8 +69,8 @@ class StudentService:
 
             with transaction.atomic():
                 role = Role.objects.get(name='student')
-                user = User.objects.createuser(
-                    username=username,
+                user = User.objects.create_user(
+                    user_name=username,
                     first_name=first_name,
                     last_name=last_name,
                     email=email,
@@ -75,14 +79,187 @@ class StudentService:
                     school_id=school_id,
                     gender=gender,
                     address=address,
-                    role_id=3,
+                    role = role,
+                    date_of_birth=date_of_birth,
                 )
+                class_instance = Class.objects.using(school_db_name).get(id=class_id)
+                if not class_instance:
+                    return JsonResponse({"error": "Class not found."},
+                                        status=status.HTTP_404_NOT_FOUND)
+                
+                student = Student.objects.using(school_db_name).create(
+                    student_id=user.id,
+                    roll_number=roll_number,
+                    admission_date=addmission_date,
+                    parent_name=parent_name,
+                    parent_phone=parent_phone,
+                    parent_email=parent_email
+                )
+
+                acadamic_year = AcademicYear.objects.using(school_db_name).get(id=acadamic_year_id)
+
+                student_class_assignment = StudentClassAssignment.objects.using(
+                    school_db_name
+                ).create(
+                    student = student,
+                    class_instance = class_instance,
+                    academic_year = acadamic_year
+                )
+
             return JsonResponse({"message": "Student created successfully.",
                                  "student_id": student.id}, status=status.HTTP_201_CREATED)
+        except Role.DoesNotExist:
+            return JsonResponse({"error": "Role student not found."},
+                                status=status.HTTP_404_NOT_FOUND)
+        except Class.DoesNotExist:
+            return JsonResponse({"error": "Class not found."},
+                                status=status.HTTP_404_NOT_FOUND)
+        except AcademicYear.DoesNotExist:
+            return JsonResponse({"error": "Academic year not found."},
+                                status=status.HTTP_404_NOT_FOUND)
+        except User.DoesNotExist:
+            return JsonResponse({"error": "User creation failed."},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except IntegrityError as e:
+            logger.error(f"Integrity error: {e}")
+            if 'unique_student_id_roll_number' in str(e):
+                return JsonResponse({"error": "Student with this ID and roll number already exists."},
+                                    status=status.HTTP_400_BAD_REQUEST)
+            elif 'unique_student_academic_year' in str(e):
+                return JsonResponse({"error": "This student is already assigned to the class for this academic year."},
+                                    status=status.HTTP_400_BAD_REQUEST)
+            elif 'unique_academic_year_dates' in str(e):
+                return JsonResponse({"error": "Academic year with these dates already exists."},
+                                    status=status.HTTP_400_BAD_REQUEST)
+            elif 'unique constraint' in str(e).lower():
+                return JsonResponse({'error':"Username already exists."}, status=400)
+            
         except Exception as e:
             logger.error(f"Error creating student: {e}")
             return JsonResponse({"error": "Failed to create student."},
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def update_student_by_id(self, request):
+        """Update an existing student's details."""
+        try:
+            school_id = request.data.get('school_id', request.user.school_id)
+            student_id = request.data.get('student_id')
+            first_name = request.data.get('first_name')
+            last_name = request.data.get('last_name')
+            email = request.data.get('email')
+            phone = request.data.get('phone_number')
+            class_assignment_id = request.data.get('class_assignment_id')
+            class_id = request.data.get('class_id')
+            roll_number = request.data.get('roll_number')
+            date_of_birth = request.data.get('date_of_birth')
+            gender = request.data.get('gender')
+            address = request.data.get('address')
+            addmission_date = request.data.get('admission_date')
+            parent_name = request.data.get('parent_name')
+            parent_phone = request.data.get('parent_phone')
+            parent_email = request.data.get('parent_email')
+            acadamic_year_id = request.data.get('academic_year_id')
+
+            if not school_id:
+                return JsonResponse({"error": "School ID is required."},
+                                    status=status.HTTP_400_BAD_REQUEST)
+            if not student_id:
+                return JsonResponse({"error": "Student ID is required."},
+                                    status=status.HTTP_400_BAD_REQUEST)
+            
+            user = User.objects.get(
+                id=student_id)
+            
+            if not user:
+                return JsonResponse({"error": "Student not found."},
+                                    status=status.HTTP_404_NOT_FOUND)
+            
+            if first_name:
+                user.first_name = first_name
+            if last_name:
+                user.last_name = last_name
+            if email:
+                user.email = email
+            if phone:
+                user.phone_number = phone
+            if gender:
+                user.gender = gender
+            if address:
+                user.address = address
+            if date_of_birth:
+                user.date_of_birth = date_of_birth
+            user.save()
+
+            school_db_name = CommonFunctions.get_school_db_name(school_id)
+
+            student = Student.objects.using(school_db_name).get(
+                student_id=student_id
+            )
+            if not student:
+                return JsonResponse({"error": "Student not found."},
+                                    status=status.HTTP_404_NOT_FOUND)
+            if roll_number:
+                student.roll_number = roll_number
+            if addmission_date:
+                student.admission_date = addmission_date
+            if parent_name:
+                student.parent_name = parent_name
+            if parent_phone:
+                student.parent_phone = parent_phone
+            if parent_email:
+                student.parent_email = parent_email
+            student.save(using=school_db_name)
+            
+            if class_assignment_id and class_id and acadamic_year_id:
+                class_assignment_instance = StudentClassAssignment.objects.using(school_db_name).get(
+                    id=class_assignment_id
+                )
+                if not class_assignment_instance:
+                    return JsonResponse({"error": "Class Assignment not found for the student."},
+                                        status=status.HTTP_404_NOT_FOUND)
+                class_assignment_instance.delete()
+
+                class_instance = Class.objects.using(school_db_name).get(id=class_id)
+                
+                acadamic_year = AcademicYear.objects.using(school_db_name).get(id=acadamic_year_id)
+                if not acadamic_year:
+                    return JsonResponse({"error": "Acadamic year not found."},
+                                        status=status.HTTP_404_NOT_FOUND)
+
+                student_class_assignment = StudentClassAssignment.objects.using(
+                    school_db_name
+                ).create(
+                    student=student,
+                    class_instance=class_instance,
+                    academic_year=acadamic_year
+                )
+        except User.DoesNotExist:
+            return JsonResponse({"error": "User not found."},
+                                status=status.HTTP_404_NOT_FOUND)
+        except Student.DoesNotExist:
+            return JsonResponse({"error": "Student not found."},
+                                status=status.HTTP_404_NOT_FOUND)
+        except Class.DoesNotExist:
+            return JsonResponse({"error": "Class not found."},
+                                status=status.HTTP_404_NOT_FOUND)
+        except AcademicYear.DoesNotExist:
+            return JsonResponse({"error": "Academic year not found."},
+                                status=status.HTTP_404_NOT_FOUND)
+        except IntegrityError as e:
+            logger.error(f"Integrity error: {e}")
+            if 'unique_student_id_roll_number' in str(e):
+                return JsonResponse({"error": "Student with this ID and roll number already exists."},
+                                    status=status.HTTP_400_BAD_REQUEST)
+            elif 'unique_student_academic_year' in str(e):
+                return JsonResponse({"error": "This student is already assigned to the class for this academic year."},
+                                    status=status.HTTP_400_BAD_REQUEST)
+            elif 'unique constraint' in str(e).lower():
+                return JsonResponse({'error':"Username already exists."}, status=400)
+        except Exception as e:
+            logger.error(f"Error updating student: {e}")
+            return JsonResponse({"error": "Failed to update student."},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
     def get_students_by_school_id(self, request):
         """Retrieve students by school ID."""
@@ -94,10 +271,6 @@ class StudentService:
         # Implementation for retrieving a student by ID
         pass
 
-    def update_student_by_id(self, request):
-        """Update an existing student's details."""
-        # Implementation for updating a student's details
-        pass
 
     def delete_student_by_id(self, request):
         """Delete a student by their ID."""
