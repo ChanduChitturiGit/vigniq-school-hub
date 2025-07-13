@@ -9,6 +9,7 @@ from django.db import transaction,IntegrityError
 from django.core.exceptions import ObjectDoesNotExist
 
 from teacher.models import Teacher, TeacherSubjectAssignment, Subject
+from academics.models import AcademicYear
 
 from classes.models import Class
 
@@ -44,11 +45,11 @@ class TeacherService:
             gender = request.data.get('gender')
             address = request.data.get('address')
             subject_assignments = request.data.get('subject_assignments', [])
-
             qualification = request.data.get('qualification', None)
             experience = request.data.get('experience', None)
             joining_date = request.data.get('joining_date', None)
             emergency_contact = request.data.get('emergency_contact', None)
+            academic_year_id = request.data.get('academic_year_id', None)
 
             if not school_id:
                 logger.error("School ID is required for teacher creation.")
@@ -61,7 +62,7 @@ class TeacherService:
 
             if (not first_name or not last_name or not user_name or not password 
                 or not email or not gender or not phone_number or not qualification
-                or not joining_date):
+                or not joining_date or not academic_year_id):
                 logger.error("Missing required fields for teacher creation.")
                 return JsonResponse({"error": "Missing required fields."}, status=400)
             
@@ -71,6 +72,12 @@ class TeacherService:
             
             school_db_name = SchoolDbMetadata.objects.filter(school_id=school_id).first().db_name
             
+            acadamic_year = AcademicYear.objects.using(school_db_name
+                                ).filter(id=academic_year_id).first()
+            if not acadamic_year:
+                logger.error(f"Academic Year with ID {academic_year_id} does not exist.")
+                return JsonResponse({"error": "Academic Year not found."}, status=404)
+
             with transaction.atomic(using='default'):
                 with transaction.atomic(using=school_db_name):
                     user = User.objects.create_user(
@@ -112,9 +119,10 @@ class TeacherService:
                                 raise ValueError(f"Invalid ID in assignment: {e}")
 
                             TeacherSubjectAssignment.objects.using(school_db_name).get_or_create(
-                                teacher=teacher,
-                                subject=subject,
-                                school_class=school_class
+                                teacher = teacher,
+                                subject = subject,
+                                school_class = school_class,
+                                academic_year = acadamic_year
                             )
 
                     send_email = EmailService()
@@ -153,11 +161,11 @@ class TeacherService:
             gender = request.data.get('gender')
             address = request.data.get('address')
             subject_assignments = request.data.get('subject_assignments', [])
-
             qualification = request.data.get('qualification', None)
             experience = request.data.get('experience', None)
             joining_date = request.data.get('joining_date', None)
             emergency_contact = request.data.get('emergency_contact', None)
+            academic_year_id = request.data.get('academic_year_id', None)
 
             school_id = request.data.get("school_id",request.user.school_id)
             school_db_name = SchoolDbMetadata.objects.filter(school_id=school_id).first().db_name
@@ -165,7 +173,16 @@ class TeacherService:
             if not teacher_id:
                 logger.error("Teacher ID is required for editing.")
                 return JsonResponse({"error": "Teacher ID is required."}, status=400)
+            
+            if not academic_year_id:
+                logger.error("Academic Year ID is required for editing.")
+                return JsonResponse({"error": "Academic Year ID is required."}, status=400)
 
+            acadamic_year = AcademicYear.objects.using(school_db_name
+                                ).filter(id=academic_year_id).first()
+            if not acadamic_year:
+                logger.error(f"Academic Year with ID {academic_year_id} does not exist.")
+                return JsonResponse({"error": "Academic Year not found."}, status=404)
             with transaction.atomic(using='default'):
                 with transaction.atomic(using=school_db_name):
                     # Update User
@@ -210,7 +227,8 @@ class TeacherService:
                     if subject_assignments is not None:
                         # Remove old assignments
                         TeacherSubjectAssignment.objects.using(school_db_name).filter(
-                            teacher=teacher).delete()
+                            teacher = teacher,
+                            acadamic_year = acadamic_year).delete()
                         # Add new assignments
                         for item in subject_assignments:
                             try:
@@ -230,9 +248,10 @@ class TeacherService:
                                 raise ValueError(f"Invalid ID in assignment: {e}")
 
                             TeacherSubjectAssignment.objects.using(school_db_name).get_or_create(
-                                teacher=teacher,
-                                subject=subject,
-                                school_class=school_class
+                                teacher = teacher,
+                                subject = subject,
+                                school_class = school_class,
+                                acadamic_year = acadamic_year
                             )
 
                     logger.info(f"Teacher {teacher_id} updated successfully.")
@@ -256,6 +275,7 @@ class TeacherService:
         try:
             teacher_id = request.GET.get('teacher_id', None)
             school_id = request.GET.get('school_id', request.user.school_id)
+            academic_year_id = request.data.get('academic_year_id', None)
 
             if not teacher_id:
                 logger.error("Teacher ID is required to fetch teacher details.")
@@ -263,6 +283,9 @@ class TeacherService:
             if not school_id:
                 logger.error("School ID is required to fetch teacher details.")
                 return JsonResponse({"error": "School ID is required."}, status=400)
+            if not academic_year_id:
+                logger.error("Academic Year ID is required for editing.")
+                return JsonResponse({"error": "Academic Year ID is required."}, status=400)
 
             school_db_name = SchoolDbMetadata.objects.filter(school_id=school_id).first().db_name
 
@@ -274,8 +297,15 @@ class TeacherService:
 
             user = User.objects.get(id=teacher.teacher_id, school_id=school_id)
 
+            acadamic_year = AcademicYear.objects.using(school_db_name
+                                ).filter(id=academic_year_id).first()
+            if not acadamic_year:
+                logger.error(f"Academic Year with ID {academic_year_id} does not exist.")
+                return JsonResponse({"error": "Academic Year not found."}, status=404)
+            
             subject_assignments = TeacherSubjectAssignment.objects.using(school_db_name).filter(
-                teacher=teacher
+                teacher = teacher,
+                academic_year = acadamic_year
             ).values(
                 'subject__id', 'subject__name', 'school_class__id', 'school_class__name',
                 'school_class__section'
@@ -323,10 +353,21 @@ class TeacherService:
         """
         try:
             school_id = request.GET.get('school_id', request.user.school_id)
+            academic_year_id = request.data.get('academic_year_id', None)
 
             if not school_id:
                 logger.error("School ID is required to fetch teacher list.")
                 return JsonResponse({"error": "School ID is required."}, status=400)
+            
+            if not academic_year_id:
+                logger.error("Academic Year ID is required for fetching teacher list.")
+                return JsonResponse({"error": "Academic Year ID is required."}, status=400)
+            
+            acadamic_year = AcademicYear.objects.using(school_db_name
+                                ).filter(id=academic_year_id).first()
+            if not acadamic_year:
+                logger.error(f"Academic Year with ID {academic_year_id} does not exist.")
+                return JsonResponse({"error": "Academic Year not found."}, status=404)
 
             school_db_name = SchoolDbMetadata.objects.filter(school_id=school_id).first().db_name
 
@@ -340,7 +381,8 @@ class TeacherService:
                     continue
 
                 subject_assignments = TeacherSubjectAssignment.objects.using(school_db_name).filter(
-                    teacher=teacher
+                    teacher = teacher,
+                    academic_year = acadamic_year
                 ).values(
                     'subject__id', 'subject__name', 'school_class__id', 'school_class__name',
                     'school_class__section'
@@ -400,20 +442,15 @@ class TeacherService:
                     except Teacher.DoesNotExist:
                         logger.error(f"Teacher with ID {teacher_id} does not exist.")
                         return JsonResponse({"error": "Teacher not found."}, status=404)
-
-                    # Delete subject assignments    
-                    TeacherSubjectAssignment.objects.using(school_db_name).filter(
-                        teacher=teacher).delete()
-
-                    # deactivate the teacher record
-                    teacher.is_active = False
-                    teacher.save(using=school_db_name)
                     
-                    # Delete the user record
                     user = User.objects.filter(id=teacher_id, school_id=school_id)
                     if not user.exists():
                         logger.error(f"User with ID {teacher_id} does not exist.")
                         return JsonResponse({"error": "User not found."}, status=404)
+
+                    # deactivate the teacher record
+                    teacher.is_active = False
+                    teacher.save(using=school_db_name)
                     
                     user = user.first()
                     user.is_active = False
