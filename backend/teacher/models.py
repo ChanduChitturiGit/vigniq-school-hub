@@ -1,7 +1,9 @@
 from django.db import models
 
 from classes.models import Class
+from academics.models import AcademicYear
 
+from core.models import User
 class Subject(models.Model):
     name = models.CharField(max_length=100, unique=True)
     
@@ -22,6 +24,12 @@ class Teacher(models.Model):
     created_at = models.DateTimeField(auto_now_add=True,null=True)
     updated_at = models.DateTimeField(auto_now=True,null=True)
 
+    @property
+    def full_name(self):
+        user_instance = User.objects.filter(id=self.teacher_id).first()
+        if user_instance:
+            return f"{user_instance.first_name} {user_instance.last_name}"
+        return "Unknown Teacher"
     class Meta:
         db_table = 'teacher'
 
@@ -29,8 +37,9 @@ class TeacherSubjectAssignment(models.Model):
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     school_class = models.ForeignKey(Class, on_delete=models.CASCADE)
+    academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE,null=True, blank=True)
 
     class Meta:
         db_table = 'teacher_subject_assignment'
-        unique_together = ('teacher', 'subject', 'school_class')
+        unique_together = ('teacher', 'subject', 'school_class','academic_year')
 
