@@ -111,8 +111,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
     const helpSubItems: { path: string; label: string; icon: React.ComponentType<{ className?: string }> }[] = [];
 
     if (user?.role === 'Super Admin') {
-      // Super Admin sees responses (from all admins)
-      helpSubItems.push({ path: '/responses', label: 'Responses', icon: MessageSquare });
+      // Super Admin sees admin requests (from all admins)
+      helpSubItems.push({ path: '/admin-requests', label: 'Requests', icon: FileText });
     } else {
       // Other roles see support, requests, and responses
       helpSubItems.push({ path: '/support', label: 'Support', icon: HelpCircle });
