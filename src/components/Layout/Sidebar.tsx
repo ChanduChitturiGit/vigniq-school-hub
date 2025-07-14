@@ -55,16 +55,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
 
   const getMenuItems = (): MenuItem[] => {
     const baseItems: MenuItem[] = [
-      { path: '/dashboard', icon: Home, label: 'Home', roles: ['Super Admin', 'Admin', 'Teacher', 'Student'] }
+      { path: '/dashboard', icon: Home, label: 'Home', roles: ['superadmin', 'admin', 'teacher', 'student'] }
     ];
 
     const roleSpecificItems: { [key: string]: MenuItem[] } = {
-      'Super Admin': [
+      'superadmin': [
         {
           key: 'school-management',
           icon: School,
           label: 'School Management',
-          roles: ['Super Admin'],
+          roles: ['superadmin'],
           isDropdown: true,
           subItems: [
             { path: '/schools', label: 'Schools', icon: School },
@@ -72,52 +72,52 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
           ]
         }
       ],
-      'Admin': [
+      'admin': [
         {
           key: 'school-management',
           icon: School,
           label: 'School Management',
-          roles: ['Admin'],
+          roles: ['admin'],
           isDropdown: true,
           subItems: [
             { path: '/admin-school', label: 'My School', icon: School },
             { path: '/classes', label: 'Classes', icon: BookOpen },
-            { path: '/teachers', label: 'Teachers', icon: GraduationCap },
-            { path: '/students', label: 'Students', icon: Users }
+            { path: '/teachers', label: 'teachers', icon: GraduationCap },
+            { path: '/students', label: 'students', icon: Users }
           ]
         }
       ],
-      'Teacher': [
+      'teacher': [
         {
           key: 'user-management',
           icon: Users,
           label: 'User Management',
-          roles: ['Teacher'],
+          roles: ['teacher'],
           isDropdown: true,
           subItems: [
             { path: '/classes', label: 'Classes', icon: BookOpen },
-            { path: '/students', label: 'Students', icon: Users }
+            { path: '/students', label: 'students', icon: Users }
           ]
         }
       ],
-      'Student': [
-        { path: '/profile', icon: User, label: 'My Profile', roles: ['Student'] },
-        { path: '/timetable', icon: Calendar, label: 'Timetable', roles: ['Student'] },
-        { path: '/grades', icon: BarChart3, label: 'Grades', roles: ['Student'] }
+      'student': [
+        { path: '/profile', icon: User, label: 'My Profile', roles: ['student'] },
+        { path: '/timetable', icon: Calendar, label: 'Timetable', roles: ['student'] },
+        { path: '/grades', icon: BarChart3, label: 'Grades', roles: ['student'] }
       ]
     };
 
-    // Help dropdown - different for Super Admin vs others
+    // Help dropdown - different for superadmin vs others
     const helpSubItems: { path: string; label: string; icon: React.ComponentType<{ className?: string }> }[] = [];
 
-    if (user?.role === 'Super Admin') {
-      // Super Admin sees responses (from all admins)
+    if (user?.role === 'superadmin') {
+      // superadmin sees responses (from all admins)
       helpSubItems.push({ path: '/responses', label: 'Responses', icon: MessageSquare });
     } else {
       // Other roles see support, requests, and responses
       helpSubItems.push({ path: '/support', label: 'Support', icon: HelpCircle });
       
-      if (user?.role !== 'Student') {
+      if (user?.role !== 'student') {
         helpSubItems.push({ path: '/admin-requests', label: 'Requests', icon: FileText });
       }
       
@@ -129,7 +129,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
         key: 'help',
         icon: HelpCircle,
         label: 'Help',
-        roles: ['Super Admin', 'Admin', 'Teacher', 'Student'],
+        roles: ['superadmin', 'admin', 'teacher', 'student'],
         isDropdown: true,
         subItems: helpSubItems
       }

@@ -3,7 +3,7 @@
         "model": "core.role",
         "pk": 1,
         "fields": {
-            "name": "super_admin"
+            "name": "superadmin"
         }
     },
     {

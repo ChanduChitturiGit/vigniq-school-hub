@@ -20,6 +20,7 @@ const Login: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { login, isAuthenticated } = useAuth();
 
+
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -60,17 +61,17 @@ const Login: React.FC = () => {
 
   const handleForgotPassword = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (forgotStep === 1) {
       // Validate username first
       if (!validateUsername(forgotUsername)) {
         return;
       }
-      
+
       // Verify username exists and get email
       const users = JSON.parse(localStorage.getItem('vigniq_users') || '[]');
       const userExists = users.find((u: any) => u.username === forgotUsername);
-      
+
       if (userExists) {
         setForgotStep(2);
         setError('');
@@ -96,19 +97,19 @@ const Login: React.FC = () => {
         setError('Passwords do not match.');
         return;
       }
-      
+
       if (newPassword.length < 6) {
         setError('Password must be at least 6 characters long.');
         return;
       }
-      
+
       const users = JSON.parse(localStorage.getItem('vigniq_users') || '[]');
       const userIndex = users.findIndex((u: any) => u.username === forgotUsername);
-      
+
       if (userIndex !== -1) {
         users[userIndex].password = newPassword;
         localStorage.setItem('vigniq_users', JSON.stringify(users));
-        
+
         setShowForgotPassword(false);
         setForgotStep(1);
         setForgotUsername('');
@@ -154,8 +155,8 @@ const Login: React.FC = () => {
                 {showForgotPassword ? 'Reset Password' : ''}
               </h1>
               <p className="text-gray-600">
-                {showForgotPassword 
-                  ? 'Enter your details to reset your password.' 
+                {showForgotPassword
+                  ? 'Enter your details to reset your password.'
                   : 'Login to continue your AI learning journey.'
                 }
               </p>

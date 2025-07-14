@@ -13,3 +13,13 @@ class Class(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.section}"
+
+
+class ClassAssignment(models.Model):
+    class_instance = models.ForeignKey(Class, on_delete=models.CASCADE)
+    class_teacher = models.ForeignKey('teacher.Teacher', on_delete=models.CASCADE)
+    academic_year = models.ForeignKey('academics.AcademicYear', on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'class_assignment'
+        unique_together = ('class_instance', 'class_teacher', 'academic_year')
