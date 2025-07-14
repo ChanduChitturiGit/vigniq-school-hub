@@ -11,14 +11,14 @@ const Dashboard: React.FC = () => {
   const { user } = useAuth();
 
   const renderDashboard = () => {
-    switch (user?.role) {
-      case 'Super Admin':
+    switch (user?.role.toLowerCase()) {
+      case 'superadmin':
         return <SuperAdminDashboard />;
-      case 'Admin':
+      case 'admin':
         return <AdminDashboard />;
-      case 'Teacher':
+      case 'teacher':
         return <TeacherDashboard />;
-      case 'Student':
+      case 'student':
         return <StudentDashboard />;
       default:
         return <div>Access Denied</div>;

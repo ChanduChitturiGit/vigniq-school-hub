@@ -1,12 +1,14 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { environment } from '@/environment';
+import { login as loginApi } from '../services/login';
 
 interface User {
   id: string;
   username: string;
   email: string;
   name: string;
-  role: 'Super Admin' | 'Admin' | 'Teacher' | 'Student';
+  role: string;
   schoolId?: string;
   classId?: string;
 }
@@ -68,14 +70,16 @@ const defaultUsers: (User & { password: string })[] = [
     classId: '1'
   }
 ];
+const baseurl = environment.baseurl;
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
 
   useEffect(() => {
     // Always reset users to ensure they have the latest structure with username
-    localStorage.setItem('vigniq_users', JSON.stringify(defaultUsers));
+   // localStorage.setItem('vigniq_users', JSON.stringify(defaultUsers));
 
     // Check for existing session
     const savedUser = localStorage.getItem('vigniq_current_user');
@@ -86,17 +90,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const login = async (username: string, password: string): Promise<boolean> => {
-    console.log('Login attempt:', { username, password });
-    const users = JSON.parse(localStorage.getItem('vigniq_users') || '[]');
-    console.log('Available users:', users);
-    const foundUser = users.find((u: any) => u.username === username && u.password === password);
-    console.log('Found user:', foundUser);
+    const res = await loginApi({ user_name : username, password });
+
+    localStorage.setItem('access_token', res.access);
+    localStorage.setItem('refresh_token', res.refresh);
+    localStorage.setItem('vigniq_current_user', JSON.stringify(res.user));
+
+    const foundUser = res.user;
     
     if (foundUser) {
-      const { password: _, ...userWithoutPassword } = foundUser;
-      setUser(userWithoutPassword);
+      setUser(foundUser);
       setIsAuthenticated(true);
-      localStorage.setItem('vigniq_current_user', JSON.stringify(userWithoutPassword));
+      localStorage.setItem('vigniq_current_user', JSON.stringify(foundUser));
       return true;
     }
     return false;
