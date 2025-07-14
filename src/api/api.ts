@@ -1,8 +1,11 @@
 // src/api/api.ts
 import axios from 'axios';
+import { environment } from '@/environment';
+
+const baseurl = environment.baseurl;
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: baseurl,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -28,7 +31,7 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       try {
         const refreshToken = localStorage.getItem('refresh_token');
-        const res = await axios.post('https://your-backend.com/api/token/refresh/', {
+        const res = await axios.post(baseurl+'/auth/token/refresh/', {
           refresh: refreshToken,
         });
 
