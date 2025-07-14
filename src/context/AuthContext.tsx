@@ -74,11 +74,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Initialize default users in localStorage if not exists
-    const existingUsers = localStorage.getItem('vigniq_users');
-    if (!existingUsers) {
-      localStorage.setItem('vigniq_users', JSON.stringify(defaultUsers));
-    }
+    // Always reset users to ensure they have the latest structure with username
+    localStorage.setItem('vigniq_users', JSON.stringify(defaultUsers));
 
     // Check for existing session
     const savedUser = localStorage.getItem('vigniq_current_user');
@@ -89,8 +86,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const login = async (username: string, password: string): Promise<boolean> => {
+    console.log('Login attempt:', { username, password });
     const users = JSON.parse(localStorage.getItem('vigniq_users') || '[]');
+    console.log('Available users:', users);
     const foundUser = users.find((u: any) => u.username === username && u.password === password);
+    console.log('Found user:', foundUser);
     
     if (foundUser) {
       const { password: _, ...userWithoutPassword } = foundUser;
