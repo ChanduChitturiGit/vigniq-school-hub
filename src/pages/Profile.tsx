@@ -1,15 +1,30 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Save, X, User, Mail, Phone, MapPin, Calendar, GraduationCap } from 'lucide-react';
+import { Edit, Save, X, User, Mail, Phone, MapPin, Calendar, GraduationCap, KeyRound } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../components/ui/alert-dialog';
 
 const Profile: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: user?.name || '',
+    firstName: user?.name?.split(' ')[0] || '',
+    lastName: user?.name?.split(' ').slice(1).join(' ') || '',
+    username: user?.username || '',
     email: user?.email || '',
     phone: '+1 234-567-8900',
     address: '123 Main Street, City, State 12345',
@@ -38,7 +53,9 @@ const Profile: React.FC = () => {
 
   const handleCancel = () => {
     setFormData({
-      name: user?.name || '',
+      firstName: user?.name?.split(' ')[0] || '',
+      lastName: user?.name?.split(' ').slice(1).join(' ') || '',
+      username: user?.username || '',
       email: user?.email || '',
       phone: '+1 234-567-8900',
       address: '123 Main Street, City, State 12345',
@@ -47,6 +64,13 @@ const Profile: React.FC = () => {
       joiningDate: '2023-01-15'
     });
     setIsEditing(false);
+  };
+
+  const handleResetPassword = () => {
+    // Store current user email in localStorage before logout
+    localStorage.setItem('reset_password_email', user?.email || '');
+    logout();
+    navigate('/reset-password?fromProfile=true');
   };
 
   return (
@@ -66,26 +90,26 @@ const Profile: React.FC = () => {
               </div>
             </div>
             
-            {user?.role !== 'Student' && (
-              <div className="flex gap-2">
-                {isEditing ? (
-                  <>
-                    <button
-                      onClick={handleSave}
-                      className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
-                    >
-                      <Save className="w-4 h-4" />
-                      Save
-                    </button>
-                    <button
-                      onClick={handleCancel}
-                      className="flex items-center gap-2 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                      Cancel
-                    </button>
-                  </>
-                ) : (
+            <div className="flex gap-2">
+              {isEditing ? (
+                <>
+                  <button
+                    onClick={handleSave}
+                    className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+                  >
+                    <Save className="w-4 h-4" />
+                    Save
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className="flex items-center gap-2 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <>
                   <button
                     onClick={() => setIsEditing(true)}
                     className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
@@ -93,9 +117,32 @@ const Profile: React.FC = () => {
                     <Edit className="w-4 h-4" />
                     Edit Profile
                   </button>
-                )}
-              </div>
-            )}
+                  
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <button className="flex items-center gap-2 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">
+                        <KeyRound className="w-4 h-4" />
+                        Reset Password
+                      </button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Reset Password</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to reset your password? You will be logged out and must log in again.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleResetPassword}>
+                          Yes, Reset Password
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              )}
+            </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -103,19 +150,46 @@ const Profile: React.FC = () => {
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                   <User className="w-4 h-4" />
-                  Full Name
+                  First Name
                 </label>
                 {isEditing ? (
                   <input
                     type="text"
-                    name="name"
-                    value={formData.name}
+                    name="firstName"
+                    value={formData.firstName}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 ) : (
-                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.name}</p>
+                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.firstName}</p>
                 )}
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                  <User className="w-4 h-4" />
+                  Last Name
+                </label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : (
+                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.lastName}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                  <User className="w-4 h-4" />
+                  Username
+                </label>
+                <p className="text-gray-900 bg-gray-100 p-3 rounded-lg border">{formData.username}</p>
+                <p className="text-xs text-gray-500 mt-1">Username cannot be changed</p>
               </div>
               
               <div>
@@ -123,17 +197,8 @@ const Profile: React.FC = () => {
                   <Mail className="w-4 h-4" />
                   Email
                 </label>
-                {isEditing ? (
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                ) : (
-                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.email}</p>
-                )}
+                <p className="text-gray-900 bg-gray-100 p-3 rounded-lg border">{formData.email}</p>
+                <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
               </div>
               
               <div>
