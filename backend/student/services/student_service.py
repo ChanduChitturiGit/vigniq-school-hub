@@ -263,16 +263,122 @@ class StudentService:
 
     def get_students_by_school_id(self, request):
         """Retrieve students by school ID."""
-        # Implementation for retrieving students by school ID
-        pass
+        try:
+            school_id = request.data.get('school_id', request.user.school_id)
+            if not school_id:
+                return JsonResponse({"error": "School ID is required."},
+                                    status=status.HTTP_400_BAD_REQUEST)
+
+            self.school_db_name = CommonFunctions.get_school_db_name(school_id)
+            if not self.school_db_name:
+                return JsonResponse({"error": "School not found or school is inactive."},
+                                    status=status.HTTP_404_NOT_FOUND)
+
+            students = Student.objects.using(self.school_db_name).all()
+            
+            students_data = self._get_students_data(students)
+            if not students_data:
+                return JsonResponse({"message": "No students found."},
+                                    status=status.HTTP_404_NOT_FOUND)
+
+            return JsonResponse({"students": students_data}, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"Error retrieving students: {e}")
+            return JsonResponse({"error": "Failed to retrieve students."},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def get_student_by_id(self, request):
         """Retrieve a student by their ID."""
-        # Implementation for retrieving a student by ID
-        pass
+        try:
+            school_id = request.data.get('school_id', request.user.school_id)
+            student_id = request.data.get('student_id')
+
+            if not school_id:
+                return JsonResponse({"error": "School ID is required."},
+                                    status=status.HTTP_400_BAD_REQUEST)
+            if not student_id:
+                return JsonResponse({"error": "Student ID is required."},
+                                    status=status.HTTP_400_BAD_REQUEST)
+
+            self.school_db_name = CommonFunctions.get_school_db_name(school_id)
+            if not self.school_db_name:
+                return JsonResponse({"error": "School not found or school is inactive."},
+                                    status=status.HTTP_404_NOT_FOUND)
+
+            student = Student.objects.using(self.school_db_name).get(student_id=student_id)
+            if not student:
+                return JsonResponse({"error": "Student not found."},
+                                    status=status.HTTP_404_NOT_FOUND)
+
+            user = User.objects.get(id=student.student_id)
+            class_assignment = StudentClassAssignment.objects.using(self.school_db_name).get(
+                student=student
+            )
+            class_instance = Class.objects.using(self.school_db_name).get(
+                id=class_assignment.class_instance_id
+            )
+
+            student_data = {
+                "student_id": student.student_id,
+                "student_name": user.full_name(),
+                "roll_number": student.roll_number,
+                "parent_name": student.parent_name,
+                "parent_phone": student.parent_phone,
+                "is_active": student.is_active,
+                "class_name": class_instance.name,
+                "class_id": class_instance.id,
+                "section": class_instance.section,
+                "email": user.email,
+                "address": user.address,
+                "date_of_birth": user.date_of_birth,
+            }
+
+            return JsonResponse({"student": student_data}, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"Error retrieving student by ID: {e}")
+            return JsonResponse({"error": "Failed to retrieve student."},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
     def delete_student_by_id(self, request):
         """Delete a student by their ID."""
         # Implementation for deleting a student by ID
         pass
+
+    def _get_students_data(self,students):
+        """Helper method to format student data."""
+        try:
+            students_data = []
+
+            for student in students:
+                try:
+                    user = User.objects.get(id=student.student_id)
+                    class_assignment = StudentClassAssignment.objects.using(self.school_db_name).get(
+                        student=student)
+                    class_instance = Class.objects.using(self.school_db_name).get(
+                        id=class_assignment.class_instance_id)
+                except User.DoesNotExist:
+                    logger.warning(f"User with ID {student.student_id} not found.")
+                    continue
+                except StudentClassAssignment.DoesNotExist:
+                    logger.warning(f"Class assignment for student ID {student.student_id} not found.")
+                    continue
+                except Class.DoesNotExist:
+                    logger.warning(f"Class with ID {class_assignment.class_instance.id} not found.")
+                    continue
+                students_data.append({
+                    "student_id": student.student_id,
+                    "student_name": user.full_name(),
+                    "roll_number": student.roll_number,
+                    "parent_name": student.parent_name,
+                    "parent_phone": student.parent_phone,
+                    "is_active": student.is_active,
+                    "class_name": class_instance.name,
+                    "class_id": class_instance.id,
+                    "section": class_instance.section,
+                    "email": user.email,
+                })
+            return students_data
+        except Exception as e:
+            logger.error(f"Error formatting students data: {e}")
+            return []
