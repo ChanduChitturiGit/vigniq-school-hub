@@ -1,4 +1,3 @@
-// src/services/login.ts
 import api from '../api/api';
 import { environment } from '@/environment';
 

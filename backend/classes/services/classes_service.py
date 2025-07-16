@@ -5,7 +5,7 @@ import logging
 from django.http import JsonResponse
 from django.db import IntegrityError
 
-from classes.models import Class,ClassAssignment
+from classes.models import SchoolClass,ClassAssignment
 from classes.serializers import ClassSerializer
 from teacher.models import Teacher
 from academics.models import AcademicYear
@@ -29,7 +29,7 @@ class ClassesService:
                 return JsonResponse({"error": "School ID is required."},
                                     status=400)
             school_db_name = CommonFunctions.get_school_db_name(school_id)
-            classes = Class.objects.using(school_db_name).all()
+            classes = SchoolClass.objects.using(school_db_name).all()
             serializer = ClassSerializer(classes, many=True)
 
             logger.info(f"Retrieved {len(serializer.data)} classes.")
@@ -76,7 +76,7 @@ class ClassesService:
                 except User.DoesNotExist:
                     logger.error(f"Teacher with ID {class_instance.class_teacher.teacher_id} does not exist.")
                     continue
-                class_obj = Class.objects.using(school_db_name).get(
+                class_obj = SchoolClass.objects.using(school_db_name).get(
                     pk=class_instance.class_instance_id)
                 academic_year_obj = AcademicYear.objects.using(school_db_name).get(
                     pk=class_instance.academic_year_id)
@@ -123,7 +123,7 @@ class ClassesService:
             class_instance = ClassAssignment.objects.using(school_db_name).get(
                 id=class_assignment_id)
             
-            class_obj = Class.objects.using(school_db_name).get(
+            class_obj = SchoolClass.objects.using(school_db_name).get(
                     pk=class_instance.class_instance_id)
             
             teacher = Teacher.objects.using(school_db_name).get(pk=class_instance.class_teacher_id)
@@ -153,7 +153,7 @@ class ClassesService:
         except User.DoesNotExist:
             logger.error("User does not exist.")
             return JsonResponse({"error": "User not found."}, status=404)
-        except Class.DoesNotExist:
+        except SchoolClass.DoesNotExist:
             logger.error("Class does not exist.")
             return JsonResponse({"error": "Class not found."}, status=404)
         except Exception as e:
@@ -186,7 +186,7 @@ class ClassesService:
                 return JsonResponse({"error": "School not found or inactive."},
                                     status=404)
 
-            class_instance,is_created = Class.objects.using(school_db_name).get_or_create(
+            class_instance,is_created = SchoolClass.objects.using(school_db_name).get_or_create(
                 name=class_name, section = section_name
             )
 
@@ -243,7 +243,7 @@ class ClassesService:
                 return JsonResponse({"error": "School not found or inactive."},
                                     status=404)
 
-            class_instance = Class.objects.using(school_db_name).get(id=class_id)
+            class_instance = SchoolClass.objects.using(school_db_name).get(id=class_id)
             class_instance.name = class_name
             class_instance.section = section_name
             class_instance.save(using=school_db_name)
@@ -252,7 +252,7 @@ class ClassesService:
 
             logger.info(f"Class '{class_name}'- {section_name} updated successfully.")
             return JsonResponse({'data': serializer.data}, status=200)
-        except Class.DoesNotExist:
+        except SchoolClass.DoesNotExist:
             logger.error("Class does not exist.")
             return JsonResponse({"error": "Class not found."}, status=404)
         except IntegrityError as e:
@@ -296,8 +296,8 @@ class ClassesService:
             if not school_db_name:
                 return JsonResponse({"error": "School not found or inactive."},
                                     status=404)
-            
-            class_instance = Class.objects.using(school_db_name).get(id=class_id)
+
+            class_instance = SchoolClass.objects.using(school_db_name).get(id=class_id)
             if not class_instance:
                 return JsonResponse({"error": "Class not found."},
                                     status=404)
@@ -332,7 +332,7 @@ class ClassesService:
             }
             logger.info(f"Class assignment created successfully: {response_data}")
             return JsonResponse({'data': response_data}, status=201)
-        except Class.DoesNotExist:
+        except SchoolClass.DoesNotExist:
             logger.error("Class does not exist.")
             return JsonResponse({"error": "Class not found."}, status=404)
         except Teacher.DoesNotExist:
@@ -394,7 +394,7 @@ class ClassesService:
             
             logger.info(f"Class assignment updated successfully: {response_data}")
             return JsonResponse({'data': response_data}, status=200)
-        except Class.DoesNotExist:
+        except SchoolClass.DoesNotExist:
             logger.error("Class does not exist.")
             return JsonResponse({"error": "Class not found."}, status=404)
         except Teacher.DoesNotExist:

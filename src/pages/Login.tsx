@@ -3,6 +3,8 @@ import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { User, Lock, LogIn, Eye, EyeOff } from 'lucide-react';
 import { toast } from '../components/ui/sonner';
+import { sentVerficationCode, verifyUsernameWithCode, resetPassword as resetPasswordApi } from '../services/passwordHandler'
+import { TailSpin } from 'react-loader-spinner';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -19,6 +21,7 @@ const Login: React.FC = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { login, isAuthenticated } = useAuth();
+
 
 
   if (isAuthenticated) {
@@ -59,7 +62,22 @@ const Login: React.FC = () => {
     }
   };
 
-  const handleForgotPassword = (e: React.FormEvent) => {
+  const sentCode = async (userName: string) => {
+    const response = await sentVerficationCode(userName);
+    return response;
+  }
+
+  const verifyCode = async (user: any) => {
+    const response = await verifyUsernameWithCode(user);
+    return response;
+  }
+
+  const resetPassword = async (user: any) => {
+    const response = await resetPasswordApi(user);
+    return response;
+  }
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (forgotStep === 1) {
@@ -69,23 +87,40 @@ const Login: React.FC = () => {
       }
 
       // Verify username exists and get email
-      const users = JSON.parse(localStorage.getItem('vigniq_users') || '[]');
-      const userExists = users.find((u: any) => u.username === forgotUsername);
+      // const users = JSON.parse(localStorage.getItem('vigniq_users') || '[]');
+      // let userExists = users.find((u: any) => u.username === forgotUsername);
+
+      let userExists = await sentCode(forgotUsername);
 
       if (userExists) {
         setForgotStep(2);
         setError('');
         // Show toast notification with user's email
-        toast(`📬 A verification code has been sent to ${userExists.email}. Please check.`, {
-          duration: 4000,
-          position: "bottom-right"
-        });
+        toast(userExists.message ? `📬 ${userExists.message}` :
+          `📬 A verification code has been sent to ${userExists.email}. Please check.`,
+          {
+            duration: 4000,
+            position: "bottom-right"
+          });
       } else {
         setError('Username not found in our system.');
       }
     } else if (forgotStep === 2) {
       // Validate code
-      if (validationCode === '123') {
+      const user = {
+        user_name: forgotUsername,
+        otp: validationCode
+      }
+      // if (validationCode === '123') {
+      //   setForgotStep(3);
+      //   setError('');
+      // } else {
+      //   setError('Invalid validation code. Please enter 123.');
+      // }
+      const response = await verifyCode(user);
+
+      if (response && response.access_token) {
+        localStorage.setItem('access_token', response.access_token);
         setForgotStep(3);
         setError('');
       } else {
@@ -98,17 +133,19 @@ const Login: React.FC = () => {
         return;
       }
 
-      if (newPassword.length < 6) {
-        setError('Password must be at least 6 characters long.');
+      if (newPassword.length < 8) {
+        setError('Password must be at least 8 characters long.');
         return;
       }
 
-      const users = JSON.parse(localStorage.getItem('vigniq_users') || '[]');
-      const userIndex = users.findIndex((u: any) => u.username === forgotUsername);
+      const response = await resetPassword({ "new_password": newPassword });
 
-      if (userIndex !== -1) {
-        users[userIndex].password = newPassword;
-        localStorage.setItem('vigniq_users', JSON.stringify(users));
+      // const users = JSON.parse(localStorage.getItem('vigniq_users') || '[]');
+      // const userIndex = users.findIndex((u: any) => u.username === forgotUsername);
+
+      if (response && response.message) {
+        //users[userIndex].password = newPassword;
+        // localStorage.setItem('vigniq_users', JSON.stringify(users));
 
         setShowForgotPassword(false);
         setForgotStep(1);
@@ -371,6 +408,9 @@ const Login: React.FC = () => {
                   >
                     Cancel
                   </button>
+                </div>
+                <div className={`spinner ${ loading ? 'display-none' : ''}`}>
+                  <TailSpin height={40} width={40} color="#4fa94d" />
                 </div>
               </form>
             )}
