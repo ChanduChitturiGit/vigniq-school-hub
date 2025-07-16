@@ -11,7 +11,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from teacher.models import Teacher, TeacherSubjectAssignment, Subject
 from academics.models import AcademicYear
 
-from classes.models import Class
+from classes.models import SchoolClass
 
 from core.models import Role, User
 from core.common_modules.password_validator import is_valid_password
@@ -106,13 +106,13 @@ class TeacherService:
                                 subject = Subject.objects.using(school_db_name).get(
                                     id=item["subject_id"]
                                 )
-                                school_class = Class.objects.using(school_db_name).get(
+                                school_class = SchoolClass.objects.using(school_db_name).get(
                                     id=item["class_id"]
                                 )
                             except Subject.DoesNotExist:
                                 logger.error(f"Subject ID {item['subject_id']} not found.")
                                 raise NotFound(f"Subject ID {item['subject_id']} not found.")
-                            except Class.DoesNotExist:
+                            except SchoolClass.DoesNotExist:
                                 logger.error(f"Class ID {item['class_id']} not found.")
                                 raise NotFound(f"Class ID {item['class_id']} not found.")
                             except ObjectDoesNotExist as e:
@@ -235,13 +235,13 @@ class TeacherService:
                                 subject = Subject.objects.using(school_db_name).get(
                                     id=item["subject_id"]
                                 )
-                                school_class = Class.objects.using(school_db_name).get(
+                                school_class = SchoolClass.objects.using(school_db_name).get(
                                     id=item["class_id"]
                                 )
                             except Subject.DoesNotExist:
                                 logger.error(f"Subject ID {item['subject_id']} not found.")
                                 raise NotFound(f"Subject ID {item['subject_id']} not found.")
-                            except Class.DoesNotExist:
+                            except SchoolClass.DoesNotExist:
                                 logger.error(f"Class ID {item['class_id']} not found.")
                                 raise NotFound(f"Class ID {item['class_id']} not found.")
                             except ObjectDoesNotExist as e:

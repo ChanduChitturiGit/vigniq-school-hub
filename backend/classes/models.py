@@ -1,6 +1,6 @@
 from django.db import models
 
-class Class(models.Model):
+class SchoolClass(models.Model):
     name = models.CharField(max_length=50)
     section = models.CharField(max_length=15, blank=True, null=True)
 
@@ -16,7 +16,7 @@ class Class(models.Model):
 
 
 class ClassAssignment(models.Model):
-    class_instance = models.ForeignKey(Class, on_delete=models.CASCADE)
+    class_instance = models.ForeignKey(SchoolClass, on_delete=models.CASCADE)
     class_teacher = models.ForeignKey('teacher.Teacher', on_delete=models.CASCADE)
     academic_year = models.ForeignKey('academics.AcademicYear', on_delete=models.CASCADE)
 

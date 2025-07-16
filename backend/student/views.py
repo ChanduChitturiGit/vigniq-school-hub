@@ -19,9 +19,9 @@ class StudentView(APIView):
             return Response({"error": "You do not have permission to get students data."},
                             status=status.HTTP_403_FORBIDDEN)
         if action == "getStudentsBySchoolId":
-            pass
+            return StudentService().get_students_by_school_id(request)
         elif action == "getStudentById":
-            pass
+            return StudentService().get_student_by_id(request)
         elif action == "getStudentsByClassId":
             pass
         return Response({"error": "Invalid GET action"}, status=status.HTTP_400_BAD_REQUEST)
