@@ -8,7 +8,7 @@ def load_fixture(apps, schema_editor):
     
     db_name = getattr(settings, 'CURRENT_MIGRATION_DB', 'default')
 
-    fixtures = ['school_boards.json']
+    fixtures = ['roles.json']
     for fixture in fixtures:
         call_command('loaddata', fixture,database=db_name)
 
