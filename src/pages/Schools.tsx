@@ -1,13 +1,24 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { getSchools } from '../data/schools';
 import { Edit, MapPin, Mail, Phone } from 'lucide-react';
+import { getSchoolsList } from '@/services/school';
 
 const Schools: React.FC = () => {
-  const schools = getSchools();
+  //const schools = getSchools();
+  const [schools, setschools] = useState([]);
+
+  useEffect(() => {
+  const fetchSchools = async () => {
+    const schoolsList = await getSchoolsList();
+    setschools(schoolsList);
+  };
+  fetchSchools();
+}, []);
+
 
   const breadcrumbItems = [
     { label: 'User Management', path: '/user-management' },
