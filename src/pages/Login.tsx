@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { User, Lock, LogIn, Eye, EyeOff } from 'lucide-react';
+import { User, Lock, LogIn, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { toast } from '../components/ui/sonner';
-import { sentVerficationCode, verifyUsernameWithCode, resetPassword as resetPasswordApi } from '../services/passwordHandler'
-import { TailSpin } from 'react-loader-spinner';
+import { sentVerficationCode, verifyUsernameWithCode, resetPassword as resetPasswordApi } from '../services/passwordHandler';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -20,6 +19,7 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
   const { login, isAuthenticated } = useAuth();
 
 
@@ -79,86 +79,82 @@ const Login: React.FC = () => {
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    setForgotLoading(true);
+    setError('');
 
-    if (forgotStep === 1) {
-      // Validate username first
-      if (!validateUsername(forgotUsername)) {
-        return;
-      }
+    try {
+      if (forgotStep === 1) {
+        // Validate username first
+        if (!validateUsername(forgotUsername)) {
+          setForgotLoading(false);
+          return;
+        }
 
-      // Verify username exists and get email
-      // const users = JSON.parse(localStorage.getItem('vigniq_users') || '[]');
-      // let userExists = users.find((u: any) => u.username === forgotUsername);
+        // Verify username exists and get email
+        let userExists = await sentCode(forgotUsername);
 
-      let userExists = await sentCode(forgotUsername);
+        if (userExists) {
+          setForgotStep(2);
+          setError('');
+          // Show toast notification with user's email
+          toast(userExists.message ? `📬 ${userExists.message}` :
+            `📬 A verification code has been sent to ${userExists.email}. Please check.`,
+            {
+              duration: 4000,
+              position: "bottom-right"
+            });
+        } else {
+          setError('Username not found in our system.');
+        }
+      } else if (forgotStep === 2) {
+        // Validate code
+        const user = {
+          user_name: forgotUsername,
+          otp: validationCode
+        }
+        const response = await verifyCode(user);
 
-      if (userExists) {
-        setForgotStep(2);
-        setError('');
-        // Show toast notification with user's email
-        toast(userExists.message ? `📬 ${userExists.message}` :
-          `📬 A verification code has been sent to ${userExists.email}. Please check.`,
-          {
+        if (response && response.access_token) {
+          localStorage.setItem('access_token', response.access_token);
+          setForgotStep(3);
+          setError('');
+        } else {
+          setError('Invalid validation code. Please enter the correct code.');
+        }
+      } else {
+        // Update password
+        if (newPassword !== confirmPassword) {
+          setError('Passwords do not match.');
+          setForgotLoading(false);
+          return;
+        }
+
+        if (newPassword.length < 8) {
+          setError('Password must be at least 8 characters long.');
+          setForgotLoading(false);
+          return;
+        }
+
+        const response = await resetPassword({ "new_password": newPassword });
+
+        if (response && response.message) {
+          setShowForgotPassword(false);
+          setForgotStep(1);
+          setForgotUsername('');
+          setValidationCode('');
+          setNewPassword('');
+          setConfirmPassword('');
+          setError('');
+          toast("✅ Password updated successfully! You can now log in with your new password.", {
             duration: 4000,
             position: "bottom-right"
           });
-      } else {
-        setError('Username not found in our system.');
+        }
       }
-    } else if (forgotStep === 2) {
-      // Validate code
-      const user = {
-        user_name: forgotUsername,
-        otp: validationCode
-      }
-      // if (validationCode === '123') {
-      //   setForgotStep(3);
-      //   setError('');
-      // } else {
-      //   setError('Invalid validation code. Please enter 123.');
-      // }
-      const response = await verifyCode(user);
-
-      if (response && response.access_token) {
-        localStorage.setItem('access_token', response.access_token);
-        setForgotStep(3);
-        setError('');
-      } else {
-        setError('Invalid validation code. Please enter 123.');
-      }
-    } else {
-      // Update password
-      if (newPassword !== confirmPassword) {
-        setError('Passwords do not match.');
-        return;
-      }
-
-      if (newPassword.length < 8) {
-        setError('Password must be at least 8 characters long.');
-        return;
-      }
-
-      const response = await resetPassword({ "new_password": newPassword });
-
-      // const users = JSON.parse(localStorage.getItem('vigniq_users') || '[]');
-      // const userIndex = users.findIndex((u: any) => u.username === forgotUsername);
-
-      if (response && response.message) {
-        //users[userIndex].password = newPassword;
-        // localStorage.setItem('vigniq_users', JSON.stringify(users));
-
-        setShowForgotPassword(false);
-        setForgotStep(1);
-        setForgotUsername('');
-        setValidationCode('');
-        setNewPassword('');
-        setConfirmPassword('');
-        setError('');
-        toast("✅ Password updated successfully! You can now log in with your new password.", {
-          duration: 4000,
-          position: "bottom-right"
-        });
-      }
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+    } finally {
+      setForgotLoading(false);
     }
   };
 
@@ -389,12 +385,18 @@ const Login: React.FC = () => {
                 <div className="flex gap-4">
                   <button
                     type="submit"
-                    className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                    disabled={forgotLoading}
+                    className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    {forgotStep === 1 ? 'Verify Username' : forgotStep === 2 ? 'Verify Code' : 'Reset Password'}
+                    {forgotLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {forgotLoading 
+                      ? 'Processing...' 
+                      : forgotStep === 1 ? 'Verify Username' : forgotStep === 2 ? 'Verify Code' : 'Reset Password'
+                    }
                   </button>
                   <button
                     type="button"
+                    disabled={forgotLoading}
                     onClick={() => {
                       setShowForgotPassword(false);
                       setForgotStep(1);
@@ -403,14 +405,12 @@ const Login: React.FC = () => {
                       setNewPassword('');
                       setConfirmPassword('');
                       setError('');
+                      setForgotLoading(false);
                     }}
-                    className="flex-1 bg-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-400 transition-colors"
+                    className="flex-1 bg-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>
-                </div>
-                <div className={`spinner ${ loading ? 'display-none' : ''}`}>
-                  <TailSpin height={40} width={40} color="#4fa94d" />
                 </div>
               </form>
             )}
