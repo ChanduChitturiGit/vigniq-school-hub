@@ -24,7 +24,7 @@ class SchoolActionView(APIView):
 
     def get(self, request, action=None):
         user = request.user
-        if user.role.id != 1:
+        if user.role.id not in (1,2):
             return Response({"error": "You do not have permission to view schools."},
                             status=status.HTTP_403_FORBIDDEN)
 
@@ -48,7 +48,7 @@ class SchoolActionView(APIView):
 
     def put(self, request, action=None):
         user = request.user
-        if user.role.id != 1:
+        if user.role.id not in (1,2):
             return Response({"error": "You do not have permission to edit a school."},
                             status=status.HTTP_403_FORBIDDEN)
 
