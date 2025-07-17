@@ -62,7 +62,7 @@ class TeacherService:
 
             if (not first_name or not last_name or not user_name or not password 
                 or not email or not gender or not phone_number or not qualification
-                or not joining_date or not academic_year_id):
+                or not joining_date):
                 logger.error("Missing required fields for teacher creation.")
                 return JsonResponse({"error": "Missing required fields."}, status=400)
             
@@ -71,12 +71,7 @@ class TeacherService:
                 return JsonResponse({"error": "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character."}, status=400)
             
             school_db_name = SchoolDbMetadata.objects.filter(school_id=school_id).first().db_name
-            
-            acadamic_year = AcademicYear.objects.using(school_db_name
-                                ).filter(id=academic_year_id).first()
-            if not acadamic_year:
-                logger.error(f"Academic Year with ID {academic_year_id} does not exist.")
-                return JsonResponse({"error": "Academic Year not found."}, status=404)
+
 
             with transaction.atomic(using='default'):
                 with transaction.atomic(using=school_db_name):
@@ -101,7 +96,14 @@ class TeacherService:
                         emergency_contact=emergency_contact,
                     )
 
-                    for item in subject_assignments:
+                    if subject_assignments:
+                        academic_year = AcademicYear.objects.using(school_db_name
+                                ).filter(id=academic_year_id).first()
+                        if not academic_year:
+                            logger.error(
+                                "Academic Year with ID %s does not exist.",academic_year_id)
+                            raise NotFound("Academic Year not found.")
+                        for item in subject_assignments:
                             try:
                                 subject = Subject.objects.using(school_db_name).get(
                                     id=item["subject_id"]
@@ -122,7 +124,7 @@ class TeacherService:
                                 teacher = teacher,
                                 subject = subject,
                                 school_class = school_class,
-                                academic_year = acadamic_year
+                                academic_year = academic_year
                             )
 
                     send_email = EmailService()
@@ -275,7 +277,7 @@ class TeacherService:
         try:
             teacher_id = request.GET.get('teacher_id', None)
             school_id = request.GET.get('school_id', request.user.school_id)
-            academic_year_id = request.data.get('academic_year_id', None)
+            academic_year_id = request.GET.get('academic_year_id', None)
 
             if not teacher_id:
                 logger.error("Teacher ID is required to fetch teacher details.")
@@ -353,7 +355,7 @@ class TeacherService:
         """
         try:
             school_id = request.GET.get('school_id', request.user.school_id)
-            academic_year_id = request.data.get('academic_year_id', None)
+            academic_year_id = request.GET.get('academic_year_id', None)
 
             if not school_id:
                 logger.error("School ID is required to fetch teacher list.")
@@ -363,13 +365,14 @@ class TeacherService:
                 logger.error("Academic Year ID is required for fetching teacher list.")
                 return JsonResponse({"error": "Academic Year ID is required."}, status=400)
             
+
+            school_db_name = SchoolDbMetadata.objects.filter(school_id=school_id).first().db_name
+
             acadamic_year = AcademicYear.objects.using(school_db_name
                                 ).filter(id=academic_year_id).first()
             if not acadamic_year:
                 logger.error(f"Academic Year with ID {academic_year_id} does not exist.")
                 return JsonResponse({"error": "Academic Year not found."}, status=404)
-
-            school_db_name = SchoolDbMetadata.objects.filter(school_id=school_id).first().db_name
 
             teachers = Teacher.objects.using(school_db_name).all()
             teacher_list = []
