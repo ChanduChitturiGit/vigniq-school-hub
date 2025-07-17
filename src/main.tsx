@@ -7,9 +7,11 @@ import { Toaster } from './components/ui/toaster'
 import { Toaster as SonnerToaster } from './components/ui/sonner'
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
+  // <StrictMode>
+  <>
     <App />
     <Toaster />
     <SonnerToaster position="bottom-right" />
-  </StrictMode>,
+  </>
+ // </StrictMode>,
 )
