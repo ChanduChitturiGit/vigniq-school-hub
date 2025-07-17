@@ -1,17 +1,22 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import PasswordInput from '../components/ui/password-input';
-import { X } from 'lucide-react';
+import ClassSectionSubjectInput, { ClassSectionSubjectData } from '../components/ui/class-section-subject-input';
+import { Plus } from 'lucide-react';
 
 const AdminAddTeacher: React.FC = () => {
   const navigate = useNavigate();
-  const [subjects, setSubjects] = useState<string[]>([]);
-  const [currentSubject, setCurrentSubject] = useState('');
   const [password, setPassword] = useState('');
+  const [teachingAssignments, setTeachingAssignments] = useState<ClassSectionSubjectData[]>([
+    { class: '', section: '', subject: '' }
+  ]);
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
+    username: '',
     email: '',
     phone: '',
     qualification: '',
@@ -35,34 +40,41 @@ const AdminAddTeacher: React.FC = () => {
     }));
   };
 
-  const handleAddSubject = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && currentSubject.trim() && !subjects.includes(currentSubject.trim())) {
-      e.preventDefault();
-      setSubjects(prev => [...prev, currentSubject.trim()]);
-      setCurrentSubject('');
-    }
+  const handleAssignmentChange = (index: number, data: ClassSectionSubjectData) => {
+    const updatedAssignments = [...teachingAssignments];
+    updatedAssignments[index] = data;
+    setTeachingAssignments(updatedAssignments);
   };
 
-  const handleRemoveSubject = (subjectToRemove: string) => {
-    setSubjects(prev => prev.filter(subject => subject !== subjectToRemove));
+  const addNewAssignment = () => {
+    setTeachingAssignments([...teachingAssignments, { class: '', section: '', subject: '' }]);
+  };
+
+  const removeAssignment = (index: number) => {
+    if (teachingAssignments.length > 1) {
+      const updatedAssignments = teachingAssignments.filter((_, i) => i !== index);
+      setTeachingAssignments(updatedAssignments);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.email || !formData.phone || !formData.qualification || !formData.joiningDate || !password) {
+    if (!formData.firstName || !formData.lastName || !formData.username || 
+        !formData.email || !formData.phone || !formData.qualification || 
+        !formData.joiningDate || !password) {
       alert('Please fill in all required fields including password');
       return;
     }
     
-    if (subjects.length === 0) {
-      alert('Please add at least one subject');
-      return;
-    }
+    // Filter valid assignments (all three fields must be filled) - now optional
+    const validAssignments = teachingAssignments.filter(assignment => 
+      assignment.class && assignment.section && assignment.subject
+    );
 
     const teacherData = {
       ...formData,
-      subjects: subjects,
+      teachingAssignments: validAssignments,
       password: password
     };
     
@@ -86,11 +98,35 @@ const AdminAddTeacher: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
                 <input
                   type="text"
-                  name="name"
-                  value={formData.name}
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
+                <input
+                  type="text"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Username *</label>
+                <input
+                  type="text"
+                  name="username"
+                  value={formData.username}
                   onChange={handleInputChange}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -181,31 +217,28 @@ const AdminAddTeacher: React.FC = () => {
               </div>
             </div>
 
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Subjects *</label>
-              <input
-                type="text"
-                value={currentSubject}
-                onChange={(e) => setCurrentSubject(e.target.value)}
-                onKeyDown={handleAddSubject}
-                placeholder="Type subject and press Enter to add"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <div className="flex flex-wrap gap-2 mt-2">
-                {subjects.map((subject, index) => (
-                  <div
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium text-gray-700">Teaching Assignments (Optional)</label>
+                <button
+                  type="button"
+                  onClick={addNewAssignment}
+                  className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Assignment
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                {teachingAssignments.map((assignment, index) => (
+                  <ClassSectionSubjectInput
                     key={index}
-                    className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
-                  >
-                    {subject}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveSubject(subject)}
-                      className="ml-1 text-blue-600 hover:text-blue-800"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
+                    data={assignment}
+                    onChange={(data) => handleAssignmentChange(index, data)}
+                    onRemove={() => removeAssignment(index)}
+                    canRemove={teachingAssignments.length > 1}
+                  />
                 ))}
               </div>
             </div>

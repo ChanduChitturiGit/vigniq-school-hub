@@ -3,15 +3,17 @@ import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { User, Lock, LogIn, Eye, EyeOff } from 'lucide-react';
 import { toast } from '../components/ui/sonner';
+import { sentVerficationCode, verifyUsernameWithCode, resetPassword as resetPasswordApi } from '../services/passwordHandler'
+import { TailSpin } from 'react-loader-spinner';
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotStep, setForgotStep] = useState(1);
-  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotUsername, setForgotUsername] = useState('');
   const [validationCode, setValidationCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -20,19 +22,38 @@ const Login: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { login, isAuthenticated } = useAuth();
 
+
+
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
+
+  const validateUsername = (username: string): boolean => {
+    if (username.length < 3) {
+      setError('Username must be at least 3 characters long.');
+      return false;
+    }
+    if (!/^[a-zA-Z0-9]+$/.test(username)) {
+      setError('Username must contain only letters and numbers.');
+      return false;
+    }
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
+    if (!validateUsername(username)) {
+      setLoading(false);
+      return;
+    }
+
     try {
-      const success = await login(email, password);
+      const success = await login(username, password);
       if (!success) {
-        setError('Invalid email or password');
+        setError('Invalid username or password');
       }
     } catch (err) {
       setError('Login failed. Please try again.');
@@ -41,28 +62,65 @@ const Login: React.FC = () => {
     }
   };
 
-  const handleForgotPassword = (e: React.FormEvent) => {
+  const sentCode = async (userName: string) => {
+    const response = await sentVerficationCode(userName);
+    return response;
+  }
+
+  const verifyCode = async (user: any) => {
+    const response = await verifyUsernameWithCode(user);
+    return response;
+  }
+
+  const resetPassword = async (user: any) => {
+    const response = await resetPasswordApi(user);
+    return response;
+  }
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (forgotStep === 1) {
-      // Verify email exists
-      const users = JSON.parse(localStorage.getItem('vigniq_users') || '[]');
-      const userExists = users.find((u: any) => u.email === forgotEmail);
-      
+      // Validate username first
+      if (!validateUsername(forgotUsername)) {
+        return;
+      }
+
+      // Verify username exists and get email
+      // const users = JSON.parse(localStorage.getItem('vigniq_users') || '[]');
+      // let userExists = users.find((u: any) => u.username === forgotUsername);
+
+      let userExists = await sentCode(forgotUsername);
+
       if (userExists) {
         setForgotStep(2);
         setError('');
-        // Show toast notification
-        toast("📬 A verification code has been sent to your email. Please check.", {
-          duration: 4000,
-          position: "bottom-right"
-        });
+        // Show toast notification with user's email
+        toast(userExists.message ? `📬 ${userExists.message}` :
+          `📬 A verification code has been sent to ${userExists.email}. Please check.`,
+          {
+            duration: 4000,
+            position: "bottom-right"
+          });
       } else {
-        setError('Email not found in our system.');
+        setError('Username not found in our system.');
       }
     } else if (forgotStep === 2) {
       // Validate code
-      if (validationCode === '123') {
+      const user = {
+        user_name: forgotUsername,
+        otp: validationCode
+      }
+      // if (validationCode === '123') {
+      //   setForgotStep(3);
+      //   setError('');
+      // } else {
+      //   setError('Invalid validation code. Please enter 123.');
+      // }
+      const response = await verifyCode(user);
+
+      if (response && response.access_token) {
+        localStorage.setItem('access_token', response.access_token);
         setForgotStep(3);
         setError('');
       } else {
@@ -74,22 +132,24 @@ const Login: React.FC = () => {
         setError('Passwords do not match.');
         return;
       }
-      
-      if (newPassword.length < 6) {
-        setError('Password must be at least 6 characters long.');
+
+      if (newPassword.length < 8) {
+        setError('Password must be at least 8 characters long.');
         return;
       }
-      
-      const users = JSON.parse(localStorage.getItem('vigniq_users') || '[]');
-      const userIndex = users.findIndex((u: any) => u.email === forgotEmail);
-      
-      if (userIndex !== -1) {
-        users[userIndex].password = newPassword;
-        localStorage.setItem('vigniq_users', JSON.stringify(users));
-        
+
+      const response = await resetPassword({ "new_password": newPassword });
+
+      // const users = JSON.parse(localStorage.getItem('vigniq_users') || '[]');
+      // const userIndex = users.findIndex((u: any) => u.username === forgotUsername);
+
+      if (response && response.message) {
+        //users[userIndex].password = newPassword;
+        // localStorage.setItem('vigniq_users', JSON.stringify(users));
+
         setShowForgotPassword(false);
         setForgotStep(1);
-        setForgotEmail('');
+        setForgotUsername('');
         setValidationCode('');
         setNewPassword('');
         setConfirmPassword('');
@@ -129,11 +189,11 @@ const Login: React.FC = () => {
                 <span className="text-2xl font-bold text-gray-800">VIGNIQ</span>
               </div>
               <h1 className="text-2xl font-bold text-blue-600 mb-2">
-                {showForgotPassword ? 'Reset Password' : 'Welcome Back!'}
+                {showForgotPassword ? 'Reset Password' : ''}
               </h1>
               <p className="text-gray-600">
-                {showForgotPassword 
-                  ? 'Enter your details to reset your password.' 
+                {showForgotPassword
+                  ? 'Enter your details to reset your password.'
                   : 'Login to continue your AI learning journey.'
                 }
               </p>
@@ -149,19 +209,23 @@ const Login: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Username/Email
+                    Username
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Enter your username or email"
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="Enter your username"
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                      pattern="[a-zA-Z0-9]+"
+                      title="Username must contain only letters and numbers"
+                      minLength={3}
                       required
                     />
                   </div>
+                  <p className="text-xs text-gray-500 mt-1">Minimum 3 characters, letters and numbers only</p>
                 </div>
 
                 <div>
@@ -218,31 +282,35 @@ const Login: React.FC = () => {
                 {forgotStep === 1 ? (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email Address
+                      Username
                     </label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                       <input
-                        type="email"
-                        value={forgotEmail}
-                        onChange={(e) => setForgotEmail(e.target.value)}
-                        placeholder="Enter your email address"
+                        type="text"
+                        value={forgotUsername}
+                        onChange={(e) => setForgotUsername(e.target.value)}
+                        placeholder="Enter your username"
                         className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                        pattern="[a-zA-Z0-9]+"
+                        title="Username must contain only letters and numbers"
+                        minLength={3}
                         required
                       />
                     </div>
+                    <p className="text-xs text-gray-500 mt-1">Minimum 3 characters, letters and numbers only</p>
                   </div>
                 ) : forgotStep === 2 ? (
                   <>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Email Address
+                        Username
                       </label>
                       <div className="relative">
                         <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                         <input
-                          type="email"
-                          value={forgotEmail}
+                          type="text"
+                          value={forgotUsername}
                           disabled
                           className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
                         />
@@ -323,14 +391,14 @@ const Login: React.FC = () => {
                     type="submit"
                     className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
                   >
-                    {forgotStep === 1 ? 'Verify Email' : forgotStep === 2 ? 'Verify Code' : 'Reset Password'}
+                    {forgotStep === 1 ? 'Verify Username' : forgotStep === 2 ? 'Verify Code' : 'Reset Password'}
                   </button>
                   <button
                     type="button"
                     onClick={() => {
                       setShowForgotPassword(false);
                       setForgotStep(1);
-                      setForgotEmail('');
+                      setForgotUsername('');
                       setValidationCode('');
                       setNewPassword('');
                       setConfirmPassword('');
@@ -341,6 +409,9 @@ const Login: React.FC = () => {
                     Cancel
                   </button>
                 </div>
+                <div className={`spinner ${ loading ? 'display-none' : ''}`}>
+                  <TailSpin height={40} width={40} color="#4fa94d" />
+                </div>
               </form>
             )}
 
@@ -349,10 +420,10 @@ const Login: React.FC = () => {
               <div className="mt-8 p-4 bg-gray-50 rounded-lg">
                 <h3 className="text-sm font-medium text-gray-700 mb-2">Demo Credentials:</h3>
                 <div className="text-xs text-gray-600 space-y-1">
-                  <div><strong>Super Admin:</strong> superadmin@gmail.com / superadmin</div>
-                  <div><strong>Admin:</strong> admin@greenwood.edu / admin123</div>
-                  <div><strong>Teacher:</strong> teacher@greenwood.edu / teacher123</div>
-                  <div><strong>Student:</strong> student@greenwood.edu / student123</div>
+                  <div><strong>Super Admin:</strong> superadmin / superadmin</div>
+                  <div><strong>Admin:</strong> admin1 / admin123</div>
+                  <div><strong>Teacher:</strong> teacher1 / teacher123</div>
+                  <div><strong>Student:</strong> student1 / student123</div>
                 </div>
               </div>
             )}

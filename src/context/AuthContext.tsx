@@ -1,18 +1,21 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { environment } from '@/environment';
+import { login as loginApi } from '../services/login';
 
 interface User {
   id: string;
+  username: string;
   email: string;
   name: string;
-  role: 'Super Admin' | 'Admin' | 'Teacher' | 'Student';
+  role: string;
   schoolId?: string;
   classId?: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   register: (userData: Omit<User, 'id'> & { password: string }) => Promise<boolean>;
   isAuthenticated: boolean;
@@ -31,6 +34,7 @@ export const useAuth = () => {
 const defaultUsers: (User & { password: string })[] = [
   {
     id: '1',
+    username: 'superadmin',
     email: 'superadmin@gmail.com',
     password: 'superadmin',
     name: 'Super Administrator',
@@ -38,6 +42,7 @@ const defaultUsers: (User & { password: string })[] = [
   },
   {
     id: '2',
+    username: 'admin1',
     email: 'admin@greenwood.edu',
     password: 'admin123',
     name: 'John Smith',
@@ -46,6 +51,7 @@ const defaultUsers: (User & { password: string })[] = [
   },
   {
     id: '3',
+    username: 'teacher1',
     email: 'teacher@greenwood.edu',
     password: 'teacher123',
     name: 'Jane Doe',
@@ -55,6 +61,7 @@ const defaultUsers: (User & { password: string })[] = [
   },
   {
     id: '4',
+    username: 'student1',
     email: 'student@greenwood.edu',
     password: 'student123',
     name: 'Alice Johnson',
@@ -63,17 +70,16 @@ const defaultUsers: (User & { password: string })[] = [
     classId: '1'
   }
 ];
+const baseurl = environment.baseurl;
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
 
   useEffect(() => {
-    // Initialize default users in localStorage if not exists
-    const existingUsers = localStorage.getItem('vigniq_users');
-    if (!existingUsers) {
-      localStorage.setItem('vigniq_users', JSON.stringify(defaultUsers));
-    }
+    // Always reset users to ensure they have the latest structure with username
+   // localStorage.setItem('vigniq_users', JSON.stringify(defaultUsers));
 
     // Check for existing session
     const savedUser = localStorage.getItem('vigniq_current_user');
@@ -83,15 +89,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    const users = JSON.parse(localStorage.getItem('vigniq_users') || '[]');
-    const foundUser = users.find((u: any) => u.email === email && u.password === password);
+  const login = async (username: string, password: string): Promise<boolean> => {
+    const res = await loginApi({ user_name : username, password });
+
+    localStorage.setItem('access_token', res.access);
+    localStorage.setItem('refresh_token', res.refresh);
+    localStorage.setItem('vigniq_current_user', JSON.stringify(res.user));
+
+    const foundUser = res.user;
     
     if (foundUser) {
-      const { password: _, ...userWithoutPassword } = foundUser;
-      setUser(userWithoutPassword);
+      setUser(foundUser);
       setIsAuthenticated(true);
-      localStorage.setItem('vigniq_current_user', JSON.stringify(userWithoutPassword));
+      localStorage.setItem('vigniq_current_user', JSON.stringify(foundUser));
       return true;
     }
     return false;

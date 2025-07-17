@@ -2,19 +2,13 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Search, Plus, BookOpen, X, Users } from 'lucide-react';
+import { Edit, Search, Plus, BookOpen, Users } from 'lucide-react';
 
 const AdminSchool: React.FC = () => {
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [teacherSearchTerm, setTeacherSearchTerm] = useState('');
   const [classSearchTerm, setClassSearchTerm] = useState('');
-  const [showAddClassForm, setShowAddClassForm] = useState(false);
-  const [newClassData, setNewClassData] = useState({
-    name: '',
-    section: '',
-    teacher: ''
-  });
   const [schoolData, setSchoolData] = useState({
     name: 'Greenwood High School',
     email: 'admin@greenwood.edu',
@@ -80,28 +74,6 @@ const AdminSchool: React.FC = () => {
     console.log('Saving school data:', schoolData);
     setIsEditing(false);
     alert('School information updated successfully!');
-  };
-
-  const handleAddClass = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!newClassData.name || !newClassData.section || !newClassData.teacher) {
-      alert('Please fill in all required fields');
-      return;
-    }
-    
-    console.log('Adding new class:', newClassData);
-    setShowAddClassForm(false);
-    setNewClassData({ name: '', section: '', teacher: '' });
-    alert('Class added successfully!');
-  };
-
-  const handleClassInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setNewClassData(prev => ({
-      ...prev,
-      [name]: value
-    }));
   };
 
   const handleTeacherClick = (teacherId: string) => {
@@ -268,13 +240,13 @@ const AdminSchool: React.FC = () => {
               </div>
               <h2 className="text-xl font-semibold text-gray-800">Classes</h2>
             </div>
-            <button
-              onClick={() => setShowAddClassForm(true)}
+            <Link
+              to="/add-class"
               className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
             >
               <Plus className="w-4 h-4" />
               Add Class
-            </button>
+            </Link>
           </div>
           
           <div className="mb-4">
@@ -296,6 +268,7 @@ const AdminSchool: React.FC = () => {
                 <Link
                   key={classItem.id}
                   to={`/class-details/${classItem.id}`}
+                  state={{ from: 'admin-school' }}
                   className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-center justify-between mb-2">
@@ -310,95 +283,6 @@ const AdminSchool: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Add Class Modal */}
-      {showAddClassForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">Add New Class</h3>
-              <button 
-                onClick={() => setShowAddClassForm(false)} 
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <form onSubmit={handleAddClass} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Class Name *</label>
-                <select
-                  name="name"
-                  value={newClassData.name}
-                  onChange={handleClassInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select Class</option>
-                  <option value="Class 6">Class 6</option>
-                  <option value="Class 7">Class 7</option>
-                  <option value="Class 8">Class 8</option>
-                  <option value="Class 9">Class 9</option>
-                  <option value="Class 10">Class 10</option>
-                  <option value="Class 11">Class 11</option>
-                  <option value="Class 12">Class 12</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Section *</label>
-                <select
-                  name="section"
-                  value={newClassData.section}
-                  onChange={handleClassInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select Section</option>
-                  <option value="A">A</option>
-                  <option value="B">B</option>
-                  <option value="C">C</option>
-                  <option value="D">D</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Assign Teacher *</label>
-                <select
-                  name="teacher"
-                  value={newClassData.teacher}
-                  onChange={handleClassInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select Teacher</option>
-                  {teachers.map(teacher => (
-                    <option key={teacher.id} value={teacher.name}>
-                      {teacher.name} - {teacher.subject}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <div className="flex gap-2 pt-4">
-                <button
-                  type="submit"
-                  className="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600"
-                >
-                  Add Class
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowAddClassForm(false)}
-                  className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </MainLayout>
   );
 };

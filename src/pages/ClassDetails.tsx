@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Edit, Search, Plus, X } from 'lucide-react';
@@ -8,6 +7,7 @@ import { Edit, Search, Plus, X } from 'lucide-react';
 const ClassDetails: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddStudentForm, setShowAddStudentForm] = useState(false);
   const [newStudentData, setNewStudentData] = useState({
@@ -76,12 +76,28 @@ const ClassDetails: React.FC = () => {
     student.rollNumber.includes(searchTerm)
   );
 
-  const breadcrumbItems = [
-    { label: 'User Management', path: '/user-management' },
-    { label: 'Schools', path: '/schools' },
-    { label: 'School Details', path: '/school-details/1' },
-    { label: `${classData.name}-${classData.section}` }
-  ];
+  // Determine breadcrumb based on navigation context
+  const getBreadcrumbItems = () => {
+    // Check if we came from admin-school (My School) or from the regular classes page
+    const referrer = document.referrer;
+    const isFromAdminSchool = referrer.includes('/admin-school') || location.state?.from === 'admin-school';
+    
+    if (isFromAdminSchool) {
+      return [
+        { label: 'My School', path: '/admin-school' },
+        { label: `${classData.name}-${classData.section}` }
+      ];
+    } else {
+      return [
+        { label: 'User Management', path: '/user-management' },
+        { label: 'Schools', path: '/schools' },
+        { label: 'School Details', path: '/school-details/1' },
+        { label: `${classData.name}-${classData.section}` }
+      ];
+    }
+  };
+
+  const breadcrumbItems = getBreadcrumbItems();
 
   const handleStudentInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;

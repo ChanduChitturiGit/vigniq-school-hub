@@ -6,6 +6,7 @@ import Breadcrumb from '../components/Layout/Breadcrumb';
 import PasswordInput from '../components/ui/password-input';
 import { addSchool } from '../data/schools';
 import { X } from 'lucide-react';
+import {createSchool as createSchoolApi} from '../services/school'
 
 const CreateSchool: React.FC = () => {
   const navigate = useNavigate();
@@ -14,16 +15,27 @@ const CreateSchool: React.FC = () => {
     address: '',
     phone: '',
     email: '',
-    adminName: '',
+    adminFirstName: '',
+    adminLastName: '',
+    adminUserName: '',
     adminEmail: '',
-    adminPassword: ''
+    adminPassword: '',
+    adminPhone: ''
   });
 
   const [boards, setBoards] = useState<string[]>([]);
   const [boardInput, setBoardInput] = useState('');
   const [showBoardSuggestions, setShowBoardSuggestions] = useState(false);
 
-  const boardSuggestions = ['State Board', 'CBSE', 'ICSE', 'IGCSE', 'IB'];
+  //const boardSuggestions2 = ['SSC', 'CBSE', 'ICSE', 'IGCSE', 'IB'];
+
+  const boardSuggestions = [
+    { boardId: 1, boardName: 'SSC' },
+    { boardId: 2, boardName: 'CBSE' },
+    { boardId: 3, boardName: 'ICSE' },
+    { boardId: 4, boardName: 'IGCSE' },
+    { boardId: 5, boardName: 'IB' }
+  ];
 
   const breadcrumbItems = [
     { label: 'User Management', path: '/user-management' },
@@ -45,9 +57,9 @@ const CreateSchool: React.FC = () => {
     setShowBoardSuggestions(value.length > 0);
   };
 
-  const addBoard = (board: string) => {
-    if (board.trim() && !boards.includes(board.trim())) {
-      setBoards([...boards, board.trim()]);
+  const addBoard = (board: any) => {
+    if (board.boardName.trim() && !boards.includes(board.boardName.trim())) {
+      setBoards([...boards, board.boardName]);
     }
     setBoardInput('');
     setShowBoardSuggestions(false);
@@ -58,21 +70,40 @@ const CreateSchool: React.FC = () => {
   };
 
   const handleBoardKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      addBoard(boardInput);
-    }
+    // if (e.key === 'Enter') {
+    //   e.preventDefault();
+    //   addBoard(boardInput);
+    // }
   };
 
   const filteredSuggestions = boardSuggestions.filter(
-    suggestion => 
-      suggestion.toLowerCase().includes(boardInput.toLowerCase()) &&
-      !boards.includes(suggestion)
+    suggestion =>
+      suggestion.boardName.toLowerCase().includes(boardInput.toLowerCase()) &&
+      !boards.includes(suggestion.boardName)
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    //console.log("schoolForm",formData,boards);
+
+    const schoolPayload = {
+      school_name:formData.schoolName,
+      address:formData.address,
+      contact_number:formData.phone,
+      boards : Object.keys(boards),
+      admin_firstname : formData.adminFirstName,
+      admin_lastname : formData.adminLastName,
+      admin_email:formData.adminEmail,
+      admin_phone : formData.adminPhone,
+      admin_username:formData.adminUserName,
+      password:formData.adminPassword
+    }
+
+    const school = await createSchoolApi(schoolPayload);
+
+    // console.log("schoolPayload",schoolPayload,school);
+
     // Create school
     const newSchool = addSchool({
       name: formData.schoolName,
@@ -89,7 +120,7 @@ const CreateSchool: React.FC = () => {
       id: Date.now().toString(),
       email: formData.adminEmail,
       password: formData.adminPassword,
-      name: formData.adminName,
+      name: formData.adminFirstName,
       role: 'Admin',
       schoolId: newSchool.id
     };
@@ -103,15 +134,15 @@ const CreateSchool: React.FC = () => {
     <MainLayout pageTitle="Create School">
       <div className="max-w-2xl mx-auto">
         <Breadcrumb items={breadcrumbItems} />
-        
+
         <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200">
           <h1 className="text-2xl font-bold text-gray-800 mb-6">Create New School</h1>
-          
+
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* School Information */}
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-gray-700 border-b pb-2">School Information</h2>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">School Name</label>
                 <input
@@ -145,13 +176,13 @@ const CreateSchool: React.FC = () => {
                             onClick={() => addBoard(suggestion)}
                             className="w-full px-3 py-2 text-left hover:bg-gray-100 transition-colors first:rounded-t-lg last:rounded-b-lg"
                           >
-                            {suggestion}
+                            {suggestion.boardName}
                           </button>
                         ))}
                       </div>
                     )}
                   </div>
-                  
+
                   {boards.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {boards.map((board, index) => (
@@ -173,7 +204,7 @@ const CreateSchool: React.FC = () => {
                   )}
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
                 <textarea
@@ -185,7 +216,7 @@ const CreateSchool: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
@@ -198,7 +229,7 @@ const CreateSchool: React.FC = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
                   <input
@@ -216,20 +247,35 @@ const CreateSchool: React.FC = () => {
             {/* Admin Information */}
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-gray-700 border-b pb-2">Admin Information</h2>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Admin Name</label>
-                <input
-                  type="text"
-                  name="adminName"
-                  value={formData.adminName}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              
+
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Admin First Name</label>
+                  <input
+                    type="text"
+                    name="adminFirstName"
+                    value={formData.adminFirstName}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Admin Last Name</label>
+                  <input
+                    type="text"
+                    name="adminLastName"
+                    value={formData.adminLastName}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Admin Email</label>
                   <input
@@ -241,7 +287,33 @@ const CreateSchool: React.FC = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Admin Phone</label>
+                  <input
+                    type="tel"
+                    name="adminPhone"
+                    value={formData.adminPhone}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Admin User Name</label>
+                  <input
+                    type="text"
+                    name="adminUserName"
+                    value={formData.adminUserName}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Admin Password</label>
                   <PasswordInput
@@ -263,7 +335,7 @@ const CreateSchool: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => navigate('/schools')}
+                 onClick={() => navigate('/schools')}
                 className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors"
               >
                 Cancel
