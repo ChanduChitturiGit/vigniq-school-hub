@@ -21,9 +21,9 @@ class ClassesManagingView(APIView):
         if user.role.id not in (1,2,3):
             return Response({"error": "You do not have permission view classes"},
                             status=status.HTTP_403_FORBIDDEN)
-        if action == 'getAvailableClassList':
-            return ClassesService().get_classes(request)
-        elif action == 'getClassesByAcademicYear':
+        # if action == 'getAvailableClassList':
+        #     return ClassesService().get_classes(request)
+        if action == 'getClassesByAcademicYear':
             return ClassesService().get_classes_by_academic_year(request)
         elif action == 'getClassById':
             return ClassesService().get_class_by_id(request)
@@ -38,9 +38,9 @@ class ClassesManagingView(APIView):
         if user.role.id not in (1,2,3):
             return Response({"error": "You do not have permission to add classes"},
                             status=status.HTTP_403_FORBIDDEN)
-        if action == 'addClassAndSection':
-            return ClassesService().create_class_and_section(request)
-        elif action == 'CreateClass':
+        # if action == 'addClassAndSection':
+        #     return ClassesService().create_class_and_section(request)
+        if action == 'createClass':
             return ClassesService().create_class(request)
         else:
             return Response({"error": "Invalid POST action"}, status=status.HTTP_400_BAD_REQUEST)
@@ -53,8 +53,8 @@ class ClassesManagingView(APIView):
         if user.role.id not in (1,2,3):
             return Response({"error": "You do not have permission to update classes"},
                             status=status.HTTP_403_FORBIDDEN)
-        if action == 'updateClassAndSection':
-            return ClassesService().update_class_and_section(request)
+        # if action == 'updateClassAndSection':
+        #     return ClassesService().update_class_and_section(request)
         elif action == 'updateClassById':
             return ClassesService().update_class(request)
         else:
