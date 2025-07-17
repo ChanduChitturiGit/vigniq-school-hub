@@ -33,7 +33,7 @@ class ClassesService:
             serializer = ClassSerializer(classes, many=True)
 
             logger.info(f"Retrieved {len(serializer.data)} classes.")
-            return JsonResponse({'data': serializer.data},status=200)
+            return JsonResponse({'classes': serializer.data},status=200)
         except Exception as e:
             logger.error(f"Error retrieving classes: {e}")
             return JsonResponse({"error": "An error occurred while retrieving classes."},
@@ -97,7 +97,7 @@ class ClassesService:
 
 
             logger.info(f"Retrieved {len(data)} active classes.")
-            return JsonResponse({'data': data}, status=200)
+            return JsonResponse({'classes': data}, status=200)
         except Exception as e:
             logger.error(f"Error retrieving active classes: {e}")
             return JsonResponse({"error": "An error occurred while retrieving active classes."},
@@ -143,7 +143,7 @@ class ClassesService:
             }
 
             logger.info(f"Class with ID {class_assignment_id} retrieved successfully.")
-            return JsonResponse({'data': data}, status=200)
+            return JsonResponse({'class': data}, status=200)
         except ClassAssignment.DoesNotExist:
             logger.error("Class assignment does not exist.")
             return JsonResponse({"error": "Class assignment not found."}, status=404)
@@ -198,7 +198,7 @@ class ClassesService:
             serializer = ClassSerializer(class_instance)
 
             logger.info(f"Class '{class_name}'- section - {section_name} created successfully.")
-            return JsonResponse({'data': serializer.data}, status=201)
+            return JsonResponse({'class': serializer.data}, status=201)
         except IntegrityError as e:
             logger.error(f"Integrity error while creating class: {e}")
             if 'unique_name_section' in str(e):
@@ -251,7 +251,7 @@ class ClassesService:
             serializer = ClassSerializer(class_instance)
 
             logger.info(f"Class '{class_name}'- {section_name} updated successfully.")
-            return JsonResponse({'data': serializer.data}, status=200)
+            return JsonResponse({'class': serializer.data}, status=200)
         except SchoolClass.DoesNotExist:
             logger.error("Class does not exist.")
             return JsonResponse({"error": "Class not found."}, status=404)
@@ -331,7 +331,7 @@ class ClassesService:
                 'academic_year_id': academic_year.id
             }
             logger.info(f"Class assignment created successfully: {response_data}")
-            return JsonResponse({'data': response_data}, status=201)
+            return JsonResponse({'class': response_data}, status=201)
         except SchoolClass.DoesNotExist:
             logger.error("Class does not exist.")
             return JsonResponse({"error": "Class not found."}, status=404)
@@ -393,7 +393,7 @@ class ClassesService:
             }
             
             logger.info(f"Class assignment updated successfully: {response_data}")
-            return JsonResponse({'data': response_data}, status=200)
+            return JsonResponse({'class': response_data}, status=200)
         except SchoolClass.DoesNotExist:
             logger.error("Class does not exist.")
             return JsonResponse({"error": "Class not found."}, status=404)

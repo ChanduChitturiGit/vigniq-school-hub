@@ -13,7 +13,7 @@ class Student(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'student_list'
+        db_table = 'student'
         constraints = [
             models.UniqueConstraint(fields=['student_id', 'roll_number'],
                                     name='unique_student_id_roll_number')

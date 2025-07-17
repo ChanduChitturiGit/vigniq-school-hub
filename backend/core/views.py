@@ -12,6 +12,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .serializers import CustomTokenObtainPairSerializer
 from core.services.password_manager_service import PasswordManagerService
+from core.services.user_profile_service import UserProfileService
 
 logger = logging.getLogger(__name__)
 
@@ -64,3 +65,18 @@ class PasswordManagerView(APIView):
             return PasswordManagerService().change_password(request)
         else:
             return Response({"error": "Invalid action."}, status=status.HTTP_400_BAD_REQUEST)
+
+class UserProfileView(APIView):
+    """
+    View to handle user profile actions.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, action=None):
+        """
+        Get the authenticated user's profile information.
+        """
+        if action == 'getUserByUserName':
+            return UserProfileService().get_user_by_username(request)
+        return Response({"error": "Invalid GET action"}, status=status.HTTP_400_BAD_REQUEST)
