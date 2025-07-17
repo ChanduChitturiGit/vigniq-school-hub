@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Edit, Search, Plus, BookOpen, Users } from 'lucide-react';
+import { getSchoolById,editSchool } from '../services/school';
+import { getTeachersBySchoold } from '../services/teacher';
+import { getClassesBySchoold } from '../services/class';
 
 const AdminSchool: React.FC = () => {
   const navigate = useNavigate();
@@ -10,11 +13,12 @@ const AdminSchool: React.FC = () => {
   const [teacherSearchTerm, setTeacherSearchTerm] = useState('');
   const [classSearchTerm, setClassSearchTerm] = useState('');
   const [schoolData, setSchoolData] = useState({
-    name: 'Greenwood High School',
-    email: 'admin@greenwood.edu',
-    phone: '+1 234-567-8900',
-    address: '123 Education Street, Learning City, LC 12345'
+    school_name: 'Greenwood High School',
+    school_email: 'admin@greenwood.edu',
+    school_contact_number: '+1 234-567-8900',
+    school_address: '123 Education Street, Learning City, LC 12345'
   });
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
 
   // Mock data for admin's school
   const school = {
@@ -31,7 +35,7 @@ const AdminSchool: React.FC = () => {
   ];
 
   // Mock data for teachers and classes
-  const teachers = [
+  let teachers = [
     { id: '1', name: 'John Smith', subject: 'Mathematics', email: 'john@school.com', phone: '+1234567890' },
     { id: '2', name: 'Sarah Johnson', subject: 'English', email: 'sarah@school.com', phone: '+1234567891' },
     { id: '3', name: 'Mike Wilson', subject: 'Science', email: 'mike@school.com', phone: '+1234567892' },
@@ -40,8 +44,9 @@ const AdminSchool: React.FC = () => {
     { id: '6', name: 'Lisa White', subject: 'Physics', email: 'lisa@school.com', phone: '+1234567895' },
     { id: '7', name: 'David Green', subject: 'Chemistry', email: 'david@school.com', phone: '+1234567896' }
   ];
+  teachers = [];
 
-  const classes = [
+  let classes = [
     { id: '1', name: 'Class 10', section: 'A', students: 25, teacher: 'John Smith' },
     { id: '2', name: 'Class 10', section: 'B', students: 28, teacher: 'Sarah Johnson' },
     { id: '3', name: 'Class 11', section: 'A', students: 22, teacher: 'Mike Wilson' },
@@ -50,6 +55,37 @@ const AdminSchool: React.FC = () => {
     { id: '6', name: 'Class 12', section: 'B', students: 23, teacher: 'Lisa White' },
     { id: '7', name: 'Class 9', section: 'A', students: 30, teacher: 'David Green' }
   ];
+  classes = [];
+
+  const schoolDataById = async () => {
+    const schoolData = await getSchoolById(userData.school_id);
+      if (schoolData && schoolData.school) {
+        setSchoolData(schoolData.school);
+      }
+  }
+
+
+  useEffect(() => {
+    const fetchSchools = async () => {
+      //schools list api
+      schoolDataById();
+
+      //teachers list api
+      const teachersData = await getTeachersBySchoold(userData.school_id);
+      if (teachersData && teachersData.teachers) {
+        teachers = teachersData.teachers;
+      }
+
+      //classes list api
+      const classesData = await getClassesBySchoold(userData.school_id);
+      if (classesData && classesData.classes) {
+        classes = classesData.classes;
+      }
+
+    };
+    fetchSchools();
+  }, []);
+
 
   const filteredTeachers = teachers.filter(teacher =>
     teacher.name.toLowerCase().includes(teacherSearchTerm.toLowerCase()) ||
@@ -70,10 +106,18 @@ const AdminSchool: React.FC = () => {
     }));
   };
 
-  const handleSaveSchool = () => {
-    console.log('Saving school data:', schoolData);
+  const handleSaveSchool = async () => {
+    //edit school api.
+    const response =  await editSchool(schoolData);
+
+    console.log('Saving school data:', schoolData,response);
     setIsEditing(false);
     alert('School information updated successfully!');
+
+    if(response.message){
+      schoolDataById();
+    }
+
   };
 
   const handleTeacherClick = (teacherId: string) => {
@@ -102,7 +146,7 @@ const AdminSchool: React.FC = () => {
               {isEditing ? 'Cancel' : 'Edit'}
             </button>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">School Name</label>
@@ -110,64 +154,64 @@ const AdminSchool: React.FC = () => {
                 <input
                   type="text"
                   name="name"
-                  value={schoolData.name}
+                  value={schoolData.school_name}
                   onChange={handleSchoolInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
-                <p className="text-gray-900">{schoolData.name}</p>
+                <p className="text-gray-900">{schoolData.school_name}</p>
               )}
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
               {isEditing ? (
                 <input
                   type="email"
-                  name="email"
-                  value={schoolData.email}
+                  name="school_email"
+                  value={schoolData.school_email}
                   onChange={handleSchoolInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
-                <p className="text-gray-900">{schoolData.email}</p>
+                <p className="text-gray-900">{schoolData.school_email}</p>
               )}
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
               {isEditing ? (
                 <input
                   type="tel"
                   name="phone"
-                  value={schoolData.phone}
+                  value={schoolData.school_contact_number}
                   onChange={handleSchoolInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
-                <p className="text-gray-900">{schoolData.phone}</p>
+                <p className="text-gray-900">{schoolData.school_contact_number}</p>
               )}
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
               {isEditing ? (
                 <textarea
                   name="address"
-                  value={schoolData.address}
+                  value={schoolData.school_address}
                   onChange={handleSchoolInputChange}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
-                <p className="text-gray-900">{schoolData.address}</p>
+                <p className="text-gray-900">{schoolData.school_address}</p>
               )}
             </div>
           </div>
-          
+
           {isEditing && (
             <div className="flex gap-2 mt-6">
-              <button 
+              <button
                 onClick={handleSaveSchool}
                 className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600"
               >
@@ -200,7 +244,7 @@ const AdminSchool: React.FC = () => {
               Add Teacher
             </Link>
           </div>
-          
+
           <div className="mb-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -228,6 +272,11 @@ const AdminSchool: React.FC = () => {
                 </div>
               ))}
             </div>
+            {filteredTeachers.length === 0 && (
+              <div>
+                No teachers found yet. You can add a new teacher by clicking the 'Add Teacher' button.
+              </div>
+            )}
           </div>
         </div>
 
@@ -248,7 +297,7 @@ const AdminSchool: React.FC = () => {
               Add Class
             </Link>
           </div>
-          
+
           <div className="mb-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -280,6 +329,11 @@ const AdminSchool: React.FC = () => {
                 </Link>
               ))}
             </div>
+            {filteredClasses.length === 0 && (
+              <div>
+                No classes found yet. You can add a new classes by clicking the 'Add Class' button.
+              </div>
+            )}
           </div>
         </div>
       </div>

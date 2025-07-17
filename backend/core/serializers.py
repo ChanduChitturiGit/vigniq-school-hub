@@ -30,7 +30,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             'email': user.email,
             'user_name': user.user_name,
             'role': user.role.name,
-            'last_login': user.last_login
+            'last_login': user.last_login,
+            'school_id' : user.school_id
         }
         self.user.last_login = now()
         self.user.save(update_fields=['last_login'])

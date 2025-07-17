@@ -355,24 +355,24 @@ class TeacherService:
         """
         try:
             school_id = request.GET.get('school_id', request.user.school_id)
-            academic_year_id = request.GET.get('academic_year_id', None)
+            # academic_year_id = request.GET.get('academic_year_id', None)
 
             if not school_id:
                 logger.error("School ID is required to fetch teacher list.")
                 return JsonResponse({"error": "School ID is required."}, status=400)
             
-            if not academic_year_id:
-                logger.error("Academic Year ID is required for fetching teacher list.")
-                return JsonResponse({"error": "Academic Year ID is required."}, status=400)
+            # if not academic_year_id:
+            #     logger.error("Academic Year ID is required for fetching teacher list.")
+            #     return JsonResponse({"error": "Academic Year ID is required."}, status=400)
             
 
             school_db_name = SchoolDbMetadata.objects.filter(school_id=school_id).first().db_name
 
-            acadamic_year = AcademicYear.objects.using(school_db_name
-                                ).filter(id=academic_year_id).first()
-            if not acadamic_year:
-                logger.error(f"Academic Year with ID {academic_year_id} does not exist.")
-                return JsonResponse({"error": "Academic Year not found."}, status=404)
+            # acadamic_year = AcademicYear.objects.using(school_db_name
+            #                     ).filter(id=academic_year_id).first()
+            # if not acadamic_year:
+            #     logger.error(f"Academic Year with ID {academic_year_id} does not exist.")
+            #     return JsonResponse({"error": "Academic Year not found."}, status=404)
 
             teachers = Teacher.objects.using(school_db_name).all()
             teacher_list = []
@@ -383,31 +383,31 @@ class TeacherService:
                 except User.DoesNotExist:
                     continue
 
-                subject_assignments = TeacherSubjectAssignment.objects.using(school_db_name).filter(
-                    teacher = teacher,
-                    academic_year = acadamic_year
-                ).values(
-                    'subject__id', 'subject__name', 'school_class__id', 'school_class__name',
-                    'school_class__section'
-                ).distinct()
+                # subject_assignments = TeacherSubjectAssignment.objects.using(school_db_name).filter(
+                #     teacher = teacher,
+                #     academic_year = acadamic_year
+                # ).values(
+                #     'subject__id', 'subject__name', 'school_class__id', 'school_class__name',
+                #     'school_class__section'
+                # ).distinct()
 
-                renamed_assignments = [
-                    {
-                        'subject': {'id': item['subject__id'], 'name': item['subject__name']},
-                        'class': {'id': item['school_class__id'],
-                                'class_name': item['school_class__name'],
-                                'section_name': item['school_class__section']
-                        },
-                    }
-                    for item in subject_assignments
-                ]
+                # renamed_assignments = [
+                #     {
+                #         'subject': {'id': item['subject__id'], 'name': item['subject__name']},
+                #         'class': {'id': item['school_class__id'],
+                #                 'class_name': item['school_class__name'],
+                #                 'section_name': item['school_class__section']
+                #         },
+                #     }
+                #     for item in subject_assignments
+                # ]
 
                 teacher_list.append({
                     "teacher_id": teacher.teacher_id,
                     "teacher_first_name": user.first_name,
                     "teacher_last_name": user.last_name,
                     "email": user.email,
-                    "subject_assignments": renamed_assignments
+                    # "subject_assignments": renamed_assignments
                 })
 
             return JsonResponse({"teachers": teacher_list}, status=200)
