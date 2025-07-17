@@ -275,7 +275,7 @@ class TeacherService:
         try:
             teacher_id = request.GET.get('teacher_id', None)
             school_id = request.GET.get('school_id', request.user.school_id)
-            academic_year_id = request.data.get('academic_year_id', None)
+            academic_year_id = request.GET.get('academic_year_id', None)
 
             if not teacher_id:
                 logger.error("Teacher ID is required to fetch teacher details.")
@@ -353,7 +353,7 @@ class TeacherService:
         """
         try:
             school_id = request.GET.get('school_id', request.user.school_id)
-            academic_year_id = request.data.get('academic_year_id', None)
+            academic_year_id = request.GET.get('academic_year_id', None)
 
             if not school_id:
                 logger.error("School ID is required to fetch teacher list.")
@@ -363,13 +363,14 @@ class TeacherService:
                 logger.error("Academic Year ID is required for fetching teacher list.")
                 return JsonResponse({"error": "Academic Year ID is required."}, status=400)
             
+
+            school_db_name = SchoolDbMetadata.objects.filter(school_id=school_id).first().db_name
+
             acadamic_year = AcademicYear.objects.using(school_db_name
                                 ).filter(id=academic_year_id).first()
             if not acadamic_year:
                 logger.error(f"Academic Year with ID {academic_year_id} does not exist.")
                 return JsonResponse({"error": "Academic Year not found."}, status=404)
-
-            school_db_name = SchoolDbMetadata.objects.filter(school_id=school_id).first().db_name
 
             teachers = Teacher.objects.using(school_db_name).all()
             teacher_list = []
