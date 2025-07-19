@@ -23,7 +23,7 @@ class StudentView(APIView):
         elif action == "getStudentById":
             return StudentService().get_student_by_id(request)
         elif action == "getStudentsByClassId":
-            pass
+            return StudentService().get_students_by_class_id(request)
         return Response({"error": "Invalid GET action"}, status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request, action=None):
@@ -59,5 +59,5 @@ class StudentView(APIView):
             return Response({"error": "You do not have permission to delete students data."},
                             status=status.HTTP_403_FORBIDDEN)
         if action == "deleteStudentById":
-            pass
-        return Response({"error": "Invalid POST action"}, status=status.HTTP_400_BAD_REQUEST)
+            return StudentService().delete_student_by_id(request)
+        return Response({"error": "Invalid Delete action"}, status=status.HTTP_400_BAD_REQUEST)

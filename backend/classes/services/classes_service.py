@@ -13,6 +13,8 @@ from academics.models import AcademicYear
 from core.common_modules.common_functions import CommonFunctions
 from core.models import User
 
+from student.models import StudentClassAssignment,Student
+
 logger = logging.getLogger(__name__)
 
 class ClassesService:
@@ -43,7 +45,7 @@ class ClassesService:
         try:
             logger.info("Retrieving active classes.")
             school_id = request.GET.get('school_id', request.user.school_id)
-            academic_year_id = request.GET.get('academic_year_id')
+            academic_year_id = request.GET.get('academic_year_id',1)
 
             if not school_id:
                 return JsonResponse({"error": "School ID is required."},
@@ -62,14 +64,16 @@ class ClassesService:
                                     status=404)
             data = []
             for class_instance in class_assignment:
+                teacher = None
                 teacher_name = None
                 try:
                     class_teacher_id = class_instance.class_teacher_id
-                    teacher = Teacher.objects.using(school_db_name).get(pk=class_teacher_id)
-                    teacher_name = User.objects.get(
-                        id=teacher.teacher_id,
-                        is_active=True,
-                    ).full_name()
+                    if class_teacher_id:
+                        teacher = Teacher.objects.using(school_db_name).get(pk=class_teacher_id)
+                        teacher_name = User.objects.get(
+                            id=teacher.teacher_id,
+                            is_active=True,
+                        ).full_name()
                 except Teacher.DoesNotExist:
                     logger.error(f"Teacher with ID {class_instance.class_teacher_id} does not exist.")
                     continue
@@ -81,17 +85,28 @@ class ClassesService:
                 academic_year_obj = AcademicYear.objects.using(school_db_name).get(
                     pk=class_instance.academic_year_id)
 
+                student_ids = StudentClassAssignment.objects.using(school_db_name).filter(
+                    class_instance=class_instance.class_instance_id,
+                    academic_year=academic_year_obj
+                ).values_list('student_id', flat=True)
+
+                student_count = Student.objects.using(school_db_name).filter(
+                    id__in=student_ids,
+                    is_active=True
+                ).count()
+
                 class_data = {
                     'class_assignment_id': class_instance.id,
                     'class_id': class_obj.id,
                     'class_name': class_obj.name,
                     'section': class_obj.section,
-                    'teacher_id': teacher.teacher_id,
+                    'teacher_id': teacher.teacher_id if teacher else None,
                     'teacher_name': teacher_name,
-                    'academic_year_id': academic_year_obj.id,
-                    'academic_year_start_date': str(academic_year_obj.start_date),
-                    'academic_year_end_date': str(academic_year_obj.end_date),
+                    # 'academic_year_id': academic_year_obj.id,
+                    # 'academic_year_start_date': str(academic_year_obj.start_date),
+                    # 'academic_year_end_date': str(academic_year_obj.end_date),
                     'school_id': school_id,
+                    'student_count': student_count
                 }
                 data.append(class_data)
 

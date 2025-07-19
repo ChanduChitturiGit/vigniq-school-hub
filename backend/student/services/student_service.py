@@ -107,7 +107,7 @@ class StudentService:
                 )
 
             return JsonResponse({"message": "Student created successfully.",
-                                 "student_id": student.id}, status=status.HTTP_201_CREATED)
+                                 "student_id": student.student_id}, status=status.HTTP_201_CREATED)
         except Role.DoesNotExist:
             return JsonResponse({"error": "Role student not found."},
                                 status=status.HTTP_404_NOT_FOUND)
@@ -169,11 +169,7 @@ class StudentService:
             
             user = User.objects.get(
                 id=student_id)
-            
-            if not user:
-                return JsonResponse({"error": "Student not found."},
-                                    status=status.HTTP_404_NOT_FOUND)
-            
+
             if first_name:
                 user.first_name = first_name
             if last_name:
@@ -234,6 +230,9 @@ class StudentService:
                             class_instance=class_instance,
                             academic_year=acadamic_year
                         )
+                    return JsonResponse(
+                        {"message": "Student updated successfully.",
+                            "student_id": student.student_id}, status=status.HTTP_200_OK)
         except ValueError as ve:
             logger.error(f"Value error: {ve}")
             return JsonResponse({"error": ve},
@@ -260,6 +259,8 @@ class StudentService:
                                     status=status.HTTP_400_BAD_REQUEST)
             elif 'unique constraint' in str(e).lower():
                 return JsonResponse({'error':"Username already exists."}, status=400)
+            return JsonResponse({"error": "Failed to update student."},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except Exception as e:
             logger.error(f"Error updating student: {e}")
             return JsonResponse({"error": "Failed to update student."},
@@ -364,6 +365,56 @@ class StudentService:
             return JsonResponse({"error": "Failed to retrieve student."},
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    def get_students_by_class_id(self, request):
+        """Retrieve students by class ID."""
+        try:
+            school_id = request.data.get('school_id', request.user.school_id)
+            class_id = request.data.get('class_id')
+            academic_year_id = request.data.get('academic_year_id', 1)
+
+            if not school_id:
+                return JsonResponse({"error": "School ID is required."},
+                                    status=status.HTTP_400_BAD_REQUEST)
+            if not class_id:
+                return JsonResponse({"error": "Class ID is required."},
+                                    status=status.HTTP_400_BAD_REQUEST)
+            if not academic_year_id:
+                return JsonResponse({"error": "Academic year ID is required."},
+                                    status=status.HTTP_400_BAD_REQUEST)
+
+            self.school_db_name = CommonFunctions.get_school_db_name(school_id)
+            if not self.school_db_name:
+                return JsonResponse({"error": "School not found or school is inactive."},
+                                    status=status.HTTP_404_NOT_FOUND)
+
+            class_instance = SchoolClass.objects.using(self.school_db_name).get(id=class_id)
+
+            students_instants_ids = StudentClassAssignment.objects.using(self.school_db_name).filter(
+                class_instance=class_instance,
+                academic_year_id=academic_year_id
+            ).values_list('student_id', flat=True)
+
+            students = Student.objects.using(self.school_db_name).filter(
+                id__in=students_instants_ids,
+            )
+
+            formated_students_data = self._get_students_data(students,academic_year_id)
+
+            return JsonResponse({"students": formated_students_data}, status=status.HTTP_200_OK)
+        except ValueError as ve:
+            logger.error(f"Value error: {ve}")
+            return JsonResponse({"error": str(ve)},
+                                status=status.HTTP_404_NOT_FOUND)
+        except StudentClassAssignment.DoesNotExist:
+            return JsonResponse({"error": "No students found for this class."},
+                                status=status.HTTP_404_NOT_FOUND)
+        except SchoolClass.DoesNotExist:
+            return JsonResponse({"error": "Class not found."},
+                                status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error retrieving students by class ID: {e}")
+            return JsonResponse({"error": "Failed to retrieve students."},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def delete_student_by_id(self, request):
         """Delete a student by their ID."""
