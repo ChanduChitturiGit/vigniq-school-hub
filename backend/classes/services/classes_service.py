@@ -332,7 +332,7 @@ class ClassesService:
                     'class_id': class_instance.id,
                     'class_name': class_instance.name,
                     'section': class_instance.section,
-                    'teacher_id': class_teacher.id,
+                    'teacher_id': class_teacher.id if class_teacher else None,
                     'academic_year_id': academic_year.id
                 }
                 logger.info(f"Class assignment created successfully: {response_data}")

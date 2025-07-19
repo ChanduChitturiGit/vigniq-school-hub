@@ -45,7 +45,7 @@ class StudentService:
             parent_name = request.data.get('parent_name')
             parent_phone = request.data.get('parent_phone')
             parent_email = request.data.get('parent_email')
-            acadamic_year_id = request.data.get('academic_year_id')
+            acadamic_year_id = request.data.get('academic_year_id',1)
 
 
             if not school_id:
@@ -158,7 +158,7 @@ class StudentService:
             parent_name = request.data.get('parent_name')
             parent_phone = request.data.get('parent_phone')
             parent_email = request.data.get('parent_email')
-            acadamic_year_id = request.data.get('academic_year_id')
+            acadamic_year_id = request.data.get('academic_year_id',1)
 
             if not school_id:
                 return JsonResponse({"error": "School ID is required."},
@@ -188,7 +188,6 @@ class StudentService:
                 user.address = address
             if date_of_birth:
                 user.date_of_birth = date_of_birth
-            user.save()
 
             school_db_name = CommonFunctions.get_school_db_name(school_id)
 
@@ -208,31 +207,37 @@ class StudentService:
                 student.parent_phone = parent_phone
             if parent_email:
                 student.parent_email = parent_email
-            student.save(using=school_db_name)
-            
-            if class_assignment_id and class_id and acadamic_year_id:
-                class_assignment_instance = StudentClassAssignment.objects.using(school_db_name).get(
-                    id=class_assignment_id
-                )
-                if not class_assignment_instance:
-                    return JsonResponse({"error": "Class Assignment not found for the student."},
-                                        status=status.HTTP_404_NOT_FOUND)
-                class_assignment_instance.delete()
 
-                class_instance = SchoolClass.objects.using(school_db_name).get(id=class_id)
-                
-                acadamic_year = AcademicYear.objects.using(school_db_name).get(id=acadamic_year_id)
-                if not acadamic_year:
-                    return JsonResponse({"error": "Acadamic year not found."},
-                                        status=status.HTTP_404_NOT_FOUND)
+            with transaction.atomic():
+                with transaction.atomic(using=school_db_name):
+                    user.save()
+                    student.save(using=school_db_name)
+                    if class_assignment_id and class_id and acadamic_year_id:
+                        class_assignment_instance = StudentClassAssignment.objects.using(
+                            school_db_name
+                        ).get(
+                            id=class_assignment_id
+                        )
+                        if not class_assignment_instance:
+                            raise ValueError("Class Assignment not found for the student.")
+                        class_assignment_instance.delete()
 
-                student_class_assignment = StudentClassAssignment.objects.using(
-                    school_db_name
-                ).create(
-                    student=student,
-                    class_instance=class_instance,
-                    academic_year=acadamic_year
-                )
+                        class_instance = SchoolClass.objects.using(school_db_name).get(id=class_id)
+                        
+                        acadamic_year = AcademicYear.objects.using(school_db_name).get(id=acadamic_year_id)
+                        if not acadamic_year:
+                            raise ValueError("Academic year not found.")
+                        student_class_assignment = StudentClassAssignment.objects.using(
+                            school_db_name
+                        ).create(
+                            student=student,
+                            class_instance=class_instance,
+                            academic_year=acadamic_year
+                        )
+        except ValueError as ve:
+            logger.error(f"Value error: {ve}")
+            return JsonResponse({"error": ve},
+                                            status=status.HTTP_404_NOT_FOUND)
         except User.DoesNotExist:
             return JsonResponse({"error": "User not found."},
                                 status=status.HTTP_404_NOT_FOUND)
@@ -265,6 +270,10 @@ class StudentService:
         """Retrieve students by school ID."""
         try:
             school_id = request.data.get('school_id', request.user.school_id)
+            academic_year_id = request.data.get('academic_year_id', 1)
+            if not academic_year_id:
+                return JsonResponse({"error": "Academic year ID is required."},
+                                    status=status.HTTP_400_BAD_REQUEST)
             if not school_id:
                 return JsonResponse({"error": "School ID is required."},
                                     status=status.HTTP_400_BAD_REQUEST)
@@ -274,14 +283,20 @@ class StudentService:
                 return JsonResponse({"error": "School not found or school is inactive."},
                                     status=status.HTTP_404_NOT_FOUND)
 
-            students = Student.objects.using(self.school_db_name).all()
-            
-            students_data = self._get_students_data(students)
+            students = Student.objects.using(self.school_db_name).filter(
+                is_active=True,
+            )
+
+            students_data = self._get_students_data(students,academic_year_id)
             if not students_data:
                 return JsonResponse({"message": "No students found."},
                                     status=status.HTTP_404_NOT_FOUND)
 
             return JsonResponse({"students": students_data}, status=status.HTTP_200_OK)
+        except ValueError as ve:
+            logger.error(f"Value error: {ve}")
+            return JsonResponse({"error": str(ve)},
+                                status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             logger.error(f"Error retrieving students: {e}")
             return JsonResponse({"error": "Failed to retrieve students."},
@@ -292,7 +307,11 @@ class StudentService:
         try:
             school_id = request.data.get('school_id', request.user.school_id)
             student_id = request.data.get('student_id')
+            academic_year_id = request.data.get('academic_year_id', 1)
 
+            if not academic_year_id:
+                return JsonResponse({"error": "Academic year ID is required."},
+                                    status=status.HTTP_400_BAD_REQUEST)
             if not school_id:
                 return JsonResponse({"error": "School ID is required."},
                                     status=status.HTTP_400_BAD_REQUEST)
@@ -311,8 +330,11 @@ class StudentService:
                                     status=status.HTTP_404_NOT_FOUND)
 
             user = User.objects.get(id=student.student_id)
+
+            academic_year = AcademicYear.objects.using(self.school_db_name).get(id=academic_year_id)
             class_assignment = StudentClassAssignment.objects.using(self.school_db_name).get(
-                student=student
+                student = student,
+                academic_year = academic_year
             )
             class_instance = SchoolClass.objects.using(self.school_db_name).get(
                 id=class_assignment.class_instance_id
@@ -320,7 +342,8 @@ class StudentService:
 
             student_data = {
                 "student_id": student.student_id,
-                "student_name": user.full_name(),
+                "student_first_name": user.first_name,
+                "student_last_name": user.last_name,
                 "roll_number": student.roll_number,
                 "parent_name": student.parent_name,
                 "parent_phone": student.parent_phone,
@@ -331,6 +354,8 @@ class StudentService:
                 "email": user.email,
                 "address": user.address,
                 "date_of_birth": user.date_of_birth,
+                "gender": user.gender,
+                "admission_date": student.admission_date
             }
 
             return JsonResponse({"student": student_data}, status=status.HTTP_200_OK)
@@ -342,19 +367,61 @@ class StudentService:
 
     def delete_student_by_id(self, request):
         """Delete a student by their ID."""
-        # Implementation for deleting a student by ID
-        pass
+        try:
+            school_id = request.data.get('school_id', request.user.school_id)
+            student_id = request.data.get('student_id')
 
-    def _get_students_data(self,students):
+            if not school_id:
+                return JsonResponse({"error": "School ID is required."},
+                                    status=status.HTTP_400_BAD_REQUEST)
+            if not student_id:
+                return JsonResponse({"error": "Student ID is required."},
+                                    status=status.HTTP_400_BAD_REQUEST)
+
+            self.school_db_name = CommonFunctions.get_school_db_name(school_id)
+            if not self.school_db_name:
+                return JsonResponse({"error": "School not found or school is inactive."},
+                                    status=status.HTTP_404_NOT_FOUND)
+
+            student = Student.objects.using(self.school_db_name).get(
+                student_id=student_id,
+                is_active=True
+            )
+
+            student.is_active = False
+
+            user = User.objects.get(id=student.student_id,is_active=True)
+            user.is_active = False
+
+            with transaction.atomic():
+                with transaction.atomic(using=self.school_db_name):
+                    user.save()
+                    student.save(using=self.school_db_name)
+
+            return JsonResponse({"message": "Student deleted successfully."}, status=status.HTTP_200_OK)
+        except Student.DoesNotExist:
+            return JsonResponse({"error": "Student not found."},
+                                status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error deleting student: {e}")
+            return JsonResponse({"error": "Failed to delete student."},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def _get_students_data(self,students,academic_year_id):
         """Helper method to format student data."""
         try:
             students_data = []
-
+            
+            academic_year = AcademicYear.objects.using(self.school_db_name).get(id=academic_year_id)
             for student in students:
                 try:
                     user = User.objects.get(id=student.student_id)
-                    class_assignment = StudentClassAssignment.objects.using(self.school_db_name).get(
-                        student=student)
+                    class_assignment = StudentClassAssignment.objects.using(
+                        self.school_db_name
+                    ).get(
+                        student=student,
+                        academic_year = academic_year
+                    )
                     class_instance = SchoolClass.objects.using(self.school_db_name).get(
                         id=class_assignment.class_instance_id)
                 except User.DoesNotExist:
@@ -379,6 +446,8 @@ class StudentService:
                     "email": user.email,
                 })
             return students_data
+        except AcademicYear.DoesNotExist:
+            raise ValueError("Academic year not found.")
         except Exception as e:
             logger.error(f"Error formatting students data: {e}")
             return []

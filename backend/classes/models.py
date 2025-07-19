@@ -17,7 +17,8 @@ class SchoolClass(models.Model):
 
 class ClassAssignment(models.Model):
     class_instance = models.ForeignKey(SchoolClass, on_delete=models.CASCADE)
-    class_teacher = models.ForeignKey('teacher.Teacher', on_delete=models.CASCADE)
+    class_teacher = models.ForeignKey('teacher.Teacher', on_delete=models.CASCADE,
+                                      null=True, blank=True)
     academic_year = models.ForeignKey('academics.AcademicYear', on_delete=models.CASCADE)
 
     class Meta:
