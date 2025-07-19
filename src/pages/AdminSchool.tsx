@@ -6,6 +6,7 @@ import { Edit, Search, Plus, BookOpen, Users } from 'lucide-react';
 import { getSchoolById,editSchool } from '../services/school';
 import { getTeachersBySchoold } from '../services/teacher';
 import { getClassesBySchoold } from '../services/class';
+import { useParams } from 'react-router-dom';
 
 const AdminSchool: React.FC = () => {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ const AdminSchool: React.FC = () => {
     school_address: '123 Education Street, Learning City, LC 12345'
   });
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
+  const { id } = useParams();
 
   // Mock data for admin's school
   const school = {
@@ -58,31 +60,31 @@ const AdminSchool: React.FC = () => {
   classes = [];
 
   const schoolDataById = async () => {
-    const schoolData = await getSchoolById(userData.school_id);
+    const schoolData = await getSchoolById(id ? id : userData.school_id);
       if (schoolData && schoolData.school) {
         setSchoolData(schoolData.school);
       }
   }
 
-
-  useEffect(() => {
-    const fetchSchools = async () => {
+  const fetchSchools = async () => {
       //schools list api
       schoolDataById();
 
       //teachers list api
-      const teachersData = await getTeachersBySchoold(userData.school_id);
+      const teachersData = await getTeachersBySchoold(id ? id : userData.school_id);
       if (teachersData && teachersData.teachers) {
         teachers = teachersData.teachers;
       }
 
       //classes list api
-      const classesData = await getClassesBySchoold(userData.school_id);
+      const classesData = await getClassesBySchoold(id ? id : userData.school_id);
       if (classesData && classesData.classes) {
         classes = classesData.classes;
       }
 
     };
+
+  useEffect(() => {   
     fetchSchools();
   }, []);
 
