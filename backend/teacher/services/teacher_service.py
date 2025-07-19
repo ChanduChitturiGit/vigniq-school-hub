@@ -42,14 +42,14 @@ class TeacherService:
             email = request.data.get('email')
             phone_number = request.data.get('phone_number')
             school_id = request.data.get('school_id', request.user.school_id)
-            gender = request.data.get('gender')
+            gender = request.data.get('gender','Male')
             address = request.data.get('address')
             subject_assignments = request.data.get('subject_assignments', [])
             qualification = request.data.get('qualification', None)
             experience = request.data.get('experience', None)
-            joining_date = request.data.get('joining_date', None)
+            joining_date = request.data.get('joiningDate', None)
             emergency_contact = request.data.get('emergency_contact', None)
-            academic_year_id = request.data.get('academic_year_id', None)
+            academic_year_id = request.data.get('academic_year_id', 1)
 
             if not school_id:
                 logger.error("School ID is required for teacher creation.")
@@ -167,7 +167,7 @@ class TeacherService:
             experience = request.data.get('experience', None)
             joining_date = request.data.get('joining_date', None)
             emergency_contact = request.data.get('emergency_contact', None)
-            academic_year_id = request.data.get('academic_year_id', None)
+            academic_year_id = request.data.get('academic_year_id', 1)
 
             school_id = request.data.get("school_id",request.user.school_id)
             school_db_name = SchoolDbMetadata.objects.filter(school_id=school_id).first().db_name
@@ -277,7 +277,7 @@ class TeacherService:
         try:
             teacher_id = request.GET.get('teacher_id', None)
             school_id = request.GET.get('school_id', request.user.school_id)
-            academic_year_id = request.GET.get('academic_year_id', None)
+            academic_year_id = request.GET.get('academic_year_id', 1)
 
             if not teacher_id:
                 logger.error("Teacher ID is required to fetch teacher details.")
