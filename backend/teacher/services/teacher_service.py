@@ -409,6 +409,7 @@ class TeacherService:
                     "email": user.email,
                     # "subject_assignments": renamed_assignments
                     "qualification": teacher.qualification,
+                    'phone_number': user.phone_number,
                 })
 
             return JsonResponse({"teachers": teacher_list}, status=200)
