@@ -408,6 +408,7 @@ class TeacherService:
                     "teacher_last_name": user.last_name,
                     "email": user.email,
                     # "subject_assignments": renamed_assignments
+                    "qualification": teacher.qualification,
                 })
 
             return JsonResponse({"teachers": teacher_list}, status=200)
