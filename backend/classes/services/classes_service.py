@@ -278,7 +278,7 @@ class ClassesService:
             class_name = request.data.get('class_name')
             section_name = request.data.get('section')
             teacher_id = request.data.get('teacher_id',None)
-            academic_year_id = request.data.get('academic_year_id')
+            academic_year_id = request.data.get('academic_year_id',1)
 
             if not school_id:
                 return JsonResponse({"error": "School ID is required."},
