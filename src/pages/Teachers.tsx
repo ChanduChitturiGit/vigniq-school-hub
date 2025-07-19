@@ -1,17 +1,19 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Edit, Plus, Mail, Phone, Search, Users as UsersIcon } from 'lucide-react';
+import {getTeachersBySchoold} from '../services/teacher';
 
 const Teachers: React.FC = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
 
   // Mock teacher data
-  const teachers = [
+  let teachers = [
     {
       id: '1',
       name: 'Jane Doe',
@@ -40,6 +42,18 @@ const Teachers: React.FC = () => {
       status: 'Active'
     }
   ];
+  teachers=[];
+  
+  const getTeachersList = async () => {
+    const response = await getTeachersBySchoold(userData.school_id);
+    if(response && response.teachers){
+      teachers = response.teachers;
+    }
+  }
+
+  useEffect(() => {
+      getTeachersList();
+    }, []);
 
   const filteredTeachers = teachers.filter(teacher =>
     teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -47,7 +61,7 @@ const Teachers: React.FC = () => {
     teacher.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const breadcrumbItems = user?.role === 'Admin' 
+  const breadcrumbItems = user?.role === 'admin' 
     ? [
         { label: 'School Management', path: '/admin-school' },
         { label: 'Teachers' }
@@ -58,7 +72,7 @@ const Teachers: React.FC = () => {
       ];
 
   return (
-    <MainLayout pageTitle="Teachers">
+    <MainLayout pageTitle="teachers">
       <div className="space-y-6">
         <Breadcrumb items={breadcrumbItems} />
         
@@ -69,9 +83,9 @@ const Teachers: React.FC = () => {
             </div>
             <h1 className="text-2xl font-bold text-gray-800">Teachers</h1>
           </div>
-          {(user?.role === 'Admin' || user?.role === 'Super Admin') && (
+          {(user?.role === 'admin' || user?.role === 'superadmin') && (
             <Link
-              to={user?.role === 'Admin' ? "/admin-add-teacher" : "/add-teacher"}
+              to={user?.role === 'admin' ? "/admin-add-teacher" : "/add-teacher"}
               className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
@@ -147,6 +161,11 @@ const Teachers: React.FC = () => {
               </div>
             </Link>
           ))}
+          {filteredTeachers.length === 0 && (
+              <div>
+                No teachers found yet. You can add a new teacher by clicking the 'Add Teacher' button.
+              </div>
+            )}
         </div>
       </div>
     </MainLayout>

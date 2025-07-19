@@ -1,16 +1,18 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { getClasses } from '../data/classes';
 import { Users, Plus, Search, BookOpen } from 'lucide-react';
+import { getClassesBySchoold } from '@/services/class';
 
 const Classes: React.FC = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const classes = getClasses();
+  let classes = [];
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
 
   const filteredClasses = classes.filter(classItem =>
     classItem.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -18,24 +20,37 @@ const Classes: React.FC = () => {
     classItem.academicYear.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const breadcrumbItems = user?.role === 'Admin' 
+  const breadcrumbItems = user?.role === 'Admin'
     ? [
-        { label: 'School Management', path: '/admin-school' },
-        { label: 'Classes' }
-      ]
+      { label: 'School Management', path: '/admin-school' },
+      { label: 'Classes' }
+    ]
     : [
-        { label: 'User Management', path: '/user-management' },
-        { label: 'Classes' }
-      ];
+      { label: 'User Management', path: '/user-management' },
+      { label: 'Classes' }
+    ];
+
+  //classes list api
+  const getTeachers = async () => {
+    //classes list api
+    const classesData = await getClassesBySchoold(userData.school_id);
+    if (classesData && classesData.data) {
+      classes = classesData.data;
+    }
+  }
+
+  useEffect(() => {
+    getTeachers();
+  }, []);
 
   return (
     <MainLayout pageTitle="Classes">
       <div className="space-y-6">
         <Breadcrumb items={breadcrumbItems} />
-        
+
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-800">Classes</h1>
-          {user?.role === 'Admin' && (
+          {user?.role === 'admin' && (
             <Link
               to="/add-class"
               className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
@@ -77,7 +92,7 @@ const Classes: React.FC = () => {
                   <BookOpen className="w-5 h-5 text-blue-600" />
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Students:</span>
@@ -88,7 +103,7 @@ const Classes: React.FC = () => {
                   <span className="font-medium text-gray-800">Jane Doe</span>
                 </div>
               </div>
-              
+
               <div className="mt-4 pt-4 border-t border-gray-100">
                 <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                   Active
@@ -96,6 +111,11 @@ const Classes: React.FC = () => {
               </div>
             </Link>
           ))}
+          {filteredClasses.length === 0 && (
+            <div>
+              No classes found yet. You can add a new classes by clicking the 'Add Class' button.
+            </div>
+          )}
         </div>
       </div>
     </MainLayout>

@@ -67,8 +67,9 @@ function App() {
           } />
           
           <Route path="/school-details/:id" element={
-            <ProtectedRoute allowedRoles={['superadmin']}>
-              <SchoolDetails />
+            <ProtectedRoute allowedRoles={['superadmin','admin']}>
+              {/* <SchoolDetails /> */}
+              <AdminSchool />
             </ProtectedRoute>
           } />
           
@@ -145,13 +146,13 @@ function App() {
           } />
           
           <Route path="/admin-school" element={
-            <ProtectedRoute allowedRoles={['admin']}>
+            <ProtectedRoute allowedRoles={['superadmin','admin']}>
               <AdminSchool />
             </ProtectedRoute>
           } />
           
           <Route path="/admin-add-teacher" element={
-            <ProtectedRoute allowedRoles={['admin']}>
+            <ProtectedRoute allowedRoles={['superadmin','admin']}>
               <AdminAddTeacher />
             </ProtectedRoute>
           } />

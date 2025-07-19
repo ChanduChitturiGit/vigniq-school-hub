@@ -6,6 +6,7 @@ import Breadcrumb from '../components/Layout/Breadcrumb';
 import PasswordInput from '../components/ui/password-input';
 import ClassSectionSubjectInput, { ClassSectionSubjectData } from '../components/ui/class-section-subject-input';
 import { Plus } from 'lucide-react';
+import {addTeacher} from '../services/teacher';
 
 const AdminAddTeacher: React.FC = () => {
   const navigate = useNavigate();
@@ -14,16 +15,16 @@ const AdminAddTeacher: React.FC = () => {
     { class: '', section: '', subject: '' }
   ]);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    username: '',
+    first_name: '',
+    last_name: '',
+    user_name: '',
     email: '',
-    phone: '',
+    phone_number: '',
     qualification: '',
     experience: '',
     address: '',
     joiningDate: '',
-    emergencyContact: ''
+    emergency_contact: ''
   });
 
   const breadcrumbItems = [
@@ -57,11 +58,11 @@ const AdminAddTeacher: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.firstName || !formData.lastName || !formData.username || 
-        !formData.email || !formData.phone || !formData.qualification || 
+    if (!formData.first_name || !formData.last_name || !formData.user_name || 
+        !formData.email || !formData.phone_number || !formData.qualification || 
         !formData.joiningDate || !password) {
       alert('Please fill in all required fields including password');
       return;
@@ -79,12 +80,19 @@ const AdminAddTeacher: React.FC = () => {
     };
     
     console.log('Adding teacher:', teacherData);
+
+    const response = await addTeacher(teacherData);
+
+    if(response){
+      alert('Teacher added successfully!');
+      console.log("response",response);
+    }
     
     // Simulate API call with success
-    setTimeout(() => {
-      alert('Teacher added successfully!');
-      navigate('/admin-school');
-    }, 500);
+    // setTimeout(() => {
+    //   alert('Teacher added successfully!');
+    //   navigate('/admin-school');
+    // }, 500);
   };
 
   return (
@@ -101,8 +109,8 @@ const AdminAddTeacher: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
                 <input
                   type="text"
-                  name="firstName"
-                  value={formData.firstName}
+                  name="first_name"
+                  value={formData.first_name}
                   onChange={handleInputChange}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -113,8 +121,8 @@ const AdminAddTeacher: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
                 <input
                   type="text"
-                  name="lastName"
-                  value={formData.lastName}
+                  name="last_name"
+                  value={formData.last_name}
                   onChange={handleInputChange}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -122,11 +130,11 @@ const AdminAddTeacher: React.FC = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Username *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">user name *</label>
                 <input
                   type="text"
-                  name="username"
-                  value={formData.username}
+                  name="user_name"
+                  value={formData.user_name}
                   onChange={handleInputChange}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -160,8 +168,8 @@ const AdminAddTeacher: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Phone *</label>
                 <input
                   type="tel"
-                  name="phone"
-                  value={formData.phone}
+                  name="phone_number"
+                  value={formData.phone_number}
                   onChange={handleInputChange}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -209,8 +217,8 @@ const AdminAddTeacher: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Emergency Contact</label>
                 <input
                   type="tel"
-                  name="emergencyContact"
-                  value={formData.emergencyContact}
+                  name="emergency_contact"
+                  value={formData.emergency_contact}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -263,7 +271,7 @@ const AdminAddTeacher: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => navigate('/admin-school')}
+                // onClick={() => navigate('/admin-school')}
                 className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors"
               >
                 Cancel
