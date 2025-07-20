@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class StudentService:
     """Service class for handling student-related operations."""
     
-    def __init__(self,school_db_name):
+    def __init__(self,school_db_name = None):
         self.school_db_name = school_db_name
 
     def create_student(self, request):
@@ -284,14 +284,9 @@ class StudentService:
                 return JsonResponse({"error": "School not found or school is inactive."},
                                     status=status.HTTP_404_NOT_FOUND)
 
-            students = Student.objects.using(self.school_db_name).filter(
-                is_active=True,
-            )
+            students = Student.objects.using(self.school_db_name).all()
 
             students_data = self.get_students_data(students,academic_year_id)
-            if not students_data:
-                return JsonResponse({"message": "No students found."},
-                                    status=status.HTTP_404_NOT_FOUND)
 
             return JsonResponse({"students": students_data}, status=status.HTTP_200_OK)
         except ValueError as ve:
