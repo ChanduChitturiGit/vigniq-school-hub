@@ -4,8 +4,8 @@ import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Edit, Search, Plus, BookOpen, Users } from 'lucide-react';
 import { getSchoolById,editSchool } from '../services/school';
-import { getTeachersBySchoold } from '../services/teacher';
-import { getClassesBySchoold } from '../services/class';
+import { getTeachersBySchoolId } from '../services/teacher';
+import { getClassesBySchoolId } from '../services/class';
 import { useParams } from 'react-router-dom';
 
 const AdminSchool: React.FC = () => {
@@ -13,6 +13,8 @@ const AdminSchool: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [teacherSearchTerm, setTeacherSearchTerm] = useState('');
   const [classSearchTerm, setClassSearchTerm] = useState('');
+  const [teachers,setteachers] = useState([]);
+  const [classes,setClasses] = useState([]);
   const [schoolData, setSchoolData] = useState({
     school_name: 'Greenwood High School',
     school_email: 'admin@greenwood.edu',
@@ -37,7 +39,7 @@ const AdminSchool: React.FC = () => {
   ];
 
   // Mock data for teachers and classes
-  let teachers = [
+  let sampleTeachers = [
     { id: '1', name: 'John Smith', subject: 'Mathematics', email: 'john@school.com', phone: '+1234567890' },
     { id: '2', name: 'Sarah Johnson', subject: 'English', email: 'sarah@school.com', phone: '+1234567891' },
     { id: '3', name: 'Mike Wilson', subject: 'Science', email: 'mike@school.com', phone: '+1234567892' },
@@ -46,9 +48,8 @@ const AdminSchool: React.FC = () => {
     { id: '6', name: 'Lisa White', subject: 'Physics', email: 'lisa@school.com', phone: '+1234567895' },
     { id: '7', name: 'David Green', subject: 'Chemistry', email: 'david@school.com', phone: '+1234567896' }
   ];
-  teachers = [];
 
-  let classes = [
+  let sampleClasses = [
     { id: '1', name: 'Class 10', section: 'A', students: 25, teacher: 'John Smith' },
     { id: '2', name: 'Class 10', section: 'B', students: 28, teacher: 'Sarah Johnson' },
     { id: '3', name: 'Class 11', section: 'A', students: 22, teacher: 'Mike Wilson' },
@@ -57,7 +58,6 @@ const AdminSchool: React.FC = () => {
     { id: '6', name: 'Class 12', section: 'B', students: 23, teacher: 'Lisa White' },
     { id: '7', name: 'Class 9', section: 'A', students: 30, teacher: 'David Green' }
   ];
-  classes = [];
 
   const schoolDataById = async () => {
     const schoolData = await getSchoolById(id ? id : userData.school_id);
@@ -71,15 +71,15 @@ const AdminSchool: React.FC = () => {
       schoolDataById();
 
       //teachers list api
-      const teachersData = await getTeachersBySchoold(id ? id : userData.school_id);
+      const teachersData = await getTeachersBySchoolId(id ? id : userData.school_id);
       if (teachersData && teachersData.teachers) {
-        teachers = teachersData.teachers;
+        setteachers(teachersData.teachers);
       }
 
       //classes list api
-      const classesData = await getClassesBySchoold(id ? id : userData.school_id);
+      const classesData = await getClassesBySchoolId(id ? id : userData.school_id);
       if (classesData && classesData.classes) {
-        classes = classesData.classes;
+        setClasses(classesData.classes);
       }
 
     };
@@ -90,14 +90,15 @@ const AdminSchool: React.FC = () => {
 
 
   const filteredTeachers = teachers.filter(teacher =>
-    teacher.name.toLowerCase().includes(teacherSearchTerm.toLowerCase()) ||
-    teacher.subject.toLowerCase().includes(teacherSearchTerm.toLowerCase())
+    ( teacher.teacher_first_name && teacher.teacher_first_name.toLowerCase().includes(teacherSearchTerm.toLowerCase())) ||
+    ( teacher.teacher_lastt_name && teacher.teacher_lastt_name.toLowerCase().includes(teacherSearchTerm.toLowerCase())) ||
+    ( teacher.subject && teacher.subject.toLowerCase().includes(teacherSearchTerm.toLowerCase()))
   );
 
   const filteredClasses = classes.filter(classItem =>
-    classItem.name.toLowerCase().includes(classSearchTerm.toLowerCase()) ||
-    classItem.section.toLowerCase().includes(classSearchTerm.toLowerCase()) ||
-    classItem.teacher.toLowerCase().includes(classSearchTerm.toLowerCase())
+    (classItem.class_name && classItem.class_name.toLowerCase().includes(classSearchTerm.toLowerCase())) ||
+    ( classItem.section && classItem.section.toLowerCase().includes(classSearchTerm.toLowerCase())) || 
+    (classItem.class_name && classItem.section && (classItem.class_name+' - '+classItem.section).toLowerCase().includes(classSearchTerm.toLowerCase()))
   );
 
   const handleSchoolInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -264,12 +265,12 @@ const AdminSchool: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredTeachers.slice(0, 6).map((teacher) => (
                 <div
-                  key={teacher.id}
-                  onClick={() => handleTeacherClick(teacher.id)}
+                  key={teacher.teacher_id}
+                  onClick={() => handleTeacherClick(teacher.teacher_id)}
                   className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer"
                 >
-                  <h3 className="font-semibold text-gray-800">{teacher.name}</h3>
-                  <p className="text-sm text-gray-600">{teacher.subject}</p>
+                  <h3 className="font-semibold text-gray-800">{teacher.teacher_first_name + " "+teacher.teacher_last_name}</h3>
+                  <p className="text-sm text-gray-600">{teacher.phone_number}</p>
                   <p className="text-sm text-gray-500">{teacher.email}</p>
                 </div>
               ))}
@@ -317,17 +318,17 @@ const AdminSchool: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredClasses.slice(0, 6).map((classItem) => (
                 <Link
-                  key={classItem.id}
-                  to={`/class-details/${classItem.id}`}
+                  key={classItem.class_id}
+                  to={`/class-details/${classItem.class_id}`}
                   state={{ from: 'admin-school' }}
                   className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-gray-800">{classItem.name} - {classItem.section}</h3>
+                    <h3 className="font-semibold text-gray-800">{classItem.class_name} - {classItem.section}</h3>
                     <BookOpen className="w-5 h-5 text-blue-500" />
                   </div>
-                  <p className="text-sm text-gray-600">Students: {classItem.students}</p>
-                  <p className="text-sm text-gray-500">Teacher: {classItem.teacher}</p>
+                  <p className="text-sm text-gray-600">Students: {classItem.student_count}</p>
+                  <p className="text-sm text-gray-500">Teacher: {classItem.teacher || 'N/A'}</p>
                 </Link>
               ))}
             </div>

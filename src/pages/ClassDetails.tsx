@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Search, Plus, X } from 'lucide-react';
+import { Edit, Search, Plus, X,GraduationCap } from 'lucide-react';
+import {getClassesById} from '../services/class'
 
 const ClassDetails: React.FC = () => {
   const { id } = useParams();
@@ -10,6 +11,8 @@ const ClassDetails: React.FC = () => {
   const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddStudentForm, setShowAddStudentForm] = useState(false);
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
+  const [allStudents,setAllStudents] = useState([]);
   const [newStudentData, setNewStudentData] = useState({
     name: '',
     email: '',
@@ -24,18 +27,8 @@ const ClassDetails: React.FC = () => {
     admissionDate: ''
   });
 
-  // Mock class data
-  const classData = {
-    id: id,
-    name: 'Class 10',
-    section: 'A',
-    academicYear: '2024-25',
-    teacher: 'John Smith',
-    totalStudents: 25
-  };
-
   // Mock students data for this class
-  const allStudents = [
+  const sampleAllStudents = [
     {
       id: '1',
       name: 'Alice Johnson',
@@ -71,6 +64,31 @@ const ClassDetails: React.FC = () => {
     }
   ];
 
+  // Mock class data
+  const sampleClassData = {
+    id: id,
+    class_name: 'Class 10',
+    section: 'A',
+    academicYear: '2024-25',
+    teacher_name: 'John Smith',
+    studends_list: allStudents
+  };
+   const [classData,setClassData] = useState(sampleClassData);
+
+  
+
+  const getClass = async () => {
+    const response = await getClassesById(Number(id),userData.school_id);
+    if(response && response.class){
+      setClassData(response.class);
+      setAllStudents(response.class.studends_list);
+    }
+  }
+
+  useEffect(()=>{
+    getClass();
+  },[])
+
   const filteredStudents = allStudents.filter(student =>
     student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     student.rollNumber.includes(searchTerm)
@@ -85,14 +103,14 @@ const ClassDetails: React.FC = () => {
     if (isFromAdminSchool) {
       return [
         { label: 'My School', path: '/admin-school' },
-        { label: `${classData.name}-${classData.section}` }
+        { label: `${classData.class_name}-${classData.section}` }
       ];
     } else {
       return [
         { label: 'User Management', path: '/user-management' },
         { label: 'Schools', path: '/schools' },
         { label: 'School Details', path: '/school-details/1' },
-        { label: `${classData.name}-${classData.section}` }
+        { label: `${classData.class_name}-${classData.section}` }
       ];
     }
   };
@@ -141,7 +159,7 @@ const ClassDetails: React.FC = () => {
   };
 
   return (
-    <MainLayout pageTitle={`${classData.name}-${classData.section} Students`}>
+    <MainLayout pageTitle={`${classData.class_name}-${classData.section} Students`}>
       <div className="space-y-6">
         <Breadcrumb items={breadcrumbItems} />
         
@@ -150,28 +168,29 @@ const ClassDetails: React.FC = () => {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-800">
-                {classData.name} - {classData.section}
+                {classData.class_name} - {classData.section}
               </h1>
               <p className="text-gray-600">{classData.academicYear}</p>
             </div>
             <div className="text-right">
               <p className="text-sm text-gray-500">Class Teacher</p>
-              <p className="font-semibold text-gray-800">{classData.teacher}</p>
+              <p className="font-semibold text-gray-800">{classData.teacher_name || 'N/A'}</p>
             </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-blue-50 p-4 rounded-lg">
               <p className="text-sm text-blue-600">Total Students</p>
-              <p className="text-2xl font-bold text-blue-800">{classData.totalStudents}</p>
+              <p className="text-2xl font-bold text-blue-800">{classData.studends_list.length}</p>
             </div>
             <div className="bg-green-50 p-4 rounded-lg">
               <p className="text-sm text-green-600">Active Students</p>
-              <p className="text-2xl font-bold text-green-800">{filteredStudents.filter(s => s.status === 'Active').length}</p>
+              {/* {filteredStudents.filter(s => s.status === 'Active').length} */}
+              <p className="text-2xl font-bold text-green-800">{classData.studends_list.length}</p>
             </div>
             <div className="bg-purple-50 p-4 rounded-lg">
               <p className="text-sm text-purple-600">Academic Year</p>
-              <p className="text-lg font-bold text-purple-800">{classData.academicYear}</p>
+              <p className="text-lg font-bold text-purple-800">{classData.academicYear || '2025-26'}</p>
             </div>
           </div>
         </div>
@@ -253,6 +272,17 @@ const ClassDetails: React.FC = () => {
             </Link>
           ))}
         </div>
+        {filteredStudents.length === 0 && (
+          <div className="text-center py-12">
+            <GraduationCap className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Students found</h3>
+            <p className="text-gray-500">
+              {searchTerm 
+                ? 'Try adjusting your search terms' 
+                : 'No students have been added yet.'}
+            </p>
+          </div>
+        )}
 
         {/* Add Student Modal */}
         {showAddStudentForm && (

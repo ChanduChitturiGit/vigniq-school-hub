@@ -85,7 +85,8 @@ const AdminAddTeacher: React.FC = () => {
 
     if(response){
       alert('Teacher added successfully!');
-      console.log("response",response);
+      navigate('/admin-school');
+      //console.log("response",response);
     }
     
     // Simulate API call with success

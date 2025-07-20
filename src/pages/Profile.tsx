@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
@@ -16,26 +16,41 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '../components/ui/alert-dialog';
+import { getUserByUserName } from '../services/user';
 
 const Profile: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: user?.name?.split(' ')[0] || '',
-    lastName: user?.name?.split(' ').slice(1).join(' ') || '',
-    username: user?.username || '',
+    first_name: user?.name?.split(' ')[0] || '',
+    last_name: user?.name?.split(' ').slice(1).join(' ') || '',
+    user_name: user?.username || '',
     email: user?.email || '',
-    phone: '+1 234-567-8900',
+    phone_number: '+1 234-567-8900',
     address: '123 Main Street, City, State 12345',
-    dateOfBirth: '1990-01-01',
+    date_of_birth: '1990-01-01',
     qualification: user?.role === 'Teacher' ? 'M.Sc Mathematics' : 'High School',
-    joiningDate: '2023-01-15'
+    joining_date: '2023-01-15'
   });
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
 
   const breadcrumbItems = [
     { label: 'Profile' }
   ];
+
+  //classes list api
+  const getUserDetails = async () => {
+    //classes list api
+    const userInfo = await getUserByUserName(userData.user_name);
+    if (userInfo && userInfo.user) {
+      setFormData(userInfo.user);
+    }
+  }
+
+  useEffect(() => {
+    getUserDetails();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -53,8 +68,8 @@ const Profile: React.FC = () => {
 
   const handleCancel = () => {
     setFormData({
-      firstName: user?.name?.split(' ')[0] || '',
-      lastName: user?.name?.split(' ').slice(1).join(' ') || '',
+      first_name: user?.name?.split(' ')[0] || '',
+      last_name: user?.name?.split(' ').slice(1).join(' ') || '',
       username: user?.username || '',
       email: user?.email || '',
       phone: '+1 234-567-8900',
@@ -77,7 +92,7 @@ const Profile: React.FC = () => {
     <MainLayout pageTitle="Profile">
       <div className="space-y-6">
         <Breadcrumb items={breadcrumbItems} />
-        
+
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
@@ -89,7 +104,7 @@ const Profile: React.FC = () => {
                 <p className="text-gray-600">{user?.role}</p>
               </div>
             </div>
-            
+
             <div className="flex gap-2">
               {isEditing ? (
                 <>
@@ -117,7 +132,7 @@ const Profile: React.FC = () => {
                     <Edit className="w-4 h-4" />
                     Edit Profile
                   </button>
-                  
+
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <button className="flex items-center gap-2 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">
@@ -144,7 +159,7 @@ const Profile: React.FC = () => {
               )}
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
@@ -155,13 +170,13 @@ const Profile: React.FC = () => {
                 {isEditing ? (
                   <input
                     type="text"
-                    name="firstName"
-                    value={formData.firstName}
+                    name="first_name"
+                    value={formData.first_name}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 ) : (
-                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.firstName}</p>
+                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.first_name}</p>
                 )}
               </div>
 
@@ -173,13 +188,13 @@ const Profile: React.FC = () => {
                 {isEditing ? (
                   <input
                     type="text"
-                    name="lastName"
-                    value={formData.lastName}
+                    name="last_name"
+                    value={formData.last_name}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 ) : (
-                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.lastName}</p>
+                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.last_name}</p>
                 )}
               </div>
 
@@ -188,10 +203,10 @@ const Profile: React.FC = () => {
                   <User className="w-4 h-4" />
                   Username
                 </label>
-                <p className="text-gray-900 bg-gray-100 p-3 rounded-lg border">{formData.username}</p>
+                <p className="text-gray-900 bg-gray-100 p-3 rounded-lg border">{formData.user_name}</p>
                 <p className="text-xs text-gray-500 mt-1">Username cannot be changed</p>
               </div>
-              
+
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                   <Mail className="w-4 h-4" />
@@ -200,7 +215,7 @@ const Profile: React.FC = () => {
                 <p className="text-gray-900 bg-gray-100 p-3 rounded-lg border">{formData.email}</p>
                 <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
               </div>
-              
+
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                   <Phone className="w-4 h-4" />
@@ -209,16 +224,16 @@ const Profile: React.FC = () => {
                 {isEditing ? (
                   <input
                     type="tel"
-                    name="phone"
-                    value={formData.phone}
+                    name="phone_number"
+                    value={formData.phone_number}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 ) : (
-                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.phone}</p>
+                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.phone_number}</p>
                 )}
               </div>
-              
+
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                   <Calendar className="w-4 h-4" />
@@ -227,17 +242,17 @@ const Profile: React.FC = () => {
                 {isEditing ? (
                   <input
                     type="date"
-                    name="dateOfBirth"
-                    value={formData.dateOfBirth}
+                    name="date_of_birth"
+                    value={formData.date_of_birth}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 ) : (
-                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.dateOfBirth}</p>
+                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.date_of_birth}</p>
                 )}
               </div>
             </div>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
@@ -256,7 +271,7 @@ const Profile: React.FC = () => {
                   <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.address}</p>
                 )}
               </div>
-              
+
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                   <GraduationCap className="w-4 h-4" />
@@ -274,7 +289,7 @@ const Profile: React.FC = () => {
                   <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.qualification}</p>
                 )}
               </div>
-              
+
               {user?.role !== 'Student' && (
                 <div>
                   <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
@@ -284,13 +299,13 @@ const Profile: React.FC = () => {
                   {isEditing ? (
                     <input
                       type="date"
-                      name="joiningDate"
-                      value={formData.joiningDate}
+                      name="joining_date"
+                      value={formData.joining_date}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   ) : (
-                    <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.joiningDate}</p>
+                    <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.joining_date}</p>
                   )}
                 </div>
               )}

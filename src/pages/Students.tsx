@@ -1,14 +1,17 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Edit, Search, Plus, GraduationCap } from 'lucide-react';
+import {getStudentsBySchoolId} from '../services/student';
 
 const Students: React.FC = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
+  const [students,setStudents] = useState([]);
 
   // Mock student data
   const allStudents = [
@@ -54,7 +57,7 @@ const Students: React.FC = () => {
     }
   ];
 
-  const filteredStudents = allStudents.filter(student =>
+  const filteredStudents = students.filter(student =>
     student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     student.class.toLowerCase().includes(searchTerm.toLowerCase()) ||
     student.rollNumber.includes(searchTerm) ||
@@ -80,6 +83,17 @@ const Students: React.FC = () => {
     }
   };
 
+  const getStudents = async () => {
+    const response = await getStudentsBySchoolId(userData.school_id);
+    if(response && response.students){
+      setStudents(response.students);
+    }
+  }
+
+  useEffect(()=>{
+    getStudents();
+  },[])
+
   const getAddStudentPath = () => {
     return user?.role === 'Teacher' ? '/add-student-teacher' : '/add-student';
   };
@@ -96,7 +110,7 @@ const Students: React.FC = () => {
             </div>
             <h1 className="text-2xl font-bold text-gray-800">Students</h1>
           </div>
-          {(user?.role === 'Admin' || user?.role === 'Teacher') && (
+          {(user?.role === 'admin' || user?.role === 'teacher') && (
             <Link
               to={getAddStudentPath()}
               className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"

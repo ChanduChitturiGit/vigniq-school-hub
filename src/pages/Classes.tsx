@@ -6,21 +6,22 @@ import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { getClasses } from '../data/classes';
 import { Users, Plus, Search, BookOpen } from 'lucide-react';
-import { getClassesBySchoold } from '@/services/class';
+import { getClassesBySchoolId } from '@/services/class';
 
 const Classes: React.FC = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  let classes = [];
+  const [classes,setClasses] = useState([]);
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
 
   const filteredClasses = classes.filter(classItem =>
-    classItem.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    classItem.section.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    classItem.academicYear.toLowerCase().includes(searchTerm.toLowerCase())
+    (classItem.class_name && classItem.class_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    ( classItem.section && classItem.section.toLowerCase().includes(searchTerm.toLowerCase())) || 
+    (classItem.class_name && classItem.section && (classItem.class_name+' - '+classItem.section).toLowerCase().includes(searchTerm.toLowerCase()))
+    // classItem.academicYear.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const breadcrumbItems = user?.role === 'Admin'
+  const breadcrumbItems = user?.role === 'admin'
     ? [
       { label: 'School Management', path: '/admin-school' },
       { label: 'Classes' }
@@ -31,17 +32,19 @@ const Classes: React.FC = () => {
     ];
 
   //classes list api
-  const getTeachers = async () => {
+  const getClasses = async () => {
     //classes list api
-    const classesData = await getClassesBySchoold(userData.school_id);
-    if (classesData && classesData.data) {
-      classes = classesData.data;
+    const classesData = await getClassesBySchoolId(userData.school_id);
+    if (classesData && classesData.classes) {
+      setClasses(classesData.classes);
     }
   }
 
   useEffect(() => {
-    getTeachers();
+    getClasses();
   }, []);
+
+  
 
   return (
     <MainLayout pageTitle="Classes">
@@ -77,16 +80,16 @@ const Classes: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredClasses.map((classItem) => (
             <Link
-              key={classItem.id}
-              to={`/class-details/${classItem.id}`}
+              key={classItem.class_id}
+              to={`/class-details/${classItem.class_id}`}
               className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-800">
-                    {classItem.name} - {classItem.section}
+                    {classItem.class_name} - {classItem.section}
                   </h3>
-                  <p className="text-sm text-gray-500">{classItem.academicYear}</p>
+                  <p className="text-sm text-gray-500">{classItem.academicYear || null}</p>
                 </div>
                 <div className="p-2 bg-blue-100 rounded-lg">
                   <BookOpen className="w-5 h-5 text-blue-600" />
@@ -96,11 +99,11 @@ const Classes: React.FC = () => {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Students:</span>
-                  <span className="font-medium text-gray-800">25</span>
+                  <span className="font-medium text-gray-800">{classItem.student_count}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Teacher:</span>
-                  <span className="font-medium text-gray-800">Jane Doe</span>
+                  <span className="font-medium text-gray-800">{classItem.teacher_name ? classItem.teacher_name : 'N/A'}</span>
                 </div>
               </div>
 
@@ -111,12 +114,18 @@ const Classes: React.FC = () => {
               </div>
             </Link>
           ))}
-          {filteredClasses.length === 0 && (
-            <div>
-              No classes found yet. You can add a new classes by clicking the 'Add Class' button.
-            </div>
-          )}
         </div>
+        {filteredClasses.length === 0 && (
+          <div className="text-center py-12">
+            <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Classes found</h3>
+            <p className="text-gray-500">
+              {searchTerm 
+                ? 'Try adjusting your search terms' 
+                : 'No classes have been added yet.'}
+            </p>
+          </div>
+        )}
       </div>
     </MainLayout>
   );

@@ -1,17 +1,20 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Edit, Mail, Phone, Calendar, GraduationCap, BookOpen } from 'lucide-react';
+import {getTeachersById, editTeacher} from '../services/teacher';
 
 const TeacherDetails: React.FC = () => {
   const { id } = useParams();
   const [isEditing, setIsEditing] = useState(false);
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const [formData, setFormData] = useState({
-    name: 'John Smith',
+    teacher_first_name: 'John Smith',
+    teacher_last_name: 'J',
     email: 'john.smith@greenwoodhigh.edu',
-    phone: '+1 (555) 234-5678',
+    phone_number: '+1 (555) 234-5678',
     subject: 'Mathematics',
     experience: '8 years',
     qualification: 'M.Sc Mathematics',
@@ -21,16 +24,32 @@ const TeacherDetails: React.FC = () => {
   });
 
   const breadcrumbItems = [
-    { label: 'User Management', path: '/user-management' },
-    { label: 'Schools', path: '/schools' },
-    { label: 'Greenwood High School', path: '/school-details/1' },
-    { label: `Teacher Details - ${formData.name}` }
+    { label: 'My School', path: '/admin-school' },
+    { label: `Teacher Details - ${formData.teacher_first_name + ' '+ formData.teacher_last_name}` }
   ];
 
   const classes = [
     { id: '1', name: 'Class 9', section: 'A', students: 25 },
     { id: '2', name: 'Class 10', section: 'B', students: 28 }
   ];
+
+  const getTeacher = async () => {
+    const response = await getTeachersById(Number(id),userData.school_id);
+    if(response && response.data){
+      setFormData(response.data);
+    }
+  }
+
+  const editTeacherData = async () => {
+    const response = await editTeacher(formData);
+    if(response && response.message){
+      console.log("editTeacherData",response);
+    }
+  }
+
+  useEffect(()=>{
+    getTeacher();
+  },[])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -42,13 +61,14 @@ const TeacherDetails: React.FC = () => {
 
   const handleSave = () => {
     // Simulate API call
-    console.log('Saving teacher data:', formData);
+    editTeacherData();
+   // console.log('Saving teacher data:', formData);
     setIsEditing(false);
     // Add success toast here
   };
 
   return (
-    <MainLayout pageTitle={`Teacher Details - ${formData.name}`}>
+    <MainLayout pageTitle={`Teacher Details - ${formData.teacher_first_name + ' '+ formData.teacher_last_name}`}>
       <div className="space-y-6">
         <Breadcrumb items={breadcrumbItems} />
 
@@ -57,10 +77,10 @@ const TeacherDetails: React.FC = () => {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
               <div className="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-2xl font-semibold">{formData.name.charAt(0)}</span>
+                <span className="text-white text-2xl font-semibold">{formData.teacher_first_name.charAt(0)}</span>
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-800">{formData.name}</h1>
+                <h1 className="text-2xl font-bold text-gray-800">{formData.teacher_first_name + ' '+ formData.teacher_last_name}</h1>
                 <p className="text-gray-600">{formData.subject} Teacher</p>
                 <p className="text-sm text-gray-500">Employee ID: T{id?.padStart(4, '0')}</p>
               </div>
@@ -79,17 +99,32 @@ const TeacherDetails: React.FC = () => {
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Personal Information</h3>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
                 {isEditing ? (
                   <input
                     type="text"
-                    name="name"
-                    value={formData.name}
+                    name="teacher_first_name"
+                    value={formData.teacher_first_name}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 ) : (
-                  <p className="text-gray-900">{formData.name}</p>
+                  <p className="text-gray-900">{formData.teacher_first_name}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name="teacher_last_name"
+                    value={formData.teacher_last_name}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : (
+                  <p className="text-gray-900">{formData.teacher_last_name}</p>
                 )}
               </div>
 
@@ -117,14 +152,14 @@ const TeacherDetails: React.FC = () => {
                   <input
                     type="tel"
                     name="phone"
-                    value={formData.phone}
+                    value={formData.phone_number}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 ) : (
                   <div className="flex items-center gap-2">
                     <Phone className="w-4 h-4 text-gray-400" />
-                    <p className="text-gray-900">{formData.phone}</p>
+                    <p className="text-gray-900">{formData.phone_number}</p>
                   </div>
                 )}
               </div>
