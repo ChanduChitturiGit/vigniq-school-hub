@@ -24,7 +24,7 @@ class ClassesManagingView(APIView):
         # if action == 'getAvailableClassList':
         #     return ClassesService().get_classes(request)
         if action == 'getClassesBySchoolId':
-            return ClassesService().get_classes_by_academic_year(request)
+            return ClassesService().get_classes_by_school_id(request)
         elif action == 'getClassById':
             return ClassesService().get_class_by_id(request)
         else:

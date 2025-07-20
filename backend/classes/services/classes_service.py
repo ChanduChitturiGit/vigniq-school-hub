@@ -42,7 +42,7 @@ class ClassesService:
             return JsonResponse({"error": "An error occurred while retrieving classes."},
                                 status=500)
     @staticmethod
-    def get_classes_by_academic_year(request):
+    def get_classes_by_school_id(request):
         try:
             logger.info("Retrieving active classes.")
             school_id = request.GET.get('school_id', request.user.school_id)
@@ -60,9 +60,7 @@ class ClassesService:
             class_assignment = ClassAssignment.objects.using(school_db_name).filter(
                 academic_year_id=academic_year_id
             )
-            if not class_assignment.exists():
-                return JsonResponse({"error": "No active classes found for the given academic year."},
-                                    status=404)
+
             data = []
             for class_instance in class_assignment:
                 teacher = None
@@ -144,12 +142,14 @@ class ClassesService:
                 class_instance=class_obj,
                 academic_year_id=academic_year_id
             )
-            
-            teacher = Teacher.objects.using(school_db_name).get(pk=class_instance.class_teacher_id)
-            teacher_name = User.objects.get(
-                id=teacher.teacher_id,
-                is_active=True,
-            ).full_name()
+            teacher = None
+            teacher_name = None
+            if class_instance.class_teacher_id:
+                teacher = Teacher.objects.using(school_db_name).get(pk=class_instance.class_teacher_id)
+                teacher_name = User.objects.get(
+                    id=teacher.teacher_id,
+                    is_active=True,
+                ).full_name()
 
             academic_year = AcademicYear.objects.using(school_db_name).get(
                 id = academic_year_id
@@ -163,13 +163,16 @@ class ClassesService:
             students = Student.objects.using(school_db_name).filter(
                 id__in=student_ids,
             )
-            students_data = StudentService().get_students_data(students,academic_year_id)
+            students_data = StudentService(school_db_name).get_students_data(
+                students,
+                academic_year_id
+            )
             data = {
                 'class_assignment_id': class_instance.id,
                 'class_id': class_instance.class_instance_id,
                 'class_name': class_obj.name,
                 'section': class_obj.section,
-                'teacher_id': teacher.teacher_id,
+                'teacher_id': teacher.teacher_id if teacher else None,
                 'teacher_name': teacher_name,
                 'studends_list': students_data
             }

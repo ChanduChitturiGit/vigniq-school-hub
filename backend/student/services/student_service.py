@@ -23,8 +23,8 @@ logger = logging.getLogger(__name__)
 class StudentService:
     """Service class for handling student-related operations."""
     
-    def __init__(self):
-        pass
+    def __init__(self,school_db_name):
+        self.school_db_name = school_db_name
 
     def create_student(self, request):
         """Create a new student."""
