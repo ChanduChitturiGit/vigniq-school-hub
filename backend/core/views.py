@@ -80,3 +80,11 @@ class UserProfileView(APIView):
         if action == 'getUserByUserName':
             return UserProfileService().get_user_by_username(request)
         return Response({"error": "Invalid GET action"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def put(self, request, action=None):
+        """
+        Update the authenticated user's profile information.
+        """
+        if action == 'editUserByUserName':
+            return UserProfileService().edit_user_by_username(request)
+        return Response({"error": "Invalid PUT action"}, status=status.HTTP_400_BAD_REQUEST)
