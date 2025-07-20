@@ -288,7 +288,7 @@ class StudentService:
                 is_active=True,
             )
 
-            students_data = self._get_students_data(students,academic_year_id)
+            students_data = self.get_students_data(students,academic_year_id)
             if not students_data:
                 return JsonResponse({"message": "No students found."},
                                     status=status.HTTP_404_NOT_FOUND)
@@ -398,7 +398,7 @@ class StudentService:
                 id__in=students_instants_ids,
             )
 
-            formated_students_data = self._get_students_data(students,academic_year_id)
+            formated_students_data = self.get_students_data(students,academic_year_id)
 
             return JsonResponse({"students": formated_students_data}, status=status.HTTP_200_OK)
         except ValueError as ve:
@@ -458,7 +458,7 @@ class StudentService:
             return JsonResponse({"error": "Failed to delete student."},
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def _get_students_data(self,students,academic_year_id):
+    def get_students_data(self,students,academic_year_id):
         """Helper method to format student data."""
         try:
             students_data = []

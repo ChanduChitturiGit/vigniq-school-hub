@@ -23,7 +23,7 @@ class ClassesManagingView(APIView):
                             status=status.HTTP_403_FORBIDDEN)
         # if action == 'getAvailableClassList':
         #     return ClassesService().get_classes(request)
-        if action == 'getClassesByAcademicYear':
+        if action == 'getClassesBySchoolId':
             return ClassesService().get_classes_by_academic_year(request)
         elif action == 'getClassById':
             return ClassesService().get_class_by_id(request)

@@ -14,6 +14,7 @@ from core.common_modules.common_functions import CommonFunctions
 from core.models import User
 
 from student.models import StudentClassAssignment,Student
+from student.services.student_service import StudentService
 
 logger = logging.getLogger(__name__)
 
@@ -124,29 +125,45 @@ class ClassesService:
         try:
             logger.info("Retrieving class by ID.")
             school_id = request.GET.get('school_id', request.user.school_id)
-            class_assignment_id = request.GET.get('class_assignment_id')
+            class_id = request.GET.get('class_id')
+            academic_year_id = request.GET.get('academic_year_id',1)
 
             if not school_id:
                 return JsonResponse({"error": "School ID is required."},
                                     status=400)
-            if not class_assignment_id:
-                return JsonResponse({"error": "Class Assignment Id is required."},
+            if not class_id:
+                return JsonResponse({"error": "Class  Id is required."},
                                     status=400)
 
             school_db_name = CommonFunctions.get_school_db_name(school_id)
-
-            class_instance = ClassAssignment.objects.using(school_db_name).get(
-                id=class_assignment_id)
             
             class_obj = SchoolClass.objects.using(school_db_name).get(
-                    pk=class_instance.class_instance_id)
+                    pk=class_id)
+
+            class_instance = ClassAssignment.objects.using(school_db_name).get(
+                class_instance=class_obj,
+                academic_year_id=academic_year_id
+            )
             
             teacher = Teacher.objects.using(school_db_name).get(pk=class_instance.class_teacher_id)
             teacher_name = User.objects.get(
                 id=teacher.teacher_id,
                 is_active=True,
             ).full_name()
-            
+
+            academic_year = AcademicYear.objects.using(school_db_name).get(
+                id = academic_year_id
+            )
+
+            student_ids = StudentClassAssignment.objects.using(school_db_name).filter(
+                class_instance = class_obj,
+                academic_year = academic_year
+            )
+
+            students = Student.objects.using(school_db_name).filter(
+                id__in=student_ids,
+            )
+            students_data = StudentService().get_students_data(students,academic_year_id)
             data = {
                 'class_assignment_id': class_instance.id,
                 'class_id': class_instance.class_instance_id,
@@ -154,11 +171,14 @@ class ClassesService:
                 'section': class_obj.section,
                 'teacher_id': teacher.teacher_id,
                 'teacher_name': teacher_name,
-                'studends_list': []
+                'studends_list': students_data
             }
 
-            logger.info(f"Class with ID {class_assignment_id} retrieved successfully.")
+            logger.info(f"Class with ID {class_id} retrieved successfully.")
             return JsonResponse({'class': data}, status=200)
+        except ValueError as ve:
+            logger.error("Value error: %s",ve)
+            return JsonResponse({'error':ve}, status=404)
         except ClassAssignment.DoesNotExist:
             logger.error("Class assignment does not exist.")
             return JsonResponse({"error": "Class assignment not found."}, status=404)
