@@ -7,6 +7,7 @@ import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Edit, Search, Plus, GraduationCap } from 'lucide-react';
 import {getStudentsBySchoolId} from '../services/student';
 
+
 const Students: React.FC = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
@@ -58,10 +59,10 @@ const Students: React.FC = () => {
   ];
 
   const filteredStudents = students.filter(student =>
-    student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    student.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     student.class.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.rollNumber.includes(searchTerm) ||
-    student.parentName.toLowerCase().includes(searchTerm.toLowerCase())
+    student.roll_number.includes(searchTerm) ||
+    student.parent_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getBreadcrumbItems = () => {
@@ -95,7 +96,7 @@ const Students: React.FC = () => {
   },[])
 
   const getAddStudentPath = () => {
-    return user?.role === 'Teacher' ? '/add-student-teacher' : '/add-student';
+    return user?.role === 'teacher' ? '/add-student-teacher' : '/add-student';
   };
 
   return (
@@ -138,19 +139,19 @@ const Students: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredStudents.map((student) => (
             <Link
-              key={student.id}
-              to={`/student-details/${student.id}`}
+              key={student.student_id}
+              to={`/student-details/${student.student_id}`}
               className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center">
                     <span className="text-white font-semibold">
-                      {student.name.charAt(0)}
+                      {student.student_name.charAt(0)}
                     </span>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-800">{student.name}</h3>
+                    <h3 className="text-lg font-semibold text-gray-800">{student.student_name}</h3>
                     <p className="text-sm text-gray-500">{student.class}</p>
                   </div>
                 </div>
@@ -159,21 +160,21 @@ const Students: React.FC = () => {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Roll Number:</span>
-                  <span className="font-medium text-gray-800">{student.rollNumber}</span>
+                  <span className="font-medium text-gray-800">{student.roll_number}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Parent:</span>
-                  <span className="font-medium text-gray-800">{student.parentName}</span>
+                  <span className="font-medium text-gray-800">{student.parent_name}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Phone:</span>
-                  <span className="font-medium text-gray-800">{student.phone}</span>
+                  <span className="font-medium text-gray-800">{student.parent_phone}</span>
                 </div>
               </div>
               
               <div className="mt-4 pt-4 border-t border-gray-100">
                 <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                  {student.status}
+                  {student.status || 'active'}
                 </span>
               </div>
             </Link>

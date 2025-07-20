@@ -34,6 +34,9 @@ const TeacherDetails: React.FC = () => {
   ];
 
   const getTeacher = async () => {
+    if(userData && userData.role && userData.role == 'superadmin'){
+      userData.school_id = localStorage.getItem('current_school_id');
+    }
     const response = await getTeachersById(Number(id),userData.school_id);
     if(response && response.data){
       setFormData(response.data);

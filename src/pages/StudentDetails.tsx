@@ -1,39 +1,56 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Edit, Save, X } from 'lucide-react';
+import {getStudentsById} from '../services/student';
 
 const StudentDetails: React.FC = () => {
   const { id } = useParams();
   const [isEditing, setIsEditing] = useState(false);
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
 
   // Mock student data
   const [studentData, setStudentData] = useState({
-    id: id,
-    name: 'Alice Johnson',
-    rollNumber: '001',
+    student_id: id,
+    student_name: 'Alice Johnson',
+    roll_number: '001',
     email: 'alice.johnson@school.edu',
     phone: '+91 98765 43210',
-    parentName: 'Robert Johnson',
-    parentPhone: '+91 98765 43210',
-    dateOfBirth: '15/05/2008',
+    parent_name: 'Robert Johnson',
+    parent_phone: '+91 98765 43210',
+    date_of_birth: '15/05/2008',
     address: '123 Main St, City',
     class: 'Class 10-A',
     status: 'Active',
-    admissionDate: '01/04/2024',
-    bloodGroup: 'A+',
-    emergencyContact: 'Jane Johnson (+91 98765 43213)'
+    admission_date: '01/04/2024',
+    blood_group: 'A+',
+    emergency_contact: 'Jane Johnson (+91 98765 43213)'
   });
 
   const breadcrumbItems = [
-    { label: 'User Management', path: '/user-management' },
-    { label: 'Schools', path: '/schools' },
-    { label: 'School Details', path: '/school-details/1' },
-    { label: 'Class Details', path: '/class-details/1' },
-    { label: studentData.name }
+   // { label: 'User Management', path: '/user-management' },
+    { label: 'My School', path: '/myschool' },
+    // { label: 'School Details', path: '/school-details/1' },
+    // { label: 'Class Details', path: '/class-details/1' },
+    { label: studentData.student_name }
   ];
+
+  const getStudentData = async () => {
+    if(userData && userData.role && userData.role == 'superadmin'){
+      userData.school_id = localStorage.getItem('current_school_id');
+    }
+    const response = await getStudentsById(Number(id),userData.school_id);
+    if(response && response.students){
+      setStudentData(response.students);
+      console.log(response.students);
+    }
+  }
+
+  useEffect(()=>{
+    getStudentData();
+  },[])
 
   const handleSave = () => {
     // Here you would typically save to backend
@@ -49,7 +66,7 @@ const StudentDetails: React.FC = () => {
   };
 
   return (
-    <MainLayout pageTitle={`Student Details - ${studentData.name}`}>
+    <MainLayout pageTitle={`Student Details - ${studentData.student_name}`}>
       <div className="space-y-6">
         <Breadcrumb items={breadcrumbItems} />
 
@@ -59,12 +76,12 @@ const StudentDetails: React.FC = () => {
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center">
                 <span className="text-white text-xl font-semibold">
-                  {studentData.name.charAt(0)}
+                  {studentData.student_name.charAt(0)}
                 </span>
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-800">{studentData.name}</h1>
-                <p className="text-gray-600">{studentData.class} • Roll: {studentData.rollNumber}</p>
+                <h1 className="text-2xl font-bold text-gray-800">{studentData.student_name}</h1>
+                <p className="text-gray-600">{studentData.class} • Roll: {studentData.roll_number}</p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -108,12 +125,12 @@ const StudentDetails: React.FC = () => {
               {isEditing ? (
                 <input
                   type="text"
-                  value={studentData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  value={studentData.student_name}
+                  onChange={(e) => handleInputChange('student_name', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
-                <p className="text-gray-900">{studentData.name}</p>
+                <p className="text-gray-900">{studentData.student_name}</p>
               )}
             </div>
             
@@ -122,12 +139,12 @@ const StudentDetails: React.FC = () => {
               {isEditing ? (
                 <input
                   type="text"
-                  value={studentData.rollNumber}
-                  onChange={(e) => handleInputChange('rollNumber', e.target.value)}
+                  value={studentData.roll_number}
+                  onChange={(e) => handleInputChange('roll_number', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
-                <p className="text-gray-900">{studentData.rollNumber}</p>
+                <p className="text-gray-900">{studentData.roll_number}</p>
               )}
             </div>
             
@@ -150,12 +167,12 @@ const StudentDetails: React.FC = () => {
               {isEditing ? (
                 <input
                   type="text"
-                  value={studentData.dateOfBirth}
-                  onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                  value={studentData.date_of_birth}
+                  onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
-                <p className="text-gray-900">{studentData.dateOfBirth}</p>
+                <p className="text-gray-900">{studentData.date_of_birth}</p>
               )}
             </div>
             
@@ -178,12 +195,12 @@ const StudentDetails: React.FC = () => {
               {isEditing ? (
                 <input
                   type="text"
-                  value={studentData.bloodGroup}
-                  onChange={(e) => handleInputChange('bloodGroup', e.target.value)}
+                  value={studentData.blood_group}
+                  onChange={(e) => handleInputChange('blood_group', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
-                <p className="text-gray-900">{studentData.bloodGroup}</p>
+                <p className="text-gray-900">{studentData.blood_group}</p>
               )}
             </div>
             
@@ -213,12 +230,12 @@ const StudentDetails: React.FC = () => {
               {isEditing ? (
                 <input
                   type="text"
-                  value={studentData.parentName}
-                  onChange={(e) => handleInputChange('parentName', e.target.value)}
+                  value={studentData.parent_name}
+                  onChange={(e) => handleInputChange('parent_name', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
-                <p className="text-gray-900">{studentData.parentName}</p>
+                <p className="text-gray-900">{studentData.parent_name}</p>
               )}
             </div>
             
@@ -227,12 +244,12 @@ const StudentDetails: React.FC = () => {
               {isEditing ? (
                 <input
                   type="tel"
-                  value={studentData.parentPhone}
-                  onChange={(e) => handleInputChange('parentPhone', e.target.value)}
+                  value={studentData.parent_phone}
+                  onChange={(e) => handleInputChange('parent_phone', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
-                <p className="text-gray-900">{studentData.parentPhone}</p>
+                <p className="text-gray-900">{studentData.parent_phone}</p>
               )}
             </div>
             
@@ -241,12 +258,12 @@ const StudentDetails: React.FC = () => {
               {isEditing ? (
                 <input
                   type="text"
-                  value={studentData.emergencyContact}
-                  onChange={(e) => handleInputChange('emergencyContact', e.target.value)}
+                  value={studentData.emergency_contact}
+                  onChange={(e) => handleInputChange('emergency_contact', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
-                <p className="text-gray-900">{studentData.emergencyContact}</p>
+                <p className="text-gray-900">{studentData.emergency_contact}</p>
               )}
             </div>
             
@@ -255,12 +272,12 @@ const StudentDetails: React.FC = () => {
               {isEditing ? (
                 <input
                   type="text"
-                  value={studentData.admissionDate}
-                  onChange={(e) => handleInputChange('admissionDate', e.target.value)}
+                  value={studentData.admission_date}
+                  onChange={(e) => handleInputChange('admission_date', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
-                <p className="text-gray-900">{studentData.admissionDate}</p>
+                <p className="text-gray-900">{studentData.admission_date}</p>
               )}
             </div>
           </div>
