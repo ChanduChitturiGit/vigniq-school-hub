@@ -33,10 +33,11 @@ const Login: React.FC = () => {
       setError('Username must be at least 3 characters long.');
       return false;
     }
-    if (!/^[a-zA-Z0-9]+$/.test(username)) {
-      setError('Username must contain only letters and numbers.');
+    if (!/^[a-zA-Z0-9@]+$/.test(username)) {
+      setError('Username must contain only letters, numbers, and @ symbol.');
       return false;
     }
+
     return true;
   };
 
@@ -215,7 +216,7 @@ const Login: React.FC = () => {
                       onChange={(e) => setUsername(e.target.value)}
                       placeholder="Enter your username"
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                      pattern="[a-zA-Z0-9]+"
+                      pattern="[a-zA-Z0-9@]+"
                       title="Username must contain only letters and numbers"
                       minLength={3}
                       required
@@ -389,8 +390,8 @@ const Login: React.FC = () => {
                     className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {forgotLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                    {forgotLoading 
-                      ? 'Processing...' 
+                    {forgotLoading
+                      ? 'Processing...'
                       : forgotStep === 1 ? 'Verify Username' : forgotStep === 2 ? 'Verify Code' : 'Reset Password'
                     }
                   </button>

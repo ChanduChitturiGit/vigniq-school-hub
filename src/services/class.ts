@@ -7,11 +7,19 @@ const suburl = '/classes/class_manager';
 
 
 //get classes by school id
-export const getClassesBySchoold = async (schoolId : Number) => {
-  const response = await api.get(baseurl+suburl+'/getAvailableClassList',{params : {school_id : schoolId}});
+export const getClassesBySchoolId = async (schoolId : Number) => {
+  const response = await api.get(baseurl+suburl+'/getClassesBySchoolId',{params : {school_id : schoolId}});
   return response.data;
 }
 
+//add new class or create new class
+export const addClass = async (data: any): Promise<any> => {
+  const response = await api.post<any>(baseurl+suburl+'/createClass', data);
+  return response.data;
+}
 
-
-
+//get classes by class id
+export const getClassesById = async (id: Number,schoolId : Number) => {
+  const response = await api.get(baseurl+suburl+'/getClassById',{params : {class_id : id,school_id : schoolId}});
+  return response.data;
+}

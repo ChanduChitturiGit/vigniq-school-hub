@@ -230,7 +230,7 @@ class TeacherService:
                         # Remove old assignments
                         TeacherSubjectAssignment.objects.using(school_db_name).filter(
                             teacher = teacher,
-                            acadamic_year = acadamic_year).delete()
+                            academic_year = acadamic_year).delete()
                         # Add new assignments
                         for item in subject_assignments:
                             try:
@@ -253,7 +253,7 @@ class TeacherService:
                                 teacher = teacher,
                                 subject = subject,
                                 school_class = school_class,
-                                acadamic_year = acadamic_year
+                                academic_year = acadamic_year
                             )
 
                     logger.info(f"Teacher {teacher_id} updated successfully.")
