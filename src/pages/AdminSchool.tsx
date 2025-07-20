@@ -124,8 +124,22 @@ const AdminSchool: React.FC = () => {
   };
 
   const handleTeacherClick = (teacherId: string) => {
+    if(userData && userData.role && userData.role == 'superadmin'){
+      localStorage.setItem('current_school_id',id)
+    }
     navigate(`/teacher-details/${teacherId}`);
   };
+
+  const handleClassClick = (classId: string) => {
+    if(userData && userData.role && userData.role == 'superadmin'){
+      localStorage.setItem('current_school_id',id)
+    }
+    navigate(`/class-details/${classId}`);
+  };
+
+  // const superAdminRouteHandling = ()=> {
+
+  // }
 
   return (
     <MainLayout pageTitle={`My School - ${school.name}`}>
@@ -317,10 +331,10 @@ const AdminSchool: React.FC = () => {
           <div className="max-h-96 overflow-y-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredClasses.slice(0, 6).map((classItem) => (
-                <Link
+                <div
                   key={classItem.class_id}
-                  to={`/class-details/${classItem.class_id}`}
-                  state={{ from: 'admin-school' }}
+                  onClick={() => handleClassClick(classItem.class_id)}
+                  // state={{ from: 'admin-school' }}
                   className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-center justify-between mb-2">
@@ -329,7 +343,7 @@ const AdminSchool: React.FC = () => {
                   </div>
                   <p className="text-sm text-gray-600">Students: {classItem.student_count}</p>
                   <p className="text-sm text-gray-500">Teacher: {classItem.teacher || 'N/A'}</p>
-                </Link>
+                </div>
               ))}
             </div>
             {filteredClasses.length === 0 && (
