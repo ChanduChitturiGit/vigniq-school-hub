@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Search, Plus, BookOpen, Users } from 'lucide-react';
+import { Edit, Search, Plus, BookOpen, Users,LoaderCircle } from 'lucide-react';
 import { getSchoolById,editSchool } from '../services/school';
 import { getTeachersBySchoolId } from '../services/teacher';
 import { getClassesBySchoolId } from '../services/class';
@@ -15,6 +15,8 @@ const AdminSchool: React.FC = () => {
   const [classSearchTerm, setClassSearchTerm] = useState('');
   const [teachers,setteachers] = useState([]);
   const [classes,setClasses] = useState([]);
+  const [classLoader,setClassLoader] = useState(true);
+  const [teacherLoader,seteacherLoader] = useState(true);
   const [schoolData, setSchoolData] = useState({
     school_name: 'Greenwood High School',
     school_email: 'admin@greenwood.edu',
@@ -71,14 +73,18 @@ const AdminSchool: React.FC = () => {
       schoolDataById();
 
       //teachers list api
+      seteacherLoader(true);
       const teachersData = await getTeachersBySchoolId(id ? id : userData.school_id);
       if (teachersData && teachersData.teachers) {
+        seteacherLoader(false);
         setteachers(teachersData.teachers);
       }
 
       //classes list api
+      setClassLoader(true);
       const classesData = await getClassesBySchoolId(id ? id : userData.school_id);
       if (classesData && classesData.classes) {
+        setClassLoader(false);
         setClasses(classesData.classes);
       }
 
@@ -276,7 +282,7 @@ const AdminSchool: React.FC = () => {
           </div>
 
           <div className="max-h-96 overflow-y-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4`}>
               {filteredTeachers.slice(0, 6).map((teacher) => (
                 <div
                   key={teacher.teacher_id}
@@ -289,11 +295,16 @@ const AdminSchool: React.FC = () => {
                 </div>
               ))}
             </div>
-            {filteredTeachers.length === 0 && (
+            {filteredTeachers.length === 0 && !teacherLoader && (
               <div>
                 No teachers found yet. You can add a new teacher by clicking the 'Add Teacher' button.
               </div>
             )}
+            {
+              teacherLoader && (
+                <LoaderCircle className="spinner-icon" size={40} />
+              )
+            }
           </div>
         </div>
 
@@ -346,11 +357,16 @@ const AdminSchool: React.FC = () => {
                 </div>
               ))}
             </div>
-            {filteredClasses.length === 0 && (
+            {filteredClasses.length === 0 && !classLoader && (
               <div>
                 No classes found yet. You can add a new classes by clicking the 'Add Class' button.
               </div>
             )}
+            {
+              classLoader && (
+                <LoaderCircle className="spinner-icon" size={40} />
+              )
+            }
           </div>
         </div>
       </div>

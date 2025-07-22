@@ -22,3 +22,9 @@ export const getStudentsById = async (id : Number,schoolId : Number) => {
   const response = await api.get(baseurl+suburl+'/getStudentById',{params : {student_id : id,school_id : schoolId}});
   return response.data;
 }
+
+//update student or edit student
+export const editStudent = async (data : any): Promise<any> => {
+  const response = await api.put<any>(baseurl+suburl+'/updateStudentById', data);
+  return response.data;
+};

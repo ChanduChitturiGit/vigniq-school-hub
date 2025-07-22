@@ -4,22 +4,28 @@ import { Link } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { getSchools } from '../data/schools';
-import { Edit, MapPin, Mail, Phone } from 'lucide-react';
+import { Edit, MapPin, Mail, Phone, LoaderCircle  as Loader, School } from 'lucide-react';
 import { getSchoolsList } from '@/services/school';
+import {SpinnerOverlay} from '../pages/SpinnerOverlay';
+
+
 
 const Schools: React.FC = () => {
   //const schools = getSchools();
   const [schools, setschools] = useState([]);
+  const [loader, setLoader] = useState(false);
 
   useEffect(() => {
-  const fetchSchools = async () => {
-    const schoolsList = await getSchoolsList();
-    if(schoolsList && schoolsList.schools){
-      setschools(schoolsList.schools);
-    }
-  };
-  fetchSchools();
-}, []);
+    const fetchSchools = async () => {
+      setLoader(true);
+      const schoolsList = await getSchoolsList();
+      if (schoolsList && schoolsList.schools) {
+        setLoader(false);
+        setschools(schoolsList.schools);
+      }
+    };
+    fetchSchools();
+  }, []);
 
 
   const breadcrumbItems = [
@@ -31,7 +37,7 @@ const Schools: React.FC = () => {
     <MainLayout pageTitle="Schools">
       <div className="space-y-6">
         <Breadcrumb items={breadcrumbItems} />
-        
+
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-800">Schools</h1>
           <Link
@@ -61,24 +67,24 @@ const Schools: React.FC = () => {
                   <Edit className="w-4 h-4" />
                 </button>
               </div>
-              
+
               <div className="space-y-3">
                 <div className="flex items-start gap-2">
                   <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
                   <p className="text-sm text-gray-600">{school.school_address}</p>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4 text-gray-400" />
                   <p className="text-sm text-gray-600">{school.school_contact_number}</p>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4 text-gray-400" />
                   <p className="text-sm text-gray-600">{school.school_email}</p>
                 </div>
               </div>
-              
+
               <div className="mt-4 pt-4 border-t border-gray-100">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-500">Students: {school.teacher_count ? school.teacher_count : 0}</span>
@@ -88,6 +94,22 @@ const Schools: React.FC = () => {
             </Link>
           ))}
         </div>
+
+        {schools.length === 0 && (
+          <div className="text-center py-12">
+            <School className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Schools found</h3>
+            <p className="text-gray-500">
+              {'No schools have been added yet.'}
+            </p>
+          </div>
+        )}
+
+        {
+          loader && (
+            <SpinnerOverlay/>
+          )
+        }
       </div>
     </MainLayout>
   );
