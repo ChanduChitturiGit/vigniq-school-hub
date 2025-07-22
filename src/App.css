@@ -34,3 +34,31 @@
 .read-the-docs {
   color: #888;
 }
+
+
+
+/* App.css */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255,255,255,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.spinner-icon {
+  animation: spin 3s linear infinite;
+  color: #4f4fc6;
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+

@@ -4,13 +4,14 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Search, Plus, GraduationCap } from 'lucide-react';
+import { Edit, Search, Plus, GraduationCap,LoaderCircle } from 'lucide-react';
 import {getStudentsBySchoolId} from '../services/student';
 
 
 const Students: React.FC = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
+  const [loader,setLoader] = useState(true);
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const [students,setStudents] = useState([]);
 
@@ -85,8 +86,10 @@ const Students: React.FC = () => {
   };
 
   const getStudents = async () => {
+    setLoader(true);
     const response = await getStudentsBySchoolId(userData.school_id);
     if(response && response.students){
+      setLoader(false);
       setStudents(response.students);
     }
   }
@@ -181,7 +184,7 @@ const Students: React.FC = () => {
           ))}
         </div>
 
-        {filteredStudents.length === 0 && (
+        {filteredStudents.length === 0 && !loader &&(
           <div className="text-center py-12">
             <GraduationCap className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No students found</h3>
@@ -192,6 +195,13 @@ const Students: React.FC = () => {
             </p>
           </div>
         )}
+        {
+          loader && (
+            <div className="text-center py-12">
+              <LoaderCircle className="spinner-icon mx-auto" size={40} />
+            </div>
+          )
+        }
       </div>
     </MainLayout>
   );

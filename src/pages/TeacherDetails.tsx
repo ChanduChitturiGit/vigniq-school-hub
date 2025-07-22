@@ -11,16 +11,16 @@ const TeacherDetails: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const [formData, setFormData] = useState({
-    teacher_first_name: 'John Smith',
-    teacher_last_name: 'J',
-    email: 'john.smith@greenwoodhigh.edu',
-    phone_number: '+1 (555) 234-5678',
-    subject: 'Mathematics',
-    experience: '8 years',
-    qualification: 'M.Sc Mathematics',
-    joiningDate: '2016-08-15',
-    address: '123 Teacher St, Education City, EC 12345',
-    emergencyContact: '+1 (555) 987-6543'
+    teacher_first_name: '',
+    teacher_last_name: '',
+    email: '',
+    phone_number: '',
+    subject: '',
+    experience: '',
+    qualification: '',
+    joiningDate: '',
+    address: '',
+    emergencyContact: ''
   });
 
   const breadcrumbItems = [

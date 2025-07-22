@@ -4,13 +4,14 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Plus, Mail, Phone, Search, Users as UsersIcon } from 'lucide-react';
+import { Edit, Plus, Mail, Phone, Search, Users as UsersIcon,LoaderCircle } from 'lucide-react';
 import {getTeachersBySchoolId} from '../services/teacher';
 
 const Teachers: React.FC = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [teachers,setTeachers] = useState([]);
+  const [loader,setLoader] = useState(true);
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
 
   // Mock teacher data
@@ -48,8 +49,10 @@ const Teachers: React.FC = () => {
   ];
   
   const getTeachersList = async () => {
+    setLoader(true);
     const response = await getTeachersBySchoolId(userData.school_id);
     if(response && response.teachers){
+      setLoader(false);
       setTeachers(response.teachers);
       // filteredTeachers = teachers;
       console.log("teachers",teachers,filteredTeachers);
@@ -173,7 +176,7 @@ const Teachers: React.FC = () => {
               </div>
             )} */}
         </div>
-        {filteredTeachers.length === 0 && (
+        {filteredTeachers.length === 0 && !loader &&(
           <div className="text-center py-12">
             <UsersIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Teachers found</h3>
@@ -184,6 +187,13 @@ const Teachers: React.FC = () => {
             </p>
           </div>
         )}
+        {
+          loader && (
+            <div className="text-center py-12">
+              <LoaderCircle className="spinner-icon mx-auto" size={40} />
+            </div>
+          )
+        }
       </div>
     </MainLayout>
   );

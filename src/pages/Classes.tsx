@@ -5,13 +5,14 @@ import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { getClasses } from '../data/classes';
-import { Users, Plus, Search, BookOpen } from 'lucide-react';
+import { Users, Plus, Search, BookOpen,LoaderCircle } from 'lucide-react';
 import { getClassesBySchoolId } from '@/services/class';
 
 const Classes: React.FC = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [classes,setClasses] = useState([]);
+  const [loader,setLoader] = useState(true);
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
 
   const filteredClasses = classes.filter(classItem =>
@@ -34,8 +35,10 @@ const Classes: React.FC = () => {
   //classes list api
   const getClasses = async () => {
     //classes list api
+    setLoader(true);
     const classesData = await getClassesBySchoolId(userData.school_id);
     if (classesData && classesData.classes) {
+      setLoader(false);
       setClasses(classesData.classes);
     }
   }
@@ -115,7 +118,7 @@ const Classes: React.FC = () => {
             </Link>
           ))}
         </div>
-        {filteredClasses.length === 0 && (
+        {filteredClasses.length === 0 && !loader && (
           <div className="text-center py-12">
             <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Classes found</h3>
@@ -126,6 +129,13 @@ const Classes: React.FC = () => {
             </p>
           </div>
         )}
+        {
+          loader && (
+            <div className="text-center py-12">
+              <LoaderCircle className="spinner-icon mx-auto" size={40} />
+            </div>
+          )
+        }
       </div>
     </MainLayout>
   );
