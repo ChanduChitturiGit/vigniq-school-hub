@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
@@ -5,6 +6,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Progress } from '../components/ui/progress';
 import { Upload, Plus, X, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -12,6 +14,8 @@ interface ChapterFile {
   id: string;
   name: string;
   file: File | null;
+  uploadProgress: number;
+  isUploading: boolean;
 }
 
 const UploadEbooks: React.FC = () => {
@@ -23,8 +27,10 @@ const UploadEbooks: React.FC = () => {
     uploadType: ''
   });
   const [contentPdf, setContentPdf] = useState<File | null>(null);
+  const [contentPdfProgress, setContentPdfProgress] = useState(0);
+  const [isContentPdfUploading, setIsContentPdfUploading] = useState(false);
   const [chapterFiles, setChapterFiles] = useState<ChapterFile[]>([
-    { id: '1', name: 'Chapter-1 PDF', file: null }
+    { id: '1', name: 'Chapter-1 PDF', file: null, uploadProgress: 0, isUploading: false }
   ]);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -33,6 +39,31 @@ const UploadEbooks: React.FC = () => {
   const subjects = ['Mathematics', 'English', 'Science', 'Physics', 'Chemistry', 'Biology', 'History', 'Geography', 'Hindi', 'Computer Science'];
   const uploadTypes = ['Chapter Wise PDF', 'Single PDF'];
 
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const simulateUpload = (callback: (progress: number) => void): Promise<void> => {
+    return new Promise((resolve) => {
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress >= 100) {
+          progress = 100;
+          clearInterval(interval);
+          callback(progress);
+          resolve();
+        } else {
+          callback(progress);
+        }
+      }, 200);
+    });
+  };
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -40,19 +71,67 @@ const UploadEbooks: React.FC = () => {
     }));
   };
 
-  const handleContentPdfChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleContentPdfChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type === 'application/pdf') {
       setContentPdf(file);
+      setIsContentPdfUploading(true);
+      setContentPdfProgress(0);
+      
+      await simulateUpload((progress) => {
+        setContentPdfProgress(progress);
+      });
+      
+      setIsContentPdfUploading(false);
     } else {
       toast.error('Please select a valid PDF file');
     }
   };
 
-  const handleChapterFileChange = (id: string, file: File | null) => {
+  const handleChapterFileChange = async (id: string, file: File | null) => {
+    if (file && file.type === 'application/pdf') {
+      setChapterFiles(prev => 
+        prev.map(chapter => 
+          chapter.id === id 
+            ? { ...chapter, file, isUploading: true, uploadProgress: 0 }
+            : chapter
+        )
+      );
+
+      await simulateUpload((progress) => {
+        setChapterFiles(prev => 
+          prev.map(chapter => 
+            chapter.id === id 
+              ? { ...chapter, uploadProgress: progress }
+              : chapter
+          )
+        );
+      });
+
+      setChapterFiles(prev => 
+        prev.map(chapter => 
+          chapter.id === id 
+            ? { ...chapter, isUploading: false }
+            : chapter
+        )
+      );
+    } else if (file) {
+      toast.error('Please select a valid PDF file');
+    }
+  };
+
+  const removeContentPdf = () => {
+    setContentPdf(null);
+    setContentPdfProgress(0);
+    setIsContentPdfUploading(false);
+  };
+
+  const removeChapterFile = (id: string) => {
     setChapterFiles(prev => 
       prev.map(chapter => 
-        chapter.id === id ? { ...chapter, file } : chapter
+        chapter.id === id 
+          ? { ...chapter, file: null, uploadProgress: 0, isUploading: false }
+          : chapter
       )
     );
   };
@@ -62,7 +141,9 @@ const UploadEbooks: React.FC = () => {
     setChapterFiles(prev => [...prev, {
       id: newId,
       name: `Chapter-${newId} PDF`,
-      file: null
+      file: null,
+      uploadProgress: 0,
+      isUploading: false
     }]);
   };
 
@@ -106,7 +187,9 @@ const UploadEbooks: React.FC = () => {
         uploadType: ''
       });
       setContentPdf(null);
-      setChapterFiles([{ id: '1', name: 'Chapter-1 PDF', file: null }]);
+      setContentPdfProgress(0);
+      setIsContentPdfUploading(false);
+      setChapterFiles([{ id: '1', name: 'Chapter-1 PDF', file: null, uploadProgress: 0, isUploading: false }]);
     }, 2000);
   };
 
@@ -118,7 +201,9 @@ const UploadEbooks: React.FC = () => {
       uploadType: ''
     });
     setContentPdf(null);
-    setChapterFiles([{ id: '1', name: 'Chapter-1 PDF', file: null }]);
+    setContentPdfProgress(0);
+    setIsContentPdfUploading(false);
+    setChapterFiles([{ id: '1', name: 'Chapter-1 PDF', file: null, uploadProgress: 0, isUploading: false }]);
   };
 
   return (
@@ -206,11 +291,37 @@ const UploadEbooks: React.FC = () => {
                       accept=".pdf"
                       onChange={handleContentPdfChange}
                       className="pl-10"
+                      disabled={isContentPdfUploading}
                     />
                     <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   </div>
                   {contentPdf && (
-                    <p className="text-sm text-green-600 mt-2">Selected: {contentPdf.name}</p>
+                    <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <FileText className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm font-medium text-gray-700">{contentPdf.name}</span>
+                          <span className="text-xs text-gray-500">({formatFileSize(contentPdf.size)})</span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={removeContentPdf}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      {(isContentPdfUploading || contentPdfProgress > 0) && (
+                        <div className="space-y-1">
+                          <Progress value={contentPdfProgress} className="h-2" />
+                          <p className="text-xs text-gray-500">
+                            {isContentPdfUploading ? `Uploading... ${Math.round(contentPdfProgress)}%` : 'Upload complete'}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
@@ -239,11 +350,37 @@ const UploadEbooks: React.FC = () => {
                           accept=".pdf"
                           onChange={(e) => handleChapterFileChange(chapter.id, e.target.files?.[0] || null)}
                           className="pl-10"
+                          disabled={chapter.isUploading}
                         />
                         <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       </div>
                       {chapter.file && (
-                        <p className="text-sm text-green-600 mt-2">Selected: {chapter.file.name}</p>
+                        <div className="mt-3 p-3 bg-white rounded-lg border">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center space-x-2">
+                              <FileText className="h-4 w-4 text-gray-500" />
+                              <span className="text-sm font-medium text-gray-700">{chapter.file.name}</span>
+                              <span className="text-xs text-gray-500">({formatFileSize(chapter.file.size)})</span>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeChapterFile(chapter.id)}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          {(chapter.isUploading || chapter.uploadProgress > 0) && (
+                            <div className="space-y-1">
+                              <Progress value={chapter.uploadProgress} className="h-2" />
+                              <p className="text-xs text-gray-500">
+                                {chapter.isUploading ? `Uploading... ${Math.round(chapter.uploadProgress)}%` : 'Upload complete'}
+                              </p>
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
                   ))}
