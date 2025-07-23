@@ -27,6 +27,7 @@ const StudentDetails: React.FC = () => {
     parent_email : 'parent@gmail.com',
     address: '123 Main St, City',
     class : 'Class 10-A',
+    class_id : 1,
     class_name: 'Class 10',
     section : "A",
     status: 'Active',
@@ -38,9 +39,9 @@ const StudentDetails: React.FC = () => {
 
   const breadcrumbItems = [
    // { label: 'User Management', path: '/user-management' },
-    { label: 'My School', path: '/myschool' },
+    { label: 'My School', path: '/admin-school' },
     // { label: 'School Details', path: '/school-details/1' },
-    // { label: 'Class Details', path: '/class-details/1' },
+    { label: 'Class Details', path: `/class-details/${studentData.class_id}` },
     { label: studentData.student_first_name }
   ];
 
@@ -60,7 +61,7 @@ const StudentDetails: React.FC = () => {
     const response = await getStudentsById(Number(id),userData.school_id);
     if(response && response.student){
       setStudentData(response.student);
-      console.log(response.student);
+      //console.log(response.student);
     }
   }
 
@@ -75,8 +76,8 @@ const StudentDetails: React.FC = () => {
     const response = await editStudent(studentData);
     if(response && response.message){
       getStudentData();
-      console.log(response);
-      console.log('Saving student data:', studentData);
+      // console.log(response);
+      // console.log('Saving student data:', studentData);
     }
    
   };
@@ -85,7 +86,7 @@ const StudentDetails: React.FC = () => {
    
     const classdata = classes.find((val: any) => (val.class_name + ' - '+val.section) == className);
     const classId = classdata.class_id ? classdata.class_id : 1;
-     console.log("className",className,classId);
+     //console.log("className",className,classId);
     return classId;
   }
 

@@ -34,7 +34,7 @@ const SchoolDetails: React.FC = () => {
 
   const breadcrumbItems = [
     { label: 'User Management', path: '/user-management' },
-    { label: 'Schools', path: '/schools' },
+    { label: 'MySchool', path: '/MySchool' },
     { label: school.name }
   ];
 

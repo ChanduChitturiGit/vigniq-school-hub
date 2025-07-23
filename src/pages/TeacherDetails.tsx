@@ -4,12 +4,13 @@ import { useParams, Link } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Edit, Mail, Phone, Calendar, GraduationCap, BookOpen } from 'lucide-react';
-import {getTeachersById, editTeacher} from '../services/teacher';
+import { getTeachersById, editTeacher } from '../services/teacher';
 
 const TeacherDetails: React.FC = () => {
   const { id } = useParams();
   const [isEditing, setIsEditing] = useState(false);
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
+  const schoolId = localStorage.getItem('current_school_id');
   const [formData, setFormData] = useState({
     teacher_first_name: '',
     teacher_last_name: '',
@@ -22,11 +23,26 @@ const TeacherDetails: React.FC = () => {
     address: '',
     emergencyContact: ''
   });
-
-  const breadcrumbItems = [
+  const [breadcrumbItems, setBreadCrumbItems] = useState([
     { label: 'My School', path: '/admin-school' },
-    { label: `Teacher Details - ${formData.teacher_first_name + ' '+ formData.teacher_last_name}` }
-  ];
+    { label: `Teacher Details - ${formData.teacher_first_name + ' ' + formData.teacher_last_name}` }
+  ]);
+
+
+  const setBreadCrumb = () => {
+    if (userData.role == 'superadmin') {
+      setBreadCrumbItems([
+        { label: 'Schools', path: '/schools' },
+        { label: 'My School', path: `/school-details/${schoolId}` },
+        { label: `Teacher Details - ${formData.teacher_first_name + ' ' + formData.teacher_last_name}` }
+      ])
+    } else {
+      setBreadCrumbItems([
+        { label: 'My School', path: '/admin-school' },
+        { label: `Teacher Details - ${formData.teacher_first_name + ' ' + formData.teacher_last_name}` }
+      ]);
+    }
+  }
 
   const classes = [
     { id: '1', name: 'Class 9', section: 'A', students: 25 },
@@ -34,25 +50,33 @@ const TeacherDetails: React.FC = () => {
   ];
 
   const getTeacher = async () => {
-    if(userData && userData.role && userData.role == 'superadmin'){
+    if (userData && userData.role && userData.role == 'superadmin') {
       userData.school_id = localStorage.getItem('current_school_id');
     }
-    const response = await getTeachersById(Number(id),userData.school_id);
-    if(response && response.data){
+    const response = await getTeachersById(Number(id), userData.school_id);
+    if (response && response.data) {
       setFormData(response.data);
+      setBreadCrumb();
     }
   }
 
   const editTeacherData = async () => {
     const response = await editTeacher(formData);
-    if(response && response.message){
-      console.log("editTeacherData",response);
+    if (response && response.message) {
+      console.log("editTeacherData", response);
     }
   }
 
-  useEffect(()=>{
+  useEffect(() => {
     getTeacher();
-  },[])
+    // setBreadCrumb();
+  }, [])
+
+  useEffect(() => {
+    if (formData.teacher_first_name && formData.teacher_last_name) {
+      setBreadCrumb();
+    }
+  }, [formData.teacher_first_name, formData.teacher_last_name]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -65,13 +89,13 @@ const TeacherDetails: React.FC = () => {
   const handleSave = () => {
     // Simulate API call
     editTeacherData();
-   // console.log('Saving teacher data:', formData);
+    // console.log('Saving teacher data:', formData);
     setIsEditing(false);
     // Add success toast here
   };
 
   return (
-    <MainLayout pageTitle={`Teacher Details - ${formData.teacher_first_name + ' '+ formData.teacher_last_name}`}>
+    <MainLayout pageTitle={`Teacher Details - ${formData.teacher_first_name + ' ' + formData.teacher_last_name}`}>
       <div className="space-y-6">
         <Breadcrumb items={breadcrumbItems} />
 
@@ -83,7 +107,7 @@ const TeacherDetails: React.FC = () => {
                 <span className="text-white text-2xl font-semibold">{formData.teacher_first_name.charAt(0)}</span>
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-800">{formData.teacher_first_name + ' '+ formData.teacher_last_name}</h1>
+                <h1 className="text-2xl font-bold text-gray-800">{formData.teacher_first_name + ' ' + formData.teacher_last_name}</h1>
                 <p className="text-gray-600">{formData.subject} Teacher</p>
                 <p className="text-sm text-gray-500">Employee ID: T{id?.padStart(4, '0')}</p>
               </div>
@@ -100,7 +124,7 @@ const TeacherDetails: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Personal Information</h3>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
                 {isEditing ? (
@@ -185,7 +209,7 @@ const TeacherDetails: React.FC = () => {
 
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Professional Information</h3>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
                 {isEditing ? (

@@ -13,7 +13,7 @@ import {SpinnerOverlay} from '../pages/SpinnerOverlay';
 const Schools: React.FC = () => {
   //const schools = getSchools();
   const [schools, setschools] = useState([]);
-  const [loader, setLoader] = useState(false);
+  const [loader, setLoader] = useState(true);
 
   useEffect(() => {
     const fetchSchools = async () => {
@@ -29,7 +29,7 @@ const Schools: React.FC = () => {
 
 
   const breadcrumbItems = [
-    { label: 'User Management', path: '/user-management' },
+    // { label: 'School Management', path: '/user-management' },
     { label: 'Schools' }
   ];
 
@@ -95,7 +95,7 @@ const Schools: React.FC = () => {
           ))}
         </div>
 
-        {schools.length === 0 && (
+        {schools.length === 0 && !loader &&(
           <div className="text-center py-12">
             <School className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Schools found</h3>
