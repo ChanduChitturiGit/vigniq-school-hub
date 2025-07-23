@@ -97,7 +97,7 @@ class ClassesService:
                 class_data = {
                     'class_assignment_id': class_instance.id,
                     'class_id': class_obj.id,
-                    'class_name': class_obj.name,
+                    'class_number': class_obj.class_number,
                     'section': class_obj.section,
                     'teacher_id': teacher.teacher_id if teacher else None,
                     'teacher_name': teacher_name,
@@ -170,7 +170,7 @@ class ClassesService:
             data = {
                 'class_assignment_id': class_instance.id,
                 'class_id': class_instance.class_instance_id,
-                'class_name': class_obj.name,
+                'class_number': class_obj.class_number,
                 'section': class_obj.section,
                 'teacher_id': teacher.teacher_id if teacher else None,
                 'teacher_name': teacher_name,
@@ -313,7 +313,7 @@ class ClassesService:
         """Create a new class."""
         try:
             school_id = request.data.get('school_id', request.user.school_id)
-            class_name = request.data.get('class_name')
+            class_number = request.data.get('class_number')
             section_name = request.data.get('section')
             teacher_id = request.data.get('teacher_id',None)
             academic_year_id = request.data.get('academic_year_id',1)
@@ -321,8 +321,8 @@ class ClassesService:
             if not school_id:
                 return JsonResponse({"error": "School ID is required."},
                                     status=400)
-            if not class_name:
-                return JsonResponse({"error": "Class name is required."},
+            if not class_number:
+                return JsonResponse({"error": "Class number is required."},
                                     status=400)
             if not section_name:
                 return JsonResponse({"error": "Section name is required."},
@@ -350,7 +350,7 @@ class ClassesService:
                                     status=404)
             with transaction.atomic(using=school_db_name):
                 class_instance = SchoolClass.objects.using(school_db_name).create(
-                    name=class_name,
+                    class_number=class_number,
                     section=section_name
                 )
 
@@ -368,7 +368,7 @@ class ClassesService:
                 response_data = {
                     'id': class_assignment.id,
                     'class_id': class_instance.id,
-                    'class_name': class_instance.name,
+                    'class_number': class_instance.class_number,
                     'section': class_instance.section,
                     'teacher_id': class_teacher.id if class_teacher else None,
                     'academic_year_id': academic_year.id
@@ -437,7 +437,7 @@ class ClassesService:
             response_data = {
                 'id': class_assignment.id,
                 'class_id': class_assignment.class_instance.id,
-                'class_name': class_assignment.class_instance.name,
+                'class_number': class_assignment.class_instance.class_number,
                 'section': class_assignment.class_instance.section,
                 'teacher_id': class_teacher.id,
                 'academic_year_id': class_assignment.academic_year.id

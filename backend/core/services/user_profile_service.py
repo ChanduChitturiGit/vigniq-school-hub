@@ -103,7 +103,7 @@ class UserProfileService:
                         "parent_phone": student.parent_phone,
                         "parent_email": student.parent_email,
                         "class_id": class_obj.id if class_obj else None,
-                        "class_name": class_obj.name if class_obj else None,
+                        "class_number": class_obj.class_number if class_obj else None,
                         "section": class_obj.section if class_obj else None,
                         "roll_number": student.roll_number,
                     })
