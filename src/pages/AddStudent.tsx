@@ -32,13 +32,24 @@ const AddStudent: React.FC = () => {
     admission_date: ''
   });
 
-  const breadcrumbItems = [
+
+  const [breadcrumbItems, setBreadCrumbItems] = useState([
     // { label: 'User Management', path: '/user-management' },
-    // { label: 'Schools', path: '/schools' },
-    // { label: 'Greenwood High School', path: '/school-details/1' },
-    { label: 'Dashboard', path: '/dashboard' },
+    { label: 'My School', path: '/admin-school' },
+    //   // { label: 'Greenwood High School', path: '/school-details/1' },
+    //  // { label: 'Dashboard', path: '/dashboard' },
     { label: 'Add Student' }
-  ];
+  ]);
+
+
+  const setBreadCrumb = () => {
+    if (userData.role == 'teacher') {
+      setBreadCrumbItems([
+        { label: 'Students', path: '/students' },
+        { label: 'Add Student' }
+      ])
+    }
+  }
 
   const getClassId = (className: string) => {
     const classdata = classes.find((val: any) => val.class_name == className);
@@ -67,11 +78,13 @@ const AddStudent: React.FC = () => {
     const classesData = await getClassesBySchoolId(userData.school_id);
     if (classesData && classesData.classes) {
       setClasses(classesData.classes);
+      setBreadCrumb();
     }
   }
 
   useEffect(() => {
     getClasses();
+    setBreadCrumb();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

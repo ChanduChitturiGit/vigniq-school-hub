@@ -74,12 +74,12 @@ const Students: React.FC = () => {
       ];
     } else if (user?.role === 'Teacher') {
       return [
-        { label: 'User Management', path: '/user-management' },
+        { label: 'User Management' },
         { label: 'Students' }
       ];
     } else {
       return [
-        { label: 'User Management', path: '/user-management' },
+        { label: 'User Management' },
         { label: 'Students' }
       ];
     }
@@ -99,7 +99,7 @@ const Students: React.FC = () => {
   },[])
 
   const getAddStudentPath = () => {
-    return user?.role === 'teacher' ? '/add-student-teacher' : '/add-student';
+    return '/add-student';
   };
 
   return (

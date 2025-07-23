@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Search, Plus, BookOpen, Users,LoaderCircle } from 'lucide-react';
-import { getSchoolById,editSchool } from '../services/school';
+import { Edit, Search, Plus, BookOpen, Users, LoaderCircle } from 'lucide-react';
+import { getSchoolById, editSchool } from '../services/school';
 import { getTeachersBySchoolId } from '../services/teacher';
 import { getClassesBySchoolId } from '../services/class';
 import { useParams } from 'react-router-dom';
@@ -13,10 +13,10 @@ const AdminSchool: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [teacherSearchTerm, setTeacherSearchTerm] = useState('');
   const [classSearchTerm, setClassSearchTerm] = useState('');
-  const [teachers,setteachers] = useState([]);
-  const [classes,setClasses] = useState([]);
-  const [classLoader,setClassLoader] = useState(true);
-  const [teacherLoader,seteacherLoader] = useState(true);
+  const [teachers, setteachers] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [classLoader, setClassLoader] = useState(true);
+  const [teacherLoader, seteacherLoader] = useState(true);
   const [schoolData, setSchoolData] = useState({
     school_name: 'Greenwood High School',
     school_email: 'admin@greenwood.edu',
@@ -25,6 +25,13 @@ const AdminSchool: React.FC = () => {
   });
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const { id } = useParams();
+  const [breadcrumbItems, setBreadCrumbItems] = useState([
+    { label: 'Dashboard', path: '/dashboard' },
+    { label: 'My School' }
+  ]);
+  const [showMore, setShowMore] = useState(false);
+
+
 
   // Mock data for admin's school
   const school = {
@@ -35,10 +42,17 @@ const AdminSchool: React.FC = () => {
     address: '123 Education Street, Learning City, LC 12345'
   };
 
-  const breadcrumbItems = [
-    { label: 'Dashboard', path: '/dashboard' },
-    { label: 'My School' }
-  ];
+
+
+  const setBreadCrumb = () => {
+    if (userData.role == 'superadmin') {
+      setBreadCrumbItems([
+        { label: 'Dashboard', path: '/dashboard' },
+        { label: 'Schools', path: '/schools' },
+        { label: 'My School' }
+      ])
+    }
+  }
 
   // Mock data for teachers and classes
   let sampleTeachers = [
@@ -63,48 +77,49 @@ const AdminSchool: React.FC = () => {
 
   const schoolDataById = async () => {
     const schoolData = await getSchoolById(id ? id : userData.school_id);
-      if (schoolData && schoolData.school) {
-        setSchoolData(schoolData.school);
-      }
+    if (schoolData && schoolData.school) {
+      setSchoolData(schoolData.school);
+    }
   }
 
   const fetchSchools = async () => {
-      //schools list api
-      schoolDataById();
+    //schools list api
+    schoolDataById();
 
-      //teachers list api
-      seteacherLoader(true);
-      const teachersData = await getTeachersBySchoolId(id ? id : userData.school_id);
-      if (teachersData && teachersData.teachers) {
-        seteacherLoader(false);
-        setteachers(teachersData.teachers);
-      }
+    //teachers list api
+    seteacherLoader(true);
+    const teachersData = await getTeachersBySchoolId(id ? id : userData.school_id);
+    if (teachersData && teachersData.teachers) {
+      seteacherLoader(false);
+      setteachers(teachersData.teachers);
+    }
 
-      //classes list api
-      setClassLoader(true);
-      const classesData = await getClassesBySchoolId(id ? id : userData.school_id);
-      if (classesData && classesData.classes) {
-        setClassLoader(false);
-        setClasses(classesData.classes);
-      }
+    //classes list api
+    setClassLoader(true);
+    const classesData = await getClassesBySchoolId(id ? id : userData.school_id);
+    if (classesData && classesData.classes) {
+      setClassLoader(false);
+      setClasses(classesData.classes);
+    }
 
-    };
+  };
 
-  useEffect(() => {   
+  useEffect(() => {
+    setBreadCrumb();
     fetchSchools();
   }, []);
 
 
   const filteredTeachers = teachers.filter(teacher =>
-    ( teacher.teacher_first_name && teacher.teacher_first_name.toLowerCase().includes(teacherSearchTerm.toLowerCase())) ||
-    ( teacher.teacher_lastt_name && teacher.teacher_lastt_name.toLowerCase().includes(teacherSearchTerm.toLowerCase())) ||
-    ( teacher.subject && teacher.subject.toLowerCase().includes(teacherSearchTerm.toLowerCase()))
+    (teacher.teacher_first_name && teacher.teacher_first_name.toLowerCase().includes(teacherSearchTerm.toLowerCase())) ||
+    (teacher.teacher_lastt_name && teacher.teacher_lastt_name.toLowerCase().includes(teacherSearchTerm.toLowerCase())) ||
+    (teacher.subject && teacher.subject.toLowerCase().includes(teacherSearchTerm.toLowerCase()))
   );
 
   const filteredClasses = classes.filter(classItem =>
     (classItem.class_name && classItem.class_name.toLowerCase().includes(classSearchTerm.toLowerCase())) ||
-    ( classItem.section && classItem.section.toLowerCase().includes(classSearchTerm.toLowerCase())) || 
-    (classItem.class_name && classItem.section && (classItem.class_name+' - '+classItem.section).toLowerCase().includes(classSearchTerm.toLowerCase()))
+    (classItem.section && classItem.section.toLowerCase().includes(classSearchTerm.toLowerCase())) ||
+    (classItem.class_name && classItem.section && (classItem.class_name + ' - ' + classItem.section).toLowerCase().includes(classSearchTerm.toLowerCase()))
   );
 
   const handleSchoolInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -117,28 +132,28 @@ const AdminSchool: React.FC = () => {
 
   const handleSaveSchool = async () => {
     //edit school api.
-    const response =  await editSchool(schoolData);
+    const response = await editSchool(schoolData);
 
-    console.log('Saving school data:', schoolData,response);
+    console.log('Saving school data:', schoolData, response);
     setIsEditing(false);
     alert('School information updated successfully!');
 
-    if(response.message){
+    if (response.message) {
       schoolDataById();
     }
 
   };
 
   const handleTeacherClick = (teacherId: string) => {
-    if(userData && userData.role && userData.role == 'superadmin'){
-      localStorage.setItem('current_school_id',id)
+    if (userData && userData.role && userData.role == 'superadmin') {
+      localStorage.setItem('current_school_id', id)
     }
     navigate(`/teacher-details/${teacherId}`);
   };
 
   const handleClassClick = (classId: string) => {
-    if(userData && userData.role && userData.role == 'superadmin'){
-      localStorage.setItem('current_school_id',id)
+    if (userData && userData.role && userData.role == 'superadmin') {
+      localStorage.setItem('current_school_id', id)
     }
     navigate(`/class-details/${classId}`);
   };
@@ -148,7 +163,7 @@ const AdminSchool: React.FC = () => {
   // }
 
   return (
-    <MainLayout pageTitle={`My School - ${school.name}`}>
+    <MainLayout pageTitle={`My School - ${schoolData.school_name}`}>
       <div className="space-y-6">
         <Breadcrumb items={breadcrumbItems} />
 
@@ -231,6 +246,17 @@ const AdminSchool: React.FC = () => {
               )}
             </div>
           </div>
+          
+          {/* view more click */}
+          {/* <div className="flex justify-end mt-4">
+            <button
+              onClick={() => setShowMore(!showMore)}
+              className="text-blue-600 hover:underline focus:outline-none"
+            >
+              {showMore ? 'Show Less' : 'View More'}
+            </button>
+          </div> */}
+
 
           {isEditing && (
             <div className="flex gap-2 mt-6">
@@ -289,7 +315,7 @@ const AdminSchool: React.FC = () => {
                   onClick={() => handleTeacherClick(teacher.teacher_id)}
                   className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer"
                 >
-                  <h3 className="font-semibold text-gray-800">{teacher.teacher_first_name + " "+teacher.teacher_last_name}</h3>
+                  <h3 className="font-semibold text-gray-800">{teacher.teacher_first_name + " " + teacher.teacher_last_name}</h3>
                   <p className="text-sm text-gray-600">{teacher.phone_number}</p>
                   <p className="text-sm text-gray-500">{teacher.email}</p>
                 </div>

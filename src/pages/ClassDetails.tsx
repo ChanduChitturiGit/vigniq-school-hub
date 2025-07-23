@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Search, Plus, X, GraduationCap } from 'lucide-react';
+import { Edit, Search, Plus, X, GraduationCap, LoaderCircle } from 'lucide-react';
 import { getClassesById } from '../services/class'
 
 const ClassDetails: React.FC = () => {
@@ -13,6 +13,8 @@ const ClassDetails: React.FC = () => {
   const [showAddStudentForm, setShowAddStudentForm] = useState(false);
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const [allStudents, setAllStudents] = useState([]);
+  const [loader, setLoader] = useState(true);
+  const schoolId = localStorage.getItem('current_school_id');
 
   // Mock students data for this class
   const sampleAllStudents = [
@@ -61,22 +63,46 @@ const ClassDetails: React.FC = () => {
     studends_list: allStudents
   };
   const [classData, setClassData] = useState(sampleClassData);
+  const [breadcrumbItems, setBreadCrumbItems] = useState([
+    { label: 'My School', path: '/admin-school' },
+    { label: `Class Details : ${classData.class_name}-${classData.section}` }
+  ]);
+
+
+  const setBreadCrumb = () => {
+    if (userData.role == 'superadmin') {
+      setBreadCrumbItems([
+        { label: 'Schools', path: '/schools' },
+        { label: 'My School', path: `/school-details/${schoolId}` },
+        { label: `Class Details : ${classData.class_name}-${classData.section}` }
+      ])
+    } else {
+      setBreadCrumbItems([
+        { label: 'My School', path: '/admin-school' },
+        { label: `Class Details : ${classData.class_name}-${classData.section}` }
+      ]);
+    }
+  }
 
 
 
   const getClass = async () => {
-    if(userData && userData.role && userData.role == 'superadmin'){
+    if (userData && userData.role && userData.role == 'superadmin') {
       userData.school_id = localStorage.getItem('current_school_id');
     }
+    setLoader(true);
     const response = await getClassesById(Number(id), userData.school_id);
     if (response && response.class) {
       setClassData(response.class);
       setAllStudents(response.class.studends_list);
+      setLoader(false);
+      setBreadCrumb();
     }
   }
 
   useEffect(() => {
     getClass();
+    setBreadCrumb();
   }, [])
 
   const filteredStudents = allStudents.filter(student =>
@@ -85,27 +111,27 @@ const ClassDetails: React.FC = () => {
   );
 
   // Determine breadcrumb based on navigation context
-  const getBreadcrumbItems = () => {
-    // Check if we came from admin-school (My School) or from the regular classes page
-    const referrer = document.referrer;
-    const isFromAdminSchool = referrer.includes('/admin-school') || location.state?.from === 'admin-school';
+  // const getBreadcrumbItems = () => {
+  //   // Check if we came from admin-school (My School) or from the regular classes page
+  //   const referrer = document.referrer;
+  //   const isFromAdminSchool = referrer.includes('/admin-school') || location.state?.from === 'admin-school';
 
-    if (isFromAdminSchool) {
-      return [
-        { label: 'My School', path: '/admin-school' },
-        { label: `${classData.class_name}-${classData.section}` }
-      ];
-    } else {
-      return [
-        { label: 'User Management', path: '/user-management' },
-        { label: 'Schools', path: '/schools' },
-        { label: 'School Details', path: '/school-details/1' },
-        { label: `${classData.class_name}-${classData.section}` }
-      ];
-    }
-  };
+  //   if (true) {
+  //     return [
+  //       { label: 'My School', path: '/admin-school' },
+  //       { label: `${classData.class_name}-${classData.section}` }
+  //     ];
+  //   } else {
+  //     return [
+  //       { label: 'User Management', path: '/user-management' },
+  //       { label: 'Schools', path: '/schools' },
+  //       { label: 'School Details', path: '/school-details/1' },
+  //       { label: `${classData.class_name}-${classData.section}` }
+  //     ];
+  //   }
+  // };
 
-  const breadcrumbItems = getBreadcrumbItems();
+  // const breadcrumbItems = getBreadcrumbItems();
 
 
 
@@ -225,7 +251,7 @@ const ClassDetails: React.FC = () => {
             </Link>
           ))}
         </div>
-        {filteredStudents.length === 0 && (
+        {filteredStudents.length === 0 && !loader && (
           <div className="text-center py-12">
             <GraduationCap className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Students found</h3>
@@ -236,7 +262,13 @@ const ClassDetails: React.FC = () => {
             </p>
           </div>
         )}
-
+        {
+          loader && (
+            <div className="text-center py-12">
+              <LoaderCircle className="spinner-icon mx-auto" size={40} />
+            </div>
+          )
+        }
       </div>
     </MainLayout>
   );
