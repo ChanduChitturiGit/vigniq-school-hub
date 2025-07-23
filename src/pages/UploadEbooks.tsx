@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
@@ -123,7 +122,7 @@ const UploadEbooks: React.FC = () => {
   };
 
   return (
-    <MainLayout>
+    <MainLayout pageTitle="Upload E-books">
       <div className="p-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Upload E-books</h1>

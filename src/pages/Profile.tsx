@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -70,13 +69,13 @@ const Profile: React.FC = () => {
     setFormData({
       first_name: user?.name?.split(' ')[0] || '',
       last_name: user?.name?.split(' ').slice(1).join(' ') || '',
-      username: user?.username || '',
+      user_name: user?.username || '',
       email: user?.email || '',
-      phone: '+1 234-567-8900',
+      phone_number: '+1 234-567-8900',
       address: '123 Main Street, City, State 12345',
-      dateOfBirth: '1990-01-01',
+      date_of_birth: '1990-01-01',
       qualification: user?.role === 'Teacher' ? 'M.Sc Mathematics' : 'High School',
-      joiningDate: '2023-01-15'
+      joining_date: '2023-01-15'
     });
     setIsEditing(false);
   };

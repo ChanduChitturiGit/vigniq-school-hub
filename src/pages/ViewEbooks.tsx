@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
@@ -141,7 +140,7 @@ const ViewEbooks: React.FC = () => {
   };
 
   return (
-    <MainLayout>
+    <MainLayout pageTitle="View E-books">
       <div className="p-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">View E-books</h1>
