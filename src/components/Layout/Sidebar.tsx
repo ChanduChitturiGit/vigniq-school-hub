@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -16,7 +17,9 @@ import {
   ChevronRight,
   MessageSquare,
   FileText,
-  UserPlus
+  UserPlus,
+  Upload,
+  Eye
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -70,6 +73,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
             { path: '/schools', label: 'Schools', icon: School },
             { path: '/create-school', label: 'Create School', icon: UserPlus }
           ]
+        },
+        {
+          key: 'ebooks',
+          icon: BookOpen,
+          label: 'E-Books',
+          roles: ['superadmin'],
+          isDropdown: true,
+          subItems: [
+            { path: '/upload-ebooks', label: 'Upload E-books', icon: Upload },
+            { path: '/view-ebooks', label: 'View E-books', icon: Eye }
+          ]
         }
       ],
       'admin': [
@@ -85,7 +99,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
             { path: '/teachers', label: 'teachers', icon: GraduationCap },
             { path: '/students', label: 'students', icon: Users }
           ]
-        }
+        },
+        { path: '/view-ebooks', icon: BookOpen, label: 'E-Books', roles: ['admin'] }
       ],
       'teacher': [
         {
@@ -98,12 +113,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
             { path: '/classes', label: 'Classes', icon: BookOpen },
             { path: '/students', label: 'students', icon: Users }
           ]
-        }
+        },
+        { path: '/view-ebooks', icon: BookOpen, label: 'E-Books', roles: ['teacher'] }
       ],
       'student': [
         { path: '/profile', icon: User, label: 'My Profile', roles: ['student'] },
         { path: '/timetable', icon: Calendar, label: 'Timetable', roles: ['student'] },
-        { path: '/grades', icon: BarChart3, label: 'Grades', roles: ['student'] }
+        { path: '/grades', icon: BarChart3, label: 'Grades', roles: ['student'] },
+        { path: '/view-ebooks', icon: BookOpen, label: 'E-Books', roles: ['student'] }
       ]
     };
 

@@ -31,6 +31,8 @@ import Support from './pages/Support';
 import Requests from './pages/Requests';
 import AdminRequests from './pages/AdminRequests';
 import Responses from './pages/Responses';
+import UploadEbooks from './pages/UploadEbooks';
+import ViewEbooks from './pages/ViewEbooks';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -68,7 +70,6 @@ function App() {
           
           <Route path="/school-details/:id" element={
             <ProtectedRoute allowedRoles={['superadmin','admin']}>
-              {/* <SchoolDetails /> */}
               <AdminSchool />
             </ProtectedRoute>
           } />
@@ -178,6 +179,18 @@ function App() {
           <Route path="/responses" element={
             <ProtectedRoute allowedRoles={['superadmin', 'admin', 'teacher', 'student']}>
               <Responses />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/upload-ebooks" element={
+            <ProtectedRoute allowedRoles={['superadmin']}>
+              <UploadEbooks />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/view-ebooks" element={
+            <ProtectedRoute>
+              <ViewEbooks />
             </ProtectedRoute>
           } />
           
