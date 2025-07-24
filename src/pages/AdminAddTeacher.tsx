@@ -9,6 +9,8 @@ import { Plus } from 'lucide-react';
 import { addTeacher } from '../services/teacher';
 import { getSubjectsBySchoolId } from '../services/subject';
 import { getClassesBySchoolId } from '@/services/class';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { toast } from '../components/ui/sonner';
 
 const AdminAddTeacher: React.FC = () => {
   const navigate = useNavigate();
@@ -29,16 +31,10 @@ const AdminAddTeacher: React.FC = () => {
     experience: '',
     address: '',
     joining_date: '',
-    date_of_birth : '',
-    gender : '',
+    date_of_birth: '',
+    gender: '',
     emergency_contact: ''
   });
-
-  // const breadcrumbItems = [
-  //   { label: 'Dashboard', path: '/dashboard' },
-  //   { label: 'My School', path: '/admin-school' },
-  //   { label: 'Add Teacher' }
-  // ];
   const [classes, setClasses] = useState([]);
   const [subjects, setSubjects] = useState();
   const [breadcrumbItems, setBreadCrumbItems] = useState([
@@ -46,6 +42,7 @@ const AdminAddTeacher: React.FC = () => {
     { label: 'My School', path: '/admin-school' },
     { label: 'Add Teacher' }
   ]);
+  const genderList = ["Male", "Female", "Others"];
 
 
   const setBreadCrumb = () => {
@@ -53,12 +50,12 @@ const AdminAddTeacher: React.FC = () => {
       setBreadCrumbItems([
         { label: 'Schools', path: '/schools' },
         { label: 'My School', path: `/school-details/${schoolId}` },
-         { label: 'Add Teacher' }
+        { label: 'Add Teacher' }
       ])
     } else {
       setBreadCrumbItems([
         { label: 'My School', path: '/admin-school' },
-         { label: 'Add Teacher' }
+        { label: 'Add Teacher' }
       ]);
     }
   }
@@ -91,6 +88,13 @@ const AdminAddTeacher: React.FC = () => {
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }));
+  };
+
+  const handleGenderChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      gender: value
     }));
   };
 
@@ -133,7 +137,7 @@ const AdminAddTeacher: React.FC = () => {
       ...formData,
       teachingAssignments: validAssignments,
       password: password,
-      school_id : userData.role == 'superadmin' ? schoolId : userData.school_id
+      school_id: userData.role == 'superadmin' ? schoolId : userData.school_id
     };
 
     console.log('Adding teacher:', teacherData);
@@ -141,16 +145,16 @@ const AdminAddTeacher: React.FC = () => {
     const response = await addTeacher(teacherData);
 
     if (response) {
-      alert('Teacher added successfully!');
+      // alert('Teacher added successfully!');
+      toast(
+        `🧑‍🏫 Teacher added successfully ✅ `,
+        {
+          duration: 4000,
+          position: "bottom-right"
+        }
+      );
       navigate('/admin-school');
-      //console.log("response",response);
     }
-
-    // Simulate API call with success
-    // setTimeout(() => {
-    //   alert('Teacher added successfully!');
-    //   navigate('/admin-school');
-    // }, 500);
   };
 
   return (
@@ -283,20 +287,22 @@ const AdminAddTeacher: React.FC = () => {
                 />
               </div>
 
-               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
-                <select
-                  name="gender"
-                  value={formData.gender}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select Gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Gender *
+                </label>
+                <Select value={formData.gender} onValueChange={handleGenderChange} required>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a Gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {genderList.map((val, index) => (
+                      <SelectItem key={index} value={val}>
+                        {val}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
@@ -310,7 +316,7 @@ const AdminAddTeacher: React.FC = () => {
                 />
               </div>
             </div>
-            
+
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">

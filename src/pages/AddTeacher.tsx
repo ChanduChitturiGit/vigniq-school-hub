@@ -72,7 +72,7 @@ const AddTeacher: React.FC = () => {
 
   const addNewAssignment = () => {
     setTeachingAssignments([...teachingAssignments, {
-      class: '', section: '', subject: '',
+      class: '', subject: '',
       assignment: undefined
     }]);
   };

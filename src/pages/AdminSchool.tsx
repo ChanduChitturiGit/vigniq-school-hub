@@ -7,6 +7,7 @@ import { getSchoolById, editSchool } from '../services/school';
 import { getTeachersBySchoolId } from '../services/teacher';
 import { getClassesBySchoolId } from '../services/class';
 import { useParams } from 'react-router-dom';
+import { toast } from '../components/ui/sonner';
 
 const AdminSchool: React.FC = () => {
   const navigate = useNavigate();
@@ -106,11 +107,11 @@ const AdminSchool: React.FC = () => {
 
 
   const setSchoolId = async () => {
-    localStorage.setItem('current_school_id',id)
+    localStorage.setItem('current_school_id', id)
   }
 
   useEffect(() => {
-    if(userData.role == 'superadmin') {
+    if (userData.role == 'superadmin') {
       setSchoolId();
 
     }
@@ -128,7 +129,7 @@ const AdminSchool: React.FC = () => {
   const filteredClasses = classes.filter(classItem =>
     (classItem.class_number && classItem.class_number.toString().toLowerCase().includes(classSearchTerm.toLowerCase())) ||
     (classItem.section && classItem.section.toLowerCase().includes(classSearchTerm.toLowerCase())) ||
-    (classItem.class_number && classItem.section && ('Class '+classItem.class_number + ' - ' + classItem.section).toLowerCase().includes(classSearchTerm.toLowerCase()))
+    (classItem.class_number && classItem.section && ('Class ' + classItem.class_number + ' - ' + classItem.section).toLowerCase().includes(classSearchTerm.toLowerCase()))
   );
 
   const handleSchoolInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -145,7 +146,14 @@ const AdminSchool: React.FC = () => {
 
     console.log('Saving school data:', schoolData, response);
     setIsEditing(false);
-    alert('School information updated successfully!');
+    // alert('School information updated successfully!');
+    toast(
+      `🏫 School information updated successfully! `,
+      {
+        duration: 4000,
+        position: "bottom-right"
+      }
+    );
 
     if (response.message) {
       schoolDataById();
@@ -200,7 +208,7 @@ const AdminSchool: React.FC = () => {
               {isEditing ? (
                 <input
                   type="text"
-                  name="name"
+                  name="school_name"
                   value={schoolData.school_name}
                   onChange={handleSchoolInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -230,7 +238,7 @@ const AdminSchool: React.FC = () => {
               {isEditing ? (
                 <input
                   type="tel"
-                  name="phone"
+                  name="school_contact_number"
                   value={schoolData.school_contact_number}
                   onChange={handleSchoolInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -244,7 +252,7 @@ const AdminSchool: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
               {isEditing ? (
                 <textarea
-                  name="address"
+                  name="school_address"
                   value={schoolData.school_address}
                   onChange={handleSchoolInputChange}
                   rows={3}
@@ -255,7 +263,7 @@ const AdminSchool: React.FC = () => {
               )}
             </div>
           </div>
-          
+
           {/* view more click */}
           {/* <div className="flex justify-end mt-4">
             <button
@@ -384,7 +392,7 @@ const AdminSchool: React.FC = () => {
                   className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-gray-800">{'Class '+classItem.class_number} - {classItem.section}</h3>
+                    <h3 className="font-semibold text-gray-800">{'Class ' + classItem.class_number} - {classItem.section}</h3>
                     <BookOpen className="w-5 h-5 text-blue-500" />
                   </div>
                   <p className="text-sm text-gray-600">Students: {classItem.student_count}</p>

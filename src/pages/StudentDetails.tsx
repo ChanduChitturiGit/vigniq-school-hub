@@ -86,7 +86,6 @@ const StudentDetails: React.FC = () => {
   const getClassId = (className: string) => {
     const classdata = classes.find((val: any) => ('Class '+val.class_number + ' - '+val.section) == className);
     const classId = classdata.class_id;
-    console.log("className",className,classId);
     return classId;
   }
 

@@ -7,6 +7,7 @@ import { ArrowLeft, BookOpen, ChevronDown } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { addClass } from '../services/class';
 import { getTeachersBySchoolId } from '../services/teacher';
+import { toast } from '../components/ui/sonner';
 
 const AddClass: React.FC = () => {
   const navigate = useNavigate();
@@ -15,8 +16,10 @@ const AddClass: React.FC = () => {
     class_name: '',
     section: '',
     teacher: '',
+    teacher_id : 0,
     school_id : 0,
-    class_number : 0
+    class_number : 0,
+    class : ''
   });
   const [suggestions, setSuggestions] = useState({
     class_name: [] as string[],
@@ -115,9 +118,11 @@ const AddClass: React.FC = () => {
   };
 
   const handleTeacherChange = (value: string) => {
+    const data = teachers.find((val : any)=> (val.teacher_first_name+' '+val.teacher_last_name) == value);
     setFormData(prev => ({
       ...prev,
-      teacher: value
+      teacher: value,
+      teacher_id : data.teacher_id
     }));
   };
 
@@ -143,8 +148,15 @@ const AddClass: React.FC = () => {
     const response = await addClass({ ...formData, school_id:  userData.role == 'superadmin' ? schoolId : userData.school_id });
 
     if (response && response.classes) {
-      console.log('Adding new class:', response, formData);
-      alert('Class added successfully!');
+      // console.log('Adding new class:', response, formData);
+      // alert('Class added successfully!');
+      toast(
+      `🛄 Class added successfully ✅ `,
+      {
+        duration: 4000,
+        position: "bottom-right"
+      }
+    );
       navigate('/admin-school');
     }
 
@@ -266,17 +278,9 @@ const AddClass: React.FC = () => {
             <div className="flex gap-4 pt-6">
               <button
                 type="submit"
-                className="flex-1 bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors font-medium"
-              >
+                className="flex-1 bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors font-medium">
                 Add Class
               </button>
-              {/* <button
-                type="button"
-                //   onClick={() => navigate('/admin-school')}
-                className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors font-medium"
-              >
-                Cancel
-              </button> */}
             </div>
           </form>
         </div>
