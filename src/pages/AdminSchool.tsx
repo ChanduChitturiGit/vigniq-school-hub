@@ -18,10 +18,10 @@ const AdminSchool: React.FC = () => {
   const [classLoader, setClassLoader] = useState(true);
   const [teacherLoader, seteacherLoader] = useState(true);
   const [schoolData, setSchoolData] = useState({
-    school_name: 'Greenwood High School',
-    school_email: 'admin@greenwood.edu',
-    school_contact_number: '+1 234-567-8900',
-    school_address: '123 Education Street, Learning City, LC 12345'
+    school_name: '',
+    school_email: '',
+    school_contact_number: '',
+    school_address: ''
   });
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const { id } = useParams();
@@ -104,7 +104,16 @@ const AdminSchool: React.FC = () => {
 
   };
 
+
+  const setSchoolId = async () => {
+    localStorage.setItem('current_school_id',id)
+  }
+
   useEffect(() => {
+    if(userData.role == 'superadmin') {
+      setSchoolId();
+
+    }
     setBreadCrumb();
     fetchSchools();
   }, []);
@@ -117,9 +126,9 @@ const AdminSchool: React.FC = () => {
   );
 
   const filteredClasses = classes.filter(classItem =>
-    (classItem.class_name && classItem.class_name.toLowerCase().includes(classSearchTerm.toLowerCase())) ||
+    (classItem.class_number && classItem.class_number.toString().toLowerCase().includes(classSearchTerm.toLowerCase())) ||
     (classItem.section && classItem.section.toLowerCase().includes(classSearchTerm.toLowerCase())) ||
-    (classItem.class_name && classItem.section && (classItem.class_name + ' - ' + classItem.section).toLowerCase().includes(classSearchTerm.toLowerCase()))
+    (classItem.class_number && classItem.section && ('Class '+classItem.class_number + ' - ' + classItem.section).toLowerCase().includes(classSearchTerm.toLowerCase()))
   );
 
   const handleSchoolInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -375,7 +384,7 @@ const AdminSchool: React.FC = () => {
                   className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-gray-800">{classItem.class_name} - {classItem.section}</h3>
+                    <h3 className="font-semibold text-gray-800">{'Class '+classItem.class_number} - {classItem.section}</h3>
                     <BookOpen className="w-5 h-5 text-blue-500" />
                   </div>
                   <p className="text-sm text-gray-600">Students: {classItem.student_count}</p>

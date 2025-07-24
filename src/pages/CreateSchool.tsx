@@ -6,10 +6,12 @@ import Breadcrumb from '../components/Layout/Breadcrumb';
 import PasswordInput from '../components/ui/password-input';
 import { addSchool } from '../data/schools';
 import { X } from 'lucide-react';
-import {createSchool as createSchoolApi} from '../services/school'
+import { createSchool as createSchoolApi } from '../services/school'
+import { SpinnerOverlay } from '../pages/SpinnerOverlay';
 
 const CreateSchool: React.FC = () => {
   const navigate = useNavigate();
+  const [loader, setLoader] = useState(false);
   const [formData, setFormData] = useState({
     schoolName: '',
     address: '',
@@ -83,21 +85,22 @@ const CreateSchool: React.FC = () => {
   );
 
   const handleSubmit = async (e: React.FormEvent) => {
+    setLoader(true);
     e.preventDefault();
 
     //console.log("schoolForm",formData,boards);
 
     const schoolPayload = {
-      school_name:formData.schoolName,
-      address:formData.address,
-      contact_number:formData.phone,
-      boards : Object.keys(boards),
-      admin_firstname : formData.adminFirstName,
-      admin_lastname : formData.adminLastName,
-      admin_email:formData.adminEmail,
-      admin_phone : formData.adminPhone,
-      admin_username:formData.adminUserName,
-      password:formData.adminPassword
+      school_name: formData.schoolName,
+      address: formData.address,
+      contact_number: formData.phone,
+      boards: Object.keys(boards),
+      admin_firstname: formData.adminFirstName,
+      admin_lastname: formData.adminLastName,
+      admin_email: formData.adminEmail,
+      admin_phone: formData.adminPhone,
+      admin_username: formData.adminUserName,
+      password: formData.adminPassword
     }
 
     const school = await createSchoolApi(schoolPayload);
@@ -105,29 +108,31 @@ const CreateSchool: React.FC = () => {
     // console.log("schoolPayload",schoolPayload,school);
 
     // Create school
-    const newSchool = addSchool({
-      name: formData.schoolName,
-      address: formData.address,
-      phone: formData.phone,
-      email: formData.email,
-      adminId: Date.now().toString(),
-      boards: boards
-    });
+    // const newSchool = addSchool({
+    //   name: formData.schoolName,
+    //   address: formData.address,
+    //   phone: formData.phone,
+    //   email: formData.email,
+    //   adminId: Date.now().toString(),
+    //   boards: boards
+    // });
 
-    // Create admin user
-    const users = JSON.parse(localStorage.getItem('vigniq_users') || '[]');
-    const newAdmin = {
-      id: Date.now().toString(),
-      email: formData.adminEmail,
-      password: formData.adminPassword,
-      name: formData.adminFirstName,
-      role: 'Admin',
-      schoolId: newSchool.id
-    };
-    users.push(newAdmin);
-    localStorage.setItem('vigniq_users', JSON.stringify(users));
-
-    navigate('/schools');
+    // // Create admin user
+    // const users = JSON.parse(localStorage.getItem('vigniq_users') || '[]');
+    // const newAdmin = {
+    //   id: Date.now().toString(),
+    //   email: formData.adminEmail,
+    //   password: formData.adminPassword,
+    //   name: formData.adminFirstName,
+    //   role: 'Admin',
+    //   schoolId: newSchool.id
+    // };
+    // users.push(newAdmin);
+    // localStorage.setItem('vigniq_users', JSON.stringify(users));
+    setLoader(false);
+    if(school && school.message){
+      navigate('/schools');
+    }
   };
 
   return (
@@ -335,7 +340,7 @@ const CreateSchool: React.FC = () => {
               </button>
               <button
                 type="button"
-                 onClick={() => navigate('/schools')}
+                onClick={() => navigate('/schools')}
                 className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors"
               >
                 Cancel
@@ -344,6 +349,12 @@ const CreateSchool: React.FC = () => {
           </form>
         </div>
       </div>
+
+      {
+        loader && (
+          <SpinnerOverlay />
+        )
+      }
     </MainLayout>
   );
 };

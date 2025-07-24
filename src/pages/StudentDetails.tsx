@@ -29,6 +29,7 @@ const StudentDetails: React.FC = () => {
     class : 'Class 10-A',
     class_id : 1,
     class_name: 'Class 10',
+    class_number : 0,
     section : "A",
     status: 'Active',
     gender : 'Male',
@@ -83,10 +84,9 @@ const StudentDetails: React.FC = () => {
   };
 
   const getClassId = (className: string) => {
-   
-    const classdata = classes.find((val: any) => (val.class_name + ' - '+val.section) == className);
-    const classId = classdata.class_id ? classdata.class_id : 1;
-     //console.log("className",className,classId);
+    const classdata = classes.find((val: any) => ('Class '+val.class_number + ' - '+val.section) == className);
+    const classId = classdata.class_id;
+    console.log("className",className,classId);
     return classId;
   }
 
@@ -120,7 +120,7 @@ const StudentDetails: React.FC = () => {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-800">{studentData.student_first_name}</h1>
-                <p className="text-gray-600">{studentData.class_name} • Roll: {studentData.roll_number}</p>
+                <p className="text-gray-600">{'Class '+studentData.class_number} • Roll: {studentData.roll_number}</p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -227,13 +227,13 @@ const StudentDetails: React.FC = () => {
               >
                 <option value="">Select Class</option>
                 {classes.map((classItem) => (
-                  <option key={classItem.class_name + ' - ' + classItem.section} value={classItem.class_name + ' - ' + classItem.section}>
-                    {classItem.class_name + ' - ' + classItem.section}
+                  <option key={'Class '+classItem.class_number + ' - ' + classItem.section} value={'Class '+classItem.class_number + ' - ' + classItem.section}>
+                    {'Class '+classItem.class_number + ' - ' + classItem.section}
                   </option>
                 ))}
               </select>
               ) : (
-                <p className="text-gray-900">{studentData.class_name + ' - ' +studentData.section}</p>
+                <p className="text-gray-900">{'Class '+studentData.class_number + ' - ' +studentData.section}</p>
               )}
             </div>
 

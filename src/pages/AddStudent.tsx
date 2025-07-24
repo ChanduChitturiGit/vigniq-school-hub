@@ -10,6 +10,7 @@ import { addStudent } from '../services/student';
 const AddStudent: React.FC = () => {
   const navigate = useNavigate();
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
+   const schoolId = localStorage.getItem('current_school_id');
   const [password, setPassword] = useState('');
   const [classes, setClasses] = useState([]);
   const [formData, setFormData] = useState({
@@ -52,8 +53,8 @@ const AddStudent: React.FC = () => {
   }
 
   const getClassId = (className: string) => {
-    const classdata = classes.find((val: any) => val.class_name == className);
-    const classId = classdata.class_id ? classdata.class_id : 1;
+    const classdata = classes.find((val: any) => ('Class '+val.class_number+' - '+val.section) == className);
+    const classId = classdata.class_id ? classdata.class_id : 0;
     return classId;
   }
 
@@ -110,7 +111,11 @@ const AddStudent: React.FC = () => {
 
     if (response && response.message) {
       alert('Student added successfully!');
-      navigate('/school-details/1');
+      if(userData.role == 'superadmin'){
+        navigate(`/school-details/${schoolId}`);
+      }else{
+        navigate('/admin-school');
+      }
     }
     // Simulate API call with success
     // setTimeout(() => {
@@ -209,8 +214,8 @@ const AddStudent: React.FC = () => {
                 >
                   <option value="">Select Class</option>
                   {classes.map((classItem) => (
-                    <option key={classItem.class_name + ' - ' + classItem.section} value={classItem.class_name + ' - ' + classItem.section}>
-                      {classItem.class_name + ' - ' + classItem.section}
+                    <option key={'Class '+classItem.class_number + ' - ' + classItem.section} value={'Class '+classItem.class_number + ' - ' + classItem.section}>
+                      {'Class '+classItem.class_number + ' - ' + classItem.section}
                     </option>
                   ))}
                 </select>

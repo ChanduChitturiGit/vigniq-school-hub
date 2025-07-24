@@ -16,9 +16,9 @@ const Classes: React.FC = () => {
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
 
   const filteredClasses = classes.filter(classItem =>
-    (classItem.class_name && classItem.class_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    ( classItem.section && classItem.section.toLowerCase().includes(searchTerm.toLowerCase())) || 
-    (classItem.class_name && classItem.section && (classItem.class_name+' - '+classItem.section).toLowerCase().includes(searchTerm.toLowerCase()))
+    (classItem.class_number && classItem.class_number.toString().toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (classItem.section && classItem.section.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (classItem.class_number && classItem.section && ('Class '+classItem.class_number + ' - ' + classItem.section).toLowerCase().includes(searchTerm.toLowerCase()))
     // classItem.academicYear.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -90,7 +90,7 @@ const Classes: React.FC = () => {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-800">
-                    {classItem.class_name} - {classItem.section}
+                    {'Class '+classItem.class_number} - {classItem.section}
                   </h3>
                   <p className="text-sm text-gray-500">{classItem.academicYear || null}</p>
                 </div>

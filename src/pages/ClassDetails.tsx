@@ -57,6 +57,7 @@ const ClassDetails: React.FC = () => {
   const sampleClassData = {
     id: id,
     class_name: 'Class 10',
+    class_number : 0,
     section: 'A',
     academicYear: '2024-25',
     teacher_name: 'John Smith',
@@ -136,7 +137,7 @@ const ClassDetails: React.FC = () => {
 
 
   return (
-    <MainLayout pageTitle={`${classData.class_name}-${classData.section} Students`}>
+    <MainLayout pageTitle={`Class ${classData.class_number}-${classData.section} Students`}>
       <div className="space-y-6">
         <Breadcrumb items={breadcrumbItems} />
 
@@ -145,7 +146,7 @@ const ClassDetails: React.FC = () => {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-800">
-                {classData.class_name} - {classData.section}
+                {'Class '+classData.class_number} - {classData.section}
               </h1>
               <p className="text-gray-600">{classData.academicYear}</p>
             </div>

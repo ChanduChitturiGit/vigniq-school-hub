@@ -1,19 +1,24 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import PasswordInput from '../components/ui/password-input';
 import ClassSectionSubjectInput, { ClassSectionSubjectData } from '../components/ui/class-section-subject-input';
 import { Plus } from 'lucide-react';
-import {addTeacher} from '../services/teacher';
+import { addTeacher } from '../services/teacher';
+import { getSubjectsBySchoolId } from '../services/subject';
+import { getClassesBySchoolId } from '@/services/class';
 
 const AdminAddTeacher: React.FC = () => {
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
-  const [teachingAssignments, setTeachingAssignments] = useState<ClassSectionSubjectData[]>([
-    { class: '', section: '', subject: '' }
-  ]);
+  const [teachingAssignments, setTeachingAssignments] = useState<ClassSectionSubjectData[]>([{
+    class: '', subject: '',
+    assignment: undefined
+  }]);
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
+  const schoolId = JSON.parse(localStorage.getItem("current_school_id"));
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -23,17 +28,65 @@ const AdminAddTeacher: React.FC = () => {
     qualification: '',
     experience: '',
     address: '',
-    joiningDate: '',
+    joining_date: '',
+    date_of_birth : '',
+    gender : '',
     emergency_contact: ''
   });
 
-  const breadcrumbItems = [
+  // const breadcrumbItems = [
+  //   { label: 'Dashboard', path: '/dashboard' },
+  //   { label: 'My School', path: '/admin-school' },
+  //   { label: 'Add Teacher' }
+  // ];
+  const [classes, setClasses] = useState([]);
+  const [subjects, setSubjects] = useState();
+  const [breadcrumbItems, setBreadCrumbItems] = useState([
     { label: 'Dashboard', path: '/dashboard' },
     { label: 'My School', path: '/admin-school' },
     { label: 'Add Teacher' }
-  ];
+  ]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+
+  const setBreadCrumb = () => {
+    if (userData.role == 'superadmin') {
+      setBreadCrumbItems([
+        { label: 'Schools', path: '/schools' },
+        { label: 'My School', path: `/school-details/${schoolId}` },
+         { label: 'Add Teacher' }
+      ])
+    } else {
+      setBreadCrumbItems([
+        { label: 'My School', path: '/admin-school' },
+         { label: 'Add Teacher' }
+      ]);
+    }
+  }
+
+  const subjectsList = async () => {
+    const response = await getSubjectsBySchoolId(userData.role == 'superadmin' ? schoolId : userData.school_id);
+    if (response && response.subjects) {
+      setSubjects(response.subjects);
+    }
+  }
+
+  //classes list api
+  const getClasses = async () => {
+    //classes list api
+    const classesData = await getClassesBySchoolId(userData.role == 'superadmin' ? schoolId : userData.school_id);
+    if (classesData && classesData.classes) {
+      setClasses(classesData.classes);
+    }
+  }
+
+
+  useEffect(() => {
+    getClasses();
+    subjectsList();
+    setBreadCrumb();
+  }, [])
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -48,7 +101,10 @@ const AdminAddTeacher: React.FC = () => {
   };
 
   const addNewAssignment = () => {
-    setTeachingAssignments([...teachingAssignments, { class: '', section: '', subject: '' }]);
+    setTeachingAssignments([...teachingAssignments, {
+      class: '', subject: '',
+      assignment: undefined
+    }]);
   };
 
   const removeAssignment = (index: number) => {
@@ -60,35 +116,36 @@ const AdminAddTeacher: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.first_name || !formData.last_name || !formData.user_name || 
-        !formData.email || !formData.phone_number || !formData.qualification || 
-        !formData.joiningDate || !password) {
+
+    if (!formData.first_name || !formData.last_name || !formData.user_name ||
+      !formData.email || !formData.phone_number || !formData.qualification ||
+      !formData.joining_date || !password) {
       alert('Please fill in all required fields including password');
       return;
     }
-    
+
     // Filter valid assignments (all three fields must be filled) - now optional
-    const validAssignments = teachingAssignments.filter(assignment => 
-      assignment.class && assignment.section && assignment.subject
+    const validAssignments = teachingAssignments.filter(assignment =>
+      assignment.class && assignment.subject
     );
 
     const teacherData = {
       ...formData,
       teachingAssignments: validAssignments,
-      password: password
+      password: password,
+      school_id : userData.role == 'superadmin' ? schoolId : userData.school_id
     };
-    
+
     console.log('Adding teacher:', teacherData);
 
     const response = await addTeacher(teacherData);
 
-    if(response){
+    if (response) {
       alert('Teacher added successfully!');
       navigate('/admin-school');
       //console.log("response",response);
     }
-    
+
     // Simulate API call with success
     // setTimeout(() => {
     //   alert('Teacher added successfully!');
@@ -100,10 +157,10 @@ const AdminAddTeacher: React.FC = () => {
     <MainLayout pageTitle="Add Teacher">
       <div className="space-y-6">
         <Breadcrumb items={breadcrumbItems} />
-        
+
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h1 className="text-2xl font-bold text-gray-800 mb-6">Add New Teacher</h1>
-          
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -117,7 +174,7 @@ const AdminAddTeacher: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
                 <input
@@ -129,7 +186,7 @@ const AdminAddTeacher: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">user name *</label>
                 <input
@@ -141,7 +198,7 @@ const AdminAddTeacher: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
                 <input
@@ -153,7 +210,7 @@ const AdminAddTeacher: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Password *</label>
                 <PasswordInput
@@ -164,7 +221,7 @@ const AdminAddTeacher: React.FC = () => {
                   showGenerator
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Phone *</label>
                 <input
@@ -176,7 +233,7 @@ const AdminAddTeacher: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Qualification *</label>
                 <input
@@ -189,7 +246,7 @@ const AdminAddTeacher: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Experience</label>
                 <input
@@ -201,19 +258,47 @@ const AdminAddTeacher: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Joining Date *</label>
                 <input
                   type="date"
-                  name="joiningDate"
-                  value={formData.joiningDate}
+                  name="joining_date"
+                  value={formData.joining_date}
                   onChange={handleInputChange}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth *</label>
+                <input
+                  type="date"
+                  name="date_of_birth"
+                  value={formData.date_of_birth}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
+                <select
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Emergency Contact</label>
                 <input
@@ -225,6 +310,7 @@ const AdminAddTeacher: React.FC = () => {
                 />
               </div>
             </div>
+            
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -238,12 +324,12 @@ const AdminAddTeacher: React.FC = () => {
                   Add Assignment
                 </button>
               </div>
-              
+
               <div className="space-y-4">
                 {teachingAssignments.map((assignment, index) => (
                   <ClassSectionSubjectInput
                     key={index}
-                    data={assignment}
+                    data={{ "assignment": assignment, "subjects": subjects, "classes": classes }}
                     onChange={(data) => handleAssignmentChange(index, data)}
                     onRemove={() => removeAssignment(index)}
                     canRemove={teachingAssignments.length > 1}
@@ -251,7 +337,7 @@ const AdminAddTeacher: React.FC = () => {
                 ))}
               </div>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
               <textarea
@@ -262,7 +348,7 @@ const AdminAddTeacher: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-            
+
             <div className="flex gap-4 pt-4">
               <button
                 type="submit"

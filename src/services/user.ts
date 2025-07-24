@@ -11,3 +11,9 @@ export const getUserByUserName = async (userName : string) => {
   const response = await api.get(baseurl+suburl+'/getUserByUserName',{params : {user_name : userName}});
   return response.data;
 }
+
+//edit profile
+export const editProfile = async (data : any) => {
+  const response = await api.put(baseurl+suburl+'/editUserByUserName',data);
+  return response.data;
+}

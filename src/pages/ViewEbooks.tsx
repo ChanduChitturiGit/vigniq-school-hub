@@ -232,7 +232,6 @@ const ViewEbooks: React.FC = () => {
                           onClick={() => handleView(ebook)}
                         >
                           <Eye className="w-4 h-4 mr-1" />
-                          View
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="max-w-4xl max-h-[80vh]">
@@ -261,7 +260,6 @@ const ViewEbooks: React.FC = () => {
                       onClick={() => handleDownload(ebook.files[0])}
                     >
                       <Download className="w-4 h-4 mr-1" />
-                      Download
                     </Button>
                     
                     {user?.role === 'superadmin' && (

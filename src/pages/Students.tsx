@@ -67,12 +67,12 @@ const Students: React.FC = () => {
   );
 
   const getBreadcrumbItems = () => {
-    if (user?.role === 'Admin') {
+    if (user?.role === 'admin') {
       return [
         { label: 'School Management', path: '/admin-school' },
         { label: 'Students' }
       ];
-    } else if (user?.role === 'Teacher') {
+    } else if (user?.role === 'teacher') {
       return [
         { label: 'User Management' },
         { label: 'Students' }

@@ -222,7 +222,7 @@ const Login: React.FC = () => {
                       required
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Minimum 3 characters, letters and numbers only</p>
+                  {/* <p className="text-xs text-gray-500 mt-1">Minimum 3 characters, letters and numbers only</p> */}
                 </div>
 
                 <div>
@@ -289,13 +289,13 @@ const Login: React.FC = () => {
                         onChange={(e) => setForgotUsername(e.target.value)}
                         placeholder="Enter your username"
                         className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                        pattern="[a-zA-Z0-9]+"
+                        pattern="[a-zA-Z0-9@]+"
                         title="Username must contain only letters and numbers"
                         minLength={3}
                         required
                       />
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Minimum 3 characters, letters and numbers only</p>
+                    {/* <p className="text-xs text-gray-500 mt-1">Minimum 3 characters, letters and numbers only</p> */}
                   </div>
                 ) : forgotStep === 2 ? (
                   <>
@@ -328,7 +328,7 @@ const Login: React.FC = () => {
                           required
                         />
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">Enter 123 to proceed</p>
+                      {/* <p className="text-xs text-gray-500 mt-1">Enter 123 to proceed</p> */}
                     </div>
                   </>
                 ) : (
@@ -417,7 +417,7 @@ const Login: React.FC = () => {
             )}
 
             {/* Demo Credentials */}
-            {!showForgotPassword && (
+            {/* {!showForgotPassword && (
               <div className="mt-8 p-4 bg-gray-50 rounded-lg">
                 <h3 className="text-sm font-medium text-gray-700 mb-2">Demo Credentials:</h3>
                 <div className="text-xs text-gray-600 space-y-1">
@@ -427,7 +427,7 @@ const Login: React.FC = () => {
                   <div><strong>Student:</strong> student1 / student123</div>
                 </div>
               </div>
-            )}
+            )} */}
           </div>
         </div>
       </div>

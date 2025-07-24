@@ -309,7 +309,7 @@ class TeacherService:
                 teacher = teacher,
                 academic_year = acadamic_year
             ).values(
-                'subject__id', 'subject__name', 'school_class__id', 'school_class__name',
+                'subject__id', 'subject__name', 'school_class__id', 'school_class__class_number',
                 'school_class__section'
             ).distinct()
 
@@ -317,7 +317,7 @@ class TeacherService:
                 {
                     'subject': {'id': item['subject__id'], 'name': item['subject__name']},
                     'class': {'id': item['school_class__id'],
-                              'class_name': item['school_class__name'],
+                              'class_number': item['school_class__class_number'],
                               'section_name': item['school_class__section']
                     },
                 }

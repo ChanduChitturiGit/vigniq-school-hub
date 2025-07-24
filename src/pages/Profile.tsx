@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '../components/ui/alert-dialog';
-import { getUserByUserName } from '../services/user';
+import { getUserByUserName, editProfile } from '../services/user';
 
 const Profile: React.FC = () => {
   const { user, logout } = useAuth();
@@ -59,10 +59,17 @@ const Profile: React.FC = () => {
     }));
   };
 
+  const editData = async (data: any) => {
+    const response = await editProfile(data);
+    if (response && response.message) {
+      console.log('Saving profile data:', formData);
+      setIsEditing(false);
+      alert('Profile updated successfully!');
+    }
+  }
+
   const handleSave = () => {
-    console.log('Saving profile data:', formData);
-    setIsEditing(false);
-    alert('Profile updated successfully!');
+    editData(formData);
   };
 
   const handleCancel = () => {
