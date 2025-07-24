@@ -4,13 +4,13 @@ import { X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 
 interface ClassSectionSubjectData {
+  assignment: ClassSectionSubjectData;
   class: string;
-  section: string;
   subject: string;
 }
 
 interface ClassSectionSubjectInputProps {
-  data: ClassSectionSubjectData;
+  data: any;
   onChange: (data: ClassSectionSubjectData) => void;
   onRemove: () => void;
   canRemove: boolean;
@@ -24,24 +24,25 @@ const ClassSectionSubjectInput: React.FC<ClassSectionSubjectInputProps> = ({
 }) => {
   const handleInputChange = (field: keyof ClassSectionSubjectData, value: string) => {
     onChange({
-      ...data,
+      ...data.assignment,
       [field]: value
     });
   };
 
-  const classes = [
-    'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
-    'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10',
-    'Class 11', 'Class 12'
-  ];
+  // [
+  //   'Class 1 - A', 'Class 2 - B'
+  // ];
+
+  const classes = data.classes;
 
   const sections = ['A', 'B', 'C', 'D', 'E', 'F'];
 
-  const subjects = [
-    'Mathematics', 'English', 'Science', 'Physics', 'Chemistry',
-    'Biology', 'History', 'Geography', 'Hindi', 'Sanskrit',
-    'Computer Science', 'Physical Education', 'Art', 'Music'
-  ];
+  // [
+  //   'Mathematics', 'English', 'Science', 'Physics', 'Chemistry',
+  //   'Biology', 'History', 'Geography', 'Hindi', 'Sanskrit',
+  //   'Computer Science', 'Physical Education', 'Art', 'Music'
+  // ]
+  const subjects = data.subjects;
 
   return (
     <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
@@ -67,16 +68,16 @@ const ClassSectionSubjectInput: React.FC<ClassSectionSubjectInputProps> = ({
               <SelectValue placeholder="Select class" />
             </SelectTrigger>
             <SelectContent>
-              {classes.map((cls) => (
-                <SelectItem key={cls} value={cls}>
-                  {cls}
+              {classes && classes.map((cls) => (
+                <SelectItem key={cls} value={'Class '+ cls.class_number+' - '+cls.section}>
+                  {'Class '+ cls.class_number+' - '+cls.section}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         
-        <div>
+        {/* <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
           <Select value={data.section} onValueChange={(value) => handleInputChange('section', value)}>
             <SelectTrigger className="w-full">
@@ -90,7 +91,7 @@ const ClassSectionSubjectInput: React.FC<ClassSectionSubjectInputProps> = ({
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </div> */}
         
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
@@ -99,7 +100,7 @@ const ClassSectionSubjectInput: React.FC<ClassSectionSubjectInputProps> = ({
               <SelectValue placeholder="Select subject" />
             </SelectTrigger>
             <SelectContent>
-              {subjects.map((subject) => (
+              {subjects && subjects.map((subject) => (
                 <SelectItem key={subject} value={subject}>
                   {subject}
                 </SelectItem>

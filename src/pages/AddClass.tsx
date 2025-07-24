@@ -1,18 +1,22 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { ArrowLeft, BookOpen, ChevronDown } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { addClass } from '../services/class';
+import { getTeachersBySchoolId } from '../services/teacher';
 
 const AddClass: React.FC = () => {
   const navigate = useNavigate();
+  const [teachers, setTeachers] = useState([]);
   const [formData, setFormData] = useState({
     class_name: '',
     section: '',
-    teacher: ''
+    teacher: '',
+    school_id : 0,
+    class_number : 0
   });
   const [suggestions, setSuggestions] = useState({
     class_name: [] as string[],
@@ -23,6 +27,7 @@ const AddClass: React.FC = () => {
     section: false
   });
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
+  const schoolId = JSON.parse(localStorage.getItem("current_school_id"));
 
   // Mock data for suggestions
   const classOptions = ['Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12'];
@@ -36,12 +41,41 @@ const AddClass: React.FC = () => {
     'Lisa White - Physics',
     'David Green - Chemistry'
   ];
+  const classNum = [1,2,3,4,5,6,7,8,9,10,11,12];
 
-  const breadcrumbItems = [
+  const [breadcrumbItems, setBreadCrumbItems] = useState([
     { label: 'Dashboard', path: '/dashboard' },
     { label: 'My School', path: '/admin-school' },
     { label: 'Add Class' }
-  ];
+  ]);
+
+
+  const setBreadCrumb = () => {
+    if (userData.role == 'superadmin') {
+      setBreadCrumbItems([
+        { label: 'Schools', path: '/schools' },
+        { label: 'My School', path: `/school-details/${schoolId}` },
+        { label: 'Add Class' }
+      ])
+    } else {
+      setBreadCrumbItems([
+        { label: 'My School', path: '/admin-school' },
+        { label: 'Add Class' }
+      ]);
+    }
+  }
+
+  const getTeachersList = async () => {
+    const response = await getTeachersBySchoolId(userData.role == 'superadmin' ? schoolId : userData.school_id);
+    if (response && response.teachers) {
+      setTeachers(response.teachers);
+    }
+  }
+
+  useEffect(() => {
+    setBreadCrumb();
+    getTeachersList();
+  }, []);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -87,18 +121,26 @@ const AddClass: React.FC = () => {
     }));
   };
 
+  const handleClassChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      class: value,
+      class_number : Number(value.split(' ')[1])
+    }));
+  };
+
 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.class_name || !formData.section) {
+    if (!formData.class_number || !formData.section) {
       alert('Please fill in all required fields');
       return;
     }
 
     //add class
-    const response = await addClass({ ...formData, school_id: userData.school_id });
+    const response = await addClass({ ...formData, school_id:  userData.role == 'superadmin' ? schoolId : userData.school_id });
 
     if (response && response.classes) {
       console.log('Adding new class:', response, formData);
@@ -133,7 +175,7 @@ const AddClass: React.FC = () => {
 
         <div className="flex items-center gap-4">
           <button
-            onClick={() => navigate('/admin-school')}
+            onClick={() => navigate(userData.role == 'superadmin' ? `/school-details/${schoolId}` : '/admin-school')}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -151,35 +193,24 @@ const AddClass: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Class Name Field */}
-            <div className="relative">
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Class Name *
+                Class *
               </label>
-              <input
-                name="class_name"
-                type="text"
-                value={formData.class_name}
-                onChange={(e) => handleInputChange('class_name', e.target.value)}
-                onFocus={() => handleFocus('class_name')}
-                onBlur={() => handleBlur('class_name')}
-                placeholder="Type or select class name..."
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              {showSuggestions.class_name && suggestions.class_name.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                  {suggestions.class_name.map((suggestion, index) => (
-                    <div
-                      key={index}
-                      onMouseDown={() => handleSuggestionClick('class_name', suggestion)}
-                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                    >
-                      {suggestion}
-                    </div>
+              <Select value={formData.class} onValueChange={handleClassChange} required>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a class" />
+                </SelectTrigger>
+                <SelectContent>
+                  {classNum.map((num, index) => (
+                    <SelectItem key={index} value={'Class '+num}>
+                      {'Class '+num}
+                    </SelectItem>
                   ))}
-                </div>
-              )}
+                </SelectContent>
+              </Select>
             </div>
+
 
             {/* Section Field */}
             <div className="relative">
@@ -222,9 +253,9 @@ const AddClass: React.FC = () => {
                   <SelectValue placeholder="Select a teacher (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  {teacherOptions.map((teacher, index) => (
-                    <SelectItem key={index} value={teacher}>
-                      {teacher}
+                  {teachers.map((teacher, index) => (
+                    <SelectItem key={index} value={teacher.teacher_first_name + ' ' + teacher.teacher_last_name}>
+                      {teacher.teacher_first_name + ' ' + teacher.teacher_last_name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -239,13 +270,13 @@ const AddClass: React.FC = () => {
               >
                 Add Class
               </button>
-              <button
+              {/* <button
                 type="button"
                 //   onClick={() => navigate('/admin-school')}
                 className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors font-medium"
               >
                 Cancel
-              </button>
+              </button> */}
             </div>
           </form>
         </div>

@@ -26,7 +26,6 @@ export const getSchoolById = async (schoolId : Number) => {
   return response.data;
 }
 
-
 //edit school
 export const editSchool = async (schoolData : any) => {
   const response = await api.put(baseurl+suburl+'/updateSchoolById',schoolData);
