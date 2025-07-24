@@ -45,7 +45,7 @@ class Migration(migrations.Migration):
             name='TeacherSubjectAssignment',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('academic_year', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='academics.academicyear')),
+                ('academic_year', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='academics.schoolacademicyear')),
                 ('school_class', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='classes.schoolclass')),
                 ('subject', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='teacher.subject')),
                 ('teacher', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='teacher.teacher')),

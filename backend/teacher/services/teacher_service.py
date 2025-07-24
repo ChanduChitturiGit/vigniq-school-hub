@@ -9,7 +9,7 @@ from django.db import transaction,IntegrityError
 from django.core.exceptions import ObjectDoesNotExist
 
 from teacher.models import Teacher, TeacherSubjectAssignment, Subject
-from academics.models import AcademicYear
+from academics.models import SchoolAcademicYear
 
 from classes.models import SchoolClass
 
@@ -97,7 +97,7 @@ class TeacherService:
                     )
 
                     if subject_assignments:
-                        academic_year = AcademicYear.objects.using(school_db_name
+                        academic_year = SchoolAcademicYear.objects.using(school_db_name
                                 ).filter(id=academic_year_id).first()
                         if not academic_year:
                             logger.error(
@@ -180,7 +180,7 @@ class TeacherService:
                 logger.error("Academic Year ID is required for editing.")
                 return JsonResponse({"error": "Academic Year ID is required."}, status=400)
 
-            acadamic_year = AcademicYear.objects.using(school_db_name
+            acadamic_year = SchoolAcademicYear.objects.using(school_db_name
                                 ).filter(id=academic_year_id).first()
             if not acadamic_year:
                 logger.error(f"Academic Year with ID {academic_year_id} does not exist.")
@@ -299,7 +299,7 @@ class TeacherService:
 
             user = User.objects.get(id=teacher.teacher_id, school_id=school_id)
 
-            acadamic_year = AcademicYear.objects.using(school_db_name
+            acadamic_year = SchoolAcademicYear.objects.using(school_db_name
                                 ).filter(id=academic_year_id).first()
             if not acadamic_year:
                 logger.error(f"Academic Year with ID {academic_year_id} does not exist.")

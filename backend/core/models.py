@@ -75,3 +75,49 @@ class Role(models.Model):
 
     def __str__(self):
         return self.name
+
+
+
+###### Abstract models for Chapter, SubTopic, and Prerequisite
+class AbstractChapter(models.Model):
+    academic_year = models.ForeignKey('SchoolAcademicYear', on_delete=models.CASCADE)
+    chapter_number = models.PositiveIntegerField()
+    chapter_name = models.CharField(max_length=200)
+
+    class Meta:
+        abstract = True
+        ordering = ['academic_year', 'chapter_number']
+
+class AbstractSubTopic(models.Model):
+    chapter = models.ForeignKey('Chapter', on_delete=models.CASCADE, related_name='sub_topics')
+    name = models.CharField(max_length=200)
+
+    class Meta:
+        abstract = True
+        ordering = ['chapter', 'name']
+
+    def __str__(self):
+        return self.name
+
+class AbstractPrerequisite(models.Model):
+    chapter = models.ForeignKey('Chapter', on_delete=models.CASCADE, related_name='prerequisites')
+    topic = models.CharField(max_length=200)
+    explanation = models.TextField()
+
+    class Meta:
+        abstract = True
+        ordering = ['chapter', 'topic']
+
+    def __str__(self):
+        return self.topic
+
+class AbstractAcademicYear(models.Model):
+    start_year = models.IntegerField(null=True, blank=True)
+    end_year = models.IntegerField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return str(self.start_date) + ' - ' + str(self.end_date)

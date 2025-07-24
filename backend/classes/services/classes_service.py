@@ -8,7 +8,7 @@ from django.db import IntegrityError,transaction
 from classes.models import SchoolClass,ClassAssignment
 from classes.serializers import ClassSerializer
 from teacher.models import Teacher
-from academics.models import AcademicYear
+from academics.models import SchoolAcademicYear
 
 from core.common_modules.common_functions import CommonFunctions
 from core.models import User
@@ -81,7 +81,7 @@ class ClassesService:
                     continue
                 class_obj = SchoolClass.objects.using(school_db_name).get(
                     pk=class_instance.class_instance_id)
-                academic_year_obj = AcademicYear.objects.using(school_db_name).get(
+                academic_year_obj = SchoolAcademicYear.objects.using(school_db_name).get(
                     pk=class_instance.academic_year_id)
 
                 student_ids = StudentClassAssignment.objects.using(school_db_name).filter(
@@ -151,7 +151,7 @@ class ClassesService:
                     is_active=True,
                 ).full_name()
 
-            academic_year = AcademicYear.objects.using(school_db_name).get(
+            academic_year = SchoolAcademicYear.objects.using(school_db_name).get(
                 id = academic_year_id
             )
 
@@ -343,7 +343,7 @@ class ClassesService:
                 if not class_teacher:
                     return JsonResponse({"error": "Teacher not found."},
                                         status=404)
-            academic_year = AcademicYear.objects.using(school_db_name).filter(
+            academic_year = SchoolAcademicYear.objects.using(school_db_name).filter(
                                 id=academic_year_id).first()
             if not academic_year:
                 return JsonResponse({"error": "Academic Year not found."},

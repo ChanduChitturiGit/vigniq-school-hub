@@ -1,7 +1,7 @@
 from django.db import models
 
 from classes.models import SchoolClass
-from academics.models import AcademicYear
+from academics.models import SchoolAcademicYear
 
 from core.models import User
 class Subject(models.Model):
@@ -37,7 +37,7 @@ class TeacherSubjectAssignment(models.Model):
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     school_class = models.ForeignKey(SchoolClass, on_delete=models.CASCADE)
-    academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE,null=True, blank=True)
+    academic_year = models.ForeignKey(SchoolAcademicYear, on_delete=models.CASCADE,null=True, blank=True)
 
     class Meta:
         db_table = 'teacher_subject_assignment'
