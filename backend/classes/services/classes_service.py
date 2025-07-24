@@ -387,9 +387,9 @@ class ClassesService:
                 return JsonResponse({
                     'error': 'A class assignment with the same class, teacher, and academic year already exists.'
                 }, status=400)
-            if 'unique_name_section' in str(e):
+            elif 'unique_class_number_section' in str(e):
                 return JsonResponse({
-                    'error': 'A class with the same name and section already exists.'
+                    'error': 'A class with the same class number and section already exists.'
                 }, status=400)
             else:
                 return JsonResponse({
