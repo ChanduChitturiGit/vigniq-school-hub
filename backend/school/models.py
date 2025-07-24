@@ -1,5 +1,5 @@
 from django.db import models
-
+from core.models import AbstractChapter, AbstractSubTopic, AbstractPrerequisite,AbstractAcademicYear
 
 
 class School(models.Model):
@@ -62,3 +62,32 @@ class SchoolBoardMapping(models.Model):
     class Meta:
         db_table = 'school_board_mapping'
         unique_together = ('school', 'board')
+
+class AcademicYear(AbstractAcademicYear):
+    class Meta:
+        db_table = 'school_academic_year'
+        unique_together = ('start_year', 'end_year')
+        ordering = ['start_year', 'end_year']
+
+class Chapter(AbstractChapter):
+    school_board = models.ForeignKey(SchoolBoard, on_delete=models.CASCADE)
+    academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE)
+
+    class Meta(AbstractChapter.Meta):
+        db_table = 'syllabus_chapter'
+        unique_together = ('school_board', 'academic_year', 'chapter_number')
+
+class SubTopic(AbstractSubTopic):
+    chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, related_name='sub_topics')
+
+    class Meta(AbstractSubTopic.Meta):
+        db_table = 'syllabus_sub_topic'
+        unique_together = ('chapter', 'name')
+
+
+class Prerequisite(AbstractPrerequisite):
+    chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, related_name='prerequisites')
+
+    class Meta(AbstractPrerequisite.Meta):
+        db_table = 'syllabus_prerequisite'
+        unique_together = ('chapter', 'topic')

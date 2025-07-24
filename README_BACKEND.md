@@ -29,14 +29,12 @@ Before running the server or any management commands, set up the Conda environme
     > 🔁 Replace `<your-env-name>` with the environment name defined in `environment.yml` (check the `name:` field at the top of the file).
 
 ---
-
-## 🚀 Starting the Backend Server
-
-To start the backend server with multiple workers using `uvicorn`, run:
+## 🛠 Running Migrations for default db
 
 ```bash
-uvicorn config.asgi:application --host 127.0.0.1 --port 8000 --workers 4
+python manage.py migrate
 ```
+
 ---
 
 ## 🛠 Running Custom Migrations for School Databases
@@ -48,3 +46,14 @@ To run the custom migration command:
 ```bash
 python manage.py custome_school_dbs_migrate
 ```
+---
+
+## 🚀 Starting the Backend Server
+
+To start the backend server with multiple workers using `uvicorn`, run:
+
+```bash
+uvicorn config.asgi:application --host 127.0.0.1 --port 8000 --workers 4
+```
+---
+

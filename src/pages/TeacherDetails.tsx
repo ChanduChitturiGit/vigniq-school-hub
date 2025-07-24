@@ -3,14 +3,19 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Mail, Phone, Calendar, GraduationCap, BookOpen } from 'lucide-react';
+import { Edit, Mail, Phone, Calendar, GraduationCap, BookOpen, Plus } from 'lucide-react';
 import { getTeachersById, editTeacher } from '../services/teacher';
+import ClassSectionSubjectInput, { ClassSectionSubjectData } from '../components/ui/class-section-subject-input';
+import { getSubjectsBySchoolId } from '../services/subject';
+import { getClassesBySchoolId } from '@/services/class';
 
 const TeacherDetails: React.FC = () => {
   const { id } = useParams();
   const [isEditing, setIsEditing] = useState(false);
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const schoolId = localStorage.getItem('current_school_id');
+  const [classes, setClasses] = useState([]);
+  const [subjects, setSubjects] = useState();
   const [formData, setFormData] = useState({
     teacher_first_name: '',
     teacher_last_name: '',
@@ -27,6 +32,12 @@ const TeacherDetails: React.FC = () => {
     { label: 'My School', path: '/admin-school' },
     { label: `Teacher Details - ${formData.teacher_first_name + ' ' + formData.teacher_last_name}` }
   ]);
+  const [teachingAssignments, setTeachingAssignments] = useState<ClassSectionSubjectData[]>([{
+    class: '', subject: '',
+    assignment: undefined
+  }]);
+
+
 
 
   const setBreadCrumb = () => {
@@ -44,7 +55,7 @@ const TeacherDetails: React.FC = () => {
     }
   }
 
-  const classes = [
+  const sampleClasses = [
     { id: '1', name: 'Class 9', section: 'A', students: 25 },
     { id: '2', name: 'Class 10', section: 'B', students: 28 }
   ];
@@ -67,7 +78,26 @@ const TeacherDetails: React.FC = () => {
     }
   }
 
+  const subjectsList = async () => {
+    const response = await getSubjectsBySchoolId(userData.role == 'superadmin' ? schoolId : userData.school_id);
+    if (response && response.subjects) {
+      setSubjects(response.subjects);
+    }
+  }
+
+  //classes list api
+  const getClasses = async () => {
+    //classes list api
+    const classesData = await getClassesBySchoolId(userData.role == 'superadmin' ? schoolId : userData.school_id);
+    if (classesData && classesData.classes) {
+      setClasses(classesData.classes);
+    }
+  }
+
+
   useEffect(() => {
+    getClasses();
+    subjectsList();
     getTeacher();
     // setBreadCrumb();
   }, [])
@@ -78,12 +108,32 @@ const TeacherDetails: React.FC = () => {
     }
   }, [formData.teacher_first_name, formData.teacher_last_name]);
 
+  const handleAssignmentChange = (index: number, data: ClassSectionSubjectData) => {
+    const updatedAssignments = [...teachingAssignments];
+    updatedAssignments[index] = data;
+    setTeachingAssignments(updatedAssignments);
+  };
+
+  const addNewAssignment = () => {
+    setTeachingAssignments([...teachingAssignments, {
+      class: '', subject: '',
+      assignment: undefined
+    }]);
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+  };
+
+  const removeAssignment = (index: number) => {
+    if (teachingAssignments.length > 1) {
+      const updatedAssignments = teachingAssignments.filter((_, i) => i !== index);
+      setTeachingAssignments(updatedAssignments);
+    }
   };
 
   const handleSave = () => {
@@ -297,6 +347,34 @@ const TeacherDetails: React.FC = () => {
           </div>
 
           {isEditing && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium text-gray-700">Teaching Assignments (Optional)</label>
+                <button
+                  type="button"
+                  onClick={addNewAssignment}
+                  className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Assignment
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {teachingAssignments.map((assignment, index) => (
+                  <ClassSectionSubjectInput
+                    key={index}
+                    data={{ "assignment": assignment, "subjects": subjects, "classes": classes }}
+                    onChange={(data) => handleAssignmentChange(index, data)}
+                    onRemove={() => removeAssignment(index)}
+                    canRemove={teachingAssignments.length > 1}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {isEditing && (
             <div className="flex gap-2 mt-6 pt-4 border-t">
               <button
                 onClick={handleSave}
@@ -318,7 +396,7 @@ const TeacherDetails: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Assigned Classes</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {classes.map((classItem) => (
+            {sampleClasses.map((classItem) => (
               <Link
                 key={classItem.id}
                 to={`/class-details/${classItem.id}`}

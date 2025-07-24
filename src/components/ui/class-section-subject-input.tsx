@@ -29,19 +29,19 @@ const ClassSectionSubjectInput: React.FC<ClassSectionSubjectInputProps> = ({
     });
   };
 
-  // [
-  //   'Class 1 - A', 'Class 2 - B'
-  // ];
+  const sampleClasses = [
+    'Class 1 - A', 'Class 2 - B'
+  ];
 
-  const classes = data.classes;
+  const classes =  data.classes;
 
   const sections = ['A', 'B', 'C', 'D', 'E', 'F'];
 
-  // [
-  //   'Mathematics', 'English', 'Science', 'Physics', 'Chemistry',
-  //   'Biology', 'History', 'Geography', 'Hindi', 'Sanskrit',
-  //   'Computer Science', 'Physical Education', 'Art', 'Music'
-  // ]
+  const sampleSubjects =[
+    'Mathematics', 'English', 'Science', 'Physics', 'Chemistry',
+    'Biology', 'History', 'Geography', 'Hindi', 'Sanskrit',
+    'Computer Science', 'Physical Education', 'Art', 'Music'
+  ]
   const subjects = data.subjects;
 
   return (

@@ -4,7 +4,7 @@ Service class to handle all academic-related operations.
 
 import logging
 from django.db import transaction
-from academics.models import AcademicYear
+from academics.models import SchoolAcademicYear
 
 from school.models import SchoolDbMetadata
 from rest_framework.response import Response
@@ -29,7 +29,7 @@ class AcademicsService:
                 logger.error(f"School with ID {school_id} does not exist.")
                 return Response({"error": "School not found."}, status=status.HTTP_404_NOT_FOUND)
 
-            academic_years = AcademicYear.objects.using(school_db_name).all()
+            academic_years = SchoolAcademicYear.objects.using(school_db_name).all()
             data = [{"id": year.id,
                      "start_year": year.start_year,
                      "end_year": year.end_year,
@@ -64,7 +64,7 @@ class AcademicsService:
                 return Response({"error": "School not found."}, status=status.HTTP_404_NOT_FOUND)
 
             with transaction.atomic(using=school_db_name):
-                academic_year = AcademicYear.objects.using(school_db_name).create(
+                academic_year = SchoolAcademicYear.objects.using(school_db_name).create(
                     start_year=start_year,
                     end_year=end_year
                 )
@@ -102,7 +102,7 @@ class AcademicsService:
                 return Response({"error": "School not found."}, status=status.HTTP_404_NOT_FOUND)
 
             with transaction.atomic(using=school_db_name):
-                academic_year = AcademicYear.objects.using(school_db_name).filter(
+                academic_year = SchoolAcademicYear.objects.using(school_db_name).filter(
                     id=academic_year_id).first()
                 if not academic_year:
                     logger.error("Academic Year with ID %s does not exist.",academic_year_id)

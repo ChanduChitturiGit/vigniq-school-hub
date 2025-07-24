@@ -18,12 +18,9 @@ class DatabaseRouter:
         return db or 'default'
 
     def allow_relation(self, obj1, obj2, **hints):
-        if obj1._state.db and obj2._state.db:
-            return obj1._state.db == obj2._state.db
-        return None
-        # db_obj1 = get_current_db()
-        # db_obj2 = get_current_db()
-        # return db_obj1 == db_obj2
+        db_obj1 = get_current_db()
+        db_obj2 = get_current_db()
+        return db_obj1 == db_obj2
 
     def allow_migrate(self, db, app_label, model_name=None, **hints):
         # Only allow `core` app on default DB

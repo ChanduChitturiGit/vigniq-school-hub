@@ -94,6 +94,7 @@ const CreateSchool: React.FC = () => {
       school_name: formData.schoolName,
       address: formData.address,
       contact_number: formData.phone,
+      email : formData.email,
       boards: Object.keys(boards),
       admin_firstname: formData.adminFirstName,
       admin_lastname: formData.adminLastName,

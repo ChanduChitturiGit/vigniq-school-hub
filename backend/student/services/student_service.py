@@ -12,7 +12,7 @@ from rest_framework import status
 from student.models import Student,StudentClassAssignment
 
 from classes.models import SchoolClass
-from academics.models import AcademicYear
+from academics.models import SchoolAcademicYear
 
 from core.common_modules.common_functions import CommonFunctions
 from core.models import User,Role
@@ -96,7 +96,7 @@ class StudentService:
                     parent_email=parent_email
                 )
 
-                acadamic_year = AcademicYear.objects.using(school_db_name).get(id=acadamic_year_id)
+                acadamic_year = SchoolAcademicYear.objects.using(school_db_name).get(id=acadamic_year_id)
 
                 student_class_assignment = StudentClassAssignment.objects.using(
                     school_db_name
@@ -114,7 +114,7 @@ class StudentService:
         except SchoolClass.DoesNotExist:
             return JsonResponse({"error": "Class not found."},
                                 status=status.HTTP_404_NOT_FOUND)
-        except AcademicYear.DoesNotExist:
+        except SchoolAcademicYear.DoesNotExist:
             return JsonResponse({"error": "Academic year not found."},
                                 status=status.HTTP_404_NOT_FOUND)
         except User.DoesNotExist:
@@ -220,7 +220,7 @@ class StudentService:
 
                         class_instance = SchoolClass.objects.using(school_db_name).get(id=class_id)
                         
-                        acadamic_year = AcademicYear.objects.using(school_db_name).get(id=acadamic_year_id)
+                        acadamic_year = SchoolAcademicYear.objects.using(school_db_name).get(id=acadamic_year_id)
                         if not acadamic_year:
                             raise ValueError("Academic year not found.")
                         student_class_assignment = StudentClassAssignment.objects.using(
@@ -246,7 +246,7 @@ class StudentService:
         except SchoolClass.DoesNotExist:
             return JsonResponse({"error": "Class not found."},
                                 status=status.HTTP_404_NOT_FOUND)
-        except AcademicYear.DoesNotExist:
+        except SchoolAcademicYear.DoesNotExist:
             return JsonResponse({"error": "Academic year not found."},
                                 status=status.HTTP_404_NOT_FOUND)
         except IntegrityError as e:
@@ -327,7 +327,7 @@ class StudentService:
 
             user = User.objects.get(id=student.student_id)
 
-            academic_year = AcademicYear.objects.using(self.school_db_name).get(id=academic_year_id)
+            academic_year = SchoolAcademicYear.objects.using(self.school_db_name).get(id=academic_year_id)
             class_assignment = StudentClassAssignment.objects.using(self.school_db_name).get(
                 student = student,
                 academic_year = academic_year
@@ -458,7 +458,7 @@ class StudentService:
         try:
             students_data = []
             
-            academic_year = AcademicYear.objects.using(self.school_db_name).get(id=academic_year_id)
+            academic_year = SchoolAcademicYear.objects.using(self.school_db_name).get(id=academic_year_id)
             for student in students:
                 try:
                     user = User.objects.get(id=student.student_id)
@@ -492,7 +492,7 @@ class StudentService:
                     "email": user.email,
                 })
             return students_data
-        except AcademicYear.DoesNotExist:
+        except SchoolAcademicYear.DoesNotExist:
             raise ValueError("Academic year not found.")
         except Exception as e:
             logger.error(f"Error formatting students data: {e}")

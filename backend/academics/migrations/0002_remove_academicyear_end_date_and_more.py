@@ -11,20 +11,20 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RemoveField(
-            model_name='academicyear',
+            model_name='schoolacademicyear',
             name='end_date',
         ),
         migrations.RemoveField(
-            model_name='academicyear',
+            model_name='schoolacademicyear',
             name='start_date',
         ),
         migrations.AddField(
-            model_name='academicyear',
+            model_name='schoolacademicyear',
             name='end_year',
             field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='academicyear',
+            model_name='schoolacademicyear',
             name='start_year',
             field=models.IntegerField(blank=True, null=True),
         ),

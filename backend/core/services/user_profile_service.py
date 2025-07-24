@@ -7,7 +7,7 @@ from django.db import transaction
 
 from core.models import User
 from teacher.models import Teacher
-from academics.models import AcademicYear
+from academics.models import SchoolAcademicYear
 from student.models import Student,StudentClassAssignment
 from classes.models import SchoolClass
 
@@ -69,7 +69,7 @@ class UserProfileService:
                         return Response({"error": "Academic year ID is required."},
                                         status=status.HTTP_400_BAD_REQUEST)
 
-                    academic_year = AcademicYear.objects.using(school_db_name).filter(
+                    academic_year = SchoolAcademicYear.objects.using(school_db_name).filter(
                         id=acadamic_year_id, is_active=True).first()
 
                     if not academic_year:

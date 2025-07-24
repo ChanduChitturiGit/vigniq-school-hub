@@ -20,13 +20,14 @@ from core.views import CustomTokenObtainPairView
 from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # path('admin/', admin.site.urls),
     path('core/', include('core.urls')),
     path('school/', include('school.urls')),
     path('teacher/', include('teacher.urls')),
     path('classes/', include('classes.urls')),
     path('student/', include('student.urls')),
     path('academics/', include('academics.urls')),
+    path('syllabus/', include('syllabus.urls')),
     path('auth/login/', CustomTokenObtainPairView.as_view(), name='login'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
