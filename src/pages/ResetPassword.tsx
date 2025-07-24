@@ -3,17 +3,19 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { KeyRound, Eye, EyeOff } from 'lucide-react';
 import { toast } from '../hooks/use-toast';
+import { resetPassword as resetPasswordApi } from '../services/passwordHandler'
 
 const ResetPassword: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const fromProfile = searchParams.get('fromProfile') === 'true';
-  
+
   const [formData, setFormData] = useState({
     email: '',
     otp: '',
-    newPassword: '',
-    confirmPassword: ''
+    new_password: '',
+    confirm_password: '',
+    old_password: ''
   });
   const [step, setStep] = useState<'email' | 'otp' | 'password'>(fromProfile ? 'password' : 'email');
   const [showPassword, setShowPassword] = useState(false);
@@ -40,7 +42,7 @@ const ResetPassword: React.FC = () => {
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     // Simulate API call
     setTimeout(() => {
       console.log('Sending OTP to:', formData.email);
@@ -56,7 +58,7 @@ const ResetPassword: React.FC = () => {
   const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     // Simulate API call
     setTimeout(() => {
       console.log('Verifying OTP:', formData.otp);
@@ -77,10 +79,30 @@ const ResetPassword: React.FC = () => {
     }, 1000);
   };
 
+  const setPassword = async (data) => {
+    const response = await resetPasswordApi(data);
+    if (response && response.message) {
+      setTimeout(() => {
+        console.log('Resetting password for:', formData.email);
+
+        // Clear stored email
+        localStorage.removeItem('reset_password_email');
+
+        toast({
+          title: "Password Updated",
+          description: "Password updated successfully. Please login again.",
+        });
+
+        navigate('/login');
+        setIsLoading(false);
+      }, 1000);
+    }
+  }
+
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (formData.newPassword !== formData.confirmPassword) {
+
+    if (formData.new_password !== formData.confirm_password) {
       toast({
         title: "Password Mismatch",
         description: "New password and confirm password do not match.",
@@ -89,32 +111,17 @@ const ResetPassword: React.FC = () => {
       return;
     }
 
-    if (formData.newPassword.length < 6) {
+    if (formData.new_password.length < 8) {
       toast({
         title: "Password Too Short",
-        description: "Password must be at least 6 characters long.",
+        description: "Password must be at least 8 characters long.",
         variant: "destructive",
       });
       return;
     }
-
-    setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      console.log('Resetting password for:', formData.email);
-      
-      // Clear stored email
-      localStorage.removeItem('reset_password_email');
-      
-      toast({
-        title: "Password Updated",
-        description: "Password updated successfully. Please login again.",
-      });
-      
-      navigate('/login');
-      setIsLoading(false);
-    }, 1000);
+    setIsLoading(true);
+    setPassword(formData);
   };
 
   return (
@@ -128,9 +135,9 @@ const ResetPassword: React.FC = () => {
             Reset Password
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            {fromProfile 
+            {fromProfile
               ? "Enter your new password below"
-              : step === 'email' 
+              : step === 'email'
                 ? "Enter your email address to receive a verification code"
                 : step === 'otp'
                   ? "Enter the verification code sent to your email"
@@ -207,17 +214,18 @@ const ResetPassword: React.FC = () => {
 
           {(fromProfile || step === 'password') && (
             <form onSubmit={handleResetPassword} className="space-y-6">
+              {/* old password */}
               <div>
-                <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
-                  New Password
+                <label htmlFor="old_password" className="block text-sm font-medium text-gray-700">
+                  Old Password
                 </label>
                 <div className="mt-1 relative">
                   <input
-                    id="newPassword"
-                    name="newPassword"
+                    id="old_password"
+                    name="old_password"
                     type={showPassword ? 'text' : 'password'}
                     required
-                    value={formData.newPassword}
+                    value={formData.old_password}
                     onChange={handleInputChange}
                     className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Enter new password"
@@ -237,16 +245,45 @@ const ResetPassword: React.FC = () => {
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="new_password" className="block text-sm font-medium text-gray-700">
+                  New Password
+                </label>
+                <div className="mt-1 relative">
+                  <input
+                    id="new_password"
+                    name="new_password"
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={formData.new_password}
+                    onChange={handleInputChange}
+                    className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter new password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-gray-400" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-gray-400" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="confirm_password" className="block text-sm font-medium text-gray-700">
                   Confirm New Password
                 </label>
                 <div className="mt-1 relative">
                   <input
-                    id="confirmPassword"
-                    name="confirmPassword"
+                    id="confirm_password"
+                    name="confirm_password"
                     type={showConfirmPassword ? 'text' : 'password'}
                     required
-                    value={formData.confirmPassword}
+                    value={formData.confirm_password}
                     onChange={handleInputChange}
                     className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Confirm new password"

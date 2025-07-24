@@ -16,6 +16,7 @@ import {
   AlertDialogTrigger,
 } from '../components/ui/alert-dialog';
 import { getUserByUserName, editProfile } from '../services/user';
+import { toast } from '../components/ui/sonner';
 
 const Profile: React.FC = () => {
   const { user, logout } = useAuth();
@@ -64,7 +65,14 @@ const Profile: React.FC = () => {
     if (response && response.message) {
       console.log('Saving profile data:', formData);
       setIsEditing(false);
-      alert('Profile updated successfully!');
+      //alert('Profile updated successfully!');
+      toast(
+        `👤 Profile updated successfully ✅ `,
+        {
+          duration: 4000,
+          position: "bottom-right"
+        }
+      );
     }
   }
 
@@ -281,7 +289,7 @@ const Profile: React.FC = () => {
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                   <GraduationCap className="w-4 h-4" />
-                  {user?.role === 'Teacher' ? 'Qualification' : 'Education'}
+                  {user?.role != 'student' ? 'Qualification' : 'Education'}
                 </label>
                 {isEditing ? (
                   <input

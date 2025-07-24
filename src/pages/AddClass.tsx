@@ -147,7 +147,7 @@ const AddClass: React.FC = () => {
     //add class
     const response = await addClass({ ...formData, school_id:  userData.role == 'superadmin' ? schoolId : userData.school_id });
 
-    if (response && response.classes) {
+    if (response && response.class) {
       // console.log('Adding new class:', response, formData);
       // alert('Class added successfully!');
       toast(
@@ -156,8 +156,8 @@ const AddClass: React.FC = () => {
         duration: 4000,
         position: "bottom-right"
       }
-    );
-      navigate('/admin-school');
+      );
+      navigate(userData.role == 'superadmin' ? `/school-details/${schoolId}` : '/admin-school');
     }
 
 

@@ -153,7 +153,7 @@ const AdminAddTeacher: React.FC = () => {
           position: "bottom-right"
         }
       );
-      navigate('/admin-school');
+      navigate(userData.role == 'superadmin' ? `/school-details/${schoolId}` : '/admin-school');
     }
   };
 
