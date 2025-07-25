@@ -1,5 +1,11 @@
 from django.db import models
-from core.models import AbstractChapter, AbstractSubTopic, AbstractPrerequisite,AbstractAcademicYear
+from core.models import (
+    AbstractChapter,
+    AbstractSubTopic,
+    AbstractPrerequisite,
+    AbstractAcademicYear,
+    AbstractSubject
+)
 
 
 class School(models.Model):
@@ -62,6 +68,29 @@ class SchoolBoardMapping(models.Model):
     class Meta:
         db_table = 'school_board_mapping'
         unique_together = ('school', 'board')
+
+class SchoolDefaultClasses(models.Model):
+    class_number = models.PositiveIntegerField(unique=True)
+
+    class Meta:
+        db_table = 'school_default_classes'
+
+class SchoolDefaultSubjects(AbstractSubject):
+    class Meta(AbstractSubject.Meta):
+        db_table = 'school_default_subjects'
+
+class SchoolSyllabusEbooks(models.Model):
+    board = models.ForeignKey(SchoolBoard, on_delete=models.CASCADE)
+    subject = models.ForeignKey(SchoolDefaultSubjects, on_delete=models.CASCADE)
+    class_number = models.ForeignKey(SchoolDefaultClasses, on_delete=models.CASCADE)
+    ebook_name = models.CharField(max_length=255)
+    file_path = models.CharField(max_length=500)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'school_syllabus_ebooks'
+        unique_together = ('board', 'subject', 'class_number', 'ebook_name')
 
 class AcademicYear(AbstractAcademicYear):
     class Meta:

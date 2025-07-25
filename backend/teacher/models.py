@@ -3,10 +3,9 @@ from django.db import models
 from classes.models import SchoolClass
 from academics.models import SchoolAcademicYear
 
-from core.models import User
-class Subject(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    
+from core.models import User,AbstractSubject
+
+class Subject(AbstractSubject):
     class Meta:
         db_table = 'subject'
 
