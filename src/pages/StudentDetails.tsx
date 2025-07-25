@@ -4,13 +4,16 @@ import { useParams } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Edit, Save, X } from 'lucide-react';
-import {getStudentsById,editStudent} from '../services/student';
+import { getStudentsById, editStudent } from '../services/student';
 import { getClassesBySchoolId } from '@/services/class';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { toast } from '../components/ui/sonner';
 
 const StudentDetails: React.FC = () => {
   const { id } = useParams();
   const [isEditing, setIsEditing] = useState(false);
-  const [classes,setClasses] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const genderList = ["Male", "Female", "Others"];
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
 
   // Mock student data
@@ -24,29 +27,29 @@ const StudentDetails: React.FC = () => {
     parent_name: 'Robert Johnson',
     parent_phone: '+91 98765 43210',
     date_of_birth: '15/05/2008',
-    parent_email : 'parent@gmail.com',
+    parent_email: 'parent@gmail.com',
     address: '123 Main St, City',
-    class : 'Class 10-A',
-    class_id : 1,
+    class: 'Class 10-A',
+    class_id: 1,
     class_name: 'Class 10',
-    class_number : 0,
-    section : "A",
+    class_number: 0,
+    section: "A",
     status: 'Active',
-    gender : 'Male',
+    gender: 'Male',
     admission_date: '01/04/2024',
     blood_group: 'A+',
     emergency_contact: 'Jane Johnson (+91 98765 43213)'
   });
 
   const breadcrumbItems = [
-   // { label: 'User Management', path: '/user-management' },
+    // { label: 'User Management', path: '/user-management' },
     { label: 'My School', path: '/admin-school' },
     // { label: 'School Details', path: '/school-details/1' },
     { label: 'Class Details', path: `/class-details/${studentData.class_id}` },
     { label: studentData.student_first_name }
   ];
 
-  
+
   //classes list api
   const getClasses = async () => {
     const classesData = await getClassesBySchoolId(userData.school_id);
@@ -56,35 +59,42 @@ const StudentDetails: React.FC = () => {
   }
 
   const getStudentData = async () => {
-    if(userData && userData.role && userData.role == 'superadmin'){
+    if (userData && userData.role && userData.role == 'superadmin') {
       userData.school_id = localStorage.getItem('current_school_id');
     }
-    const response = await getStudentsById(Number(id),userData.school_id);
-    if(response && response.student){
+    const response = await getStudentsById(Number(id), userData.school_id);
+    if (response && response.student) {
       setStudentData(response.student);
       //console.log(response.student);
     }
   }
 
-  useEffect(()=>{
+  useEffect(() => {
     getStudentData();
     getClasses();
-  },[])
+  }, [])
 
   const handleSave = async () => {
     // Here you would typically save to backend
     setIsEditing(false);
     const response = await editStudent(studentData);
-    if(response && response.message){
+    if (response && response.message) {
       getStudentData();
       // console.log(response);
       // console.log('Saving student data:', studentData);
+      toast(
+        `🧑‍🎓 Student data updated successfully ✅ `,
+        {
+          duration: 4000,
+          position: "bottom-right"
+        }
+      );
     }
-   
+
   };
 
   const getClassId = (className: string) => {
-    const classdata = classes.find((val: any) => ('Class '+val.class_number + ' - '+val.section) == className);
+    const classdata = classes.find((val: any) => ('Class ' + val.class_number + ' - ' + val.section) == className);
     const classId = classdata.class_id;
     return classId;
   }
@@ -94,17 +104,33 @@ const StudentDetails: React.FC = () => {
       ...prev,
       [field]: value
     }));
-     if (field == 'class') {
-      const classId = getClassId(value);
-      setStudentData(prev => ({
-        ...prev,
-        'class_id': classId
-      }));
-    }
+    // if (field == 'class') {
+    //   const classId = getClassId(value);
+    //   setStudentData(prev => ({
+    //     ...prev,
+    //     'class_id': classId
+    //   }));
+    // }
+  };
+
+  const handleClassChange = (value: string) => {
+    studentData.class = value;
+    const classId = getClassId(value);
+    setStudentData(prev => ({
+      ...prev,
+      'class_id': classId
+    }));
+  };
+
+  const handleGenderChange = (value: string) => {
+    setStudentData(prev => ({
+      ...prev,
+      gender: value
+    }));
   };
 
   return (
-    <MainLayout pageTitle={`Student Details - ${studentData.student_first_name + ' '+ studentData.student_last_name}`}>
+    <MainLayout pageTitle={`Student Details - ${studentData.student_first_name + ' ' + studentData.student_last_name}`}>
       <div className="space-y-6">
         <Breadcrumb items={breadcrumbItems} />
 
@@ -119,7 +145,7 @@ const StudentDetails: React.FC = () => {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-800">{studentData.student_first_name}</h1>
-                <p className="text-gray-600">{'Class '+studentData.class_number} • Roll: {studentData.roll_number}</p>
+                <p className="text-gray-600">{'Class ' + studentData.class_number} • Roll: {studentData.roll_number}</p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -156,7 +182,7 @@ const StudentDetails: React.FC = () => {
         {/* Student Information */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-6">Student Information</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
@@ -185,7 +211,7 @@ const StudentDetails: React.FC = () => {
                 <p className="text-gray-900">{studentData.student_last_name}</p>
               )}
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Roll Number</label>
               {isEditing ? (
@@ -199,7 +225,7 @@ const StudentDetails: React.FC = () => {
                 <p className="text-gray-900">{studentData.roll_number}</p>
               )}
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
               {isEditing ? (
@@ -214,26 +240,23 @@ const StudentDetails: React.FC = () => {
               )}
             </div>
 
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Class</label>
-              {isEditing ? (
-                <select
-                name="class"
-                value={studentData.class}
-                onChange={(e) => handleInputChange('class', e.target.value)}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select Class</option>
-                {classes.map((classItem) => (
-                  <option key={'Class '+classItem.class_number + ' - ' + classItem.section} value={'Class '+classItem.class_number + ' - ' + classItem.section}>
-                    {'Class '+classItem.class_number + ' - ' + classItem.section}
-                  </option>
-                ))}
-              </select>
-              ) : (
-                <p className="text-gray-900">{'Class '+studentData.class_number + ' - ' +studentData.section}</p>
-              )}
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Class *
+              </label>
+              <Select value={studentData.class} onValueChange={handleClassChange} required>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a Class" />
+                </SelectTrigger>
+                <SelectContent>
+                  {classes.map((classItem, index) => (
+                    <SelectItem key={index} value={'Class ' + classItem.class_number + ' - ' + classItem.section}>
+                      {'Class ' + classItem.class_number + ' - ' + classItem.section}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
 
@@ -252,7 +275,7 @@ const StudentDetails: React.FC = () => {
               )}
             </div>
 
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
               {isEditing ? (
                 <input
@@ -264,9 +287,27 @@ const StudentDetails: React.FC = () => {
               ) : (
                 <p className="text-gray-900">{studentData.gender}</p>
               )}
+            </div> */}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Gender *
+              </label>
+              <Select value={studentData.gender} onValueChange={handleGenderChange} required>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a Gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  {genderList.map((val, index) => (
+                    <SelectItem key={index} value={val}>
+                      {val}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            
-            
+
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Blood Group</label>
               {isEditing ? (
@@ -294,7 +335,7 @@ const StudentDetails: React.FC = () => {
                 <p className="text-gray-900">{studentData.admission_date}</p>
               )}
             </div>
-            
+
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
               {isEditing ? (
@@ -314,7 +355,7 @@ const StudentDetails: React.FC = () => {
         {/* Parent/Guardian Information */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-6">Parent/Guardian Information</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Parent/Guardian Name</label>
@@ -329,7 +370,7 @@ const StudentDetails: React.FC = () => {
                 <p className="text-gray-900">{studentData.parent_name}</p>
               )}
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Contact Phone</label>
               {isEditing ? (
@@ -343,7 +384,7 @@ const StudentDetails: React.FC = () => {
                 <p className="text-gray-900">{studentData.parent_phone}</p>
               )}
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Emergency Contact</label>
               {isEditing ? (
@@ -357,8 +398,8 @@ const StudentDetails: React.FC = () => {
                 <p className="text-gray-900">{studentData.emergency_contact}</p>
               )}
             </div>
-            
-             <div>
+
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Parent Email</label>
               {isEditing ? (
                 <input

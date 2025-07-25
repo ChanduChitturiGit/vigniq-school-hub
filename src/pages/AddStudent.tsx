@@ -6,11 +6,13 @@ import Breadcrumb from '../components/Layout/Breadcrumb';
 import PasswordInput from '../components/ui/password-input';
 import { getClassesBySchoolId } from '../services/class';
 import { addStudent } from '../services/student';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { toast } from '../components/ui/sonner';
 
 const AddStudent: React.FC = () => {
   const navigate = useNavigate();
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
-   const schoolId = localStorage.getItem('current_school_id');
+  const schoolId = localStorage.getItem('current_school_id');
   const [password, setPassword] = useState('');
   const [classes, setClasses] = useState([]);
   const [formData, setFormData] = useState({
@@ -32,6 +34,7 @@ const AddStudent: React.FC = () => {
     parent_email: '',
     admission_date: ''
   });
+   const genderList = ["Male", "Female", "Others"];
 
 
   const [breadcrumbItems, setBreadCrumbItems] = useState([
@@ -53,7 +56,7 @@ const AddStudent: React.FC = () => {
   }
 
   const getClassId = (className: string) => {
-    const classdata = classes.find((val: any) => ('Class '+val.class_number+' - '+val.section) == className);
+    const classdata = classes.find((val: any) => ('Class ' + val.class_number + ' - ' + val.section) == className);
     const classId = classdata.class_id ? classdata.class_id : 0;
     return classId;
   }
@@ -64,19 +67,37 @@ const AddStudent: React.FC = () => {
       ...prev,
       [name]: value
     }));
-    if (name == 'class') {
-      const classId = getClassId(value);
-      setFormData(prev => ({
-        ...prev,
-        'class_id': classId
-      }));
-    }
+    // if (name == 'class') {
+    //   const classId = getClassId(value);
+    //   setFormData(prev => ({
+    //     ...prev,
+    //     'class_id': classId
+    //   }));
+    // }
+  };
+
+
+  const handleClassChange = (value: string) => {
+    formData.class = value;
+    const classId = getClassId(value);
+    setFormData(prev => ({
+      ...prev,
+      'class_id': classId
+    }));
+  };
+
+  
+  const handleGenderChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      gender: value
+    }));
   };
 
   //classes list api
   const getClasses = async () => {
     //classes list api
-    const classesData = await getClassesBySchoolId(userData.school_id);
+    const classesData = await getClassesBySchoolId(userData.role == 'superadmin' ? schoolId : userData.school_id);
     if (classesData && classesData.classes) {
       setClasses(classesData.classes);
       setBreadCrumb();
@@ -102,7 +123,8 @@ const AddStudent: React.FC = () => {
 
     const studentData = {
       ...formData,
-      password: password
+      password: password,
+      school_id : userData.role == 'superadmin' ? schoolId : userData.school_id
     };
 
     console.log('Adding student:', studentData);
@@ -110,10 +132,17 @@ const AddStudent: React.FC = () => {
     const response = await addStudent(studentData);
 
     if (response && response.message) {
-      alert('Student added successfully!');
-      if(userData.role == 'superadmin'){
+      // alert('Student added successfully!');
+      toast(
+              `🧑‍🎓 Student added successfully ✅ `,
+              {
+                duration: 4000,
+                position: "bottom-right"
+              }
+            );
+      if (userData.role == 'superadmin') {
         navigate(`/school-details/${schoolId}`);
-      }else{
+      } else {
         navigate('/admin-school');
       }
     }
@@ -203,7 +232,7 @@ const AddStudent: React.FC = () => {
                 />
               </div>
 
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Class *</label>
                 <select
                   name="class"
@@ -214,29 +243,30 @@ const AddStudent: React.FC = () => {
                 >
                   <option value="">Select Class</option>
                   {classes.map((classItem) => (
-                    <option key={'Class '+classItem.class_number + ' - ' + classItem.section} value={'Class '+classItem.class_number + ' - ' + classItem.section}>
-                      {'Class '+classItem.class_number + ' - ' + classItem.section}
+                    <option key={'Class ' + classItem.class_number + ' - ' + classItem.section} value={'Class ' + classItem.class_number + ' - ' + classItem.section}>
+                      {'Class ' + classItem.class_number + ' - ' + classItem.section}
                     </option>
                   ))}
                 </select>
-              </div>
-
-              {/* <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Section *</label>
-                <select
-                  name="section"
-                  value={formData.section}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select Section</option>
-                  <option value="A">A</option>
-                  <option value="B">B</option>
-                  <option value="C">C</option>
-                  <option value="D">D</option>
-                </select>
               </div> */}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Class *
+                </label>
+                <Select value={formData.class} onValueChange={handleClassChange} required>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a Class" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {classes.map((classItem, index) => (
+                      <SelectItem key={index} value={'Class ' + classItem.class_number + ' - ' + classItem.section}>
+                        {'Class ' + classItem.class_number + ' - ' + classItem.section}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Roll Number *</label>
@@ -262,7 +292,7 @@ const AddStudent: React.FC = () => {
                 />
               </div>
 
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
                 <select
                   name="gender"
@@ -276,6 +306,24 @@ const AddStudent: React.FC = () => {
                   <option value="Female">Female</option>
                   <option value="Other">Other</option>
                 </select>
+              </div> */}
+
+               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Gender *
+                </label>
+                <Select value={formData.gender} onValueChange={handleGenderChange} required>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a Gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {genderList.map((val, index) => (
+                      <SelectItem key={index} value={val}>
+                        {val}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>

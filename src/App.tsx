@@ -165,13 +165,13 @@ function App() {
           } />
           
           <Route path="/requests" element={
-            <ProtectedRoute allowedRoles={['student', 'teacher']}>
+            <ProtectedRoute allowedRoles={['student', 'teacher','admin','superadmin']}>
               <Requests />
             </ProtectedRoute>
           } />
           
           <Route path="/admin-requests" element={
-            <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+            <ProtectedRoute allowedRoles={['admin', 'superadmin','teacher','superadmin']}>
               <AdminRequests />
             </ProtectedRoute>
           } />

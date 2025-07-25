@@ -187,7 +187,7 @@ const ClassDetails: React.FC = () => {
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          {(userData?.role === 'admin' || userData?.role === 'teacher') && (
+          {(userData?.role === 'superadmin' || userData?.role === 'admin' || userData?.role === 'teacher') && (
             <Link
               to={'/add-student'}
               className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
