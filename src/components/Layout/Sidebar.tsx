@@ -104,9 +104,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
       ],
       'teacher': [
         {
-          key: 'user-management',
+          key: 'school-management',
           icon: Users,
-          label: 'User Management',
+          label: 'School Management',
           roles: ['teacher'],
           isDropdown: true,
           subItems: [
@@ -118,8 +118,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
       ],
       'student': [
         { path: '/profile', icon: User, label: 'My Profile', roles: ['student'] },
-        { path: '/timetable', icon: Calendar, label: 'Timetable', roles: ['student'] },
-        { path: '/grades', icon: BarChart3, label: 'Grades', roles: ['student'] },
+        // { path: '/timetable', icon: Calendar, label: 'Timetable', roles: ['student'] },
+        // { path: '/grades', icon: BarChart3, label: 'Grades', roles: ['student'] },
         { path: '/view-ebooks', icon: BookOpen, label: 'E-Books', roles: ['student'] }
       ]
     };
