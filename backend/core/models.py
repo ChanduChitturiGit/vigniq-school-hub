@@ -78,6 +78,7 @@ class Role(models.Model):
 
 
 
+
 ###### Abstract models for Chapter, SubTopic, and Prerequisite
 class AbstractChapter(models.Model):
     academic_year = models.ForeignKey('SchoolAcademicYear', on_delete=models.CASCADE)
@@ -121,3 +122,8 @@ class AbstractAcademicYear(models.Model):
 
     def __str__(self):
         return str(self.start_date) + ' - ' + str(self.end_date)
+
+class AbstractSubject(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    class Meta:
+        abstract = True

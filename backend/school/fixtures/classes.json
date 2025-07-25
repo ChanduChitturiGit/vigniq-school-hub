@@ -1,0 +1,86 @@
+[
+  {
+    "model": "school.schooldefaultclasses",
+    "pk": 1,
+    "fields": {
+      "class_number": 1
+    }
+  },
+  {
+    "model": "school.schooldefaultclasses",
+    "pk": 2,
+    "fields": {
+      "class_number": 2
+    }
+  },
+  {
+    "model": "school.schooldefaultclasses",
+    "pk": 3,
+    "fields": {
+      "class_number": 3
+    }
+  },
+  {
+    "model": "school.schooldefaultclasses",
+    "pk": 4,
+    "fields": {
+      "class_number": 4
+    }
+  },
+  {
+    "model": "school.schooldefaultclasses",
+    "pk": 5,
+    "fields": {
+      "class_number": 5
+    }
+  },
+  {
+    "model": "school.schooldefaultclasses",
+    "pk": 6,
+    "fields": {
+      "class_number": 6
+    }
+  },
+  {
+    "model": "school.schooldefaultclasses",
+    "pk": 7,
+    "fields": {
+      "class_number": 7
+    }
+  },
+  {
+    "model": "school.schooldefaultclasses",
+    "pk": 8,
+    "fields": {
+      "class_number": 8
+    }
+  },
+  {
+    "model": "school.schooldefaultclasses",
+    "pk": 9,
+    "fields": {
+      "class_number": 9
+    }
+  },
+  {
+    "model": "school.schooldefaultclasses",
+    "pk": 10,
+    "fields": {
+      "class_number": 10
+    }
+  },
+  {
+    "model": "school.schooldefaultclasses",
+    "pk": 11,
+    "fields": {
+      "class_number": 11
+    }
+  },
+  {
+    "model": "school.schooldefaultclasses",
+    "pk": 12,
+    "fields": {
+      "class_number": 12
+    }
+  }
+]

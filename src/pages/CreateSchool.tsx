@@ -96,10 +96,10 @@ const CreateSchool: React.FC = () => {
       contact_number: formData.phone,
       email : formData.email,
       boards: Object.keys(boards),
-      admin_firstname: formData.adminFirstName,
-      admin_lastname: formData.adminLastName,
+      admin_first_name: formData.adminFirstName,
+      admin_last_name: formData.adminLastName,
       admin_email: formData.adminEmail,
-      admin_phone: formData.adminPhone,
+      admin_phone_number: formData.adminPhone,
       admin_username: formData.adminUserName,
       password: formData.adminPassword
     }
