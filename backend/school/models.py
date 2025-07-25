@@ -83,6 +83,10 @@ class SchoolSyllabusEbooks(models.Model):
     board = models.ForeignKey(SchoolBoard, on_delete=models.CASCADE)
     subject = models.ForeignKey(SchoolDefaultSubjects, on_delete=models.CASCADE)
     class_number = models.ForeignKey(SchoolDefaultClasses, on_delete=models.CASCADE)
+    ebook_type = models.CharField(max_length=50, null=True, choices=[
+        ('single', 'Single'),
+        ('chapter_wise', 'Chapter Wise'),
+    ])
     ebook_name = models.CharField(max_length=255)
     file_path = models.CharField(max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)

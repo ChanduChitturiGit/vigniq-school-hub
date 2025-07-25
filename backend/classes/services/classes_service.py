@@ -13,6 +13,8 @@ from academics.models import SchoolAcademicYear
 from core.common_modules.common_functions import CommonFunctions
 from core.models import User
 
+from school.models import SchoolDefaultClasses
+
 from student.models import StudentClassAssignment,Student
 from student.services.student_service import StudentService
 
@@ -26,17 +28,15 @@ class ClassesService:
         """Retrieve all classes."""
         try:
             logger.info("Retrieving all classes.")
-
-            school_id = request.GET.get('school_id', request.user.school_id)
-            if not school_id:
-                return JsonResponse({"error": "School ID is required."},
-                                    status=400)
-            school_db_name = CommonFunctions.get_school_db_name(school_id)
-            classes = SchoolClass.objects.using(school_db_name).all()
-            serializer = ClassSerializer(classes, many=True)
-
-            logger.info(f"Retrieved {len(serializer.data)} classes.")
-            return JsonResponse({'classes': serializer.data},status=200)
+            classes = SchoolDefaultClasses.objects.all()
+            class_data = []
+            for class_obj in classes:
+                class_data.append({
+                    'id': class_obj.id,
+                    'class_number': class_obj.class_number,
+                })
+            logger.info(f"Retrieved {len(class_data)} classes.")
+            return JsonResponse({'data': class_data},status=200)
         except Exception as e:
             logger.error(f"Error retrieving classes: {e}")
             return JsonResponse({"error": "An error occurred while retrieving classes."},
