@@ -57,45 +57,48 @@ class ClassesService:
             
             school_db_name = CommonFunctions.get_school_db_name(school_id)
 
-            class_assignment = ClassAssignment.objects.using(school_db_name).filter(
-                academic_year_id=academic_year_id
-            )
+            classes = SchoolClass.objects.using(school_db_name).all()
 
             data = []
-            for class_instance in class_assignment:
+            for class_obj in classes:
+                class_instance = ClassAssignment.objects.using(school_db_name).filter(
+                    class_instance=class_obj,
+                    academic_year_id=academic_year_id
+                ).first()
                 teacher = None
                 teacher_name = None
-                try:
-                    class_teacher_id = class_instance.class_teacher_id
-                    if class_teacher_id:
-                        teacher = Teacher.objects.using(school_db_name).get(pk=class_teacher_id)
-                        teacher_name = User.objects.get(
-                            id=teacher.teacher_id,
-                            is_active=True,
-                        ).full_name()
-                except Teacher.DoesNotExist:
-                    logger.error(f"Teacher with ID {class_instance.class_teacher_id} does not exist.")
-                    continue
-                except User.DoesNotExist:
-                    logger.error(f"Teacher with ID {class_instance.class_teacher.teacher_id} does not exist.")
-                    continue
-                class_obj = SchoolClass.objects.using(school_db_name).get(
-                    pk=class_instance.class_instance_id)
-                academic_year_obj = SchoolAcademicYear.objects.using(school_db_name).get(
-                    pk=class_instance.academic_year_id)
+                student_count = 0
+                if class_instance:
+                    try:
+                        class_teacher_id = class_instance.class_teacher_id
+                        if class_teacher_id:
+                            teacher = Teacher.objects.using(school_db_name).get(pk=class_teacher_id)
+                            teacher_name = User.objects.get(
+                                id=teacher.teacher_id,
+                                is_active=True,
+                            ).full_name()
+                    except Teacher.DoesNotExist:
+                        logger.error(f"Teacher with ID {class_instance.class_teacher_id} does not exist.")
+                        continue
+                    except User.DoesNotExist:
+                        logger.error(f"Teacher with ID {class_instance.class_teacher.teacher_id} does not exist.")
+                        continue
 
-                student_ids = StudentClassAssignment.objects.using(school_db_name).filter(
-                    class_instance=class_instance.class_instance_id,
-                    academic_year=academic_year_obj
-                ).values_list('student_id', flat=True)
+                    academic_year_obj = SchoolAcademicYear.objects.using(school_db_name).get(
+                        pk=class_instance.academic_year_id)
 
-                student_count = Student.objects.using(school_db_name).filter(
-                    id__in=student_ids,
-                    is_active=True
-                ).count()
+                    student_ids = StudentClassAssignment.objects.using(school_db_name).filter(
+                        class_instance=class_instance.class_instance_id,
+                        academic_year=academic_year_obj
+                    ).values_list('student_id', flat=True)
+
+                    student_count = Student.objects.using(school_db_name).filter(
+                        id__in=student_ids,
+                        is_active=True
+                    ).count()
 
                 class_data = {
-                    'class_assignment_id': class_instance.id,
+                    'class_assignment_id': class_instance.id if class_instance else None,
                     'class_id': class_obj.id,
                     'class_number': class_obj.class_number,
                     'section': class_obj.section,
@@ -138,13 +141,13 @@ class ClassesService:
             class_obj = SchoolClass.objects.using(school_db_name).get(
                     pk=class_id)
 
-            class_instance = ClassAssignment.objects.using(school_db_name).get(
+            class_instance = ClassAssignment.objects.using(school_db_name).filter(
                 class_instance=class_obj,
                 academic_year_id=academic_year_id
-            )
+            ).first()
             teacher = None
             teacher_name = None
-            if class_instance.class_teacher_id:
+            if class_instance and class_instance.class_teacher_id:
                 teacher = Teacher.objects.using(school_db_name).get(pk=class_instance.class_teacher_id)
                 teacher_name = User.objects.get(
                     id=teacher.teacher_id,
@@ -168,8 +171,8 @@ class ClassesService:
                 academic_year_id
             )
             data = {
-                'class_assignment_id': class_instance.id,
-                'class_id': class_instance.class_instance_id,
+                'class_assignment_id': class_instance.id if class_instance else None,
+                'class_id': class_id,
                 'class_number': class_obj.class_number,
                 'section': class_obj.section,
                 'teacher_id': teacher.teacher_id if teacher else None,
