@@ -28,7 +28,7 @@ const Classes: React.FC = () => {
       { label: 'Classes' }
     ]
     : [
-      { label: 'User Management' },
+      { label: 'School Management' },
       { label: 'Classes' }
     ];
 

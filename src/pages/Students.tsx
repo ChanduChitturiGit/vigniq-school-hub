@@ -74,12 +74,12 @@ const Students: React.FC = () => {
       ];
     } else if (user?.role === 'teacher') {
       return [
-        { label: 'User Management' },
+        { label: 'School Management' },
         { label: 'Students' }
       ];
     } else {
       return [
-        { label: 'User Management' },
+        { label: 'School Management' },
         { label: 'Students' }
       ];
     }
