@@ -67,7 +67,9 @@ class SchoolBoardMapping(models.Model):
 
     class Meta:
         db_table = 'school_board_mapping'
-        unique_together = ('school', 'board')
+        constraints = [
+            models.UniqueConstraint(fields=['school', 'board'], name='unique_school_board')
+        ]
 
 class SchoolDefaultClasses(models.Model):
     class_number = models.PositiveIntegerField(unique=True)
