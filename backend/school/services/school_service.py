@@ -2,6 +2,7 @@
 import logging
 import psycopg2
 
+import redis
 from django.db import transaction
 from django.conf import settings
 from django.test.utils import override_settings
@@ -21,6 +22,8 @@ from teacher.models import Teacher
 from school.models import School, SchoolDbMetadata, SchoolBoard, SchoolBoardMapping
 
 from academics.models import SchoolAcademicYear
+
+from syllabus.services.ebook_service import EbookService
 
 
 logger = logging.getLogger(__name__)
@@ -92,10 +95,13 @@ class SchoolService:
                     logger.error("Database creation failed. Rolling back transaction.")
                     raise Exception("Failed to create database for school.")
 
-                SchoolAcademicYear.objects.using(school_db_metadata.db_name).create(
+                academic_year = SchoolAcademicYear.objects.using(school_db_metadata.db_name).create(
                     start_year=data.get('academic_start_year'),
                     end_year=data.get('academic_end_year'),
                 )
+
+                EbookService().copy_syllabus_data_to_school_db(school_db_metadata,academic_year.id)
+
                 email_service = EmailService()
                 email_service.send_email(
                     to_email=admin_user.email,
@@ -104,15 +110,15 @@ class SchoolService:
                     user_name=admin_user.user_name,
                     password=data.get('password'),
                 )
-
-                return Response({"message": "School created successfully."}, status=status.HTTP_201_CREATED)
+            DbLoader().load_databases()
+            return Response({"message": "School created successfully."}, status=status.HTTP_201_CREATED)
 
         except Role.DoesNotExist:
             logger.error("Role 'admin' does not exist.")
             return Response({"error": "Admin role is not configured in the system."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         except Exception as e:
-            logger.error("Error while creating school.")
+            logger.error("Error while creating school. Error: %s", str(e))
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def edit_school(self, request):
@@ -275,6 +281,7 @@ class SchoolService:
                 port = settings.DB_CONFIG['PORT']
             )
             self.apply_db_migrations(school_db_metadata.db_name)
+
             logger.info(f"Database {school_db_metadata.db_name} created successfully.")
             return True
         except Exception as e:

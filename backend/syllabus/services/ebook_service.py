@@ -7,7 +7,7 @@ from django.db import transaction
 from rest_framework.response import Response
 from rest_framework import status
 
-from core import s3_client
+
 from school.models import (
     SchoolDefaultClasses,
     Chapter,
@@ -19,7 +19,8 @@ from school.models import (
     SchoolBoardMapping
 )
 from syllabus.models import SchoolChapter,SchoolSubTopic, SchoolPrerequisite
-
+from classes.models import SchoolClass
+from core import s3_client
 from core.common_modules.aws_s3_bucket import AwsS3Bucket
 from core.lang_chain.lang_chain import LangChainService
 
@@ -168,20 +169,23 @@ class EbookService:
         
         return True
     
-    def copy_syllabus_data_to_school_db(self,school_db_metadata):
+    def copy_syllabus_data_to_school_db(self,school_db_metadata,academic_year_id):
         school_db_name = school_db_metadata.db_name
         
         with transaction.atomic(using=school_db_name):
             boards = SchoolBoardMapping.objects.filter(school_id = school_db_metadata.school_id)
             for board in boards:
-                ebooks = SchoolSyllabusEbooks.objects.filter(board = board).select_related('class_number', 'subject')
+                ebooks = SchoolSyllabusEbooks.objects.filter(board_id = board.board_id).select_related('class_number', 'subject')
                 for ebook in ebooks:
                     chapters = Chapter.objects.filter(ebook=ebook)
                     for chapter in chapters:
+                        school_class_obj = SchoolClass.objects.using(school_db_name).get(
+                            class_number=ebook.class_number_id
+                        )
                         school_chapter_obj = SchoolChapter.objects.using(school_db_name).create(
                             school_board_id=board.board_id,
-                            academic_year=1,
-                            class_number_id=ebook.class_number_id,
+                            academic_year_id=academic_year_id,
+                            class_number=school_class_obj,
                             subject_id=ebook.subject_id,
                             chapter_number=chapter.chapter_number,
                             chapter_name=chapter.chapter_name

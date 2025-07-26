@@ -5,7 +5,7 @@ import logging
 from django.http import JsonResponse
 from django.db import IntegrityError,transaction
 
-from classes.models import SchoolClass,ClassAssignment
+from classes.models import SchoolClass,ClassAssignment,SchoolSection
 from classes.serializers import ClassSerializer
 from teacher.models import Teacher
 from academics.models import SchoolAcademicYear
@@ -57,7 +57,7 @@ class ClassesService:
             
             school_db_name = CommonFunctions.get_school_db_name(school_id)
 
-            classes = SchoolClass.objects.using(school_db_name).all()
+            classes = SchoolSection.objects.using(school_db_name).all()
 
             data = []
             for class_obj in classes:
@@ -81,7 +81,7 @@ class ClassesService:
                         logger.error(f"Teacher with ID {class_instance.class_teacher_id} does not exist.")
                         continue
                     except User.DoesNotExist:
-                        logger.error(f"Teacher with ID {class_instance.class_teacher.teacher_id} does not exist.")
+                        logger.error(f"Teacher with ID {teacher.teacher_id} does not exist.")
                         continue
 
                     academic_year_obj = SchoolAcademicYear.objects.using(school_db_name).get(
@@ -100,7 +100,7 @@ class ClassesService:
                 class_data = {
                     'class_assignment_id': class_instance.id if class_instance else None,
                     'class_id': class_obj.id,
-                    'class_number': class_obj.class_number,
+                    'class_number': class_obj.class_instance_id,
                     'section': class_obj.section,
                     'teacher_id': teacher.teacher_id if teacher else None,
                     'teacher_name': teacher_name,
@@ -138,7 +138,7 @@ class ClassesService:
 
             school_db_name = CommonFunctions.get_school_db_name(school_id)
             
-            class_obj = SchoolClass.objects.using(school_db_name).get(
+            class_obj = SchoolSection.objects.using(school_db_name).get(
                     pk=class_id)
 
             class_instance = ClassAssignment.objects.using(school_db_name).filter(
@@ -173,7 +173,7 @@ class ClassesService:
             data = {
                 'class_assignment_id': class_instance.id if class_instance else None,
                 'class_id': class_id,
-                'class_number': class_obj.class_number,
+                'class_number': class_obj.class_instance_id,
                 'section': class_obj.section,
                 'teacher_id': teacher.teacher_id if teacher else None,
                 'teacher_name': teacher_name,
@@ -194,9 +194,9 @@ class ClassesService:
         except User.DoesNotExist:
             logger.error("User does not exist.")
             return JsonResponse({"error": "User not found."}, status=404)
-        except SchoolClass.DoesNotExist:
-            logger.error("Class does not exist.")
-            return JsonResponse({"error": "Class not found."}, status=404)
+        except SchoolSection.DoesNotExist:
+            logger.error("Class and Section does not exist.")
+            return JsonResponse({"error": "Class and Section not found."}, status=404)
         except Exception as e:
             logger.error(f"Error retrieving class: {e}")
             return JsonResponse({"error": "An error occurred while retrieving the class."},
@@ -352,8 +352,11 @@ class ClassesService:
                 return JsonResponse({"error": "Academic Year not found."},
                                     status=404)
             with transaction.atomic(using=school_db_name):
-                class_instance = SchoolClass.objects.using(school_db_name).create(
+                class_obj = SchoolClass.objects.using(school_db_name).get(
                     class_number=class_number,
+                )
+                class_instance = SchoolSection.objects.using(school_db_name).create(
+                    class_instance=class_obj,
                     section=section_name
                 )
 
@@ -371,7 +374,7 @@ class ClassesService:
                 response_data = {
                     'id': class_assignment.id,
                     'class_id': class_instance.id,
-                    'class_number': class_instance.class_number,
+                    'class_number': class_obj.class_number,
                     'section': class_instance.section,
                     'teacher_id': class_teacher.id if class_teacher else None,
                     'academic_year_id': academic_year.id
@@ -390,7 +393,7 @@ class ClassesService:
                 return JsonResponse({
                     'error': 'A class assignment with the same class, teacher, and academic year already exists.'
                 }, status=400)
-            elif 'unique_class_number_section' in str(e):
+            elif 'unique_class_instance_section' in str(e):
                 return JsonResponse({
                     'error': 'A class with the same class number and section already exists.'
                 }, status=400)
@@ -436,18 +439,10 @@ class ClassesService:
                                     status=404)
             class_assignment.class_teacher = class_teacher
             class_assignment.save(using=school_db_name)
+
             
-            response_data = {
-                'id': class_assignment.id,
-                'class_id': class_assignment.class_instance.id,
-                'class_number': class_assignment.class_instance.class_number,
-                'section': class_assignment.class_instance.section,
-                'teacher_id': class_teacher.id,
-                'academic_year_id': class_assignment.academic_year.id
-            }
-            
-            logger.info(f"Class assignment updated successfully: {response_data}")
-            return JsonResponse({'class': response_data}, status=200)
+            logger.info(f"Class assignment updated successfully")
+            return JsonResponse({'message': "Class assignment updated successfully."}, status=200)
         except SchoolClass.DoesNotExist:
             logger.error("Class does not exist.")
             return JsonResponse({"error": "Class not found."}, status=404)

@@ -9,7 +9,7 @@ from core.models import User
 from teacher.models import Teacher
 from academics.models import SchoolAcademicYear
 from student.models import Student,StudentClassAssignment
-from classes.models import SchoolClass
+from classes.models import SchoolSection
 
 from core.common_modules.common_functions import CommonFunctions
 
@@ -63,7 +63,7 @@ class UserProfileService:
                         "emergency_contact": teacher.emergency_contact,
                     })
                 elif user.role.id == 4:
-                    acadamic_year_id = request.GET.get("academic_year_id")
+                    acadamic_year_id = request.GET.get("academic_year_id",1)
                     if not acadamic_year_id:
                         logger.error("Academic year ID is required for student profile.")
                         return Response({"error": "Academic year ID is required."},
@@ -85,7 +85,7 @@ class UserProfileService:
 
                     class_obj = None
                     if student_class_assignment:
-                        class_obj = SchoolClass.objects.using(school_db_name).filter(
+                        class_obj = SchoolSection.objects.using(school_db_name).filter(
                             id=student_class_assignment.class_instance_id
                         ).first()
 
@@ -103,7 +103,7 @@ class UserProfileService:
                         "parent_phone": student.parent_phone,
                         "parent_email": student.parent_email,
                         "class_id": class_obj.id if class_obj else None,
-                        "class_number": class_obj.class_number if class_obj else None,
+                        "class_number": class_obj.class_instance_id if class_obj else None,
                         "section": class_obj.section if class_obj else None,
                         "roll_number": student.roll_number,
                     })

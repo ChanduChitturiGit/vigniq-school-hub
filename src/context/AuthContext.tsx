@@ -5,7 +5,7 @@ import { login as loginApi } from '../services/login';
 
 interface User {
   id: string;
-  username: string;
+  user_name: string;
   email: string;
   name: string;
   role: string;
@@ -34,7 +34,7 @@ export const useAuth = () => {
 const defaultUsers: (User & { password: string })[] = [
   {
     id: '1',
-    username: 'superadmin',
+    user_name: 'superadmin',
     email: 'superadmin@gmail.com',
     password: 'superadmin',
     name: 'Super Administrator',
@@ -42,7 +42,7 @@ const defaultUsers: (User & { password: string })[] = [
   },
   {
     id: '2',
-    username: 'admin1',
+    user_name: 'admin1',
     email: 'admin@greenwood.edu',
     password: 'admin123',
     name: 'John Smith',
@@ -51,7 +51,7 @@ const defaultUsers: (User & { password: string })[] = [
   },
   {
     id: '3',
-    username: 'teacher1',
+    user_name: 'teacher1',
     email: 'teacher@greenwood.edu',
     password: 'teacher123',
     name: 'Jane Doe',
@@ -61,7 +61,7 @@ const defaultUsers: (User & { password: string })[] = [
   },
   {
     id: '4',
-    username: 'student1',
+    user_name: 'student1',
     email: 'student@greenwood.edu',
     password: 'student123',
     name: 'Alice Johnson',

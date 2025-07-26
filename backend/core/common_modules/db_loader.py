@@ -4,6 +4,8 @@ import logging
 
 from django.conf import settings
 
+from school.models import SchoolDbMetadata
+
 logger = logging.getLogger(__name__)
 
 class DbLoader:
@@ -35,3 +37,17 @@ class DbLoader:
         except Exception as e:
             logger.error(f"Error loading database {db_key}: {e}")
             raise e
+    
+    def load_databases(self):
+        for school_db in SchoolDbMetadata.objects.all():
+            db_key = school_db.db_name
+            if db_key not in settings.DATABASES:
+                self.load_dynamic_databases(
+                    db_key = db_key,
+                    engine = settings.DB_CONFIG['ENGINE'],
+                    name = school_db.db_name,
+                    user = settings.DB_CONFIG['USER'],
+                    password = settings.DB_CONFIG['PASSWORD'],
+                    host = settings.DB_CONFIG['HOST'],
+                    port = settings.DB_CONFIG['PORT']
+                )

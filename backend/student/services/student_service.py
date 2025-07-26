@@ -11,7 +11,7 @@ from rest_framework import status
 
 from student.models import Student,StudentClassAssignment
 
-from classes.models import SchoolClass
+from classes.models import SchoolSection
 from academics.models import SchoolAcademicYear
 
 from core.common_modules.common_functions import CommonFunctions
@@ -82,8 +82,9 @@ class StudentService:
                     role = role,
                     date_of_birth=date_of_birth,
                 )
-                class_instance = SchoolClass.objects.using(school_db_name).get(id=class_id)
-                if not class_instance:
+                class_section_instance = SchoolSection.objects.using(school_db_name).get(
+                    id = class_id)
+                if not class_section_instance:
                     return JsonResponse({"error": "Class not found."},
                                         status=status.HTTP_404_NOT_FOUND)
                 
@@ -102,7 +103,7 @@ class StudentService:
                     school_db_name
                 ).create(
                     student = student,
-                    class_instance = class_instance,
+                    class_instance = class_section_instance,
                     academic_year = acadamic_year
                 )
 
@@ -111,7 +112,7 @@ class StudentService:
         except Role.DoesNotExist:
             return JsonResponse({"error": "Role student not found."},
                                 status=status.HTTP_404_NOT_FOUND)
-        except SchoolClass.DoesNotExist:
+        except SchoolSection.DoesNotExist:
             return JsonResponse({"error": "Class not found."},
                                 status=status.HTTP_404_NOT_FOUND)
         except SchoolAcademicYear.DoesNotExist:
@@ -218,8 +219,8 @@ class StudentService:
                             raise ValueError("Class Assignment not found for the student.")
                         class_assignment_instance.delete()
 
-                        class_instance = SchoolClass.objects.using(school_db_name).get(id=class_id)
-                        
+                        class_section_instance = SchoolSection.objects.using(school_db_name).get(id=class_id)
+
                         acadamic_year = SchoolAcademicYear.objects.using(school_db_name).get(id=acadamic_year_id)
                         if not acadamic_year:
                             raise ValueError("Academic year not found.")
@@ -227,7 +228,7 @@ class StudentService:
                             school_db_name
                         ).create(
                             student=student,
-                            class_instance=class_instance,
+                            class_instance=class_section_instance,
                             academic_year=acadamic_year
                         )
                     return JsonResponse(
@@ -243,7 +244,7 @@ class StudentService:
         except Student.DoesNotExist:
             return JsonResponse({"error": "Student not found."},
                                 status=status.HTTP_404_NOT_FOUND)
-        except SchoolClass.DoesNotExist:
+        except SchoolSection.DoesNotExist:
             return JsonResponse({"error": "Class not found."},
                                 status=status.HTTP_404_NOT_FOUND)
         except SchoolAcademicYear.DoesNotExist:
@@ -332,7 +333,7 @@ class StudentService:
                 student = student,
                 academic_year = academic_year
             )
-            class_instance = SchoolClass.objects.using(self.school_db_name).get(
+            class_instance = SchoolSection.objects.using(self.school_db_name).get(
                 id=class_assignment.class_instance_id
             )
 
@@ -344,7 +345,7 @@ class StudentService:
                 "parent_name": student.parent_name,
                 "parent_phone": student.parent_phone,
                 "is_active": student.is_active,
-                "class_number": class_instance.class_number,
+                "class_number": class_instance.class_instance_id,
                 "class_id": class_instance.id,
                 "section": class_instance.section,
                 "email": user.email,
@@ -382,10 +383,10 @@ class StudentService:
                 return JsonResponse({"error": "School not found or school is inactive."},
                                     status=status.HTTP_404_NOT_FOUND)
 
-            class_instance = SchoolClass.objects.using(self.school_db_name).get(id=class_id)
+            class_section_instance = SchoolSection.objects.using(self.school_db_name).get(id=class_id)
 
             students_instants_ids = StudentClassAssignment.objects.using(self.school_db_name).filter(
-                class_instance=class_instance,
+                class_instance=class_section_instance,
                 academic_year_id=academic_year_id
             ).values_list('student_id', flat=True)
 
@@ -403,7 +404,7 @@ class StudentService:
         except StudentClassAssignment.DoesNotExist:
             return JsonResponse({"error": "No students found for this class."},
                                 status=status.HTTP_404_NOT_FOUND)
-        except SchoolClass.DoesNotExist:
+        except SchoolSection.DoesNotExist:
             return JsonResponse({"error": "Class not found."},
                                 status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
@@ -468,7 +469,7 @@ class StudentService:
                         student=student,
                         academic_year = academic_year
                     )
-                    class_instance = SchoolClass.objects.using(self.school_db_name).get(
+                    class_instance = SchoolSection.objects.using(self.school_db_name).get(
                         id=class_assignment.class_instance_id)
                 except User.DoesNotExist:
                     logger.warning(f"User with ID {student.student_id} not found.")
@@ -476,7 +477,7 @@ class StudentService:
                 except StudentClassAssignment.DoesNotExist:
                     logger.warning(f"Class assignment for student ID {student.student_id} not found.")
                     continue
-                except SchoolClass.DoesNotExist:
+                except SchoolSection.DoesNotExist:
                     logger.warning(f"Class with ID {class_assignment.class_instance.id} not found.")
                     continue
                 students_data.append({
@@ -486,7 +487,7 @@ class StudentService:
                     "parent_name": student.parent_name,
                     "parent_phone": student.parent_phone,
                     "is_active": student.is_active,
-                    "class_number": class_instance.class_number,
+                    "class_number": class_instance.class_instance_id,
                     "class_id": class_instance.id,
                     "section": class_instance.section,
                     "email": user.email,

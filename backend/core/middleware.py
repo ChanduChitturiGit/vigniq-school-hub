@@ -9,7 +9,6 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, AuthenticationFailed
 
 from school.models import School
-from school.models import SchoolDbMetadata
 
 from core.common_modules.db_loader import DbLoader
 
@@ -36,7 +35,7 @@ class LoadDynamicDatabasesMiddleware:
     def __call__(self, request):
         if not _db_initialized.is_set():
             try:
-                self.load_databases()
+                DbLoader().load_databases()
                 _db_initialized.set()
             except Exception as e:
                 logging.error(f"[DB INIT ERROR] Failed to load dynamic DBs: {e}")
@@ -44,20 +43,6 @@ class LoadDynamicDatabasesMiddleware:
 
         return self.get_response(request)
 
-    def load_databases(self):
-        db_loader = DbLoader()
-        for school_db in SchoolDbMetadata.objects.all():
-            db_key = school_db.db_name
-            if db_key not in settings.DATABASES:
-                db_loader.load_dynamic_databases(
-                    db_key = db_key,
-                    engine = settings.DB_CONFIG['ENGINE'],
-                    name = school_db.db_name,
-                    user = settings.DB_CONFIG['USER'],
-                    password = settings.DB_CONFIG['PASSWORD'],
-                    host = settings.DB_CONFIG['HOST'],
-                    port = settings.DB_CONFIG['PORT']
-                )
                 
 
 class DatabaseMiddleware:

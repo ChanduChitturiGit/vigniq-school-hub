@@ -107,7 +107,7 @@ class Chapter(AbstractChapter):
 
     class Meta(AbstractChapter.Meta):
         db_table = 'syllabus_chapter'
-        unique_together = ('school_board', 'chapter_number')
+        unique_together = ('chapter_number', 'ebook')
 
 class SubTopic(AbstractSubTopic):
     chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, related_name='sub_topics')

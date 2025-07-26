@@ -3,7 +3,9 @@ import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Edit, Search, Plus, X, GraduationCap, LoaderCircle } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { getClassesById } from '../services/class'
+import { getTeachersBySchoolId } from '../services/teacher'
 
 const ClassDetails: React.FC = () => {
   const { id } = useParams();
@@ -15,6 +17,14 @@ const ClassDetails: React.FC = () => {
   const [allStudents, setAllStudents] = useState([]);
   const [loader, setLoader] = useState(true);
   const schoolId = localStorage.getItem('current_school_id');
+  const [isEditing, setIsEditing] = useState(false);
+  const [teachers, setteachers] = useState([]);
+  const [formData, setFormData] = useState({
+    teacher_id: 0,
+    class_id: 0,
+    teacher_name: ''
+
+  });
 
   // Mock students data for this class
   const sampleAllStudents = [
@@ -57,7 +67,7 @@ const ClassDetails: React.FC = () => {
   const sampleClassData = {
     id: id,
     class_name: 'Class 10',
-    class_number : 0,
+    class_number: 0,
     section: 'A',
     academicYear: '2024-25',
     teacher_name: 'John Smith',
@@ -66,7 +76,7 @@ const ClassDetails: React.FC = () => {
   const [classData, setClassData] = useState(sampleClassData);
   const [breadcrumbItems, setBreadCrumbItems] = useState([
     { label: 'My School', path: '/admin-school' },
-    { label: `Class Details : ${classData.class_name}-${classData.section}` }
+    { label: `Class Details : ${'Class ' + classData.class_number}-${classData.section}` }
   ]);
 
 
@@ -75,13 +85,20 @@ const ClassDetails: React.FC = () => {
       setBreadCrumbItems([
         { label: 'Schools', path: '/schools' },
         { label: 'My School', path: `/school-details/${schoolId}` },
-        { label: `Class Details : ${classData.class_name}-${classData.section}` }
+        { label: `Class Details : ${'Class ' + classData.class_number}-${classData.section}` }
       ])
     } else {
       setBreadCrumbItems([
         { label: 'My School', path: '/admin-school' },
-        { label: `Class Details : ${classData.class_name}-${classData.section}` }
+        { label: `Class Details : ${'Class ' + classData.class_number}-${classData.section}` }
       ]);
+    }
+  }
+
+  const getTeachers = async () => {
+    const teachersData = await getTeachersBySchoolId(userData.role == 'superadmin' ? schoolId : userData.school_id);
+    if (teachersData && teachersData.teachers) {
+      setteachers(teachersData.teachers);
     }
   }
 
@@ -103,36 +120,28 @@ const ClassDetails: React.FC = () => {
 
   useEffect(() => {
     getClass();
+    getTeachers();
     setBreadCrumb();
   }, [])
+
+  const handleTeacherChange = (value: string) => {
+    // const data = teachers.find((val: any) => (val.teacher_first_name + ' ' + val.teacher_last_name) == value);
+    // formData.teacher_name = value;
+    // setFormData(prev => ({
+    //   ...prev,
+    //   teacher: value,
+    //   teacher_id: data.teacher_id
+    // }));
+    setFormData((prev) => ({
+      ...prev,
+      teacher_name: value,
+    }));
+  };
 
   const filteredStudents = allStudents.filter(student =>
     student.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     student.roll_number.includes(searchTerm)
   );
-
-  // Determine breadcrumb based on navigation context
-  // const getBreadcrumbItems = () => {
-  //   // Check if we came from admin-school (My School) or from the regular classes page
-  //   const referrer = document.referrer;
-  //   const isFromAdminSchool = referrer.includes('/admin-school') || location.state?.from === 'admin-school';
-
-  //   if (true) {
-  //     return [
-  //       { label: 'My School', path: '/admin-school' },
-  //       { label: `${classData.class_name}-${classData.section}` }
-  //     ];
-  //   } else {
-  //     return [
-  //       { label: 'User Management', path: '/user-management' },
-  //       { label: 'Schools', path: '/schools' },
-  //       { label: 'School Details', path: '/school-details/1' },
-  //       { label: `${classData.class_name}-${classData.section}` }
-  //     ];
-  //   }
-  // };
-
-  // const breadcrumbItems = getBreadcrumbItems();
 
 
 
@@ -146,13 +155,46 @@ const ClassDetails: React.FC = () => {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-800">
-                {'Class '+classData.class_number} - {classData.section}
+                {'Class ' + classData.class_number} - {classData.section}
               </h1>
               <p className="text-gray-600">{classData.academicYear}</p>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-500">Class Teacher</p>
-              <p className="font-semibold text-gray-800">{classData.teacher_name || 'N/A'}</p>
+            <div className="text-right flex">
+              {!isEditing ? (
+                <>
+                  <div>
+                    <p className="text-sm text-gray-500">Class Teacher</p>
+                    <p className="font-semibold text-gray-800">{classData.teacher_name || 'N/A'}</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Class Teacher
+                    </label>
+                    <Select value={formData.teacher_name} onValueChange={handleTeacherChange}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a teacher" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {teachers.map((teacher, index) => (
+                          <SelectItem key={index} value={teacher.teacher_first_name + ' ' + teacher.teacher_last_name}>
+                            {teacher.teacher_first_name + ' ' + teacher.teacher_last_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+              <button
+                onClick={() => setIsEditing(!isEditing)}
+                className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              >
+                <Edit className="w-4 h-4" />
+                {isEditing ? 'Cancel' : 'Edit'}
+              </button>
             </div>
           </div>
 
