@@ -105,6 +105,7 @@ const TeacherDetails: React.FC = () => {
         status: "error"
       });
     }
+    getTeacher();
   }
 
   const subjectsList = async () => {
