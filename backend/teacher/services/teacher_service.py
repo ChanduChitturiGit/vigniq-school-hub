@@ -315,11 +315,11 @@ class TeacherService:
 
             renamed_assignments = [
                 {
-                    'subject': {'id': item['subject__id'], 'name': item['subject__name']},
-                    'class': {'id': item['school_class__id'],
-                              'class_number': item['school_class__class_number'],
-                              'section_name': item['school_class__section']
-                    },
+                    'subject_id': item['subject__id'], 
+                    'subject_name': item['subject__name'],
+                    'class_id': item['school_class__id'],
+                    'class_number': item['school_class__class_number'],
+                    'section': item['school_class__section']
                 }
                 for item in subject_assignments
             ]

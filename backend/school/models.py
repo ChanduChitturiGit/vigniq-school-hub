@@ -103,7 +103,6 @@ class AcademicYear(AbstractAcademicYear):
         ordering = ['start_year', 'end_year']
 
 class Chapter(AbstractChapter):
-    school_board = models.ForeignKey(SchoolBoard, on_delete=models.CASCADE)
     ebook = models.ForeignKey(SchoolSyllabusEbooks, on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta(AbstractChapter.Meta):
