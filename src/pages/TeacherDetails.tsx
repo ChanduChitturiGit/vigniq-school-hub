@@ -29,7 +29,8 @@ const TeacherDetails: React.FC = () => {
     joiningDate: '',
     address: '',
     emergencyContact: '',
-    subject_assignments: []
+    subject_assignments: [],
+    school_id : null
   });
   const [breadcrumbItems, setBreadCrumbItems] = useState([
     { label: 'My School', path: '/admin-school' },
@@ -74,7 +75,7 @@ const TeacherDetails: React.FC = () => {
       subjectsList();
       setFormData(response.data);
       setBreadCrumb();
-      seTeacherAssignments(response.data.subject_assignments)
+      seTeacherAssignments(response.data.subject_assignments);
     }
   }
 
@@ -85,8 +86,9 @@ const TeacherDetails: React.FC = () => {
         assignment.class && assignment.subject
       );
       validAssignments = [...validAssignments,...teacherAssignments];
-      console.log("validAssignments",validAssignments);
+      // console.log("validAssignments",validAssignments);
       formData.subject_assignments = validAssignments;
+      formData.school_id = Number(userData.role == 'superadmin' ? schoolId : userData.schoo_id);
       const response = await editTeacher(formData);
       if (response && response.message) {
         // console.log("editTeacherData", response);

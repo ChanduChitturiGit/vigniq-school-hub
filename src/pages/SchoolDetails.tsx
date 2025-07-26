@@ -285,7 +285,7 @@ const SchoolDetails: React.FC = () => {
 
           <div className="max-h-96 overflow-y-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredTeachers.slice(0, 6).map((teacher) => (
+              {filteredTeachers.map((teacher) => (
                 <div
                   key={teacher.id}
                   onClick={() => handleTeacherClick(teacher.id)}
