@@ -17,8 +17,10 @@ import {
 } from '../components/ui/alert-dialog';
 import { getUserByUserName, editProfile } from '../services/user';
 import { toast } from '../components/ui/sonner';
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
 
 const Profile: React.FC = () => {
+  const { showSnackbar } = useSnackbar();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
@@ -61,18 +63,23 @@ const Profile: React.FC = () => {
   };
 
   const editData = async (data: any) => {
-    const response = await editProfile(data);
-    if (response && response.message) {
-      console.log('Saving profile data:', formData);
-      setIsEditing(false);
-      //alert('Profile updated successfully!');
-      toast(
-        `👤 Profile updated successfully ✅ `,
-        {
-          duration: 4000,
-          position: "bottom-right"
-        }
-      );
+    try {
+      const response = await editProfile(data);
+      if (response && response.message) {
+        console.log('Saving profile data:', formData);
+        setIsEditing(false);
+        showSnackbar({
+          title: "Success",
+          description: "👤 Profile updated successfully ✅",
+          status: "success"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
     }
   }
 

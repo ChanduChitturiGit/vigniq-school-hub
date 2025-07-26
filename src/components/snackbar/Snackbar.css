@@ -1,0 +1,11 @@
+/* Snackbar.css */
+.progress-bar {
+  height: 4px;
+  background-color: red;
+  width: 0%;
+  transition: width 10s linear;
+}
+
+.progress-bar.fill {
+  width: 100%;
+}

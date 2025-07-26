@@ -13,7 +13,7 @@ export const getClassesBySchoolId = async (schoolId : Number) => {
 }
 
 //add new class or create new class
-export const addClass = async (data: any): Promise<any> => {
+export const addClass = async (data: any) => {
   const response = await api.post<any>(baseurl+suburl+'/createClass', data);
   return response.data;
 }

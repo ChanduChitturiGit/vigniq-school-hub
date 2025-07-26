@@ -8,13 +8,16 @@ import { getStudentsById, editStudent } from '../services/student';
 import { getClassesBySchoolId } from '@/services/class';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from '../components/ui/sonner';
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
 
 const StudentDetails: React.FC = () => {
+  const { showSnackbar } = useSnackbar();
   const { id } = useParams();
   const [isEditing, setIsEditing] = useState(false);
   const [classes, setClasses] = useState([]);
   const genderList = ["Male", "Female", "Others"];
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
+  const schoolId = localStorage.getItem('current_school_id');
 
   // Mock student data
   const [studentData, setStudentData] = useState({
@@ -43,7 +46,7 @@ const StudentDetails: React.FC = () => {
 
   const breadcrumbItems = [
     // { label: 'User Management', path: '/user-management' },
-    { label: 'My School', path: '/admin-school' },
+    { label: 'My School', path: (userData.role == 'superadmin' ? `/school-details/${schoolId}` : '/admin-school') },
     // { label: 'School Details', path: '/school-details/1' },
     { label: 'Class Details', path: `/class-details/${studentData.class_id}` },
     { label: studentData.student_first_name }
@@ -80,17 +83,12 @@ const StudentDetails: React.FC = () => {
     const response = await editStudent(studentData);
     if (response && response.message) {
       getStudentData();
-      // console.log(response);
-      // console.log('Saving student data:', studentData);
-      toast(
-        `🧑‍🎓 Student data updated successfully ✅ `,
-        {
-          duration: 4000,
-          position: "bottom-right"
-        }
-      );
+      showSnackbar({
+        title: "Success",
+        description: "🧑‍🎓 Student data updated successfully ✅",
+        status: "success"
+      });
     }
-
   };
 
   const getClassId = (className: string) => {
@@ -245,18 +243,23 @@ const StudentDetails: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Class *
               </label>
-              <Select value={studentData.class} onValueChange={handleClassChange} required>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a Class" />
-                </SelectTrigger>
-                <SelectContent>
-                  {classes.map((classItem, index) => (
-                    <SelectItem key={index} value={'Class ' + classItem.class_number + ' - ' + classItem.section}>
-                      {'Class ' + classItem.class_number + ' - ' + classItem.section}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {isEditing ? (
+                <Select value={studentData.class} onValueChange={handleClassChange} required>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a Class" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {classes.map((classItem, index) => (
+                      <SelectItem key={index} value={'Class ' + classItem.class_number + ' - ' + classItem.section}>
+                        {'Class ' + classItem.class_number + ' - ' + classItem.section}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <p className="text-gray-900">{'Class ' + studentData.class_number + ' - ' + studentData.section}</p>
+              )
+            }
             </div>
 
 
@@ -275,36 +278,30 @@ const StudentDetails: React.FC = () => {
               )}
             </div>
 
-            {/* <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={studentData.gender}
-                  onChange={(e) => handleInputChange('gender', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              ) : (
-                <p className="text-gray-900">{studentData.gender}</p>
-              )}
-            </div> */}
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Gender *
               </label>
-              <Select value={studentData.gender} onValueChange={handleGenderChange} required>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a Gender" />
-                </SelectTrigger>
-                <SelectContent>
-                  {genderList.map((val, index) => (
-                    <SelectItem key={index} value={val}>
-                      {val}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {isEditing ? (
+                <>
+                  <Select value={studentData.gender} onValueChange={handleGenderChange} required>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a Gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {genderList.map((val, index) => (
+                        <SelectItem key={index} value={val}>
+                          {val}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </>
+              ) :
+                (
+                  <p className="text-gray-900">{studentData.gender}</p>
+                )
+              }
             </div>
 
 
