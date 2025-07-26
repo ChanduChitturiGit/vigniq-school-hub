@@ -4,8 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import { User, Lock, LogIn, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { toast } from '../components/ui/sonner';
 import { sentVerficationCode, verifyUsernameWithCode, resetPassword as resetPasswordApi } from '../services/passwordHandler';
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
 
 const Login: React.FC = () => {
+  const { showSnackbar } = useSnackbar();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -98,14 +100,24 @@ const Login: React.FC = () => {
           setForgotStep(2);
           setError('');
           // Show toast notification with user's email
-          toast(userExists.message ? `📬 ${userExists.message}` :
-            `📬 A verification code has been sent to ${userExists.email}. Please check.`,
-            {
-              duration: 4000,
-              position: "bottom-right"
-            });
+          // toast(userExists.message ? `📬 ${userExists.message}` :
+          //   `📬 A verification code has been sent to ${userExists.email}. Please check.`,
+          //   {
+          //     duration: 4000,
+          //     position: "bottom-right"
+          //   });
+          showSnackbar({
+            title: "Success",
+            description: userExists.message ? `📬 ${userExists.message} ✅` : `📬 A verification code has been sent to respective Email. Please check. ✅`,
+            status: "success"
+          });
         } else {
           setError('Username not found in our system.');
+          showSnackbar({
+            title: "⛔ Error",
+            description: "Username not found in our system.",
+            status: "error"
+          });
         }
       } else if (forgotStep === 2) {
         // Validate code
@@ -116,11 +128,21 @@ const Login: React.FC = () => {
         const response = await verifyCode(user);
 
         if (response && response.access_token) {
+          showSnackbar({
+            title: "Success",
+            description: `📬 A verification Successful.Please fill the details to reset your Password ✅`,
+            status: "success"
+          });
           localStorage.setItem('access_token', response.access_token);
           setForgotStep(3);
           setError('');
         } else {
           setError('Invalid validation code. Please enter the correct code.');
+          showSnackbar({
+            title: "⛔ Error",
+            description: "Invalid validation code. Please enter the correct code.",
+            status: "error"
+          });
         }
       } else {
         // Update password
@@ -146,9 +168,14 @@ const Login: React.FC = () => {
           setNewPassword('');
           setConfirmPassword('');
           setError('');
-          toast("✅ Password updated successfully! You can now log in with your new password.", {
-            duration: 4000,
-            position: "bottom-right"
+          // toast("✅ Password updated successfully! You can now log in with your new password.", {
+          //   duration: 4000,
+          //   position: "bottom-right"
+          // });
+          showSnackbar({
+            title: "Success",
+            description: `✅ Password updated successfully! You can now log in with your new password.`,
+            status: "success"
           });
         }
       }
