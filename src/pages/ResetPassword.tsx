@@ -45,7 +45,7 @@ const ResetPassword: React.FC = () => {
 
     // Simulate API call
     setTimeout(() => {
-      console.log('Sending OTP to:', formData.email);
+      // console.log('Sending OTP to:', formData.email);
       toast({
         title: "OTP Sent",
         description: "A verification code has been sent to your email.",

@@ -18,6 +18,7 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ isCollapsed, toggleSidebar, pageT
   const handleLogout = () => {
     logout();
     setShowUserMenu(false);
+    localStorage.clear();
   };
 
   const handleProfileClick = () => {

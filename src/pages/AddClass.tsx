@@ -3,23 +3,29 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { ArrowLeft, BookOpen, ChevronDown } from 'lucide-react';
+import { ArrowLeft, BookOpen, ChevronDown, Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { addClass } from '../services/class';
 import { getTeachersBySchoolId } from '../services/teacher';
 import { toast } from '../components/ui/sonner';
+import { toast as toaster } from '../hooks/use-toast';
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
+
+
 
 const AddClass: React.FC = () => {
+  const { showSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const [teachers, setTeachers] = useState([]);
+  const [loader, setLoader] = useState(false);
   const [formData, setFormData] = useState({
     class_name: '',
     section: '',
     teacher: '',
-    teacher_id : 0,
-    school_id : 0,
-    class_number : 0,
-    class : ''
+    teacher_id: 0,
+    school_id: 0,
+    class_number: 0,
+    class: ''
   });
   const [suggestions, setSuggestions] = useState({
     class_name: [] as string[],
@@ -44,7 +50,7 @@ const AddClass: React.FC = () => {
     'Lisa White - Physics',
     'David Green - Chemistry'
   ];
-  const classNum = [1,2,3,4,5,6,7,8,9,10,11,12];
+  const classNum = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
   const [breadcrumbItems, setBreadCrumbItems] = useState([
     { label: 'Dashboard', path: '/dashboard' },
@@ -118,11 +124,11 @@ const AddClass: React.FC = () => {
   };
 
   const handleTeacherChange = (value: string) => {
-    const data = teachers.find((val : any)=> (val.teacher_first_name+' '+val.teacher_last_name) == value);
+    const data = teachers.find((val: any) => (val.teacher_first_name + ' ' + val.teacher_last_name) == value);
     setFormData(prev => ({
       ...prev,
       teacher: value,
-      teacher_id : data.teacher_id
+      teacher_id: data.teacher_id
     }));
   };
 
@@ -130,13 +136,14 @@ const AddClass: React.FC = () => {
     setFormData(prev => ({
       ...prev,
       class: value,
-      class_number : Number(value.split(' ')[1])
+      class_number: Number(value.split(' ')[1])
     }));
   };
 
 
 
   const handleSubmit = async (e: React.FormEvent) => {
+    setLoader(true);
     e.preventDefault();
 
     if (!formData.class_number || !formData.section) {
@@ -144,23 +151,46 @@ const AddClass: React.FC = () => {
       return;
     }
 
-    //add class
-    const response = await addClass({ ...formData, school_id:  userData.role == 'superadmin' ? schoolId : userData.school_id });
-
-    if (response && response.class) {
-      // console.log('Adding new class:', response, formData);
-      // alert('Class added successfully!');
-      toast(
-      `🛄 Class added successfully ✅ `,
-      {
-        duration: 4000,
-        position: "bottom-right"
-      }
-      );
-      navigate(userData.role == 'superadmin' ? `/school-details/${schoolId}` : '/admin-school');
+    if (formData.teacher_id == 0) {
+      delete formData.teacher_id;
     }
+    //add class
+    try {
+      const response = await addClass({
+        ...formData,
+        school_id: userData.role === 'superadmin' ? schoolId : userData.school_id
+      });
 
+      if (response?.class) {
+        showSnackbar({
+          title: "Success",
+          description: "🛄 Class added successfully ✅",
+          status: "success"
+        });
 
+        navigate(userData.role === 'superadmin' ? `/school-details/${schoolId}` : '/admin-school');
+      } else if (response?.error) {
+        showSnackbar({
+          title: "⛔ Error",
+          description: response?.errorr || "Something went wrong",
+          status: "error"
+        });
+      } else {
+        showSnackbar({
+          title: "⛔ Error",
+          description: "Something went wrong",
+          status: "error"
+        });
+      }
+    } catch (error: any) {
+      // In case of network errors or exceptions
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+    setLoader(false);
   };
 
   const handleFocus = (field: string) => {
@@ -215,8 +245,8 @@ const AddClass: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {classNum.map((num, index) => (
-                    <SelectItem key={index} value={'Class '+num}>
-                      {'Class '+num}
+                    <SelectItem key={index} value={'Class ' + num}>
+                      {'Class ' + num}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -278,8 +308,10 @@ const AddClass: React.FC = () => {
             <div className="flex gap-4 pt-6">
               <button
                 type="submit"
-                className="flex-1 bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors font-medium">
-                Add Class
+                disabled={loader}
+                // hover:bg-green-600
+                className="flex-1 bg-green-500 text-white py-2 px-4 rounded-lg transition-colors font-medium">
+                {loader ? 'Adding...' : 'Add Class'}
               </button>
             </div>
           </form>
