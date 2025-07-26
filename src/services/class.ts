@@ -23,3 +23,9 @@ export const getClassesById = async (id: Number,schoolId : Number) => {
   const response = await api.get(baseurl+suburl+'/getClassById',{params : {class_id : id,school_id : schoolId}});
   return response.data;
 }
+
+//add new class or create new class
+export const editClass = async (data: any) => {
+  const response = await api.put<any>(baseurl+suburl+'/updateClassById', data);
+  return response.data;
+}

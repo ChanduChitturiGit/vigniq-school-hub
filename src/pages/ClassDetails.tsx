@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Search, Plus, X, GraduationCap, LoaderCircle } from 'lucide-react';
+import { Edit, Search, Plus, X, GraduationCap, LoaderCircle, Save } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { getClassesById } from '../services/class'
+import { getClassesById, editClass } from '../services/class'
 import { getTeachersBySchoolId } from '../services/teacher'
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
 
 const ClassDetails: React.FC = () => {
+  const { showSnackbar } = useSnackbar();
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -20,10 +22,10 @@ const ClassDetails: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [teachers, setteachers] = useState([]);
   const [formData, setFormData] = useState({
-    teacher_id: 0,
-    class_id: 0,
-    teacher_name: ''
-
+    teacher_id: null,
+    class_id: null,
+    teacher_name: '',
+    school_id: null
   });
 
   // Mock students data for this class
@@ -125,18 +127,46 @@ const ClassDetails: React.FC = () => {
   }, [])
 
   const handleTeacherChange = (value: string) => {
-    // const data = teachers.find((val: any) => (val.teacher_first_name + ' ' + val.teacher_last_name) == value);
-    // formData.teacher_name = value;
-    // setFormData(prev => ({
-    //   ...prev,
-    //   teacher: value,
-    //   teacher_id: data.teacher_id
-    // }));
     setFormData((prev) => ({
       ...prev,
       teacher_name: value,
+      teacher_id : getClassId(value)
     }));
   };
+
+  const getClassId = (teacher: string) => {
+    const teacherData = teachers.find((val: any) => (val.teacher_first_name + ' ' + val.teacher_last_name) == teacher);
+    const data = teacherData.teacher_id ? teacherData.teacher_id : null;
+    return data;
+  }
+
+  const saveTeacher = async () => {
+    setIsEditing(false);
+    formData.school_id = Number(userData.role == 'superadmin' ? schoolId : userData.school_id);
+    formData.class_id = Number(id);
+    try {
+      const response = await editClass(formData);
+      if (response && response.message) {
+        showSnackbar({
+          title: "Success",
+          description: "🛄 Class Teacher Updated successfully ✅",
+          status: "success"
+        });
+      } else {
+        showSnackbar({
+          title: "⛔ Error",
+          description: "Something went wrong",
+          status: "error"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
 
   const filteredStudents = allStudents.filter(student =>
     student.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -188,9 +218,20 @@ const ClassDetails: React.FC = () => {
                   </div>
                 </>
               )}
+              <>
+                {isEditing && (
+                  <button
+                    onClick={saveTeacher}
+                    className="flex items-center gap-2 px-4 py-2 mx-4 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  >
+                    <Save className="w-4 h-4" />
+                    {'Save'}
+                  </button>
+                )}
+              </>
               <button
                 onClick={() => setIsEditing(!isEditing)}
-                className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 mx-4 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               >
                 <Edit className="w-4 h-4" />
                 {isEditing ? 'Cancel' : 'Edit'}
