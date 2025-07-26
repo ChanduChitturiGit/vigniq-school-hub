@@ -32,4 +32,8 @@ export const editSchool = async (schoolData : any) => {
   return response.data;
 }
 
-
+//get school list
+export const getBoardsList = async () => {
+  const response = await api.get(baseurl+suburl+'/board_list');
+  return response.data;
+};

@@ -118,12 +118,12 @@ const ClassDetails: React.FC = () => {
       setLoader(false);
       setBreadCrumb();
     }
+    getTeachers();
+    setBreadCrumb();
   }
 
   useEffect(() => {
     getClass();
-    getTeachers();
-    setBreadCrumb();
   }, [])
 
   const handleTeacherChange = (value: string) => {
@@ -166,6 +166,7 @@ const ClassDetails: React.FC = () => {
         status: "error"
       });
     }
+    getClass();
   }
 
   const filteredStudents = allStudents.filter(student =>

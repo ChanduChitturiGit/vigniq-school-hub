@@ -1,17 +1,27 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import PasswordInput from '../components/ui/password-input';
+import { Select as UISelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { addSchool } from '../data/schools';
 import { X } from 'lucide-react';
-import { createSchool as createSchoolApi } from '../services/school'
+import { createSchool as createSchoolApi, getBoardsList } from '../services/school'
 import { SpinnerOverlay } from '../pages/SpinnerOverlay';
+import Select, { ActionMeta, MultiValue } from 'react-select';
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
+
+type OptionType = {
+  label: string;
+  value: number;
+};
 
 const CreateSchool: React.FC = () => {
+  const { showSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const [loader, setLoader] = useState(false);
+  const [boards, setBoards] = useState([]);
   const [formData, setFormData] = useState({
     schoolName: '',
     address: '',
@@ -22,15 +32,15 @@ const CreateSchool: React.FC = () => {
     adminUserName: '',
     adminEmail: '',
     adminPassword: '',
-    adminPhone: ''
+    adminPhone: '',
+    board_id: null,
+    selectedBoards: [] as OptionType[],
+    board_ids: [] as number[],
+    academic_start_year: new Date().getFullYear().toString(),
+    academic_end_year: (new Date().getFullYear() + 1).toString()
   });
-
-  const [boards, setBoards] = useState<string[]>([]);
   const [boardInput, setBoardInput] = useState('');
   const [showBoardSuggestions, setShowBoardSuggestions] = useState(false);
-
-  //const boardSuggestions2 = ['SSC', 'CBSE', 'ICSE', 'IGCSE', 'IB'];
-
   const boardSuggestions = [
     { boardId: 1, boardName: 'SSC' },
     { boardId: 2, boardName: 'CBSE' },
@@ -38,11 +48,31 @@ const CreateSchool: React.FC = () => {
     { boardId: 4, boardName: 'IGCSE' },
     { boardId: 5, boardName: 'IB' }
   ];
-
   const breadcrumbItems = [
-    { label: 'User Management', path: '/user-management' },
+    { label: 'School Management' },
     { label: 'Create School' }
   ];
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 10 }, (_, i) => (currentYear - 3 + i).toString());
+  const [endYears, setEndYears] = useState(Array.from({ length: 6 }, (_, i) => (Number(formData.academic_start_year) + i).toString()));
+
+
+  const boardsList = async () => {
+    const response = await getBoardsList();
+    if (response && response.boards) {
+      setBoards(
+        response.boards.map((board) => ({
+          label: board.name,
+          value: board.id,
+        }))
+      );
+
+    }
+  }
+
+  useEffect(() => {
+    boardsList();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -53,29 +83,37 @@ const CreateSchool: React.FC = () => {
     setFormData(prev => ({ ...prev, adminPassword: value }));
   };
 
-  const handleBoardInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setBoardInput(value);
-    setShowBoardSuggestions(value.length > 0);
+  const getBoardId = (data: string) => {
+    const boardData = boards.find((val: any) => (val.name) == data);
+    const boardId = boardData.id ? boardData.id : null;
+    return boardId;
+  }
+
+  const handleStartYearChange = (value: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      academic_start_year: value,
+    }));
+    const selectedYear = parseInt(value);
+    setEndYears(Array.from({ length: 6 }, (_, i) => (selectedYear + i).toString()));
   };
 
-  const addBoard = (board: any) => {
-    if (board.boardName.trim() && !boards.includes(board.boardName.trim())) {
-      setBoards([...boards, board.boardName]);
-    }
-    setBoardInput('');
-    setShowBoardSuggestions(false);
+  const handleEndYearChange = (value: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      academic_end_year: value,
+    }));
   };
 
-  const removeBoard = (boardToRemove: string) => {
-    setBoards(boards.filter(board => board !== boardToRemove));
-  };
-
-  const handleBoardKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // if (e.key === 'Enter') {
-    //   e.preventDefault();
-    //   addBoard(boardInput);
-    // }
+  const handleBoardChange = (
+    selectedOptions: MultiValue<OptionType>,
+    _actionMeta: ActionMeta<OptionType>
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      selectedBoards: selectedOptions as OptionType[],
+      board_ids: selectedOptions.map((option) => option.value),
+    }));
   };
 
   const filteredSuggestions = boardSuggestions.filter(
@@ -94,46 +132,43 @@ const CreateSchool: React.FC = () => {
       school_name: formData.schoolName,
       address: formData.address,
       contact_number: formData.phone,
-      email : formData.email,
-      boards: Object.keys(boards),
+      email: formData.email,
+      boards: formData.board_ids,
       admin_first_name: formData.adminFirstName,
       admin_last_name: formData.adminLastName,
       admin_email: formData.adminEmail,
       admin_phone_number: formData.adminPhone,
       admin_username: formData.adminUserName,
-      password: formData.adminPassword
+      password: formData.adminPassword,
+      academic_start_year: Number(formData.academic_start_year),
+      academic_end_year: Number(formData.academic_end_year)
     }
 
-    const school = await createSchoolApi(schoolPayload);
-
-    // console.log("schoolPayload",schoolPayload,school);
-
-    // Create school
-    // const newSchool = addSchool({
-    //   name: formData.schoolName,
-    //   address: formData.address,
-    //   phone: formData.phone,
-    //   email: formData.email,
-    //   adminId: Date.now().toString(),
-    //   boards: boards
-    // });
-
-    // // Create admin user
-    // const users = JSON.parse(localStorage.getItem('vigniq_users') || '[]');
-    // const newAdmin = {
-    //   id: Date.now().toString(),
-    //   email: formData.adminEmail,
-    //   password: formData.adminPassword,
-    //   name: formData.adminFirstName,
-    //   role: 'Admin',
-    //   schoolId: newSchool.id
-    // };
-    // users.push(newAdmin);
-    // localStorage.setItem('vigniq_users', JSON.stringify(users));
+    try {
+      const school = await createSchoolApi(schoolPayload);
+      if (school && school.message) {
+        navigate('/schools');
+        showSnackbar({
+          title: "Success",
+          description: "🏫 School Created successfully ✅",
+          status: "success"
+        });
+      } else {
+        showSnackbar({
+          title: "⛔ Error",
+          description: "Something went wrong",
+          status: "error"
+        });
+      }
+    }catch(error){
+      setLoader(false);
+       showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
     setLoader(false);
-    if(school && school.message){
-      navigate('/schools');
-    }
   };
 
   return (
@@ -164,51 +199,53 @@ const CreateSchool: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Board</label>
                 <div className="space-y-2">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={boardInput}
-                      onChange={handleBoardInputChange}
-                      onKeyPress={handleBoardKeyPress}
-                      placeholder="Type board name (e.g., CBSE, State Board)"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    {showBoardSuggestions && filteredSuggestions.length > 0 && (
-                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
-                        {filteredSuggestions.map((suggestion, index) => (
-                          <button
-                            key={index}
-                            type="button"
-                            onClick={() => addBoard(suggestion)}
-                            className="w-full px-3 py-2 text-left hover:bg-gray-100 transition-colors first:rounded-t-lg last:rounded-b-lg"
-                          >
-                            {suggestion.boardName}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {boards.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {boards.map((board, index) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
-                        >
-                          {board}
-                          <button
-                            type="button"
-                            onClick={() => removeBoard(board)}
-                            className="ml-1 hover:text-blue-600"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  <Select<OptionType, true>
+                    isMulti
+                    options={boards}
+                    onChange={handleBoardChange}
+                    className="basic-multi-select"
+                    classNamePrefix="select"
+                    placeholder="Select Boards"
+                    value={formData.selectedBoards}
+                  />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Academic Start Year
+                </label>
+                <UISelect value={formData.academic_start_year} onValueChange={handleStartYearChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a teacher" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {years.map((val, index) => (
+                      <SelectItem key={index} value={val}>
+                        {val}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </UISelect>
+              </div>
+
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Academic End Year
+                </label>
+                <UISelect value={formData.academic_end_year} onValueChange={handleEndYearChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a teacher" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {endYears.map((val, index) => (
+                      <SelectItem key={index} value={val}>
+                        {val}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </UISelect>
               </div>
 
               <div>

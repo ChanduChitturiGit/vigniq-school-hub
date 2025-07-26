@@ -4,27 +4,48 @@ import { Link } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { getSchools } from '../data/schools';
-import { Edit, MapPin, Mail, Phone, LoaderCircle  as Loader, School } from 'lucide-react';
-import { getSchoolsList } from '@/services/school';
-import {SpinnerOverlay} from '../pages/SpinnerOverlay';
+import { Edit, MapPin, Mail, Phone, LoaderCircle as Loader, School } from 'lucide-react';
+import { getSchoolsList,getBoardsList } from '@/services/school';
+import { SpinnerOverlay } from '../pages/SpinnerOverlay';
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
 
 
 
 const Schools: React.FC = () => {
   //const schools = getSchools();
+  const { showSnackbar } = useSnackbar();
   const [schools, setschools] = useState([]);
   const [loader, setLoader] = useState(true);
+  const [boards,setBoards] = useState([]);
 
-  useEffect(() => {
-    const fetchSchools = async () => {
-      setLoader(true);
+  const fetchSchools = async () => {
+    setLoader(true);
+    try {
       const schoolsList = await getSchoolsList();
       if (schoolsList && schoolsList.schools) {
         setLoader(false);
         setschools(schoolsList.schools);
       }
-    };
+    }catch(error){
+      setLoader(false);
+      showSnackbar({
+        title: "⛔ Something went wrong ",
+        description: "Please refresh and try again",
+        status: "error"
+      });
+    }
+  };
+
+  const boardsList = async () => {
+    const response = await getBoardsList();
+    if(response && response.boards){
+      setBoards(response.boards);
+    }
+  }
+
+  useEffect(() => {
     fetchSchools();
+    boardsList();
   }, []);
 
 
@@ -95,7 +116,7 @@ const Schools: React.FC = () => {
           ))}
         </div>
 
-        {schools.length === 0 && !loader &&(
+        {schools.length === 0 && !loader && (
           <div className="text-center py-12">
             <School className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Schools found</h3>
@@ -107,7 +128,7 @@ const Schools: React.FC = () => {
 
         {
           loader && (
-            <SpinnerOverlay/>
+            <SpinnerOverlay />
           )
         }
       </div>
