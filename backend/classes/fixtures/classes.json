@@ -1,0 +1,86 @@
+[
+  {
+    "model": "classes.schoolclass",
+    "pk": 1,
+    "fields": {
+      "class_number": 1
+    }
+  },
+  {
+    "model": "classes.schoolclass",
+    "pk": 2,
+    "fields": {
+      "class_number": 2
+    }
+  },
+  {
+    "model": "classes.schoolclass",
+    "pk": 3,
+    "fields": {
+      "class_number": 3
+    }
+  },
+  {
+    "model": "classes.schoolclass",
+    "pk": 4,
+    "fields": {
+      "class_number": 4
+    }
+  },
+  {
+    "model": "classes.schoolclass",
+    "pk": 5,
+    "fields": {
+      "class_number": 5
+    }
+  },
+  {
+    "model": "classes.schoolclass",
+    "pk": 6,
+    "fields": {
+      "class_number": 6
+    }
+  },
+  {
+    "model": "classes.schoolclass",
+    "pk": 7,
+    "fields": {
+      "class_number": 7
+    }
+  },
+  {
+    "model": "classes.schoolclass",
+    "pk": 8,
+    "fields": {
+      "class_number": 8
+    }
+  },
+  {
+    "model": "classes.schoolclass",
+    "pk": 9,
+    "fields": {
+      "class_number": 9
+    }
+  },
+  {
+    "model": "classes.schoolclass",
+    "pk": 10,
+    "fields": {
+      "class_number": 10
+    }
+  },
+  {
+    "model": "classes.schoolclass",
+    "pk": 11,
+    "fields": {
+      "class_number": 11
+    }
+  },
+  {
+    "model": "classes.schoolclass",
+    "pk": 12,
+    "fields": {
+      "class_number": 12
+    }
+  }
+]
