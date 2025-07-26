@@ -15,7 +15,8 @@ from school.models import (
     SubTopic,
     SchoolBoard,
     SchoolDefaultSubjects,
-    SchoolSyllabusEbooks
+    SchoolSyllabusEbooks,
+    SchoolBoardMapping
 )
 from syllabus.models import SchoolChapter,SchoolSubTopic, SchoolPrerequisite
 
@@ -85,6 +86,59 @@ class EbookService:
             logger.exception(f"Error uploading eBook: {e}")
             return Response({"error": "An error occurred while uploading the eBook."},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def get_ebook(self, request):
+        """Retrieve eBook details."""
+        try:
+            board_id = request.GET.get("board_id")
+            class_id = request.GET.get("class_id")
+            subject_id = request.GET.get("subject_id")
+            page = int(request.GET.get("page", 1))
+
+            page_size = 10
+            if not board_id or not class_id:
+                logger.error("Missing required fields for eBook retrieval.")
+                return Response({"error": "Missing required fields."}, status=status.HTTP_400_BAD_REQUEST)
+            board = SchoolBoard.objects.get(id=board_id)
+            class_obj = SchoolDefaultClasses.objects.get(id=class_id)
+            if subject_id:
+                subject = SchoolDefaultSubjects.objects.filter(id=subject_id)
+            else:
+                subject = SchoolDefaultSubjects.objects.all()
+
+            ebooks_obj = SchoolSyllabusEbooks.objects.filter(
+                board=board,
+                class_number=class_obj,
+                subject__in=subject
+            )
+            ebooks = ebooks_obj.order_by('id')[(page - 1) * page_size: page * page_size]
+            if ebooks_obj and not ebooks:
+                return Response({"message": "End of ebooks.",'data':[]}, status=status.HTTP_204_NO_CONTENT)
+            if not ebooks:
+                return Response({"error": "No eBooks found for the given criteria."},
+                                status=status.HTTP_404_NOT_FOUND)
+
+            ebook_list = []
+            for ebook in ebooks:
+                ebook_list.append({
+                    "id": ebook.id,
+                    "file_path": s3_client.generate_temp_link(ebook.file_path),
+                    "ebook_name": ebook.ebook_name,
+                    "ebook_type": ebook.ebook_type
+                })
+
+            logger.info(f"Retrieved {len(ebook_list)} eBooks for board {board.board_name}, class {class_obj.class_number}.")
+            return Response({'data': ebook_list}, status=status.HTTP_200_OK)
+        except SchoolBoard.DoesNotExist:
+            return Response({"error": "Board not found."}, status=status.HTTP_404_NOT_FOUND)
+        except SchoolDefaultClasses.DoesNotExist:
+            return Response({"error": "Class not found."}, status=status.HTTP_404_NOT_FOUND)
+        except SchoolDefaultSubjects.DoesNotExist:
+            return Response({"error": "Subject not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.exception(f"Error retrieving eBook: {e}")
+            return Response({"error": "An error occurred while retrieving the eBook."},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def extract_topics_and_prerequisites(self, pdf_file, ebook):
         """Extract topics and prerequisites from the provided PDF file."""
@@ -95,7 +149,6 @@ class EbookService:
             for chapter_item in chapters_obj:
                 chapter, _ = Chapter.objects.update_or_create(
                     chapter_number=chapter_item['chapter_number'],
-                    school_board_id=ebook.board_id,
                     ebook=ebook,
                     defaults={'chapter_name': chapter_item['chapter_name']}
                 )
@@ -114,4 +167,35 @@ class EbookService:
                     )
         
         return True
+    
+    def copy_syllabus_data_to_school_db(self,school_db_metadata):
+        school_db_name = school_db_metadata.db_name
         
+        with transaction.atomic(using=school_db_name):
+            boards = SchoolBoardMapping.objects.filter(school_id = school_db_metadata.school_id)
+            for board in boards:
+                ebooks = SchoolSyllabusEbooks.objects.filter(board = board).select_related('class_number', 'subject')
+                for ebook in ebooks:
+                    chapters = Chapter.objects.filter(ebook=ebook)
+                    for chapter in chapters:
+                        school_chapter_obj = SchoolChapter.objects.using(school_db_name).create(
+                            school_board_id=board.board_id,
+                            academic_year=1,
+                            class_number_id=ebook.class_number_id,
+                            subject_id=ebook.subject_id,
+                            chapter_number=chapter.chapter_number,
+                            chapter_name=chapter.chapter_name
+                        )
+                        sub_topics = SubTopic.objects.filter(chapter=chapter)
+                        for sub_topic in sub_topics:
+                            SchoolSubTopic.objects.using(school_db_name).create(
+                                chapter=school_chapter_obj,
+                                name=sub_topic.name
+                            )
+                        prerequisites = Prerequisite.objects.filter(chapter=chapter)
+                        for prerequisite in prerequisites:
+                            SchoolPrerequisite.objects.using(school_db_name).create(
+                                chapter=school_chapter_obj,
+                                topic=prerequisite.topic,
+                                explanation=prerequisite.explanation
+                            )
