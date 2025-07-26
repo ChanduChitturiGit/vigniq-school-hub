@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from core.permissions import IsSuperAdmin
 
+from syllabus.services.ebook_service import EbookService
+
 class EbookView(APIView):
     """View for managing eBooks."""
 
@@ -18,6 +20,5 @@ class EbookView(APIView):
         """Handle POST requests for eBook actions."""
         
         if action == 'uploadEbook':
-            # Logic for uploading an eBook
-            return Response({"message": "eBook uploaded successfully"})
+            return EbookService().upload_ebook(request)
         return Response({"message": f"POST request for action: {action}"})
