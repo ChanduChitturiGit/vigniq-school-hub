@@ -2,6 +2,8 @@
 
 import logging
 
+import PyPDF2
+
 from school.models import SchoolDbMetadata
 
 logger = logging.getLogger(__name__)
@@ -20,3 +22,15 @@ class CommonFunctions:
         except Exception as e:
             logger.error(f"Error retrieving school database name: {e}")
             return None
+    
+    @staticmethod
+    def extract_text_from_pdf(pdf_file):
+        pdf_text = ""
+        pdf_reader = PyPDF2.PdfReader(pdf_file)
+        num_pages = len(pdf_reader.pages)
+
+        for page_num in range(num_pages):
+            page = pdf_reader.pages[page_num]
+            page_text = page.extract_text()
+            pdf_text += (page_text or "") + "\n\n"
+        return pdf_text

@@ -77,22 +77,6 @@ const ClassSectionSubjectInput: React.FC<ClassSectionSubjectInputProps> = ({
           </Select>
         </div>
         
-        {/* <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
-          <Select value={data.section} onValueChange={(value) => handleInputChange('section', value)}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select section" />
-            </SelectTrigger>
-            <SelectContent>
-              {sections.map((section) => (
-                <SelectItem key={section} value={section}>
-                  {section}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div> */}
-        
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
           <Select value={data.subject} onValueChange={(value) => handleInputChange('subject', value)}>
@@ -101,8 +85,8 @@ const ClassSectionSubjectInput: React.FC<ClassSectionSubjectInputProps> = ({
             </SelectTrigger>
             <SelectContent>
               {subjects && subjects.map((subject) => (
-                <SelectItem key={subject} value={subject}>
-                  {subject}
+                <SelectItem key={subject.id} value={subject.name}>
+                  {subject.name}
                 </SelectItem>
               ))}
             </SelectContent>

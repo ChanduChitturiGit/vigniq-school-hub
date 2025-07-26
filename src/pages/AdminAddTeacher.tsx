@@ -39,7 +39,7 @@ const AdminAddTeacher: React.FC = () => {
     emergency_contact: ''
   });
   const [classes, setClasses] = useState([]);
-  const [subjects, setSubjects] = useState();
+  const [subjects, setSubjects] = useState([]);
   const [breadcrumbItems, setBreadCrumbItems] = useState([
     { label: 'Dashboard', path: '/dashboard' },
     { label: 'My School', path: '/admin-school' },
@@ -65,8 +65,8 @@ const AdminAddTeacher: React.FC = () => {
 
   const subjectsList = async () => {
     const response = await getSubjectsBySchoolId(userData.role == 'superadmin' ? schoolId : userData.school_id);
-    if (response && response.subjects) {
-      setSubjects(response.subjects);
+    if (response && response) {
+      setSubjects(response);
     }
   }
 
@@ -101,8 +101,23 @@ const AdminAddTeacher: React.FC = () => {
     }));
   };
 
+  const getClassId = (className: string) => {
+    const classdata = classes.find((val: any) => ('Class ' + val.class_number + ' - ' + val.section) == className);
+    const classId = classdata.class_id ? classdata.class_id : 0;
+    return classId;
+  }
+
+  
+  const getSubjectId = (subjectName: string) => {
+    const subjectdata = subjects.find((val: any) => (val.name) == subjectName);
+    const subjectId = subjectdata.id ? subjectdata.id : 0;
+    return subjectId;
+  }
+
   const handleAssignmentChange = (index: number, data: ClassSectionSubjectData) => {
     const updatedAssignments = [...teachingAssignments];
+    data[`class_id`] = (data.class!= '' && !data['class_id']) ?  getClassId(data.class) : data['class_id'] ? data['class_id'] : null;
+    data[`subject_id`] = (data.subject != '' &&  !data['subject_id']) ?  getSubjectId(data.subject) : null;
     updatedAssignments[index] = data;
     setTeachingAssignments(updatedAssignments);
   };
@@ -138,7 +153,7 @@ const AdminAddTeacher: React.FC = () => {
 
     const teacherData = {
       ...formData,
-      teachingAssignments: validAssignments,
+      subject_assignments: validAssignments,
       password: password,
       school_id: userData.role == 'superadmin' ? schoolId : userData.school_id
     };

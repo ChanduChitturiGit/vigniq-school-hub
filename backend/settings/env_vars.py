@@ -32,3 +32,11 @@ EMAIL_CONFIG = {
     'EMAIL_HOST_PASSWORD': os.getenv('EMAIL_HOST_PASSWORD', '')
 }
 
+
+API_KEYS = {
+    'GEMINI_API_KEY': os.getenv('GEMINI_API_KEY')
+}
+
+AI_MODELS = {
+    'GEMINI_MODEL': os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')
+}

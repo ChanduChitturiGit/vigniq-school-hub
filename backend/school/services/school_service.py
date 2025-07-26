@@ -20,6 +20,8 @@ from teacher.models import Teacher
 
 from school.models import School, SchoolDbMetadata, SchoolBoard, SchoolBoardMapping
 
+from academics.models import SchoolAcademicYear
+
 
 logger = logging.getLogger(__name__)
 
@@ -52,8 +54,10 @@ class SchoolService:
                     email = data.get('admin_email'),
                     user_name = data.get('admin_username'),
                     password = data.get('password'),
-                    phone_number = data.get('contact_number'),
+                    phone_number = data.get('admin_phone_number'),
                     role = admin_role,
+                    first_name = data.get("admin_first_name"),
+                    last_name = data.get("admin_last_name")
                 )
 
                 school = School.objects.create(
@@ -61,7 +65,7 @@ class SchoolService:
                     address = data.get('address'),
                     contact_number = data.get('contact_number'),
                     school_admin = admin_user,
-                    email = data.get('school_email', None),
+                    email = data.get('email', None),
                 )
 
                 board_ids = data.get('boards', [])
@@ -87,7 +91,11 @@ class SchoolService:
                 if not success:
                     logger.error("Database creation failed. Rolling back transaction.")
                     raise Exception("Failed to create database for school.")
-                
+
+                SchoolAcademicYear.objects.using(school_db_metadata.db_name).create(
+                    start_year=data.get('academic_start_year'),
+                    end_year=data.get('academic_end_year'),
+                )
                 email_service = EmailService()
                 email_service.send_email(
                     to_email=admin_user.email,

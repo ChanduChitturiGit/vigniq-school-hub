@@ -13,7 +13,8 @@ class EbookView(APIView):
 
     def get(self, request, action=None):
         """Handle GET requests for eBook actions."""
-        # Implement logic for handling eBook actions
+        if action == 'getEbooks':
+            return EbookService().get_ebook(request)
         return Response({"message": f"GET request for action: {action}"})
 
     def post(self, request, action=None):
