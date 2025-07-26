@@ -411,8 +411,9 @@ class ClassesService:
         """Update an existing class."""
         try:
             school_id = request.data.get('school_id', request.user.school_id)
-            id = request.data.get('id')
+            id = request.data.get('class_id')
             teacher_id = request.data.get('teacher_id')
+            academic_year_id = request.data.get('academic_year_id',1)
 
             if not school_id:
                 return JsonResponse({"error": "School ID is required."},
@@ -431,8 +432,13 @@ class ClassesService:
 
             class_teacher = Teacher.objects.using(school_db_name).get(id=teacher_id)
 
-            class_assignment = ClassAssignment.objects.using(school_db_name).get(
+            class_section_instance = SchoolSection.objects.using(school_db_name).get(
                 id=id
+            )
+            
+            class_assignment = ClassAssignment.objects.using(school_db_name).get(
+                class_instance = class_section_instance,
+                academic_year_id = academic_year_id
             )
             if not class_assignment:
                 return JsonResponse({"error": "Class assignment not found."},
