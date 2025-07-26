@@ -226,7 +226,7 @@ class TeacherService:
                         teacher.joining_date = joining_date
                     if emergency_contact is not None:
                         teacher.emergency_contact = emergency_contact
-                    teacher.save()
+                    teacher.save(using=school_db_name)
 
                     # Update assignments
                     if subject_assignments is not None:
