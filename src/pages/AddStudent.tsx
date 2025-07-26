@@ -8,13 +8,17 @@ import { getClassesBySchoolId } from '../services/class';
 import { addStudent } from '../services/student';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from '../components/ui/sonner';
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
+import { Loader2 } from 'lucide-react';
 
 const AddStudent: React.FC = () => {
+  const { showSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const schoolId = localStorage.getItem('current_school_id');
   const [password, setPassword] = useState('');
   const [classes, setClasses] = useState([]);
+  const [loader, setLoader] = useState(false);
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -34,7 +38,7 @@ const AddStudent: React.FC = () => {
     parent_email: '',
     admission_date: ''
   });
-   const genderList = ["Male", "Female", "Others"];
+  const genderList = ["Male", "Female", "Others"];
 
 
   const [breadcrumbItems, setBreadCrumbItems] = useState([
@@ -67,13 +71,6 @@ const AddStudent: React.FC = () => {
       ...prev,
       [name]: value
     }));
-    // if (name == 'class') {
-    //   const classId = getClassId(value);
-    //   setFormData(prev => ({
-    //     ...prev,
-    //     'class_id': classId
-    //   }));
-    // }
   };
 
 
@@ -86,7 +83,7 @@ const AddStudent: React.FC = () => {
     }));
   };
 
-  
+
   const handleGenderChange = (value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -124,33 +121,33 @@ const AddStudent: React.FC = () => {
     const studentData = {
       ...formData,
       password: password,
-      school_id : userData.role == 'superadmin' ? schoolId : userData.school_id
+      school_id: userData.role == 'superadmin' ? schoolId : userData.school_id
     };
 
-    console.log('Adding student:', studentData);
+    try {
+      setLoader(true);
+      const response = await addStudent(studentData);
 
-    const response = await addStudent(studentData);
-
-    if (response && response.message) {
-      // alert('Student added successfully!');
-      toast(
-              `🧑‍🎓 Student added successfully ✅ `,
-              {
-                duration: 4000,
-                position: "bottom-right"
-              }
-            );
-      if (userData.role == 'superadmin') {
-        navigate(`/school-details/${schoolId}`);
-      } else {
-        navigate('/admin-school');
+      if (response && response.message) {
+        showSnackbar({
+          title: "sucess",
+          description: `🧑‍🎓 Student added successfully ✅`,
+          status: "success"
+        });
+        if (userData.role == 'superadmin') {
+          navigate(`/school-details/${schoolId}`);
+        } else {
+          navigate('/admin-school');
+        }
       }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
     }
-    // Simulate API call with success
-    // setTimeout(() => {
-    //   alert('Student added successfully!');
-    //   navigate('/school-details/1');
-    // }, 500);
+    setLoader(false);
   };
 
   return (
@@ -308,7 +305,7 @@ const AddStudent: React.FC = () => {
                 </select>
               </div> */}
 
-               <div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Gender *
                 </label>
@@ -385,21 +382,26 @@ const AddStudent: React.FC = () => {
               />
             </div>
 
-            <div className="flex gap-4 pt-4">
-              <button
-                type="submit"
-                className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors"
-              >
-                Add Student
-              </button>
-              <button
-                type="button"
-                // onClick={() => navigate('/school-details/1')}
-                className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
+            {!loader && (
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="submit"
+                  className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors"
+                >
+                  Add Student
+                </button>
+                <button
+                  type="button"
+                  // onClick={() => navigate('/school-details/1')}
+                  className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+            {loader && (
+              <Loader2 className="w-10 h-10 mx-auto text-blue animate-spin" />
+            )}
           </form>
         </div>
       </div>

@@ -8,8 +8,10 @@ import { getTeachersById, editTeacher } from '../services/teacher';
 import ClassSectionSubjectInput, { ClassSectionSubjectData } from '../components/ui/class-section-subject-input';
 import { getSubjectsBySchoolId } from '../services/subject';
 import { getClassesBySchoolId } from '@/services/class';
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
 
 const TeacherDetails: React.FC = () => {
+  const { showSnackbar } = useSnackbar();
   const { id } = useParams();
   const [isEditing, setIsEditing] = useState(false);
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
@@ -72,9 +74,22 @@ const TeacherDetails: React.FC = () => {
   }
 
   const editTeacherData = async () => {
-    const response = await editTeacher(formData);
-    if (response && response.message) {
-      console.log("editTeacherData", response);
+    try {
+      const response = await editTeacher(formData);
+      if (response && response.message) {
+        // console.log("editTeacherData", response);
+        showSnackbar({
+          title: "Sucess",
+          description: response.message,
+          status: "success"
+        });
+      }
+    } catch(error : any) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
     }
   }
 

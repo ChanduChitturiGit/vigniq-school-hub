@@ -1,3 +1,8 @@
+AWS_S3_BUCKET_NAME =  ''
+AWS_REGION_NAME = ''
+AWS_ACCESS_KEY_ID = ''
+AWS_SECRET_ACCESS_KEY = ''
+
 ENVIRONMENT = 'dev'
 
 SECRET_KEY = 'django-insecure-&9chc#qf(k@=zb54)hiy!jvaf^264=85bai=!th#(6x@t78rpj'

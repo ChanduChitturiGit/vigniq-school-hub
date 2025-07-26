@@ -7,6 +7,13 @@ APP_CONFIG = {
     'ENVIRONMENT': os.getenv('ENVIRONMENT', 'dev'),
 }
 
+AWS_CONFIG = {
+    'S3_BUCKET_NAME': os.getenv('AWS_S3_BUCKET_NAME'),
+    'REGION_NAME': os.getenv('AWS_REGION_NAME', 'us-east-1'),
+    'AWS_ACCESS_KEY_ID': os.getenv('AWS_ACCESS_KEY_ID', ''),
+    'AWS_SECRET_ACCESS_KEY': os.getenv('AWS_SECRET_ACCESS_KEY', ''),
+}
+
 DB_CONFIG = {
     'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.sqlite3'),
     'NAME': os.getenv('DB_NAME', 'db.sqlite3'),
@@ -24,3 +31,4 @@ EMAIL_CONFIG = {
     'EMAIL_HOST_USER': os.getenv('EMAIL_HOST_USER', ''),
     'EMAIL_HOST_PASSWORD': os.getenv('EMAIL_HOST_PASSWORD', '')
 }
+

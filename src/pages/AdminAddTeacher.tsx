@@ -5,16 +5,19 @@ import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import PasswordInput from '../components/ui/password-input';
 import ClassSectionSubjectInput, { ClassSectionSubjectData } from '../components/ui/class-section-subject-input';
-import { Plus } from 'lucide-react';
+import { Loader2, Plus } from 'lucide-react';
 import { addTeacher } from '../services/teacher';
 import { getSubjectsBySchoolId } from '../services/subject';
 import { getClassesBySchoolId } from '@/services/class';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from '../components/ui/sonner';
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
 
 const AdminAddTeacher: React.FC = () => {
+  const { showSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
+  const [loader,setLoader] = useState(false);
   const [teachingAssignments, setTeachingAssignments] = useState<ClassSectionSubjectData[]>([{
     class: '', subject: '',
     assignment: undefined
@@ -140,21 +143,27 @@ const AdminAddTeacher: React.FC = () => {
       school_id: userData.role == 'superadmin' ? schoolId : userData.school_id
     };
 
-    console.log('Adding teacher:', teacherData);
+    try {
+      setLoader(true);
+      const response = await addTeacher(teacherData);
 
-    const response = await addTeacher(teacherData);
-
-    if (response) {
-      // alert('Teacher added successfully!');
-      toast(
-        `🧑‍🏫 Teacher added successfully ✅ `,
-        {
-          duration: 4000,
-          position: "bottom-right"
-        }
-      );
-      navigate(userData.role == 'superadmin' ? `/school-details/${schoolId}` : '/admin-school');
+      if (response) {
+        // alert('Teacher added successfully!');
+        showSnackbar({
+          title: "Success",
+          description: "🧑‍🏫 Teacher added successfully ✅",
+          status: "success"
+        });
+        navigate(userData.role == 'superadmin' ? `/school-details/${schoolId}` : '/admin-school');
+      }
+    } catch (error: any) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
     }
+    setLoader(false);
   };
 
   return (
@@ -356,19 +365,25 @@ const AdminAddTeacher: React.FC = () => {
             </div>
 
             <div className="flex gap-4 pt-4">
-              <button
-                type="submit"
-                className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-              >
-                Add Teacher
-              </button>
-              <button
-                type="button"
-                // onClick={() => navigate('/admin-school')}
-                className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors"
-              >
-                Cancel
-              </button>
+              {!loader && (
+                <>
+                  <button
+                    type="submit"
+                    className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                  >
+                    Add Teacher
+                  </button>
+                  <button
+                    type="button"
+                    // onClick={() => navigate('/admin-school')}
+                    className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors"
+                  >
+                    Cancel
+                  </button></>
+              )}
+              {loader && (
+                <Loader2 className="w-10 h-10 mx-auto text-blue animate-spin" />
+              )}
             </div>
           </form>
         </div>

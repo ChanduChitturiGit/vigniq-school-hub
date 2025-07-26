@@ -21,8 +21,8 @@ class ClassesManagingView(APIView):
         if user.role.id not in (1,2,3):
             return Response({"error": "You do not have permission view classes"},
                             status=status.HTTP_403_FORBIDDEN)
-        # if action == 'getAvailableClassList':
-        #     return ClassesService().get_classes(request)
+        if action == 'getAvailableClassList':
+            return ClassesService().get_classes(request)
         if action == 'getClassesBySchoolId':
             return ClassesService().get_classes_by_school_id(request)
         elif action == 'getClassById':
