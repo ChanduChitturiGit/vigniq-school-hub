@@ -8,8 +8,10 @@ import { getTeachersBySchoolId } from '../services/teacher';
 import { getClassesBySchoolId } from '../services/class';
 import { useParams } from 'react-router-dom';
 import { toast } from '../components/ui/sonner';
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
 
 const AdminSchool: React.FC = () => {
+  const { showSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [teacherSearchTerm, setTeacherSearchTerm] = useState('');
@@ -141,24 +143,25 @@ const AdminSchool: React.FC = () => {
   };
 
   const handleSaveSchool = async () => {
-    //edit school api.
-    const response = await editSchool(schoolData);
-
-    console.log('Saving school data:', schoolData, response);
-    setIsEditing(false);
-    // alert('School information updated successfully!');
-    toast(
-      `🏫 School information updated successfully! `,
-      {
-        duration: 4000,
-        position: "bottom-right"
+    try {
+      //edit school api.
+      const response = await editSchool(schoolData);
+      if (response && response.message) {
+        setIsEditing(false);
+        showSnackbar({
+          title: "Success",
+          description: "🏫 School information updated successfully ✅",
+          status: "success"
+        });
       }
-    );
-
-    if (response.message) {
-      schoolDataById();
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
     }
-
+    schoolDataById();
   };
 
   const handleTeacherClick = (teacherId: string) => {

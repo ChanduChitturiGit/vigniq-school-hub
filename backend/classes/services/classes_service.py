@@ -430,7 +430,7 @@ class ClassesService:
                 return JsonResponse({"error": "School not found or inactive."},
                                     status=404)
 
-            class_teacher = Teacher.objects.using(school_db_name).get(id=teacher_id)
+            class_teacher = Teacher.objects.using(school_db_name).get(teacher_id=teacher_id)
 
             class_section_instance = SchoolSection.objects.using(school_db_name).get(
                 id=id

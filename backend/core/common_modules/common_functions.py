@@ -25,6 +25,7 @@ class CommonFunctions:
     
     @staticmethod
     def extract_text_from_pdf(pdf_file):
+        pdf_file.seek(0)
         pdf_text = ""
         pdf_reader = PyPDF2.PdfReader(pdf_file)
         num_pages = len(pdf_reader.pages)
