@@ -3,7 +3,7 @@ import logging
 import psycopg2
 
 import redis
-from django.db import transaction
+from django.db import transaction,IntegrityError
 from django.conf import settings
 from django.test.utils import override_settings
 from django.apps import apps
@@ -52,16 +52,21 @@ class SchoolService:
                     logger.error("Invalid password format.")
                     return Response({"error": "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character."}, status=400)
 
-                
-                admin_user = User.objects.create_user(
-                    email = data.get('admin_email'),
-                    user_name = data.get('admin_username'),
-                    password = data.get('password'),
-                    phone_number = data.get('admin_phone_number'),
-                    role = admin_role,
-                    first_name = data.get("admin_first_name"),
-                    last_name = data.get("admin_last_name")
-                )
+                try:
+                    admin_user = User.objects.create_user(
+                        email = data.get('admin_email'),
+                        user_name = data.get('admin_username'),
+                        password = data.get('password'),
+                        phone_number = data.get('admin_phone_number'),
+                        role = admin_role,
+                        first_name = data.get("admin_first_name"),
+                        last_name = data.get("admin_last_name")
+                    )
+                except IntegrityError as e:
+                    if 'duplicate key value violates unique constraint' in str(e):
+                        return Response({"error": "Username already taken."}, status=status.HTTP_400_BAD_REQUEST)
+                    else:
+                        raise
 
                 school = School.objects.create(
                     name = data.get('school_name'),
@@ -119,8 +124,26 @@ class SchoolService:
 
         except Role.DoesNotExist:
             logger.error("Role 'admin' does not exist.")
-            return Response({"error": "Admin role is not configured in the system."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+            return Response({"error": "Admin role is not configured in the system."},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except User.DoesNotExist:
+            logger.error("User creation failed.")
+            return Response({"error": "Failed to create admin user."},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except SchoolBoard.DoesNotExist:
+            logger.error("School board does not exist.")
+            return Response({"error": "At least one valid board must be selected."},
+                            status=status.HTTP_400_BAD_REQUEST)
+        except IntegrityError as e:
+            logger.error("Integrity error while creating school: %s", str(e))
+            if 'duplicate key value violates unique constraint' in str(e):
+                return Response({"error": "A school with this email already exists."},
+                                status=status.HTTP_400_BAD_REQUEST)
+            elif 'unique_school_board' in str(e):
+                return Response({"error": "This school is already mapped to the selected board."},
+                                status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "School with this name already exists."},
+                            status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logger.error("Error while creating school. Error: %s", str(e))
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

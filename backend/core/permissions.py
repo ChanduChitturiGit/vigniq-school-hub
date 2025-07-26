@@ -13,3 +13,4 @@ class IsSuperAdminOrAdmin(BasePermission):
 class IsSuperAdminOrAdminOrTeacher(BasePermission):
     def has_permission(self, request, view):
         return request.user.is_authenticated and request.user.role_id in [1, 2, 3]
+

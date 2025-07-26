@@ -142,7 +142,7 @@ class EbookService:
             return Response({"error": "An error occurred while retrieving the eBook."},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    def delete_ebook(self, request):
+    def delete_ebook_by_id(self, request):
         """Delete an eBook."""
         try:
             ebook_id = request.query_params.get("ebook_id")
