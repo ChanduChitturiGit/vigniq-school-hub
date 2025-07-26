@@ -104,11 +104,11 @@ class AcademicYear(AbstractAcademicYear):
 
 class Chapter(AbstractChapter):
     school_board = models.ForeignKey(SchoolBoard, on_delete=models.CASCADE)
-    academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE)
+    ebook = models.ForeignKey(SchoolSyllabusEbooks, on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta(AbstractChapter.Meta):
         db_table = 'syllabus_chapter'
-        unique_together = ('school_board', 'academic_year', 'chapter_number')
+        unique_together = ('school_board', 'chapter_number')
 
 class SubTopic(AbstractSubTopic):
     chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, related_name='sub_topics')

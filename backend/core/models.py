@@ -81,13 +81,12 @@ class Role(models.Model):
 
 ###### Abstract models for Chapter, SubTopic, and Prerequisite
 class AbstractChapter(models.Model):
-    academic_year = models.ForeignKey('SchoolAcademicYear', on_delete=models.CASCADE)
     chapter_number = models.PositiveIntegerField()
     chapter_name = models.CharField(max_length=200)
 
     class Meta:
         abstract = True
-        ordering = ['academic_year', 'chapter_number']
+        ordering = ['chapter_number']
 
 class AbstractSubTopic(models.Model):
     chapter = models.ForeignKey('Chapter', on_delete=models.CASCADE, related_name='sub_topics')
