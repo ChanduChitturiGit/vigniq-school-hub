@@ -46,12 +46,12 @@ class AcademicYearActionView(APIView):
             return AcademicsService().edit_academic_year(request)
         return Response({"error": "Invalid PUT action"}, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, action=None):
-        user = request.user
-        if user.role.id not in (1, 2):
-            return Response({"error": "You do not have permission to delete an academic year."},
-                            status=status.HTTP_403_FORBIDDEN)
+    # def delete(self, request, action=None):
+    #     user = request.user
+    #     if user.role.id not in (1, 2):
+    #         return Response({"error": "You do not have permission to delete an academic year."},
+    #                         status=status.HTTP_403_FORBIDDEN)
 
-        if action == "deleteAcademicYear":
-            return AcademicsService().delete_academic_year(request)
-        return Response({"error": "Invalid DELETE action"}, status=status.HTTP_400_BAD_REQUEST)
+    #     if action == "deleteAcademicYear":
+    #         return AcademicsService().delete_academic_year(request)
+    #     return Response({"error": "Invalid DELETE action"}, status=status.HTTP_400_BAD_REQUEST)

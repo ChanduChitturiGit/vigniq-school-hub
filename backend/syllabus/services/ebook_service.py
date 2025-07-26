@@ -1,7 +1,7 @@
 """Ebook Service Module"""
 
 import logging
-
+from io import BytesIO
 from django.db import transaction
 
 from rest_framework.response import Response
@@ -59,7 +59,8 @@ class EbookService:
                 file_name = subject_obj.name
                 s3_key = f"ebooks/class_{class_obj.class_number}/{board_obj.board_name.replace(' ', '_')}/{file_name}"
 
-            upload_success = s3_client.upload_file(file, s3_key)
+            file_bytes = file.read()
+            upload_success = s3_client.upload_file(BytesIO(file_bytes), s3_key)
             if upload_success:
                 with transaction.atomic():
                     ebook, created = SchoolSyllabusEbooks.objects.update_or_create(
@@ -70,7 +71,7 @@ class EbookService:
                         ebook_name=file_name,
                         defaults={"file_path": s3_key}
                     )
-                    self.extract_topics_and_prerequisites(file,ebook)
+                    self.extract_topics_and_prerequisites(BytesIO(file_bytes), ebook)
                 return Response({"message": "eBook uploaded successfully"}, status=status.HTTP_201_CREATED)
             else:
                 return Response({"error": "Failed to upload eBook."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -140,6 +141,27 @@ class EbookService:
             logger.exception(f"Error retrieving eBook: {e}")
             return Response({"error": "An error occurred while retrieving the eBook."},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def delete_ebook(self, request):
+        """Delete an eBook."""
+        try:
+            ebook_id = request.query_params.get("ebook_id")
+            if not ebook_id:
+                return Response({"error": "eBook ID is required."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            ebook = SchoolSyllabusEbooks.objects.get(id=ebook_id)
+            s3_client.delete_file(ebook.file_path)
+            ebook.delete()
+
+            logger.info("eBook with ID %s deleted successfully.",ebook_id)
+            return Response({"message": "eBook deleted successfully."}, status=status.HTTP_200_OK)
+        except SchoolSyllabusEbooks.DoesNotExist:
+            return Response({"error": "eBook not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.exception(f"Error deleting eBook: {e}")
+            return Response({"error": "An error occurred while deleting the eBook."},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def extract_topics_and_prerequisites(self, pdf_file, ebook):
         """Extract topics and prerequisites from the provided PDF file."""
@@ -170,36 +192,43 @@ class EbookService:
         return True
     
     def copy_syllabus_data_to_school_db(self,school_db_metadata,academic_year_id):
-        school_db_name = school_db_metadata.db_name
-        
-        with transaction.atomic(using=school_db_name):
-            boards = SchoolBoardMapping.objects.filter(school_id = school_db_metadata.school_id)
-            for board in boards:
-                ebooks = SchoolSyllabusEbooks.objects.filter(board_id = board.board_id).select_related('class_number', 'subject')
-                for ebook in ebooks:
-                    chapters = Chapter.objects.filter(ebook=ebook)
-                    for chapter in chapters:
-                        school_class_obj = SchoolClass.objects.using(school_db_name).get(
-                            class_number=ebook.class_number_id
-                        )
-                        school_chapter_obj = SchoolChapter.objects.using(school_db_name).create(
-                            school_board_id=board.board_id,
-                            academic_year_id=academic_year_id,
-                            class_number=school_class_obj,
-                            subject_id=ebook.subject_id,
-                            chapter_number=chapter.chapter_number,
-                            chapter_name=chapter.chapter_name
-                        )
-                        sub_topics = SubTopic.objects.filter(chapter=chapter)
-                        for sub_topic in sub_topics:
-                            SchoolSubTopic.objects.using(school_db_name).create(
-                                chapter=school_chapter_obj,
-                                name=sub_topic.name
+        try:
+            school_db_name = school_db_metadata.db_name
+            
+            with transaction.atomic(using=school_db_name):
+                boards = SchoolBoardMapping.objects.filter(school_id = school_db_metadata.school_id)
+                for board in boards:
+                    ebooks = SchoolSyllabusEbooks.objects.filter(board_id = board.board_id).select_related('class_number', 'subject')
+                    for ebook in ebooks:
+                        chapters = Chapter.objects.filter(ebook=ebook)
+                        for chapter in chapters:
+                            school_class_obj = SchoolClass.objects.using(school_db_name).get(
+                                class_number=ebook.class_number_id
                             )
-                        prerequisites = Prerequisite.objects.filter(chapter=chapter)
-                        for prerequisite in prerequisites:
-                            SchoolPrerequisite.objects.using(school_db_name).create(
-                                chapter=school_chapter_obj,
-                                topic=prerequisite.topic,
-                                explanation=prerequisite.explanation
+                            school_chapter_obj = SchoolChapter.objects.using(school_db_name).create(
+                                school_board_id=board.board_id,
+                                academic_year_id=academic_year_id,
+                                class_number=school_class_obj,
+                                subject_id=ebook.subject_id,
+                                chapter_number=chapter.chapter_number,
+                                chapter_name=chapter.chapter_name
                             )
+                            sub_topics = SubTopic.objects.filter(chapter=chapter)
+                            for sub_topic in sub_topics:
+                                SchoolSubTopic.objects.using(school_db_name).create(
+                                    chapter=school_chapter_obj,
+                                    name=sub_topic.name
+                                )
+                            prerequisites = Prerequisite.objects.filter(chapter=chapter)
+                            for prerequisite in prerequisites:
+                                SchoolPrerequisite.objects.using(school_db_name).create(
+                                    chapter=school_chapter_obj,
+                                    topic=prerequisite.topic,
+                                    explanation=prerequisite.explanation
+                                )
+                    logger.info(f"Syllabus data for board {board.board_id} copied to school DB {school_db_name} successfully.")
+            logger.info(f"Syllabus data copied to school DB {school_db_name} successfully.")
+            return True
+        except Exception as e:
+            logger.error(f"Error copying syllabus data to school DB {school_db_name}: {str(e)}")
+            return False

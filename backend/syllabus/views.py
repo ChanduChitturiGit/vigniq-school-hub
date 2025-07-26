@@ -23,3 +23,9 @@ class EbookView(APIView):
         if action == 'uploadEbook':
             return EbookService().upload_ebook(request)
         return Response({"message": f"POST request for action: {action}"})
+    
+    def delete(self, request, action=None):
+        """Handle DELETE requests for eBook actions."""
+        if action == 'deleteEbook':
+            return EbookService().delete_ebook(request)
+        return Response({"message": f"DELETE request for action: {action}"})

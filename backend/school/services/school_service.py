@@ -73,7 +73,9 @@ class SchoolService:
 
                 board_ids = data.get('boards', [])
                 boards = SchoolBoard.objects.filter(id__in=board_ids)
-
+                if not boards:
+                    logger.error("No valid boards provided.")
+                    return Response({"error": "At least one valid board must be selected."}, status=status.HTTP_400_BAD_REQUEST)
                 for board in boards:
                     SchoolBoardMapping.objects.get_or_create(school=school, board=board)
 
@@ -100,8 +102,6 @@ class SchoolService:
                     end_year=data.get('academic_end_year'),
                 )
 
-                EbookService().copy_syllabus_data_to_school_db(school_db_metadata,academic_year.id)
-
                 email_service = EmailService()
                 email_service.send_email(
                     to_email=admin_user.email,
@@ -111,6 +111,10 @@ class SchoolService:
                     password=data.get('password'),
                 )
             DbLoader().load_databases()
+            copy_status = EbookService().copy_syllabus_data_to_school_db(school_db_metadata,
+                                                                         academic_year.id)
+            if not copy_status:
+                logger.error("Failed to copy syllabus data to school database.")
             return Response({"message": "School created successfully."}, status=status.HTTP_201_CREATED)
 
         except Role.DoesNotExist:
@@ -173,11 +177,11 @@ class SchoolService:
             schools_data = []
             for school in schools:
                 school_db_metadata = SchoolDbMetadata.objects.filter(school=school).first()
+
                 if school_db_metadata:
                     school_db_name = school_db_metadata.db_name
                 else:
-                    school_db_name = None
-                
+                    continue
                 teacher_count = Teacher.objects.using(school_db_name).filter(is_active=True).count()
 
                 schools_data.append({
