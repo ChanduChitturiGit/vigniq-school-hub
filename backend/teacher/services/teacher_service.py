@@ -170,6 +170,9 @@ class TeacherService:
             academic_year_id = request.data.get('academic_year_id', 1)
 
             school_id = request.data.get("school_id",request.user.school_id)
+            if not school_id:
+                logger.error("School ID is required for editing teacher.")
+                return JsonResponse({"error": "School ID is required."}, status=400)
             school_db_name = SchoolDbMetadata.objects.filter(school_id=school_id).first().db_name
 
             if not teacher_id:
