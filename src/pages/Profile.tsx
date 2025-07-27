@@ -27,13 +27,13 @@ const Profile: React.FC = () => {
   const [formData, setFormData] = useState({
     first_name: user?.name?.split(' ')[0] || '',
     last_name: user?.name?.split(' ').slice(1).join(' ') || '',
-    user_name: user?.username || '',
+    user_name: '',
     email: user?.email || '',
-    phone_number: '+1 234-567-8900',
-    address: '123 Main Street, City, State 12345',
-    date_of_birth: '1990-01-01',
-    qualification: user?.role === 'Teacher' ? 'M.Sc Mathematics' : 'High School',
-    joining_date: '2023-01-15'
+    phone_number: '',
+    address: '',
+    date_of_birth: '',
+    qualification: '',
+    joining_date: ''
   });
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
 
@@ -88,18 +88,8 @@ const Profile: React.FC = () => {
   };
 
   const handleCancel = () => {
-    setFormData({
-      first_name: user?.name?.split(' ')[0] || '',
-      last_name: user?.name?.split(' ').slice(1).join(' ') || '',
-      user_name: user?.username || '',
-      email: user?.email || '',
-      phone_number: '+1 234-567-8900',
-      address: '123 Main Street, City, State 12345',
-      date_of_birth: '1990-01-01',
-      qualification: user?.role === 'Teacher' ? 'M.Sc Mathematics' : 'High School',
-      joining_date: '2023-01-15'
-    });
     setIsEditing(false);
+    getUserDetails();
   };
 
   const handleResetPassword = () => {
@@ -255,23 +245,25 @@ const Profile: React.FC = () => {
                 )}
               </div>
 
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                  <Calendar className="w-4 h-4" />
-                  Date of Birth
-                </label>
-                {isEditing ? (
-                  <input
-                    type="date"
-                    name="date_of_birth"
-                    value={formData.date_of_birth}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                ) : (
-                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.date_of_birth}</p>
-                )}
-              </div>
+              {false && (
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                    <Calendar className="w-4 h-4" />
+                    Date of Birth
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="date"
+                      name="date_of_birth"
+                      value={formData.date_of_birth}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.date_of_birth}</p>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="space-y-4">
@@ -293,25 +285,27 @@ const Profile: React.FC = () => {
                 )}
               </div>
 
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                  <GraduationCap className="w-4 h-4" />
-                  {user?.role != 'student' ? 'Qualification' : 'Education'}
-                </label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    name="qualification"
-                    value={formData.qualification}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                ) : (
-                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.qualification}</p>
-                )}
-              </div>
+              {userData.role != 'superadmin' && userData.role != 'admin' && (
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                    <GraduationCap className="w-4 h-4" />
+                    {user?.role != 'student' ? 'Qualification' : 'Education'}
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="qualification"
+                      value={formData.qualification}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.qualification}</p>
+                  )}
+                </div>
+              )}
 
-              {user?.role !== 'Student' && (
+              {false && (
                 <div>
                   <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                     <Calendar className="w-4 h-4" />
