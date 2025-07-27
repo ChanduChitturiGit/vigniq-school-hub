@@ -279,7 +279,7 @@ class TeacherService:
         """Get a teacher's details by their ID."""
         try:
             teacher_id = request.GET.get('teacher_id', None)
-            school_id = request.GET.get('school_id', request.user.school_id)
+            school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
             academic_year_id = request.GET.get('academic_year_id', 1)
 
             if not teacher_id:
@@ -357,7 +357,7 @@ class TeacherService:
         This method expects the request to contain a 'school_id' parameter.
         """
         try:
-            school_id = request.GET.get('school_id', request.user.school_id)
+            school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
             # academic_year_id = request.GET.get('academic_year_id', None)
 
             if not school_id:

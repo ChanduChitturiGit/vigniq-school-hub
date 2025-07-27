@@ -271,7 +271,7 @@ class StudentService:
     def get_students_by_school_id(self, request):
         """Retrieve students by school ID."""
         try:
-            school_id = request.GET.get('school_id', request.user.school_id)
+            school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
             academic_year_id = request.GET.get('academic_year_id', 1)
             if not academic_year_id:
                 return JsonResponse({"error": "Academic year ID is required."},
@@ -302,7 +302,7 @@ class StudentService:
     def get_student_by_id(self, request):
         """Retrieve a student by their ID."""
         try:
-            school_id = request.GET.get('school_id', request.user.school_id)
+            school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
             student_id = request.GET.get('student_id')
             academic_year_id = request.GET.get('academic_year_id', 1)
 
@@ -364,7 +364,7 @@ class StudentService:
     def get_students_by_class_id(self, request):
         """Retrieve students by class ID."""
         try:
-            school_id = request.GET.get('school_id', request.user.school_id)
+            school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
             class_id = request.GET.get('class_id')
             academic_year_id = request.GET.get('academic_year_id', 1)
 

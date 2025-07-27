@@ -45,7 +45,7 @@ class ClassesService:
     def get_classes_by_school_id(request):
         try:
             logger.info("Retrieving active classes.")
-            school_id = request.GET.get('school_id', request.user.school_id)
+            school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
             academic_year_id = request.GET.get('academic_year_id',1)
 
             if not school_id:
@@ -125,7 +125,7 @@ class ClassesService:
         """Retrieve a class by its ID."""
         try:
             logger.info("Retrieving class by ID.")
-            school_id = request.GET.get('school_id', request.user.school_id)
+            school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
             class_id = request.GET.get('class_id')
             academic_year_id = request.GET.get('academic_year_id',1)
 

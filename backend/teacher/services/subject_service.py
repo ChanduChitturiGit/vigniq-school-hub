@@ -56,7 +56,7 @@ class SubjectService:
     def get_subjects_by_school_id(self,request):
         """List all subjects."""
         try:
-            school_id = request.GET.get('school_id', request.user.school_id)
+            school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
             
             if school_id:
                 school_db_name = CommonFunctions.get_school_db_name(school_id)

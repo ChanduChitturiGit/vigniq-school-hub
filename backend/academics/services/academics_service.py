@@ -19,7 +19,7 @@ class AcademicsService:
         Fetch all academic years.
         """
         try:
-            school_id = request.GET.get("school_id", request.user.school_id)
+            school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
             if not school_id:
                 logger.error("School ID is required for fetching academic years.")
                 return Response({"error": "School ID is required."},
