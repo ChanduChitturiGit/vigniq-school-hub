@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import { Button } from '../components/ui/button';
@@ -9,6 +9,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Progress } from '../components/ui/progress';
 import { Upload, Plus, X, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { createSchool as createSchoolApi, getBoardsList } from '../services/school'
+import { SpinnerOverlay } from '../pages/SpinnerOverlay';
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
+import { getClassesList } from '@/services/class';
+import { getSubjectsList } from '@/services/subject';
+import { uploadEbook } from '../services/ebooks'
 
 interface ChapterFile {
   id: string;
@@ -19,6 +25,7 @@ interface ChapterFile {
 }
 
 const UploadEbooks: React.FC = () => {
+  const { showSnackbar } = useSnackbar();
   const { user } = useAuth();
   const [formData, setFormData] = useState({
     board: '',
@@ -29,15 +36,65 @@ const UploadEbooks: React.FC = () => {
   const [contentPdf, setContentPdf] = useState<File | null>(null);
   const [contentPdfProgress, setContentPdfProgress] = useState(0);
   const [isContentPdfUploading, setIsContentPdfUploading] = useState(false);
+  const [boards, setBoards] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [subjects, setSubjects] = useState([]);
   const [chapterFiles, setChapterFiles] = useState<ChapterFile[]>([
     { id: '1', name: 'Chapter-1 PDF', file: null, uploadProgress: 0, isUploading: false }
   ]);
   const [isUploading, setIsUploading] = useState(false);
 
-  const boards = ['CBSE', 'ICSE', 'State Board', 'IGCSE', 'IB'];
-  const classes = ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12'];
-  const subjects = ['Mathematics', 'English', 'Science', 'Physics', 'Chemistry', 'Biology', 'History', 'Geography', 'Hindi', 'Computer Science'];
+  const sampleBoards = ['CBSE', 'ICSE', 'State Board', 'IGCSE', 'IB'];
+  const sampleClasses = ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12'];
+  const sampleSubjects = ['Mathematics', 'English', 'Science', 'Physics', 'Chemistry', 'Biology', 'History', 'Geography', 'Hindi', 'Computer Science'];
   const uploadTypes = ['Chapter Wise PDF', 'Single PDF'];
+
+
+  const boardsList = async () => {
+    const response = await getBoardsList();
+    if (response && response.boards) {
+      setBoards(response.boards);
+    }
+  }
+
+  const classList = async () => {
+    const response = await getClassesList();
+    if (response && response.data) {
+      setClasses(response.data);
+    }
+  }
+
+  const subjectsList = async () => {
+    const response = await getSubjectsList();
+    if (response) {
+      setSubjects(response);
+    }
+  }
+
+  const saveBook = async (data) => {
+    try {
+      const response = await uploadEbook(data);
+      if (response && response.message) {
+        showSnackbar({
+          title: "Success",
+          description: `📃 ${response.message} ✅`,
+          status: "success"
+        });
+      }
+    }catch(error){
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
+  useEffect(() => {
+    boardsList();
+    classList();
+    subjectsList();
+  }, []);
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
@@ -64,59 +121,110 @@ const UploadEbooks: React.FC = () => {
     });
   };
 
+  const getBoardId = (data: string) => {
+    const boardData = boards.find((val: any) => (val.name) == data);
+    const boardId = boardData.id ? boardData.id : null;
+    return boardId;
+  }
+
+  const getClassId = (data: string) => {
+    const boardData = classes.find((val: any) => ('Class ' + val.class_number) == data);
+    const boardId = boardData.id ? boardData.id : null;
+    return boardId;
+  }
+
+  const getSubjectId = (data: string) => {
+    const boardData = subjects.find((val: any) => (val.name) == data);
+    const boardId = boardData.id ? boardData.id : null;
+    return boardId;
+  }
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
+    if (field == 'board') {
+      setFormData(prev => ({
+        ...prev,
+        board_id: getBoardId(value)
+      }));
+    } else if (field == 'class') {
+      setFormData(prev => ({
+        ...prev,
+        'class_id': getClassId(value)
+      }));
+    } else if (field == 'subject') {
+      setFormData(prev => ({
+        ...prev,
+        'subject_id': getSubjectId(value)
+      }));
+    } else if (field == 'uploadType') {
+      setFormData(prev => ({
+        ...prev,
+        'upload_type': value == 'Single PDF' ? 'single' : 'multiple'
+      }));
+    }
+    console.log(formData);
   };
 
   const handleContentPdfChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type === 'application/pdf') {
       setContentPdf(file);
+      formData[`file`] = file;
       setIsContentPdfUploading(true);
       setContentPdfProgress(0);
-      
+
       await simulateUpload((progress) => {
         setContentPdfProgress(progress);
       });
-      
+
       setIsContentPdfUploading(false);
     } else {
-      toast.error('Please select a valid PDF file');
+      // toast.error('Please select a valid PDF file');
+      showSnackbar({
+        title: "⛔ Error",
+        description: `Please select a valid PDF file 📃`,
+        status: "error"
+      });
     }
   };
 
   const handleChapterFileChange = async (id: string, file: File | null) => {
     if (file && file.type === 'application/pdf') {
-      setChapterFiles(prev => 
-        prev.map(chapter => 
-          chapter.id === id 
+      setChapterFiles(prev =>
+        prev.map(chapter =>
+          chapter.id === id
             ? { ...chapter, file, isUploading: true, uploadProgress: 0 }
             : chapter
         )
       );
 
       await simulateUpload((progress) => {
-        setChapterFiles(prev => 
-          prev.map(chapter => 
-            chapter.id === id 
+        setChapterFiles(prev =>
+          prev.map(chapter =>
+            chapter.id === id
               ? { ...chapter, uploadProgress: progress }
               : chapter
           )
         );
       });
 
-      setChapterFiles(prev => 
-        prev.map(chapter => 
-          chapter.id === id 
+      setChapterFiles(prev =>
+        prev.map(chapter =>
+          chapter.id === id
             ? { ...chapter, isUploading: false }
             : chapter
         )
       );
     } else if (file) {
-      toast.error('Please select a valid PDF file');
+      // toast.error('Please select a valid PDF file');
+      showSnackbar({
+        title: "⛔ Error",
+        description: `Please select a valid PDF file 📃`,
+        status: "error"
+      });
     }
   };
 
@@ -127,9 +235,9 @@ const UploadEbooks: React.FC = () => {
   };
 
   const removeChapterFile = (id: string) => {
-    setChapterFiles(prev => 
-      prev.map(chapter => 
-        chapter.id === id 
+    setChapterFiles(prev =>
+      prev.map(chapter =>
+        chapter.id === id
           ? { ...chapter, file: null, uploadProgress: 0, isUploading: false }
           : chapter
       )
@@ -155,7 +263,7 @@ const UploadEbooks: React.FC = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    
+
     if (!formData.board || !formData.class || !formData.subject || !formData.uploadType) {
       toast.error('Please fill in all required fields');
       return;
@@ -173,12 +281,18 @@ const UploadEbooks: React.FC = () => {
     }
 
     setIsUploading(true);
-    
+
+    if(!formData[`file`]){
+      formData[`file`] = contentPdf;
+    }
+
+    saveBook(formData);
+
     // Simulate upload process
     setTimeout(() => {
       setIsUploading(false);
-      toast.success('E-book uploaded successfully!');
-      
+      //toast.success('E-book uploaded successfully!');
+
       // Reset form
       setFormData({
         board: '',
@@ -229,8 +343,8 @@ const UploadEbooks: React.FC = () => {
                       <SelectValue placeholder="Select Board" />
                     </SelectTrigger>
                     <SelectContent>
-                      {boards.map((board) => (
-                        <SelectItem key={board} value={board}>{board}</SelectItem>
+                      {boards.map((board, index) => (
+                        <SelectItem key={board.id} value={board.name}>{board.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -239,12 +353,12 @@ const UploadEbooks: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Class</label>
                   <Select value={formData.class} onValueChange={(value) => handleInputChange('class', value)}>
-                    <SelectTrigger>
+                    <SelectTrigger >
                       <SelectValue placeholder="Select Class" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="h-64">
                       {classes.map((cls) => (
-                        <SelectItem key={cls} value={cls}>{cls}</SelectItem>
+                        <SelectItem key={cls.class_id} value={'Class ' + cls.class_number}>{'Class ' + cls.class_number}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -258,9 +372,9 @@ const UploadEbooks: React.FC = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Select Subject" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="h-64">
                     {subjects.map((subject) => (
-                      <SelectItem key={subject} value={subject}>{subject}</SelectItem>
+                      <SelectItem key={subject.id} value={subject.name}>{subject.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -384,7 +498,7 @@ const UploadEbooks: React.FC = () => {
                       )}
                     </div>
                   ))}
-                  
+
                   <Button
                     type="button"
                     variant="outline"

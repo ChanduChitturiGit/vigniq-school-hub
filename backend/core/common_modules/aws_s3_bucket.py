@@ -6,6 +6,8 @@ from typing import Optional, List
 
 import boto3
 from botocore.exceptions import ClientError
+from botocore.client import Config
+
 
 from django.conf import settings
 
@@ -20,6 +22,7 @@ class AwsS3Bucket:
             region_name=settings.AWS_CONFIG['REGION_NAME'],
             aws_access_key_id=settings.AWS_CONFIG['AWS_ACCESS_KEY_ID'],
             aws_secret_access_key=settings.AWS_CONFIG['AWS_SECRET_ACCESS_KEY'],
+            config=Config(signature_version='s3v4')
         )
 
     def upload_file(self, file, s3_key: str) -> bool:
@@ -44,7 +47,7 @@ class AwsS3Bucket:
         try:
             url = self.s3.generate_presigned_url(
                 ClientMethod='get_object',
-                Params={'Bucket': self.bucket_name, 'Key': s3_key},
+                Params={'Bucket': self.bucket_name, 'Key': s3_key,'ResponseContentDisposition': 'inline'},
                 ExpiresIn=expires_in
             )
             logger.info("Generated temporary URL for key: %s", s3_key)
