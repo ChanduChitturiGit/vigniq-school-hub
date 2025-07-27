@@ -45,7 +45,7 @@ class LoadDynamicDatabasesMiddleware:
 
                 
 
-class DatabaseMiddleware:
+class AuthenticationMiddleware:
     """
     Middleware to set current DB context based on authenticated user's school.
     Should be placed after authentication middleware.
@@ -54,19 +54,30 @@ class DatabaseMiddleware:
         self.get_response = get_response
 
         self.exempt_paths = [
+            "/",
+            "/assets/",
+            "/static/",
+            "/favicon.ico",
             "/auth/login/",
             "/auth/token/refresh/",
             "/core/password_manager/reset_password",
             "/core/password_manager/verify_otp"
         ]
 
+    def is_exempt(self, path):
+        return (
+            path in self.exempt_paths
+            or path.startswith("/assets/")
+            or path.startswith("/static/")
+            or path == "/favicon.ico"
+        )
+
     def __call__(self, request):
         path = request.path
 
-        if path in self.exempt_paths:
+        if self.is_exempt(path):
             return self.get_response(request)
 
-        # Attempt to authenticate using JWT manually
         jwt_auth = JWTAuthentication()
         try:
             user_auth_tuple = jwt_auth.authenticate(request)

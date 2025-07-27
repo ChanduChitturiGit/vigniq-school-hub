@@ -114,7 +114,7 @@ class EbookService:
             ebooks_obj = SchoolSyllabusEbooks.objects.filter(**filter_conditions)
             ebooks = ebooks_obj.order_by('id')[(page - 1) * page_size: page * page_size]
             if ebooks_obj and not ebooks:
-                return Response({"message": "End of ebooks.",'data':[]}, status=status.HTTP_204_NO_CONTENT)
+                return Response({"message": "End of ebooks.",'data':[]}, status=status.HTTP_200_OK)
             if not ebooks:
                 return Response({"error": "No eBooks found for the given criteria."},
                                 status=status.HTTP_404_NOT_FOUND)
@@ -126,6 +126,7 @@ class EbookService:
                     "file_path": s3_client.generate_temp_link(ebook.file_path),
                     "board": ebook.board.board_name,
                     "subject_name": ebook.subject.name,
+                    "class_number": ebook.class_number.class_number,
                     "ebook_name": ebook.ebook_name,
                     "ebook_type": ebook.ebook_type,
                     "uploaded_at": ebook.created_at.strftime("%Y-%m-%d %H:%M:%S"),
