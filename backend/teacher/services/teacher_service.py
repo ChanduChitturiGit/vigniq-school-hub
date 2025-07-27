@@ -41,7 +41,7 @@ class TeacherService:
             password = request.data.get('password')
             email = request.data.get('email')
             phone_number = request.data.get('phone_number')
-            school_id = request.data.get('school_id', request.user.school_id)
+            school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
             gender = request.data.get('gender',None)
             address = request.data.get('address')
             subject_assignments = request.data.get('subject_assignments', [])
@@ -169,7 +169,7 @@ class TeacherService:
             emergency_contact = request.data.get('emergency_contact', None)
             academic_year_id = request.data.get('academic_year_id', 1)
 
-            school_id = request.data.get("school_id",request.user.school_id)
+            school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
             if not school_id:
                 logger.error("School ID is required for editing teacher.")
                 return JsonResponse({"error": "School ID is required."}, status=400)
@@ -428,7 +428,7 @@ class TeacherService:
         """
         try:
             teacher_id = request.data.get('teacher_id', None)
-            school_id = request.data.get('school_id',request.user.school_id)
+            school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
 
             if not teacher_id:
                 logger.error("Teacher ID is required to delete a teacher.")

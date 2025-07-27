@@ -47,7 +47,7 @@ class AcademicsService:
         Create a new academic year.
         """
         try:
-            school_id = request.data.get("school_id", request.user.school_id)
+            school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
             start_year = request.data.get("start_year")
             end_year = request.data.get("end_year")
 
@@ -83,7 +83,7 @@ class AcademicsService:
         Update an existing academic year.
         """
         try:
-            school_id = request.data.get("school_id", request.user.school_id)
+            school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
             academic_year_id = request.data.get("academic_year_id")
             start_year = request.data.get("start_year")
             end_year = request.data.get("end_year")

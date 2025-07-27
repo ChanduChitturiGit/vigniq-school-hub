@@ -29,7 +29,7 @@ class StudentService:
     def create_student(self, request):
         """Create a new student."""
         try:
-            school_id = request.data.get('school_id', request.user.school_id)
+            school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
             first_name = request.data.get('first_name')
             last_name = request.data.get('last_name')
             username = request.data.get('user_name')
@@ -143,7 +143,7 @@ class StudentService:
     def update_student_by_id(self, request):
         """Update an existing student's details."""
         try:
-            school_id = request.data.get('school_id', request.user.school_id)
+            school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
             student_id = request.data.get('student_id')
             first_name = request.data.get('first_name')
             last_name = request.data.get('last_name')
@@ -415,7 +415,7 @@ class StudentService:
     def delete_student_by_id(self, request):
         """Delete a student by their ID."""
         try:
-            school_id = request.data.get('school_id', request.user.school_id)
+            school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
             student_id = request.data.get('student_id')
 
             if not school_id:
