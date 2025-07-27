@@ -42,6 +42,8 @@ const ViewEbooks: React.FC = () => {
   const { showSnackbar } = useSnackbar();
   const { user } = useAuth();
   const [loader, setLoader] = useState(false);
+  const [downloadLoader,setDownloadLoader] = useState(false);
+  const [viewLoader,setViewLoader] = useState(false);
   const [filters, setFilters] = useState({
     board: '',
     class: '',
@@ -191,19 +193,57 @@ const ViewEbooks: React.FC = () => {
   };
 
   const handleView = async (ebook: any) => {
+    setViewLoader(true);
     // setSelectedEbook(ebook);
     const fileUrl = ebook.file_path;
     // window.open(fileUrl, "_blank");
     const res = await fetch(fileUrl);
     const blob = await res.blob();
     const file = URL.createObjectURL(blob);
+    setViewLoader(false);
     window.open(file, "_blank");
+
   };
 
-  const handleDownload = (file: { name: string; url: string }) => {
+  const handleDownload = async (ebook: any) => {
     // Simulate download
-    toast.success(`Downloading ${file.name}...`);
+    setDownloadLoader(true);
+    try {
+      const fileUrl = ebook.file_path;
+      const res = await fetch(fileUrl);
+      const blob = await res.blob();
+
+      // Create a temporary download link
+      const downloadUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+
+      // Extract filename from the S3 path or use a default one
+      const filename = `${ebook.board}_Class_${ebook.class_number}_${ebook.subject_name}` || "downloaded-file";
+      a.download = filename;
+
+      document.body.appendChild(a);
+      a.click();
+
+      // Clean up
+      document.body.removeChild(a);
+      URL.revokeObjectURL(downloadUrl);
+
+      showSnackbar({
+        title: "Success",
+        description: `📃 PDF downloaded succesfully ✅`,
+        status: "success"
+      });
+      setDownloadLoader(false);
+    }catch(error){
+      showSnackbar({
+        title: "⛔ Error",
+        description: `Something went wrong please try again!`,
+        status: "error"
+      });
+    }
   };
+
 
   const handleDelete = (ebookId: string) => {
     if (user?.role === 'superadmin') {
@@ -323,16 +363,16 @@ const ViewEbooks: React.FC = () => {
                       className="flex-1 text-blue-600 hover:bg-green-50"
                       onClick={() => handleView(ebook)}
                     >
-                      <Eye className="w-4 h-4 mr-1" />
+                      {viewLoader ? (<Loader2 className="w-10 h-10 mx-auto text-blue animate-spin" />) : (<Eye className="w-4 h-4 mr-1" />)}
                     </Button>
 
                     <Button
                       variant="outline"
                       size="sm"
                       className="flex-1 text-green-600 hover:bg-green-50"
-                      onClick={() => handleDownload(ebook.files[0])}
+                      onClick={() => handleDownload(ebook)}
                     >
-                      <Download className="w-4 h-4 mr-1" />
+                      {downloadLoader ? (<Loader2 className="w-10 h-10 mx-auto text-blue animate-spin" />) : (<Download className="w-4 h-4 mr-1" />)}
                     </Button>
 
                     {user?.role === 'superadmin' && (

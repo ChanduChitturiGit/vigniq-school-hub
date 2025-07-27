@@ -31,7 +31,8 @@ const UploadEbooks: React.FC = () => {
     board: '',
     class: '',
     subject: '',
-    uploadType: ''
+    uploadType: '',
+    chapter: ''
   });
   const [contentPdf, setContentPdf] = useState<File | null>(null);
   const [contentPdfProgress, setContentPdfProgress] = useState(0);
@@ -71,24 +72,7 @@ const UploadEbooks: React.FC = () => {
     }
   }
 
-  const saveBook = async (data) => {
-    try {
-      const response = await uploadEbook(data);
-      if (response && response.message) {
-        showSnackbar({
-          title: "Success",
-          description: `📃 ${response.message} ✅`,
-          status: "success"
-        });
-      }
-    }catch(error){
-      showSnackbar({
-        title: "⛔ Error",
-        description: error?.response?.data?.error || "Something went wrong",
-        status: "error"
-      });
-    }
-  }
+
 
   useEffect(() => {
     boardsList();
@@ -164,6 +148,11 @@ const UploadEbooks: React.FC = () => {
         ...prev,
         'upload_type': value == 'Single PDF' ? 'single' : 'multiple'
       }));
+    } else if (field == 'chapter') {
+      setFormData(prev => ({
+        ...prev,
+        'chapter_id': value.split(' ')[1] || null
+      }));
     }
     console.log(formData);
   };
@@ -193,6 +182,7 @@ const UploadEbooks: React.FC = () => {
 
   const handleChapterFileChange = async (id: string, file: File | null) => {
     if (file && file.type === 'application/pdf') {
+      formData[`file`] = file;
       setChapterFiles(prev =>
         prev.map(chapter =>
           chapter.id === id
@@ -261,6 +251,37 @@ const UploadEbooks: React.FC = () => {
     }
   };
 
+  const saveBook = async (data) => {
+    try {
+      const response = await uploadEbook(data);
+      if (response && response.message) {
+        showSnackbar({
+          title: "Success",
+          description: `📃 ${response.message} ✅`,
+          status: "success"
+        });
+        setIsUploading(false);
+        setFormData({
+          board: '',
+          class: '',
+          subject: '',
+          uploadType: '',
+          chapter: ''
+        });
+        setContentPdf(null);
+        setContentPdfProgress(0);
+        setIsContentPdfUploading(false);
+        // setChapterFiles([{ id: '1', name: 'Chapter-1 PDF', file: null, uploadProgress: 0, isUploading: false }]);
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -282,29 +303,11 @@ const UploadEbooks: React.FC = () => {
 
     setIsUploading(true);
 
-    if(!formData[`file`]){
+    if (!formData[`file`]) {
       formData[`file`] = contentPdf;
     }
 
     saveBook(formData);
-
-    // Simulate upload process
-    setTimeout(() => {
-      setIsUploading(false);
-      //toast.success('E-book uploaded successfully!');
-
-      // Reset form
-      setFormData({
-        board: '',
-        class: '',
-        subject: '',
-        uploadType: ''
-      });
-      setContentPdf(null);
-      setContentPdfProgress(0);
-      setIsContentPdfUploading(false);
-      setChapterFiles([{ id: '1', name: 'Chapter-1 PDF', file: null, uploadProgress: 0, isUploading: false }]);
-    }, 2000);
   };
 
   const handleCancel = () => {
@@ -312,7 +315,8 @@ const UploadEbooks: React.FC = () => {
       board: '',
       class: '',
       subject: '',
-      uploadType: ''
+      uploadType: '',
+      chapter: ''
     });
     setContentPdf(null);
     setContentPdfProgress(0);
@@ -395,6 +399,27 @@ const UploadEbooks: React.FC = () => {
                 </Select>
               </div>
 
+              {formData.uploadType === 'Chapter Wise PDF' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Class Number</label>
+                  <Select
+                    value={formData.chapter} // Ensure it's a string
+                    onValueChange={(value) => handleInputChange('chapter', value)} // Convert back to number
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select chapter number" />
+                    </SelectTrigger>
+                    <SelectContent className='h-64'>
+                      {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
+                        <SelectItem key={'chapter ' + num} value={'chapter ' + num}>
+                          {'chapter ' + num}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               {/* Conditional File Upload Sections */}
               {formData.uploadType === 'Single PDF' && (
                 <div>
@@ -445,7 +470,7 @@ const UploadEbooks: React.FC = () => {
                   {chapterFiles.map((chapter) => (
                     <div key={chapter.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                       <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-sm font-medium text-gray-700">{chapter.name}</h4>
+                        <h4 className="text-sm font-medium text-gray-700">{formData.chapter}</h4>
                         {chapterFiles.length > 1 && (
                           <Button
                             type="button"
@@ -473,7 +498,7 @@ const UploadEbooks: React.FC = () => {
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center space-x-2">
                               <FileText className="h-4 w-4 text-gray-500" />
-                              <span className="text-sm font-medium text-gray-700">{chapter.file.name}</span>
+                              <span className="text-sm font-medium text-gray-700">{formData.chapter}</span>
                               <span className="text-xs text-gray-500">({formatFileSize(chapter.file.size)})</span>
                             </div>
                             <Button
@@ -499,7 +524,7 @@ const UploadEbooks: React.FC = () => {
                     </div>
                   ))}
 
-                  <Button
+                  {/* <Button
                     type="button"
                     variant="outline"
                     onClick={addNewChapter}
@@ -507,7 +532,7 @@ const UploadEbooks: React.FC = () => {
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Add New Chapter
-                  </Button>
+                  </Button> */}
                 </div>
               )}
 
