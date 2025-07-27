@@ -51,7 +51,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'core.middleware.LoadDynamicDatabasesMiddleware',
-    'core.middleware.DatabaseMiddleware',
+    'core.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     
@@ -186,6 +186,22 @@ LOGGING = {
     },
 }
 
+
+# Static files (CSS, JavaScript, Images)
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+PROJECT_ROOT = os.path.dirname(BASE_DIR)
+
+REACT_DIST_DIR = os.path.join(PROJECT_ROOT, 'dist')
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'collected_static')
+
+STATICFILES_DIRS = [
+    os.path.join(REACT_DIST_DIR, 'assets'),
+]
+
+STATIC_URL = '/assets/'
 
 
 # Email settings
