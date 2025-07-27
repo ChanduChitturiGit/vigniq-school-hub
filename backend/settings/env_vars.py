@@ -5,6 +5,7 @@ load_dotenv(dotenv_path='../.env',override=True)
 
 APP_CONFIG = {
     'ENVIRONMENT': os.getenv('ENVIRONMENT', 'dev'),
+    'ALLOWED_HOSTS': os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(','),
 }
 
 AWS_CONFIG = {

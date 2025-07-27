@@ -3,6 +3,7 @@
 import logging
 import os
 from typing import Optional, List
+import mimetypes
 
 import boto3
 from botocore.exceptions import ClientError
@@ -25,9 +26,18 @@ class AwsS3Bucket:
             config=Config(signature_version='s3v4')
         )
 
-    def upload_file(self, file, s3_key: str) -> bool:
+    def upload_file(self, file, s3_key: str, file_type = None) -> bool:
         try:
-            self.s3.upload_fileobj(file, self.bucket_name, s3_key)
+            file_type = file_type or 'application/octet-stream'
+
+            self.s3.upload_fileobj(
+                file,
+                self.bucket_name, s3_key,
+                ExtraArgs={
+                    'ContentType': file_type,
+                    'ContentDisposition': 'inline'
+                }
+            )
             logger.info("File uploaded successfully to S3: %s", s3_key)
             return True
         except ClientError as e:

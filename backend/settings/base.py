@@ -67,6 +67,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080"
 ]
 
+ALLOWED_HOSTS = APP_CONFIG['ALLOWED_HOSTS']
+
 ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [
