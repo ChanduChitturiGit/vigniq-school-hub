@@ -5,7 +5,6 @@ SECRET_KEY = APP_SECRET['SECRET_KEY']
 
 DEBUG = False
 
-ALLOWED_HOSTS = []
 
 CACHES = {
         'default': {

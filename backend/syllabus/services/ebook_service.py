@@ -59,8 +59,9 @@ class EbookService:
                 file_name = subject_obj.name
                 s3_key = f"ebooks/class_{class_obj.class_number}/{board_obj.board_name.replace(' ', '_')}/{file_name}"
 
+            file_type = 'application/pdf'
             file_bytes = file.read()
-            upload_success = s3_client.upload_file(BytesIO(file_bytes), s3_key)
+            upload_success = s3_client.upload_file(BytesIO(file_bytes), s3_key, file_type=file_type)
             if upload_success:
                 with transaction.atomic():
                     ebook, created = SchoolSyllabusEbooks.objects.update_or_create(
