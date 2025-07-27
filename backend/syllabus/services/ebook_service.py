@@ -97,22 +97,21 @@ class EbookService:
             subject_id = request.GET.get("subject_id")
             page = int(request.GET.get("page", 1))
 
+            filter_conditions = {}
             page_size = 10
-            if not board_id or not class_id:
-                logger.error("Missing required fields for eBook retrieval.")
-                return Response({"error": "Missing required fields."}, status=status.HTTP_400_BAD_REQUEST)
-            board = SchoolBoard.objects.get(id=board_id)
-            class_obj = SchoolDefaultClasses.objects.get(id=class_id)
+            if board_id:
+                board = SchoolBoard.objects.get(id=board_id)
+                filter_conditions['board'] = board
+            if class_id:
+                class_obj = SchoolDefaultClasses.objects.get(id=class_id)
+                filter_conditions['class_number'] = class_obj
             if subject_id:
                 subject = SchoolDefaultSubjects.objects.filter(id=subject_id)
             else:
                 subject = SchoolDefaultSubjects.objects.all()
+            filter_conditions['subject__in'] = subject
 
-            ebooks_obj = SchoolSyllabusEbooks.objects.filter(
-                board=board,
-                class_number=class_obj,
-                subject__in=subject
-            )
+            ebooks_obj = SchoolSyllabusEbooks.objects.filter(**filter_conditions)
             ebooks = ebooks_obj.order_by('id')[(page - 1) * page_size: page * page_size]
             if ebooks_obj and not ebooks:
                 return Response({"message": "End of ebooks.",'data':[]}, status=status.HTTP_204_NO_CONTENT)
@@ -125,11 +124,14 @@ class EbookService:
                 ebook_list.append({
                     "id": ebook.id,
                     "file_path": s3_client.generate_temp_link(ebook.file_path),
+                    "board": ebook.board.board_name,
+                    "subject_name": ebook.subject.name,
                     "ebook_name": ebook.ebook_name,
-                    "ebook_type": ebook.ebook_type
+                    "ebook_type": ebook.ebook_type,
+                    "uploaded_at": ebook.created_at.strftime("%Y-%m-%d %H:%M:%S"),
                 })
 
-            logger.info(f"Retrieved {len(ebook_list)} eBooks for board {board.board_name}, class {class_obj.class_number}.")
+            logger.info(f"Retrieved Ebooks Successfully.")
             return Response({'data': ebook_list}, status=status.HTTP_200_OK)
         except SchoolBoard.DoesNotExist:
             return Response({"error": "Board not found."}, status=status.HTTP_404_NOT_FOUND)
