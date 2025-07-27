@@ -11,6 +11,7 @@ from rest_framework import status
 from teacher.models import Subject
 
 from core.common_modules.common_functions import CommonFunctions
+from school.models import SchoolDefaultSubjects
 
 logger = logging.getLogger(__name__)
 
@@ -56,15 +57,17 @@ class SubjectService:
         """List all subjects."""
         try:
             school_id = request.GET.get('school_id', request.user.school_id)
-            if not school_id:
-                return JsonResponse({"error": "School ID is required."},
-                                    status=status.HTTP_400_BAD_REQUEST)
-            school_db_name = CommonFunctions.get_school_db_name(school_id)
-            if not school_db_name:
-                return JsonResponse({"error": "School not found or school is inactive."},
-                                    status=status.HTTP_404_NOT_FOUND)
+            
+            if school_id:
+                school_db_name = CommonFunctions.get_school_db_name(school_id)
+                if not school_db_name:
+                    return JsonResponse({"error": "School not found or school is inactive."},
+                                        status=status.HTTP_404_NOT_FOUND)
 
-            subjects = Subject.objects.using(school_db_name).all().values('id', 'name')
+                subjects = Subject.objects.using(school_db_name).all()
+            else:
+                subjects = SchoolDefaultSubjects.objects.all()
+            subjects = subjects.values('id', 'name')
             return JsonResponse(list(subjects), safe=False, status=status.HTTP_200_OK)
         except Exception as e:
             logger.error(f"Error fetching subjects: {e}")

@@ -1,11 +1,11 @@
-"""prod settings"""
+"""dev settings"""
 from .base import *
 
 SECRET_KEY = APP_SECRET['SECRET_KEY']
 
 DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 CACHES = {
         'default': {

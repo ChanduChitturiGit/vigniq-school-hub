@@ -1,18 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import { Button } from '../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Card, CardContent } from '../components/ui/card';
-import { Eye, Download, Trash2, FileText } from 'lucide-react';
+import { Eye, Download, Trash2, FileText, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '../components/ui/dialog';
+// import {
+//   Dialog,
+//   DialogContent,
+//   DialogHeader,
+//   DialogTitle,
+//   DialogTrigger,
+// } from '../components/ui/dialog';
+import { getBoardsList } from '../services/school'
+import { getEbookList } from '../services/ebooks'
+import { getClassesList } from '../services/class'
+import { getSubjectsList } from '../services/subject'
+import { SpinnerOverlay } from '../pages/SpinnerOverlay';
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
+import sampleData from '../services/ebooksData.json'
+
 
 interface Ebook {
   id: string;
@@ -31,90 +39,165 @@ interface Ebook {
 }
 
 const ViewEbooks: React.FC = () => {
+  const { showSnackbar } = useSnackbar();
   const { user } = useAuth();
+  const [loader, setLoader] = useState(false);
   const [filters, setFilters] = useState({
     board: '',
     class: '',
-    subject: ''
+    subject: '',
+    board_id: null,
+    class_id: null,
+    subject_id: null,
+    page: 1
   });
-  const [ebooks, setEbooks] = useState<Ebook[]>([]);
-  const [filteredEbooks, setFilteredEbooks] = useState<Ebook[]>([]);
-  const [selectedEbook, setSelectedEbook] = useState<Ebook | null>(null);
+  const [payload, setPayload] = useState({
+    board_id: null,
+    class_id: null,
+    subject_id: null,
+    page: 1
+  });
+  const [ebooks, setEbooks] = useState([]);
+  const [filteredEbooks, setFilteredEbooks] = useState<any[]>([]);
+  const [selectedEbook, setSelectedEbook] = useState(null);
+  const [boards, setBoards] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Sample data
-  const sampleEbooks: Ebook[] = [
-    {
-      id: '1',
-      title: 'Mathematics_Chapter1',
-      board: 'CBSE',
-      class: 'Class 10',
-      subject: 'Mathematics',
-      uploadType: 'Chapter Wise PDF',
-      uploadDate: '2023-10-26',
-      files: [
-        { id: '1', name: 'Mathematics_Chapter1.pdf', url: '/sample.pdf', type: 'pdf' }
-      ]
-    },
-    {
-      id: '2',
-      title: 'Physics_Optics_Notes',
-      board: 'CBSE',
-      class: 'Class 12',
-      subject: 'Physics',
-      uploadType: 'Single PDF',
-      uploadDate: '2023-10-25',
-      files: [
-        { id: '2', name: 'Physics_Optics_Notes.pdf', url: '/sample.pdf', type: 'pdf' }
-      ]
-    },
-    {
-      id: '3',
-      title: 'Chemistry_Organic_Basics',
-      board: 'ICSE',
-      class: 'Class 11',
-      subject: 'Chemistry',
-      uploadType: 'Chapter Wise PDF',
-      uploadDate: '2023-10-24',
-      files: [
-        { id: '3', name: 'Chemistry_Organic_Basics.pdf', url: '/sample.pdf', type: 'pdf' }
-      ]
-    }
-  ];
+  const sampleEbooks: any = sampleData;
 
-  const boards = ['CBSE', 'ICSE', 'State Board', 'IGCSE', 'IB'];
-  const classes = ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12'];
-  const subjects = ['Mathematics', 'English', 'Science', 'Physics', 'Chemistry', 'Biology', 'History', 'Geography', 'Hindi', 'Computer Science'];
+  const sampleBoards = ['CBSE', 'ICSE', 'State Board', 'IGCSE', 'IB'];
+  const smapleClasses = ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12'];
+  const sampleSubjects = ['Mathematics', 'English', 'Science', 'Physics', 'Chemistry', 'Biology', 'History', 'Geography', 'Hindi', 'Computer Science'];
+
+  const boardsList = async () => {
+    const response = await getBoardsList();
+    if (response && response.boards) {
+      setBoards(response.boards);
+    }
+  }
+
+  const classList = async () => {
+    const response = await getClassesList();
+    if (response && response.data) {
+      setClasses(response.data);
+    }
+  }
+
+  const subjectsList = async () => {
+    const response = await getSubjectsList();
+    if (response) {
+      setSubjects(response);
+    }
+  }
+
+  const ebookData = async (data) => {
+    try {
+      setLoader(true);
+      const response = await getEbookList(data);
+      if (response && response.data) {
+        setEbooks(response.data);
+        setFilteredEbooks(response.data);
+      }
+    } catch (error) {
+      if (error?.response?.data?.error == 'No eBooks found for the given criteria.') {
+        setFilteredEbooks([]);
+      } else {
+        showSnackbar({
+          title: "⛔ Error",
+          description: error?.response?.data?.error || "Something went wrong",
+          status: "error"
+        });
+      }
+    }
+    setLoader(false);
+  }
 
   useEffect(() => {
+    boardsList();
+    classList();
+    subjectsList();
     setEbooks(sampleEbooks);
-    setFilteredEbooks(sampleEbooks);
+    // setFilteredEbooks(sampleEbooks);
+    ebookData(payload);
   }, []);
 
   useEffect(() => {
-    let filtered = ebooks;
+    const handleScroll = () => {
+      const container = scrollContainerRef.current;
+      if (!container) return;
 
-    if (filters.board) {
-      filtered = filtered.filter(ebook => ebook.board === filters.board);
-    }
-    if (filters.class) {
-      filtered = filtered.filter(ebook => ebook.class === filters.class);
-    }
-    if (filters.subject) {
-      filtered = filtered.filter(ebook => ebook.subject === filters.subject);
-    }
+      const isBottom =
+        container.scrollHeight - container.scrollTop <= container.clientHeight + 50;
 
-    setFilteredEbooks(filtered);
-  }, [filters, ebooks]);
+      if (isBottom) {
+        console.log('End reached');
+      }
+    };
+
+    const container = scrollContainerRef.current;
+    container?.addEventListener('scroll', handleScroll);
+
+    return () => {
+      container?.removeEventListener('scroll', handleScroll);
+    };
+  })
+
+  useEffect(() => {
+    ebookData(payload);
+  }, [payload])
+
+  const getBoardId = (data: string) => {
+    const boardData = boards.find((val: any) => (val.name) == data);
+    const boardId = boardData.id ? boardData.id : null;
+    return boardId;
+  }
+
+  const getClassId = (data: string) => {
+    const boardData = classes.find((val: any) => ('Class ' + val.class_number) == data);
+    const boardId = boardData.class_id ? boardData.class_id : null;
+    return boardId;
+  }
+
+  const getSubjectId = (data: string) => {
+    const boardData = subjects.find((val: any) => (val.name) == data);
+    const boardId = boardData.id ? boardData.id : null;
+    return boardId;
+  }
 
   const handleFilterChange = (field: string, value: string) => {
     setFilters(prev => ({
       ...prev,
       [field]: value
     }));
+    if (field == 'board') {
+      setPayload(prev => ({
+        ...prev,
+        'board_id': getBoardId(value)
+      }));
+    } else if (field == 'class') {
+      setPayload(prev => ({
+        ...prev,
+        'class_id': getClassId(value)
+      }));
+    } else if (field == 'subject') {
+      setPayload(prev => ({
+        ...prev,
+        'subject_id': getSubjectId(value)
+      }));
+    }
   };
 
-  const handleView = (ebook: Ebook) => {
-    setSelectedEbook(ebook);
+  const handleView = async (ebook: any) => {
+    // setSelectedEbook(ebook);
+    const fileUrl = ebook.file_path;
+    // window.open(fileUrl, "_blank");
+    const res = await fetch(fileUrl);
+    const blob = await res.blob();
+    const file = URL.createObjectURL(blob);
+    window.open(file, "_blank");
   };
 
   const handleDownload = (file: { name: string; url: string }) => {
@@ -135,12 +218,23 @@ const ViewEbooks: React.FC = () => {
     setFilters({
       board: '',
       class: '',
-      subject: ''
+      subject: '',
+      board_id: null,
+      class_id: null,
+      subject_id: null,
+      page: 1
     });
+    setPayload({
+      board_id: null,
+      class_id: null,
+      subject_id: null,
+      page: 1
+    });
+    getEbookList(payload);
   };
 
   return (
-    <MainLayout pageTitle="View E-books">
+    <MainLayout ref={scrollContainerRef} pageTitle="View E-books">
       <div className="p-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">View E-books</h1>
@@ -159,7 +253,7 @@ const ViewEbooks: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {boards.map((board) => (
-                      <SelectItem key={board} value={board}>{board}</SelectItem>
+                      <SelectItem key={board.id} value={board.name}>{board.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -171,9 +265,9 @@ const ViewEbooks: React.FC = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Select Class" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="h-64">
                     {classes.map((cls) => (
-                      <SelectItem key={cls} value={cls}>{cls}</SelectItem>
+                      <SelectItem key={cls.id} value={'Class ' + cls.class_number}>{'Class ' + cls.class_number}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -185,15 +279,15 @@ const ViewEbooks: React.FC = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Select Subject" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="h-64">
                     {subjects.map((subject) => (
-                      <SelectItem key={subject} value={subject}>{subject}</SelectItem>
+                      <SelectItem key={subject.id} value={subject.name}>{subject.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
-            
+
             <div className="flex justify-end">
               <Button variant="outline" onClick={clearFilters}>
                 Clear Filters
@@ -204,55 +298,34 @@ const ViewEbooks: React.FC = () => {
 
         {/* E-books Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredEbooks.map((ebook) => (
+          {Array.isArray(filteredEbooks) && filteredEbooks.map((ebook) => (
             <Card key={ebook.id} className="hover:shadow-lg transition-shadow">
               <CardContent className="p-6">
                 <div className="flex flex-col items-center text-center">
                   <div className="w-16 h-16 bg-red-100 rounded-lg flex items-center justify-center mb-4">
                     <FileText className="w-8 h-8 text-red-500" />
                   </div>
-                  
-                  <h3 className="font-medium text-gray-900 mb-2 truncate w-full" title={ebook.title}>
-                    {ebook.title}
+
+                  <h3 className="font-medium text-gray-900 mb-2 truncate w-full" title={ebook.ebook_name}>
+                    {ebook.ebook_name}
                   </h3>
-                  
+
                   <div className="text-sm text-gray-500 mb-4 w-full">
-                    <p>{ebook.board} • {ebook.class}</p>
-                    <p>{ebook.subject}</p>
-                    <p className="text-xs mt-1">Uploaded: {ebook.uploadDate}</p>
+                    <p>{ebook.board} • {'Class ' + ebook.class_number}</p>
+                    <p>{ebook.subject_name}</p>
+                    <p className="text-xs mt-1">Uploaded: {ebook.uploaded_at}</p>
                   </div>
-                  
+
                   <div className="flex space-x-2 w-full">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1 text-blue-600 hover:bg-blue-50"
-                          onClick={() => handleView(ebook)}
-                        >
-                          <Eye className="w-4 h-4 mr-1" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-4xl max-h-[80vh]">
-                        <DialogHeader>
-                          <DialogTitle>{selectedEbook?.title}</DialogTitle>
-                        </DialogHeader>
-                        <div className="mt-4">
-                          <p className="text-sm text-gray-600 mb-4">
-                            {selectedEbook?.board} • {selectedEbook?.class} • {selectedEbook?.subject}
-                          </p>
-                          <div className="bg-gray-100 rounded-lg p-8 text-center">
-                            <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                            <p className="text-gray-600">PDF Viewer would be integrated here</p>
-                            <p className="text-sm text-gray-500 mt-2">
-                              In a real implementation, this would show the PDF content
-                            </p>
-                          </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 text-blue-600 hover:bg-green-50"
+                      onClick={() => handleView(ebook)}
+                    >
+                      <Eye className="w-4 h-4 mr-1" />
+                    </Button>
+
                     <Button
                       variant="outline"
                       size="sm"
@@ -261,7 +334,7 @@ const ViewEbooks: React.FC = () => {
                     >
                       <Download className="w-4 h-4 mr-1" />
                     </Button>
-                    
+
                     {user?.role === 'superadmin' && (
                       <Button
                         variant="outline"
@@ -279,11 +352,16 @@ const ViewEbooks: React.FC = () => {
           ))}
         </div>
 
-        {filteredEbooks.length === 0 && (
+        {Array.isArray(filteredEbooks) && filteredEbooks.length === 0 && !loader && (
           <div className="text-center py-12">
             <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No E-books Found</h3>
             <p className="text-gray-500">Try adjusting your filters or check back later for new content.</p>
+          </div>
+        )}
+        {loader && (
+          <div className="text-center py-12">
+            <Loader2 className="w-10 h-10 mx-auto text-blue animate-spin" />
           </div>
         )}
       </div>

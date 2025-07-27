@@ -29,3 +29,10 @@ export const editClass = async (data: any) => {
   const response = await api.put<any>(baseurl+suburl+'/updateClassById', data);
   return response.data;
 }
+
+//get classes list
+export const getClassesList = async () => {
+  const response = await api.get(baseurl+suburl+'/getAvailableClassList');
+  return response.data;
+}
+

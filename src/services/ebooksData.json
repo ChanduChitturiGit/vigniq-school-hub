@@ -1,0 +1,11 @@
+[
+    {
+        "id": 1,
+        "file_path": "https://vigniq-dev.s3.amazonaws.com/ebooks/class_2/State_Board/Mathematic?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA4WCCWE5DKBBLRLOK%2F20250727%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20250727T051822Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=2e4bc559e1127b86e416e583d3f5a1955071c7ddaaea5b3db8ab6eba73e612cf",
+        "board": "State Board",
+        "subject_name": "Mathematics",
+        "ebook_name": "Mathematic",
+        "ebook_type": "single",
+        "uploaded_at": "2025-07-27 04:50:56"
+    }
+]

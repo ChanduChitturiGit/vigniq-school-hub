@@ -399,7 +399,7 @@ const AdminSchool: React.FC = () => {
                     <BookOpen className="w-5 h-5 text-blue-500" />
                   </div>
                   <p className="text-sm text-gray-600">Students: {classItem.student_count}</p>
-                  <p className="text-sm text-gray-500">Teacher: {classItem.teacher || 'N/A'}</p>
+                  <p className="text-sm text-gray-500">Teacher: {classItem.teacher_name || 'N/A'}</p>
                 </div>
               ))}
             </div>
