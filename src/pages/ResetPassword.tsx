@@ -4,8 +4,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { KeyRound, Eye, EyeOff } from 'lucide-react';
 import { toast } from '../hooks/use-toast';
 import { resetPassword as resetPasswordApi } from '../services/passwordHandler'
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
 
 const ResetPassword: React.FC = () => {
+  const { showSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const fromProfile = searchParams.get('fromProfile') === 'true';
@@ -46,9 +48,10 @@ const ResetPassword: React.FC = () => {
     // Simulate API call
     setTimeout(() => {
       // console.log('Sending OTP to:', formData.email);
-      toast({
+      showSnackbar({
         title: "OTP Sent",
-        description: "A verification code has been sent to your email.",
+        description: "A verification code has been sent to your email. ✅",
+        status: "success"
       });
       setStep('otp');
       setIsLoading(false);
@@ -63,9 +66,10 @@ const ResetPassword: React.FC = () => {
     setTimeout(() => {
       console.log('Verifying OTP:', formData.otp);
       if (formData.otp === '123456') {
-        toast({
+        showSnackbar({
           title: "OTP Verified",
-          description: "Please enter your new password.",
+          description: "Please enter your new password. ✅",
+          status: "success"
         });
         setStep('password');
       } else {
@@ -80,46 +84,55 @@ const ResetPassword: React.FC = () => {
   };
 
   const setPassword = async (data) => {
-    const response = await resetPasswordApi(data);
-    if (response && response.message) {
-      setTimeout(() => {
-        console.log('Resetting password for:', formData.email);
+    try {
+      const response = await resetPasswordApi(data);
+      if (response && response.message) {
+        setTimeout(() => {
+          console.log('Resetting password for:', formData.email);
 
-        // Clear stored email
-        localStorage.removeItem('reset_password_email');
+          // Clear stored email
+          localStorage.removeItem('reset_password_email');
 
-        toast({
-          title: "Password Updated",
-          description: "Password updated successfully. Please login again.",
-        });
+          showSnackbar({
+            title: "Password Updated",
+            description: "Password updated successfully. Please login again. ✅",
+            status: "success"
+          });
 
-        navigate('/login');
-        setIsLoading(false);
-      }, 1000);
+          navigate('/login');
+          setIsLoading(false);
+        }, 1000);
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
     }
+    setIsLoading(false);
   }
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (formData.new_password !== formData.confirm_password) {
-      toast({
-        title: "Password Mismatch",
-        description: "New password and confirm password do not match.",
-        variant: "destructive",
+      showSnackbar({
+        title: "⛔ Password Mismatch",
+        description: "New password and confirm password do not match. ✅",
+        status: "error"
       });
       return;
     }
 
     if (formData.new_password.length < 8) {
-      toast({
-        title: "Password Too Short",
-        description: "Password must be at least 8 characters long.",
-        variant: "destructive",
+      showSnackbar({
+        title: "⛔ Password Too Short",
+        description: "Password must be at least 8 characters long. ✅",
+        status: "error"
       });
       return;
     }
-    
     setIsLoading(true);
     setPassword(formData);
   };
