@@ -14,13 +14,16 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
+# from django.contrib import admin
 from django.urls import path, include
-from core.views import CustomTokenObtainPairView
+from django.conf import settings
+from django.conf.urls.static import static
+from core.views import CustomTokenObtainPairView, FrontendAppView
 from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
     # path('admin/', admin.site.urls),
+    path('', FrontendAppView.as_view(), name='frontend'),
     path('core/', include('core.urls')),
     path('school/', include('school.urls')),
     path('teacher/', include('teacher.urls')),
@@ -30,4 +33,4 @@ urlpatterns = [
     path('syllabus/', include('syllabus.urls')),
     path('auth/login/', CustomTokenObtainPairView.as_view(), name='login'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-]
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -1,6 +1,6 @@
 """core views.py"""
 import logging
-
+import os
 
 from rest_framework import status
 from rest_framework.views import APIView
@@ -9,6 +9,9 @@ from rest_framework.permissions import IsAuthenticated,AllowAny
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from django.views.generic import View
+from django.http import HttpResponse
+from django.conf import settings
 
 from .serializers import CustomTokenObtainPairSerializer
 from core.services.password_manager_service import PasswordManagerService
@@ -16,6 +19,14 @@ from core.services.user_profile_service import UserProfileService
 
 logger = logging.getLogger(__name__)
 
+class FrontendAppView(View):
+    def get(self, request):
+        index_path = os.path.join(settings.PROJECT_ROOT, 'dist', 'index.html')
+        try:
+            with open(index_path, 'r') as f:
+                return HttpResponse(f.read())
+        except FileNotFoundError:
+            return HttpResponse("index.html not found. Run your frontend build.", status=501)
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
