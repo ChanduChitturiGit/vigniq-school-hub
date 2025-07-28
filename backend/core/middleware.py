@@ -82,29 +82,29 @@ class AuthenticationMiddleware:
         try:
             user_auth_tuple = jwt_auth.authenticate(request)
             if user_auth_tuple is None:
-                return JsonResponse({"error": "Authentication required."}, status=401)
+                return JsonResponse({"error": "Authentication credentials were not provided or are invalid."}, status=401)
 
             user, _ = user_auth_tuple
             request.user = user
 
-            if user.is_superuser:
-                set_current_db('default')
-            else:
+            if not user.is_superuser:
                 if not hasattr(user, 'school_id') or user.school_id is None:
-                    return JsonResponse({"error": "School not associated with user."}, status=400)
+                    return JsonResponse({"error": "User is not associated with any school. Please contact support."}, status=400)
                 
-                school_id = user.school_id
-                school = School.objects.filter(id=school_id).first()
+                # school_id = user.school_id
+                # school = School.objects.filter(id=school_id).first()
 
-                if not school:
-                    return JsonResponse({"error": "School not found."}, status=400)
+                # if not school:
+                #     return JsonResponse({"error": "School not found."}, status=400)
 
-                db_name = f"{school.name.lower().replace(' ', '_')}_{school.id}_db"
-                set_current_db(db_name)
+                # db_name = f"{school.name.lower().replace(' ', '_')}_{school.id}_db"
+                # set_current_db(db_name)
 
-        except (InvalidToken, AuthenticationFailed) as e:
-            return JsonResponse({"error": str(e)}, status=401)
+        except InvalidToken as e:
+            return JsonResponse({"error":"Invalid or expired token. Please log in again."}, status=401)
+        except AuthenticationFailed as e:
+            return JsonResponse({"error": f"Authentication failed: {str(e)}"}, status=401)
 
         response = self.get_response(request)
-        set_current_db(None)
+        # set_current_db(None)
         return response

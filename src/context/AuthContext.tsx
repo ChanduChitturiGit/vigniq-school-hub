@@ -75,11 +75,11 @@ const baseurl = environment.baseurl;
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  
+
 
   useEffect(() => {
     // Always reset users to ensure they have the latest structure with username
-   // localStorage.setItem('vigniq_users', JSON.stringify(defaultUsers));
+    // localStorage.setItem('vigniq_users', JSON.stringify(defaultUsers));
 
     // Check for existing session
     const savedUser = localStorage.getItem('vigniq_current_user');
@@ -90,21 +90,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const login = async (username: string, password: string): Promise<boolean> => {
-    const res = await loginApi({ user_name : username, password });
+    try {
+      const res = await loginApi({ user_name: username, password });
 
-    localStorage.setItem('access_token', res.access);
-    localStorage.setItem('refresh_token', res.refresh);
-    localStorage.setItem('vigniq_current_user', JSON.stringify(res.user));
+      localStorage.setItem('access_token', res.access);
+      localStorage.setItem('refresh_token', res.refresh);
+      localStorage.setItem('vigniq_current_user', JSON.stringify(res.user));
 
-    const foundUser = res.user;
-    
-    if (foundUser) {
-      setUser(foundUser);
-      setIsAuthenticated(true);
-      localStorage.setItem('vigniq_current_user', JSON.stringify(foundUser));
-      return true;
+      const foundUser = res.user;
+
+      if (foundUser) {
+        setUser(foundUser);
+        setIsAuthenticated(true);
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false; // don't crash, just return failure
     }
-    return false;
   };
 
   const logout = () => {
@@ -120,7 +125,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       id: Date.now().toString(),
       role: userData.role || 'Student'
     };
-    
+
     users.push(newUser);
     localStorage.setItem('vigniq_users', JSON.stringify(users));
     return true;

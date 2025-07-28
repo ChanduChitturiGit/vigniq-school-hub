@@ -27,7 +27,7 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     // If 401 Unauthorized and we haven't retried yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry && !window.location.href.includes('/login')) {
       originalRequest._retry = true;
       try {
         const refreshToken = localStorage.getItem('refresh_token');
@@ -47,7 +47,9 @@ api.interceptors.response.use(
         console.error("Refresh token failed:", refreshError);
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
-        window.location.href = '/login';
+        if(!window.location.href.includes('/login')){
+          window.location.href = '/login';
+        }
         return Promise.reject(refreshError);
       }
     }

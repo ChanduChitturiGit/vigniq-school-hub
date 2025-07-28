@@ -45,7 +45,7 @@ class ClassesService:
     def get_classes_by_school_id(request):
         try:
             logger.info("Retrieving active classes.")
-            school_id = request.GET.get('school_id', request.user.school_id)
+            school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
             academic_year_id = request.GET.get('academic_year_id',1)
 
             if not school_id:
@@ -125,7 +125,7 @@ class ClassesService:
         """Retrieve a class by its ID."""
         try:
             logger.info("Retrieving class by ID.")
-            school_id = request.GET.get('school_id', request.user.school_id)
+            school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
             class_id = request.GET.get('class_id')
             academic_year_id = request.GET.get('academic_year_id',1)
 
@@ -315,7 +315,7 @@ class ClassesService:
     def create_class(request):
         """Create a new class."""
         try:
-            school_id = request.data.get('school_id', request.user.school_id)
+            school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
             class_number = request.data.get('class_number')
             section_name = request.data.get('section')
             teacher_id = request.data.get('teacher_id',None)
@@ -410,7 +410,7 @@ class ClassesService:
     def update_class(request):
         """Update an existing class."""
         try:
-            school_id = request.data.get('school_id', request.user.school_id)
+            school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
             id = request.data.get('class_id')
             teacher_id = request.data.get('teacher_id')
             academic_year_id = request.data.get('academic_year_id',1)
