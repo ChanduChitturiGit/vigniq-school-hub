@@ -9,7 +9,7 @@ from core.models import (
 
 
 class School(models.Model):
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255)
     address = models.TextField()
     contact_number = models.CharField(max_length=15, blank=True, null=True)
     school_admin = models.ForeignKey('core.User',

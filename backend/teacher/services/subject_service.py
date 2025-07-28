@@ -23,7 +23,7 @@ class SubjectService:
     def create_subject(self, request):
         """Create a new subject."""
         try:
-            school_id = request.data.get('school_id',request.user.school_id)
+            school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
             name = request.data.get('name')
             if not school_id:
                 return JsonResponse({"error": "School ID is required."},
@@ -56,7 +56,7 @@ class SubjectService:
     def get_subjects_by_school_id(self,request):
         """List all subjects."""
         try:
-            school_id = request.GET.get('school_id', request.user.school_id)
+            school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
             
             if school_id:
                 school_db_name = CommonFunctions.get_school_db_name(school_id)
@@ -77,7 +77,7 @@ class SubjectService:
     def update_subject_by_id(self, request):
         """Update an existing subject."""
         try:
-            school_id = request.data.get('school_id', request.user.school_id)
+            school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
             subject_id = request.data.get('subject_id')
             name = request.data.get('name')
             if not school_id:
