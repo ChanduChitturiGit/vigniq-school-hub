@@ -23,7 +23,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
     # path('admin/', admin.site.urls),
-    path(r'^.*$', FrontendAppView.as_view(), name='frontend'),
+    path('', FrontendAppView.as_view(), name='frontend'),
     path('core/', include('core.urls')),
     path('school/', include('school.urls')),
     path('teacher/', include('teacher.urls')),
