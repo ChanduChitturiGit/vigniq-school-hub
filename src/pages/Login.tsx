@@ -30,28 +30,10 @@ const Login: React.FC = () => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const validateUsername = (username: string): boolean => {
-    if (username.length < 3) {
-      setError('Username must be at least 3 characters long.');
-      return false;
-    }
-    if (!/^[a-zA-Z0-9@]+$/.test(username)) {
-      setError('Username must contain only letters, numbers, and @ symbol.');
-      return false;
-    }
-
-    return true;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
-    if (!validateUsername(username)) {
-      setLoading(false);
-      return;
-    }
 
     try {
       const success = await login(username, password);
@@ -87,11 +69,6 @@ const Login: React.FC = () => {
 
     try {
       if (forgotStep === 1) {
-        // Validate username first
-        if (!validateUsername(forgotUsername)) {
-          setForgotLoading(false);
-          return;
-        }
 
         // Verify username exists and get email
         let userExists = await sentCode(forgotUsername);
@@ -99,13 +76,6 @@ const Login: React.FC = () => {
         if (userExists) {
           setForgotStep(2);
           setError('');
-          // Show toast notification with user's email
-          // toast(userExists.message ? `📬 ${userExists.message}` :
-          //   `📬 A verification code has been sent to ${userExists.email}. Please check.`,
-          //   {
-          //     duration: 4000,
-          //     position: "bottom-right"
-          //   });
           showSnackbar({
             title: "Success",
             description: userExists.message ? `📬 ${userExists.message} ✅` : `📬 A verification code has been sent to respective Email. Please check. ✅`,
@@ -168,10 +138,6 @@ const Login: React.FC = () => {
           setNewPassword('');
           setConfirmPassword('');
           setError('');
-          // toast("✅ Password updated successfully! You can now log in with your new password.", {
-          //   duration: 4000,
-          //   position: "bottom-right"
-          // });
           showSnackbar({
             title: "Success",
             description: `✅ Password updated successfully! You can now log in with your new password.`,
@@ -243,7 +209,6 @@ const Login: React.FC = () => {
                       onChange={(e) => setUsername(e.target.value)}
                       placeholder="Enter your username"
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                      pattern="[a-zA-Z0-9@]+"
                       title="Username must contain only letters and numbers"
                       minLength={3}
                       required
@@ -316,7 +281,6 @@ const Login: React.FC = () => {
                         onChange={(e) => setForgotUsername(e.target.value)}
                         placeholder="Enter your username"
                         className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                        pattern="[a-zA-Z0-9@]+"
                         title="Username must contain only letters and numbers"
                         minLength={3}
                         required
