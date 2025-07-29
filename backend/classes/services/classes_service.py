@@ -6,17 +6,25 @@ from django.http import JsonResponse
 from django.db import IntegrityError,transaction
 
 from classes.models import SchoolClass,ClassAssignment,SchoolSection
-from classes.serializers import ClassSerializer
+
 from teacher.models import Teacher
 from academics.models import SchoolAcademicYear
 
 from core.common_modules.common_functions import CommonFunctions
 from core.models import User
 
-from school.models import SchoolDefaultClasses
+from school.models import SchoolDefaultClasses,SchoolBoard
 
 from student.models import StudentClassAssignment,Student
 from student.services.student_service import StudentService
+
+from syllabus.models import (
+    SchoolChapter,
+    SchoolPrerequisite,
+    SchoolSubTopic,
+    SchoolClassSubTopic,
+    SchoolClassPrerequisite
+)
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +69,9 @@ class ClassesService:
 
             data = []
             for class_obj in classes:
+                school_board = SchoolBoard.objects.using(school_db_name).get(
+                    id=class_obj.board_id
+                )
                 class_instance = ClassAssignment.objects.using(school_db_name).filter(
                     class_instance=class_obj,
                     academic_year_id=academic_year_id
@@ -97,20 +108,22 @@ class ClassesService:
                         is_active=True
                     ).count()
 
-                class_data = {
-                    'class_assignment_id': class_instance.id if class_instance else None,
-                    'class_id': class_obj.id,
-                    'class_number': class_obj.class_instance_id,
-                    'section': class_obj.section,
-                    'teacher_id': teacher.teacher_id if teacher else None,
-                    'teacher_name': teacher_name,
-                    # 'academic_year_id': academic_year_obj.id,
-                    # 'academic_year_start_date': str(academic_year_obj.start_date),
-                    # 'academic_year_end_date': str(academic_year_obj.end_date),
-                    'school_id': school_id,
-                    'student_count': student_count
-                }
-                data.append(class_data)
+                    class_data = {
+                        'class_assignment_id': class_instance.id if class_instance else None,
+                        'class_id': class_obj.id,
+                        'class_number': class_obj.class_instance_id,
+                        'section': class_obj.section,
+                        'teacher_id': teacher.teacher_id if teacher else None,
+                        'teacher_name': teacher_name,
+                        # 'academic_year_id': academic_year_obj.id,
+                        # 'academic_year_start_date': str(academic_year_obj.start_date),
+                        # 'academic_year_end_date': str(academic_year_obj.end_date),
+                        'school_id': school_id,
+                        'student_count': student_count,
+                        'school_board_id': school_board.id,
+                        'school_board_name': school_board.board_name,
+                    }
+                    data.append(class_data)
 
 
             logger.info(f"Retrieved {len(data)} active classes.")
@@ -140,7 +153,9 @@ class ClassesService:
             
             class_obj = SchoolSection.objects.using(school_db_name).get(
                     pk=class_id)
-
+            school_board = SchoolBoard.objects.using(school_db_name).get(
+                id=class_obj.board_id
+            )
             class_instance = ClassAssignment.objects.using(school_db_name).filter(
                 class_instance=class_obj,
                 academic_year_id=academic_year_id
@@ -177,7 +192,9 @@ class ClassesService:
                 'section': class_obj.section,
                 'teacher_id': teacher.teacher_id if teacher else None,
                 'teacher_name': teacher_name,
-                'studends_list': students_data
+                'studends_list': students_data,
+                'school_board_id' : school_board.id,
+                'school_board_name' : school_board.board_name,
             }
 
             logger.info(f"Class with ID {class_id} retrieved successfully.")
@@ -202,115 +219,6 @@ class ClassesService:
             return JsonResponse({"error": "An error occurred while retrieving the class."},
                                 status=500)
 
-    # @staticmethod
-    # def create_class_and_section(request):
-    #     """Create a new class."""
-    #     try:
-    #         logger.info("Creating a new class.")
-    #         school_id = request.data.get('school_id', request.user.school_id)
-    #         class_name = request.data.get('class_name')
-    #         section_name = request.data.get('section_name')
-
-    #         if not school_id:
-    #             return JsonResponse({"error": "School ID is required."},
-    #                                 status=400)
-    #         if not class_name:
-    #             return JsonResponse({"error": "Class name is required."},
-    #                                 status=400)
-    #         if not section_name:
-    #             return JsonResponse({"error": "Section name is required."},
-    #                                 status=400)
-
-    #         school_db_name = CommonFunctions.get_school_db_name(school_id)
-
-    #         if not school_db_name:
-    #             return JsonResponse({"error": "School not found or inactive."},
-    #                                 status=404)
-
-    #         class_instance,is_created = SchoolClass.objects.using(school_db_name).get_or_create(
-    #             name=class_name, section = section_name
-    #         )
-
-    #         if not is_created:
-    #             return JsonResponse({
-    #                 'error': 'A class with the same name and section already exists.'
-    #             }, status=400)
-
-    #         serializer = ClassSerializer(class_instance)
-
-    #         logger.info(f"Class '{class_name}'- section - {section_name} created successfully.")
-    #         return JsonResponse({'class': serializer.data}, status=201)
-    #     except IntegrityError as e:
-    #         logger.error(f"Integrity error while creating class: {e}")
-    #         if 'unique_name_section' in str(e):
-    #             return JsonResponse({
-    #                 'error': 'A class with the same name and section already exists.'
-    #             }, status=400)
-    #         else:
-    #             return JsonResponse({
-    #                 'error': 'An unexpected error occurred while creating the class.'
-    #             }, status=500)
-    #     except Exception as e:
-    #         logger.error(f"Error creating class: {e}")
-    #         return JsonResponse({"error": "An error occurred while creating the class."},
-    #                             status=500)
-    
-    # @staticmethod
-    # def update_class_and_section(request):
-    #     """Update an existing class."""
-    #     try:
-    #         logger.info("Updating a class...")
-    #         school_id = request.data.get('school_id', request.user.school_id)
-    #         class_id = request.data.get('class_id')
-    #         class_name = request.data.get('class_name')
-    #         section_name = request.data.get('section_name')
-
-    #         if not school_id:
-    #             return JsonResponse({"error": "School ID is required."},
-    #                                 status=400)
-    #         if not class_id:
-    #             return JsonResponse({"error": "Class ID is required."},
-    #                                 status=400)
-    #         if not class_name:
-    #             return JsonResponse({"error": "Class name is required."},
-    #                                 status=400)
-    #         if not section_name:
-    #             return JsonResponse({"error": "Section is required."},
-    #                                 status=400)
-
-    #         school_db_name = CommonFunctions.get_school_db_name(school_id)
-
-    #         if not school_db_name:
-    #             return JsonResponse({"error": "School not found or inactive."},
-    #                                 status=404)
-
-    #         class_instance = SchoolClass.objects.using(school_db_name).get(id=class_id)
-    #         class_instance.name = class_name
-    #         class_instance.section = section_name
-    #         class_instance.save(using=school_db_name)
-
-    #         serializer = ClassSerializer(class_instance)
-
-    #         logger.info(f"Class '{class_name}'- {section_name} updated successfully.")
-    #         return JsonResponse({'class': serializer.data}, status=200)
-    #     except SchoolClass.DoesNotExist:
-    #         logger.error("Class does not exist.")
-    #         return JsonResponse({"error": "Class not found."}, status=404)
-    #     except IntegrityError as e:
-    #         logger.error(f"Integrity error while updating class: {e}")
-    #         if 'unique_name_section' in str(e):
-    #             return JsonResponse({
-    #                 'error': 'A class with the same name and section already exists.'
-    #             }, status=400)
-    #         else:
-    #             return JsonResponse({
-    #                 'error': 'An unexpected error occurred while updating the class.'
-    #             }, status=500)
-    #     except Exception as e:
-    #         logger.error(f"Error updating class: {e}")
-    #         return JsonResponse({"error": "An error occurred while updating the class."},
-    #                             status=500)
-
     @staticmethod
     def create_class(request):
         """Create a new class."""
@@ -319,20 +227,11 @@ class ClassesService:
             class_number = request.data.get('class_number')
             section_name = request.data.get('section')
             teacher_id = request.data.get('teacher_id',None)
+            board_id = request.data.get('board_id', None)
             academic_year_id = request.data.get('academic_year_id',1)
 
-            if not school_id:
-                return JsonResponse({"error": "School ID is required."},
-                                    status=400)
-            if not class_number:
-                return JsonResponse({"error": "Class number is required."},
-                                    status=400)
-            if not section_name:
-                return JsonResponse({"error": "Section name is required."},
-                                    status=400)
-
-            if not academic_year_id:
-                return JsonResponse({"error": "Academic Year ID is required."},
+            if not school_id or not class_number or not section_name or not board_id or not academic_year_id:
+                return JsonResponse({"error": "Required fields are missing."},
                                     status=400)
 
             school_db_name = CommonFunctions.get_school_db_name(school_id)
@@ -357,7 +256,8 @@ class ClassesService:
                 )
                 class_instance = SchoolSection.objects.using(school_db_name).create(
                     class_instance=class_obj,
-                    section=section_name
+                    section=section_name,
+                    board_id=board_id
                 )
 
                 class_assignment, created = ClassAssignment.objects.using(school_db_name).get_or_create(
@@ -366,10 +266,49 @@ class ClassesService:
                     academic_year=academic_year
                 )
 
+                chapters = SchoolChapter.objects.using(school_db_name).filter(
+                    class_number=class_obj,
+                    academic_year=academic_year,
+                    school_board_id=board_id
+                )
+                if chapters.exists():
+                    for chapter in chapters:
+                        subtopics = SchoolSubTopic.objects.using(school_db_name).filter(chapter=chapter)
+                        class_subtopic_objs = [
+                            SchoolClassSubTopic(
+                                chapter=chapter,
+                                name=subtopic.name,
+                                class_section=class_instance
+                            )
+                            for subtopic in subtopics
+                        ]
+                        if class_subtopic_objs:
+                            SchoolClassSubTopic.objects.using(school_db_name).bulk_create(
+                                class_subtopic_objs
+                            )
+
+                        prerequisites = SchoolPrerequisite.objects.using(school_db_name).filter(
+                            chapter=chapter
+                        )
+                        class_prerequisite_objs = [
+                            SchoolClassPrerequisite(
+                                chapter=chapter,
+                                class_section=class_instance,
+                                topic=prerequisite.topic,
+                                explanation=prerequisite.explanation
+                            )
+                            for prerequisite in prerequisites
+                        ]
+                        if class_prerequisite_objs:
+                            SchoolClassPrerequisite.objects.using(school_db_name).bulk_create(
+                                class_prerequisite_objs
+                            )
                 if not created:
                     return JsonResponse({
                         'error': 'A class assignment with the same class, teacher, and academic year already exists.'
                     }, status=400)
+                
+
                 
                 response_data = {
                     'id': class_assignment.id,
