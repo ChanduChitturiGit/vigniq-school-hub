@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class SyllabusService:
     """Service class for handling syllabus-related operations."""
     
-    def get_chapters_by_subject_id(self, request):
+    def get_chapters_progress(self, request):
         """Fetch chapters by subject ID."""
         try:
             school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)

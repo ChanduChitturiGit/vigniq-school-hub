@@ -11,6 +11,7 @@ class SchoolClass(models.Model):
 class SchoolSection(models.Model):
     class_instance = models.ForeignKey(SchoolClass, on_delete=models.CASCADE)
     section = models.CharField(max_length=50)
+    board_id = models.IntegerField(null=True, blank=True)
 
     class Meta:
         db_table = 'school_section'

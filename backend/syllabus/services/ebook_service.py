@@ -173,24 +173,25 @@ class EbookService:
         lang_chain_service = LangChainService()
         chapters_obj = lang_chain_service.get_topics_and_prerequisites(pdf_file)
         with transaction.atomic():
+            Chapter.objects.filter(ebook=ebook).delete()
             for chapter_item in chapters_obj:
-                chapter, _ = Chapter.objects.update_or_create(
+                chapter = Chapter.objects.create(
                     chapter_number=chapter_item['chapter_number'],
                     ebook=ebook,
-                    defaults={'chapter_name': chapter_item['chapter_name']}
+                    chapter_name=chapter_item['chapter_name']
                 )
 
                 for sub_topic in chapter_item['sub_topics']:
-                    sub_topic_obj, _ = SubTopic.objects.update_or_create(
+                    sub_topic_obj = SubTopic.objects.create(
                         chapter=chapter,
                         name=sub_topic
                     )
                     
                 for prerequisite in chapter_item['pre_requisites']:
-                    prerequisite_obj, _ = Prerequisite.objects.update_or_create(
+                    prerequisite_obj = Prerequisite.objects.create(
                         chapter=chapter,
                         topic=prerequisite['topic'],
-                        defaults={'explanation': prerequisite['explanation']}
+                        explanation=prerequisite['explanation']
                     )
         
         return True
