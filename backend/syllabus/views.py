@@ -40,8 +40,8 @@ class SyllabusView(APIView):
 
     def get(self, request, action=None):
         """Handle GET requests for syllabus actions."""
-        if action == 'getChaptersBySubjectId':
-            return SyllabusService().get_chapters_by_subject_id(request)
+        if action == 'getChaptersProgress':
+            return SyllabusService().get_chapters_progress(request)
         return Response({"message": f"GET request for action: {action}"})
 
     def post(self, request, action=None):
