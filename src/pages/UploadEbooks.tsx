@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import { Button } from '../components/ui/button';
@@ -42,15 +42,22 @@ const UploadEbooks: React.FC = () => {
   const [boards, setBoards] = useState([]);
   const [classes, setClasses] = useState([]);
   const [subjects, setSubjects] = useState([]);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
   const [chapterFiles, setChapterFiles] = useState<ChapterFile[]>([
-    { id: '1', name: 'Chapter-1 PDF', file: null, uploadProgress: 0, isUploading: false,inputKey: Date.now() }
+    { id: '1', name: 'Upload PDF', file: null, uploadProgress: 0, isUploading: false, inputKey: Date.now() }
   ]);
+  const [savedFiles, setSavedFiles] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [chapterStatus, setChapterStatus] = useState(false);
 
   const sampleBoards = ['CBSE', 'ICSE', 'State Board', 'IGCSE', 'IB'];
   const sampleClasses = ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12'];
   const sampleSubjects = ['Mathematics', 'English', 'Science', 'Physics', 'Chemistry', 'Biology', 'History', 'Geography', 'Hindi', 'Computer Science'];
   const uploadTypes = ['Chapter Wise PDF', 'Single PDF'];
+
+  const [numberList,setNumberList] = useState(Array.from({ length: 20 }, (_, i) => i + 1));
+  const [chapterListData,setChapterListData] = useState([]);
+
 
 
   const boardsList = async () => {
@@ -74,13 +81,26 @@ const UploadEbooks: React.FC = () => {
     }
   }
 
-
-
   useEffect(() => {
     boardsList();
     classList();
     subjectsList();
   }, []);
+
+  // useEffect(() => {
+  //   if (formData.uploadType == 'Chapter Wise PDF') {
+  //     setTimeout(() => {
+  //       bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  //     }, 300);
+  //   }
+  // }, [savedFiles, chapterFiles]);
+
+  useEffect(() => {
+    if( formData.uploadType == 'Chapter Wise PDF'){
+      const newList = numberList.filter((num) => !chapterListData.includes(num));
+      setNumberList(newList)
+    }
+  }, [chapterListData]);
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
@@ -156,7 +176,6 @@ const UploadEbooks: React.FC = () => {
         'chapter_id': value.split(' ')[1] || null
       }));
     }
-    console.log(formData);
   };
 
   const handleContentPdfChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -219,7 +238,7 @@ const UploadEbooks: React.FC = () => {
   };
 
   const removeContentPdf = () => {
-    setFormData((prev)=>({
+    setFormData((prev) => ({
       ...prev,
       inputKey: Date.now()
     }))
@@ -230,28 +249,31 @@ const UploadEbooks: React.FC = () => {
 
   const removeChapterFile = (id: string) => {
     setChapterFiles(prev =>
-    prev.map(chapter =>
-      chapter.id === id
-        ? {
+      prev.map(chapter =>
+        chapter.id === id
+          ? {
             ...chapter,
             file: null,
-            inputKey: Date.now(), 
+            inputKey: Date.now(),
           }
-        : chapter
-    )
-  );
+          : chapter
+      )
+    );
   };
 
   const addNewChapter = () => {
     const newId = (chapterFiles.length + 1).toString();
     setChapterFiles(prev => [...prev, {
       id: newId,
-      name: `Chapter-${newId} PDF`,
+      name: `Upload PDF`,
       file: null,
       uploadProgress: 0,
       isUploading: false,
       inputKey: Date.now()
     }]);
+    setTimeout(() => {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 800);
   };
 
   const removeChapter = (id: string) => {
@@ -264,23 +286,36 @@ const UploadEbooks: React.FC = () => {
     try {
       const response = await uploadEbook(data);
       if (response && response.message) {
+        savedFiles.push({ ...formData });
+        setChapterFiles([
+        ]);
+        setChapterListData(prev => [...prev, Number(formData?.chapter?.split(' ')[1])]);
         showSnackbar({
           title: "Success",
           description: `📃 ${response.message} ✅`,
           status: "success"
         });
         setIsUploading(false);
-        setFormData({
-          board: '',
-          class: '',
-          subject: '',
-          uploadType: '',
-          chapter: '',
-          inputKey: Date.now()
-        });
+        if (formData.uploadType != 'Chapter Wise PDF') {
+          setFormData({
+            board: '',
+            class: '',
+            subject: '',
+            uploadType: '',
+            chapter: '',
+            inputKey: Date.now()
+          });
+          setChapterStatus(false);
+        } else {
+          setFormData((prev) => ({
+            ...prev,
+            chapter: null
+          }))
+        }
         setContentPdf(null);
         setContentPdfProgress(0);
         setIsContentPdfUploading(false);
+        setChapterStatus(true);
         // setChapterFiles([{ id: '1', name: 'Chapter-1 PDF', file: null, uploadProgress: 0, isUploading: false }]);
       }
     } catch (error) {
@@ -316,10 +351,10 @@ const UploadEbooks: React.FC = () => {
       }
     } else if (formData.uploadType === 'Single PDF' && !contentPdf) {
       showSnackbar({
-          title: "⛔ Error",
-          description: `Please upload the content PDF`,
-          status: "error"
-        });
+        title: "⛔ Error",
+        description: `Please upload the content PDF`,
+        status: "error"
+      });
       return;
     }
 
@@ -344,11 +379,14 @@ const UploadEbooks: React.FC = () => {
     setContentPdf(null);
     setContentPdfProgress(0);
     setIsContentPdfUploading(false);
-    //setChapterFiles([{ id: '1', name: '', file: null, uploadProgress: 0, isUploading: false,inputKey: Date.now() }]);
+    setNumberList(Array.from({ length: 20 }, (_, i) => i + 1));
+    setChapterListData([]);
+    setChapterFiles([{ id: '1', name: '', file: null, uploadProgress: 0, isUploading: false,inputKey: Date.now() }]);
+    setSavedFiles([]);
   };
 
   return (
-    <MainLayout pageTitle="Upload E-books">
+    <MainLayout ref={bottomRef} pageTitle="Upload E-books">
       <div className="p-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Upload E-books</h1>
@@ -365,7 +403,7 @@ const UploadEbooks: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Board Name</label>
-                  <Select value={formData.board} onValueChange={(value) => handleInputChange('board', value)}>
+                  <Select required value={formData.board} onValueChange={(value) => handleInputChange('board', value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select Board" />
                     </SelectTrigger>
@@ -379,7 +417,11 @@ const UploadEbooks: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Class</label>
-                  <Select value={formData.class} onValueChange={(value) => handleInputChange('class', value)}>
+                  <Select required value={formData.class} onValueChange={(value) => handleInputChange('class', value)}
+                    disabled={
+                      !formData.board
+                    }
+                  >
                     <SelectTrigger >
                       <SelectValue placeholder="Select Class" />
                     </SelectTrigger>
@@ -395,7 +437,12 @@ const UploadEbooks: React.FC = () => {
               {/* Subject Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
-                <Select value={formData.subject} onValueChange={(value) => handleInputChange('subject', value)}>
+                <Select required value={formData.subject} onValueChange={(value) => handleInputChange('subject', value)}
+                  disabled={
+                    !formData.board ||
+                    !formData.class
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select Subject" />
                   </SelectTrigger>
@@ -410,7 +457,13 @@ const UploadEbooks: React.FC = () => {
               {/* Upload Type Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Ebook Upload Type</label>
-                <Select value={formData.uploadType} onValueChange={(value) => handleInputChange('uploadType', value)}>
+                <Select required value={formData.uploadType} onValueChange={(value) => handleInputChange('uploadType', value)}
+                  disabled={
+                    !formData.board ||
+                    !formData.class ||
+                    !formData.subject
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select Upload Type" />
                   </SelectTrigger>
@@ -424,16 +477,22 @@ const UploadEbooks: React.FC = () => {
 
               {formData.uploadType === 'Chapter Wise PDF' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Class Number</label>
-                  <Select
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Chapter Number</label>
+                  <Select required
                     value={formData.chapter} // Ensure it's a string
                     onValueChange={(value) => handleInputChange('chapter', value)} // Convert back to number
+                    disabled={
+                      !formData.board ||
+                      !formData.class ||
+                      !formData.subject ||
+                      !formData.uploadType
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select chapter number" />
                     </SelectTrigger>
                     <SelectContent className='h-64'>
-                      {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
+                      {numberList.map((num) => (
                         <SelectItem key={'chapter ' + num} value={'chapter ' + num}>
                           {'chapter ' + num}
                         </SelectItem>
@@ -454,7 +513,15 @@ const UploadEbooks: React.FC = () => {
                       key={formData.inputKey.toString()}
                       onChange={handleContentPdfChange}
                       className="pl-10"
-                      disabled={isContentPdfUploading}
+                      //disabled={isContentPdfUploading}
+                      disabled={
+                        (
+                          !formData.board ||
+                          !formData.class ||
+                          !formData.subject ||
+                          !formData.uploadType) &&
+                        (isContentPdfUploading)
+                      }
                     />
                     <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   </div>
@@ -490,53 +557,83 @@ const UploadEbooks: React.FC = () => {
               )}
 
               {formData.uploadType === 'Chapter Wise PDF' && (
-                <div className="space-y-4">
-                  {chapterFiles.map((chapter) => (
-                    <div key={chapter.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-sm font-medium text-gray-700">{formData.chapter}</h4>
-                        {chapterFiles.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeChapter(chapter.id)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
+                <>
+                  <div className="space-y-4">
+                    {savedFiles && savedFiles.length > 0 && savedFiles.map((val) => (
+                      <div key={val.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-sm font-medium text-gray-700">{val.chapter}</h4>
+                        </div>
+                        {val.file && (
+                          <div className="mt-3 p-3 bg-white rounded-lg border">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center space-x-2">
+                                <FileText className="h-4 w-4 text-gray-500" />
+                                <span className="text-sm font-medium text-gray-700">{val.chapter}</span>
+                                {/* <span className="text-xs text-gray-500">({formatFileSize(chapter.file.size)})</span> */}
+                              </div>
+                            </div>
+                          </div>
                         )}
                       </div>
-                      <div className="relative">
-                        <Input
-                          type="file"
-                          accept=".pdf"
-                          key={chapter.inputKey.toString()}
-                          onChange={(e) => handleChapterFileChange(chapter.id, e.target.files?.[0] || null)}
-                          className="pl-10"
-                          disabled={chapter.isUploading}
-                        />
-                        <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      </div>
-                      {chapter.file && (
-                        <div className="mt-3 p-3 bg-white rounded-lg border">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center space-x-2">
-                              <FileText className="h-4 w-4 text-gray-500" />
-                              <span className="text-sm font-medium text-gray-700">{formData.chapter}</span>
-                              {/* <span className="text-xs text-gray-500">({formatFileSize(chapter.file.size)})</span> */}
-                            </div>
+                    ))}
+                  </div>
+
+                  <div className="space-y-4">
+                    {chapterFiles && chapterFiles.length > 0 && chapterFiles.map((chapter) => (
+                      <div key={chapter.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-sm font-medium text-gray-700">{formData.chapter}</h4>
+                          {chapterFiles.length > 1 && (
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
-                              onClick={() => removeChapterFile(chapter.id)}
+                              onClick={() => removeChapter(chapter.id)}
                               className="text-red-500 hover:text-red-700"
                             >
                               <X className="w-4 h-4" />
                             </Button>
-                          </div>
-                          {/* {(chapter.isUploading || chapter.uploadProgress > 0) && (
+                          )}
+                        </div>
+                        <div className="relative">
+                          <Input required
+                            type="file"
+                            accept=".pdf"
+                            key={chapter.inputKey.toString()}
+                            onChange={(e) => handleChapterFileChange(chapter.id, e.target.files?.[0] || null)}
+                            className="pl-10"
+                            disabled={
+                              (
+                                !formData.board ||
+                                !formData.class ||
+                                !formData.subject ||
+                                !formData.uploadType || 
+                                !formData.chapter
+                              ) 
+                            }
+                          />
+                          <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        </div>
+                        {chapter.file && (
+                          <div className="mt-3 p-3 bg-white rounded-lg border">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center space-x-2">
+                                <FileText className="h-4 w-4 text-gray-500" />
+                                <span className="text-sm font-medium text-gray-700">{formData.chapter}</span>
+                                <span className="text-xs text-gray-500">({formatFileSize(chapter.file.size)})</span>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeChapterFile(chapter.id)}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                            {/* {(chapter.isUploading || chapter.uploadProgress > 0) && (
                             <div className="space-y-1">
                               <Progress value={chapter.uploadProgress} className="h-2" />
                               <p className="text-xs text-gray-500">
@@ -544,21 +641,29 @@ const UploadEbooks: React.FC = () => {
                               </p>
                             </div>
                           )} */}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
 
-                  {/* <Button
-                    type="button"
-                    variant="outline"
-                    onClick={addNewChapter}
-                    className="w-full border-dashed border-blue-300 text-blue-600 hover:bg-blue-50"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add New Chapter
-                  </Button> */}
-                </div>
+                    {chapterFiles && chapterFiles.length == 0 &&
+                      chapterStatus && formData.uploadType == 'Chapter Wise PDF' &&
+                      (
+                        <>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={addNewChapter}
+                            className="w-full border-dashed border-blue-300 text-blue-600 hover:bg-blue-50"
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add New Chapter
+                          </Button>
+                        </>
+                      )
+                    }
+                  </div>
+                </>
               )}
 
               {/* Action Buttons */}
