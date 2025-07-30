@@ -6,6 +6,7 @@ from rest_framework import status
 
 from syllabus.models import SchoolChapter, SchoolPrerequisite, SchoolSubTopic
 from core.common_modules.common_functions import CommonFunctions
+from teacher.models import TeacherSubjectAssignment
 logger = logging.getLogger(__name__)
 
 class SyllabusService:
@@ -20,7 +21,8 @@ class SyllabusService:
             class_number_id = request.GET.get("class_number_id")
             subject_id = request.GET.get('subject_id')
 
-            if not school_id or not school_board_id or not academic_year_id or not class_number_id or not subject_id:
+            if not all([school_id, school_board_id, academic_year_id, class_number_id, subject_id]):
+                logger.error("Missing required parameters for fetching chapters.")
                 return Response({"error": "Missing required parameters."},
                                 status=status.HTTP_400_BAD_REQUEST)
             school_db_name = CommonFunctions.get_school_db_name(school_id)
@@ -47,4 +49,39 @@ class SyllabusService:
         except Exception as e:
             logger.error(f"Error fetching chapters: {e}")
             return Response({"error": "Failed to fetch chapters."},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def get_grade_by_teacher_id(self, request):
+        """Fetch grade by teacher ID."""
+        try:
+            school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
+            teacher_id = request.GET.get("teacher_id")
+            academic_year = request.GET.get("academic_year", 1)
+            if not teacher_id or not school_id:
+                logger.error("Missing required parameters.")
+                return Response({"error": "Missing required parameters."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            school_db_name = CommonFunctions.get_school_db_name(school_id)
+            print(f"Using school database: {school_db_name}")
+            teacher_assignment_obj = TeacherSubjectAssignment.objects.using(school_db_name).filter(
+                teacher__teacher_id=teacher_id,
+                academic_year=academic_year
+            ).values('school_class_id', 'school_class__class_instance_id',
+                          'school_class__section', 'subject_id','subject__name')
+            
+            data = []
+            for assignment in teacher_assignment_obj:
+                data.append({
+                    "class_id": assignment["school_class_id"],
+                    "class_number": assignment["school_class__class_instance_id"],
+                    "section": assignment["school_class__section"],
+                    "subject_id": assignment["subject_id"],
+                    "subject_name": assignment["subject__name"]
+                })
+            return Response({"data": data}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error(f"Error fetching grade by teacher ID: {e}")
+            return Response({"error": "Failed to fetch grade."},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
