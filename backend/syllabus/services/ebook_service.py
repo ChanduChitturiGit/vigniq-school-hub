@@ -3,7 +3,7 @@
 import logging
 from io import BytesIO
 from django.db import transaction
-from django.db.models import Max, Q, Subquery, OuterRef
+from collections import OrderedDict
 from django.utils import timezone
 from rest_framework.response import Response
 from rest_framework import status
@@ -95,6 +95,9 @@ class EbookService:
                         file_path=s3_key,
                         syllabus_year=syllabus_year
                     )
+                    if upload_type == 'chapter_wise':
+                        ebook.chapter_number = int(chapter_number)
+                        ebook.save()
                     self.extract_topics_and_prerequisites(BytesIO(file_bytes), ebook,
                                                           previously_uploaded_ebook_id)
                 return Response({"message": "eBook uploaded successfully"},
@@ -144,61 +147,40 @@ class EbookService:
             else:
                 subject = SchoolDefaultSubjects.objects.all()
             filter_conditions['subject__in'] = subject
-            filter_conditions['syllabus_year__lte'] = year  # Common year filter
-
-            # --- SINGLE TYPE EBOOKS ---
-            single_subquery = SchoolSyllabusEbooks.objects.filter(
-                board=OuterRef('board'),
-                class_number=OuterRef('class_number'),
-                subject=OuterRef('subject'),
-                ebook_type='single',
-                syllabus_year__lte=year
-            ).order_by('-syllabus_year').values('syllabus_year')[:1]
+            filter_conditions['syllabus_year__lte'] = year
 
             base_queryset = SchoolSyllabusEbooks.objects.filter(**filter_conditions)
 
-            latest_single_ebooks = base_queryset.filter(
+            # --- SINGLE TYPE ---
+
+            all_single = base_queryset.filter(
                 ebook_type='single',
-                syllabus_year=Subquery(single_subquery)
-            )
+                syllabus_year__lte=year
+            ).order_by('-syllabus_year', '-created_at')
 
-            # --- CHAPTER-WISE EBOOKS ---
-            chapter_qs = Chapter.objects.filter(
-                ebook__isnull=False,
-                ebook__ebook_type='chapter_wise',
-                ebook__syllabus_year__lte=year,
-            )
+            unique_single = OrderedDict()
+            for ebook in all_single:
+                key = (ebook.board_id, ebook.class_number_id, ebook.subject_id)
+                if key not in unique_single:
+                    unique_single[key] = ebook
 
-            if board_id:
-                chapter_qs = chapter_qs.filter(ebook__board=board)
-            if class_id:
-                chapter_qs = chapter_qs.filter(ebook__class_number=class_obj)
-            if subject_id:
-                chapter_qs = chapter_qs.filter(ebook__subject__in=subject)
+            latest_single_ebooks = list(unique_single.values())
 
-            # Get latest chapter-wise eBook per (board, class, subject, chapter_number)
-            seen_keys = set()
-            latest_chapterwise_ebooks = []
-            for chapter in chapter_qs.select_related('ebook'):
-                key = (
-                    chapter.ebook.board_id,
-                    chapter.ebook.class_number_id,
-                    chapter.ebook.subject_id,
-                    chapter.chapter_number
-                )
-                if key in seen_keys:
-                    continue
-                latest_ebook = Chapter.objects.filter(
-                    chapter_number=chapter.chapter_number,
-                    ebook__board=chapter.ebook.board,
-                    ebook__class_number=chapter.ebook.class_number,
-                    ebook__subject=chapter.ebook.subject,
-                    ebook__ebook_type='chapter_wise',
-                    ebook__syllabus_year__lte=year
-                ).select_related('ebook').order_by('-ebook__syllabus_year', '-ebook__created_at').first()
-                if latest_ebook:
-                    latest_chapterwise_ebooks.append(latest_ebook.ebook)
-                    seen_keys.add(key)
+            # --- CHAPTER-WISE TYPE FIXED ---
+
+            all_chapterwise = base_queryset.filter(
+                ebook_type='chapter_wise',
+                syllabus_year__lte=year,
+                chapter_number__isnull=False
+            ).order_by('-syllabus_year', '-created_at')
+
+            unique_chapterwise = OrderedDict()
+            for ebook in all_chapterwise:
+                key = (ebook.board_id, ebook.class_number_id, ebook.subject_id, ebook.chapter_number)
+                if key not in unique_chapterwise:
+                    unique_chapterwise[key] = ebook
+
+            latest_chapterwise_ebooks = list(unique_chapterwise.values())
 
             # Combine and paginate
             combined_ebooks = list(latest_single_ebooks) + latest_chapterwise_ebooks
@@ -221,6 +203,7 @@ class EbookService:
                     "class_number": ebook.class_number.class_number,
                     "ebook_name": ebook.ebook_name,
                     "ebook_type": ebook.ebook_type,
+                    "chapter_number": ebook.chapter_number,
                     "uploaded_at": ebook.created_at.strftime("%Y-%m-%d %H:%M:%S"),
                 })
 

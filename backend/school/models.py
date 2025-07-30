@@ -92,6 +92,7 @@ class SchoolSyllabusEbooks(models.Model):
     ebook_name = models.CharField(max_length=255)
     file_path = models.CharField(max_length=500)
     syllabus_year = models.IntegerField(null=True, blank=True)
+    chapter_number = models.PositiveIntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
