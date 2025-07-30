@@ -3,7 +3,8 @@
 import logging
 from io import BytesIO
 from django.db import transaction
-
+from django.db.models import Max, Q, Subquery, OuterRef
+from django.utils import timezone
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -39,11 +40,12 @@ class EbookService:
             class_id = request.data.get('class_id')
             subject_id = request.data.get('subject_id')
             chapter_number = request.data.get('chapter_number')
+            syllabus_year = request.data.get('syllabus_year')
 
             if not file:
                 logger.error("No file provided for upload.")
                 return Response({"error": "No file provided."}, status=status.HTTP_400_BAD_REQUEST)
-            if not upload_type or not board_id or not class_id or not subject_id:
+            if not upload_type or not board_id or not class_id or not subject_id or not syllabus_year:
                 logger.error("Missing required fields for eBook upload.")
                 return Response({"error": "Missing required fields."},
                                 status=status.HTTP_400_BAD_REQUEST)
@@ -53,10 +55,14 @@ class EbookService:
             subject_obj = SchoolDefaultSubjects.objects.get(id=subject_id)
 
             if upload_type == 'chapter_wise':
-                file_name = f"{subject_obj.name}_chapter_{chapter_number}"
+                if not chapter_number:
+                    logger.error("Chapter number is required for chapter-wise upload.")
+                    return Response({"error": "Chapter number is required."},
+                                    status=status.HTTP_400_BAD_REQUEST)
+                file_name = f"{subject_obj.name}_chapter_{chapter_number}_{timezone.now().strftime('%Y%m%d%H%M%S')}.pdf"
                 s3_key = f"ebooks/class_{class_obj.class_number}/{board_obj.board_name.replace(' ', '_')}/{subject_obj.name}/{file_name}"
             else:
-                file_name = subject_obj.name
+                file_name = f"{subject_obj.name}_{timezone.now().strftime('%Y%m%d%H%M%S')}.pdf"
                 s3_key = f"ebooks/class_{class_obj.class_number}/{board_obj.board_name.replace(' ', '_')}/{file_name}"
 
             file_type = 'application/pdf'
@@ -64,18 +70,38 @@ class EbookService:
             upload_success = s3_client.upload_file(BytesIO(file_bytes), s3_key, file_type=file_type)
             if upload_success:
                 with transaction.atomic():
-                    ebook, created = SchoolSyllabusEbooks.objects.update_or_create(
+                    filters = {
+                        'ebook__board': board_obj,
+                        'ebook__subject': subject_obj,
+                        'ebook__class_number': class_obj
+                    }
+                    if upload_type == 'chapter_wise':
+                        filters['ebook__ebook_type'] = upload_type
+                        filters['chapter_number'] = chapter_number
+                    previously_uploaded_ebook = Chapter.objects.filter(
+                        **filters
+                    ).order_by('-ebook__created_at','-ebook__id').first()
+                    if previously_uploaded_ebook:
+                        previously_uploaded_ebook_id = previously_uploaded_ebook.ebook_id
+                    else:
+                        previously_uploaded_ebook_id = None
+
+                    ebook = SchoolSyllabusEbooks.objects.create(
                         board=board_obj,
                         subject=subject_obj,
                         class_number=class_obj,
                         ebook_type=upload_type,
                         ebook_name=file_name,
-                        defaults={"file_path": s3_key}
+                        file_path=s3_key,
+                        syllabus_year=syllabus_year
                     )
-                    self.extract_topics_and_prerequisites(BytesIO(file_bytes), ebook)
-                return Response({"message": "eBook uploaded successfully"}, status=status.HTTP_201_CREATED)
+                    self.extract_topics_and_prerequisites(BytesIO(file_bytes), ebook,
+                                                          previously_uploaded_ebook_id)
+                return Response({"message": "eBook uploaded successfully"},
+                                status=status.HTTP_201_CREATED)
             else:
-                return Response({"error": "Failed to upload eBook."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return Response({"error": "Failed to upload eBook."},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except SchoolBoard.DoesNotExist:
             logger.error(f"Board with ID {board_id} does not exist.")
             return Response({"error": "Board not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -91,15 +117,22 @@ class EbookService:
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def get_ebook(self, request):
-        """Retrieve eBook details."""
+        """Retrieve eBook details with latest version logic for both 'single' and 'chapter_wise'."""
         try:
             board_id = request.GET.get("board_id")
             class_id = request.GET.get("class_id")
             subject_id = request.GET.get("subject_id")
+            year = request.GET.get("syllabus_year")
             page = int(request.GET.get("page", 1))
 
-            filter_conditions = {}
+            if not year:
+                logger.error("Syllabus year is required.")
+                return Response({"error": "Syllabus year is required."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
             page_size = 10
+            filter_conditions = {}
+
             if board_id:
                 board = SchoolBoard.objects.get(id=board_id)
                 filter_conditions['board'] = board
@@ -111,11 +144,69 @@ class EbookService:
             else:
                 subject = SchoolDefaultSubjects.objects.all()
             filter_conditions['subject__in'] = subject
+            filter_conditions['syllabus_year__lte'] = year  # Common year filter
 
-            ebooks_obj = SchoolSyllabusEbooks.objects.filter(**filter_conditions)
-            ebooks = ebooks_obj.order_by('id')[(page - 1) * page_size: page * page_size]
-            if ebooks_obj and not ebooks:
-                return Response({"message": "End of ebooks.",'data':[]}, status=status.HTTP_200_OK)
+            # --- SINGLE TYPE EBOOKS ---
+            single_subquery = SchoolSyllabusEbooks.objects.filter(
+                board=OuterRef('board'),
+                class_number=OuterRef('class_number'),
+                subject=OuterRef('subject'),
+                ebook_type='single',
+                syllabus_year__lte=year
+            ).order_by('-syllabus_year').values('syllabus_year')[:1]
+
+            base_queryset = SchoolSyllabusEbooks.objects.filter(**filter_conditions)
+
+            latest_single_ebooks = base_queryset.filter(
+                ebook_type='single',
+                syllabus_year=Subquery(single_subquery)
+            )
+
+            # --- CHAPTER-WISE EBOOKS ---
+            chapter_qs = Chapter.objects.filter(
+                ebook__isnull=False,
+                ebook__ebook_type='chapter_wise',
+                ebook__syllabus_year__lte=year,
+            )
+
+            if board_id:
+                chapter_qs = chapter_qs.filter(ebook__board=board)
+            if class_id:
+                chapter_qs = chapter_qs.filter(ebook__class_number=class_obj)
+            if subject_id:
+                chapter_qs = chapter_qs.filter(ebook__subject__in=subject)
+
+            # Get latest chapter-wise eBook per (board, class, subject, chapter_number)
+            seen_keys = set()
+            latest_chapterwise_ebooks = []
+            for chapter in chapter_qs.select_related('ebook'):
+                key = (
+                    chapter.ebook.board_id,
+                    chapter.ebook.class_number_id,
+                    chapter.ebook.subject_id,
+                    chapter.chapter_number
+                )
+                if key in seen_keys:
+                    continue
+                latest_ebook = Chapter.objects.filter(
+                    chapter_number=chapter.chapter_number,
+                    ebook__board=chapter.ebook.board,
+                    ebook__class_number=chapter.ebook.class_number,
+                    ebook__subject=chapter.ebook.subject,
+                    ebook__ebook_type='chapter_wise',
+                    ebook__syllabus_year__lte=year
+                ).select_related('ebook').order_by('-ebook__syllabus_year', '-ebook__created_at').first()
+                if latest_ebook:
+                    latest_chapterwise_ebooks.append(latest_ebook.ebook)
+                    seen_keys.add(key)
+
+            # Combine and paginate
+            combined_ebooks = list(latest_single_ebooks) + latest_chapterwise_ebooks
+            combined_ebooks.sort(key=lambda x: x.id)
+            ebooks = combined_ebooks[(page - 1) * page_size: page * page_size]
+
+            if combined_ebooks and not ebooks:
+                return Response({"message": "End of ebooks.", 'data': []}, status=status.HTTP_200_OK)
             if not ebooks:
                 return Response({"error": "No eBooks found for the given criteria."},
                                 status=status.HTTP_404_NOT_FOUND)
@@ -133,8 +224,9 @@ class EbookService:
                     "uploaded_at": ebook.created_at.strftime("%Y-%m-%d %H:%M:%S"),
                 })
 
-            logger.info(f"Retrieved Ebooks Successfully.")
+            logger.info("Retrieved Ebooks Successfully.")
             return Response({'data': ebook_list}, status=status.HTTP_200_OK)
+
         except SchoolBoard.DoesNotExist:
             return Response({"error": "Board not found."}, status=status.HTTP_404_NOT_FOUND)
         except SchoolDefaultClasses.DoesNotExist:
@@ -167,13 +259,13 @@ class EbookService:
             return Response({"error": "An error occurred while deleting the eBook."},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def extract_topics_and_prerequisites(self, pdf_file, ebook):
+    def extract_topics_and_prerequisites(self, pdf_file, ebook, previously_uploaded_ebook_id):
         """Extract topics and prerequisites from the provided PDF file."""
 
         lang_chain_service = LangChainService()
         chapters_obj = lang_chain_service.get_topics_and_prerequisites(pdf_file)
         with transaction.atomic():
-            Chapter.objects.filter(ebook=ebook).delete()
+            Chapter.objects.filter(ebook_id=previously_uploaded_ebook_id).delete()
             for chapter_item in chapters_obj:
                 chapter = Chapter.objects.create(
                     chapter_number=chapter_item['chapter_number'],
@@ -216,7 +308,8 @@ class EbookService:
                                 class_number=school_class_obj,
                                 subject_id=ebook.subject_id,
                                 chapter_number=chapter.chapter_number,
-                                chapter_name=chapter.chapter_name
+                                chapter_name=chapter.chapter_name,
+                                ebook_id=ebook.id
                             )
                             sub_topics = SubTopic.objects.filter(chapter=chapter)
                             for sub_topic in sub_topics:

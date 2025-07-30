@@ -91,12 +91,13 @@ class SchoolSyllabusEbooks(models.Model):
     ])
     ebook_name = models.CharField(max_length=255)
     file_path = models.CharField(max_length=500)
+    syllabus_year = models.IntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'school_syllabus_ebooks'
-        unique_together = ('board', 'subject', 'class_number', 'ebook_name')
+        unique_together = ('board', 'subject', 'class_number', 'ebook_name', 'created_at')
 
 class AcademicYear(AbstractAcademicYear):
     class Meta:
