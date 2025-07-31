@@ -42,8 +42,8 @@ const ViewEbooks: React.FC = () => {
   const { showSnackbar } = useSnackbar();
   const { user } = useAuth();
   const [loader, setLoader] = useState(false);
-  const [downloadLoader,setDownloadLoader] = useState(false);
-  const [viewLoader,setViewLoader] = useState(false);
+  const [downloadLoader, setDownloadLoader] = useState(false);
+  const [viewLoader, setViewLoader] = useState(false);
   const [filters, setFilters] = useState({
     board: '',
     class: '',
@@ -51,7 +51,9 @@ const ViewEbooks: React.FC = () => {
     board_id: null,
     class_id: null,
     subject_id: null,
-    page: 1
+    page: 1,
+    yearString: '',
+    year: null
   });
   const [payload, setPayload] = useState({
     board_id: null,
@@ -66,6 +68,8 @@ const ViewEbooks: React.FC = () => {
   const [classes, setClasses] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 10 }, (_, i) => (currentYear - i).toString());
 
   // Sample data
   const sampleEbooks: any = sampleData;
@@ -189,6 +193,11 @@ const ViewEbooks: React.FC = () => {
         ...prev,
         'subject_id': getSubjectId(value)
       }));
+    } else if (field == 'yearString') {
+      setPayload(prev => ({
+        ...prev,
+        'year': Number(value)
+      }));
     }
   };
 
@@ -235,7 +244,7 @@ const ViewEbooks: React.FC = () => {
         status: "success"
       });
       setDownloadLoader(false);
-    }catch(error){
+    } catch (error) {
       showSnackbar({
         title: "⛔ Error",
         description: `Something went wrong please try again!`,
@@ -262,6 +271,8 @@ const ViewEbooks: React.FC = () => {
       board_id: null,
       class_id: null,
       subject_id: null,
+      yearString: '',
+      year: null,
       page: 1
     });
     setPayload({
@@ -284,7 +295,7 @@ const ViewEbooks: React.FC = () => {
         {/* Filters Section */}
         <Card className="mb-6">
           <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Board Name</label>
                 <Select value={filters.board} onValueChange={(value) => handleFilterChange('board', value)}>
@@ -326,7 +337,28 @@ const ViewEbooks: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* year */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Year
+                </label>
+                <Select value={filters.yearString} onValueChange={(value) => handleFilterChange('yearString', value)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a year" />
+                  </SelectTrigger>
+                  <SelectContent className='h-64'>
+                    {years.map((val, index) => (
+                      <SelectItem key={index} value={val}>
+                        {val}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
+
 
             <div className="flex justify-end">
               <Button variant="outline" onClick={clearFilters}>

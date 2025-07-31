@@ -34,6 +34,8 @@ const UploadEbooks: React.FC = () => {
     subject: '',
     uploadType: '',
     chapter: '',
+    yearString : '',
+    year : null,
     inputKey: Date.now()
   });
   const [contentPdf, setContentPdf] = useState<File | null>(null);
@@ -55,8 +57,10 @@ const UploadEbooks: React.FC = () => {
   const sampleSubjects = ['Mathematics', 'English', 'Science', 'Physics', 'Chemistry', 'Biology', 'History', 'Geography', 'Hindi', 'Computer Science'];
   const uploadTypes = ['Chapter Wise PDF', 'Single PDF'];
 
-  const [numberList,setNumberList] = useState(Array.from({ length: 20 }, (_, i) => i + 1));
-  const [chapterListData,setChapterListData] = useState([]);
+  const [numberList, setNumberList] = useState(Array.from({ length: 20 }, (_, i) => i + 1));
+  const [chapterListData, setChapterListData] = useState([]);
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 10 }, (_, i) => (currentYear - i).toString());
 
 
 
@@ -96,7 +100,7 @@ const UploadEbooks: React.FC = () => {
   // }, [savedFiles, chapterFiles]);
 
   useEffect(() => {
-    if( formData.uploadType == 'Chapter Wise PDF'){
+    if (formData.uploadType == 'Chapter Wise PDF') {
       const newList = numberList.filter((num) => !chapterListData.includes(num));
       setNumberList(newList)
     }
@@ -174,6 +178,11 @@ const UploadEbooks: React.FC = () => {
       setFormData(prev => ({
         ...prev,
         'chapter_id': value.split(' ')[1] || null
+      }));
+    }else if (field == 'yearString') {
+      setFormData(prev => ({
+        ...prev,
+        'year': Number(value)
       }));
     }
   };
@@ -303,6 +312,8 @@ const UploadEbooks: React.FC = () => {
             subject: '',
             uploadType: '',
             chapter: '',
+            yearString : '',
+            year : null,
             inputKey: Date.now()
           });
           setChapterStatus(false);
@@ -324,6 +335,8 @@ const UploadEbooks: React.FC = () => {
         description: error?.response?.data?.error || "Something went wrong",
         status: "error"
       });
+    }finally{
+      setIsUploading(false);
     }
   }
 
@@ -374,6 +387,8 @@ const UploadEbooks: React.FC = () => {
       subject: '',
       uploadType: '',
       chapter: '',
+      yearString : '',
+      year : null,
       inputKey: Date.now()
     });
     setContentPdf(null);
@@ -381,7 +396,7 @@ const UploadEbooks: React.FC = () => {
     setIsContentPdfUploading(false);
     setNumberList(Array.from({ length: 20 }, (_, i) => i + 1));
     setChapterListData([]);
-    setChapterFiles([{ id: '1', name: '', file: null, uploadProgress: 0, isUploading: false,inputKey: Date.now() }]);
+    setChapterFiles([{ id: '1', name: '', file: null, uploadProgress: 0, isUploading: false, inputKey: Date.now() }]);
     setSavedFiles([]);
   };
 
@@ -434,25 +449,53 @@ const UploadEbooks: React.FC = () => {
                 </div>
               </div>
 
-              {/* Subject Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
-                <Select required value={formData.subject} onValueChange={(value) => handleInputChange('subject', value)}
-                  disabled={
-                    !formData.board ||
-                    !formData.class
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Subject" />
-                  </SelectTrigger>
-                  <SelectContent className="h-64">
-                    {subjects.map((subject) => (
-                      <SelectItem key={subject.id} value={subject.name}>{subject.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Subject Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                  <Select required value={formData.subject} onValueChange={(value) => handleInputChange('subject', value)}
+                    disabled={
+                      !formData.board ||
+                      !formData.class
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Subject" />
+                    </SelectTrigger>
+                    <SelectContent className="h-64">
+                      {subjects.map((subject) => (
+                        <SelectItem key={subject.id} value={subject.name}>{subject.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* year */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Year
+                  </label>
+                  <Select value={formData.yearString} onValueChange={(value) => handleInputChange('yearString', value)}
+                     disabled={
+                      !formData.board ||
+                      !formData.class || 
+                      !formData.subject
+                    }>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a year" />
+                    </SelectTrigger>
+                    <SelectContent className='h-64'>
+                      {years.map((val, index) => (
+                        <SelectItem key={index} value={val}>
+                          {val}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
               </div>
+
 
               {/* Upload Type Selection */}
               <div>
@@ -461,7 +504,8 @@ const UploadEbooks: React.FC = () => {
                   disabled={
                     !formData.board ||
                     !formData.class ||
-                    !formData.subject
+                    !formData.yearString ||
+                    !formData.subject 
                   }
                 >
                   <SelectTrigger>
@@ -484,6 +528,7 @@ const UploadEbooks: React.FC = () => {
                     disabled={
                       !formData.board ||
                       !formData.class ||
+                      !formData.yearString ||
                       !formData.subject ||
                       !formData.uploadType
                     }
@@ -518,6 +563,7 @@ const UploadEbooks: React.FC = () => {
                         (
                           !formData.board ||
                           !formData.class ||
+                          !formData.yearString ||
                           !formData.subject ||
                           !formData.uploadType) &&
                         (isContentPdfUploading)
@@ -607,10 +653,11 @@ const UploadEbooks: React.FC = () => {
                               (
                                 !formData.board ||
                                 !formData.class ||
+                                !formData.yearString ||
                                 !formData.subject ||
-                                !formData.uploadType || 
+                                !formData.uploadType ||
                                 !formData.chapter
-                              ) 
+                              )
                             }
                           />
                           <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
