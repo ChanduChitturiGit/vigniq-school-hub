@@ -10,6 +10,7 @@ class SchoolChapter(AbstractChapter):
     academic_year = models.ForeignKey(SchoolAcademicYear, on_delete=models.CASCADE)
     class_number = models.ForeignKey(SchoolClass, on_delete=models.CASCADE, null=True, blank=True)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, null=True, blank=True)
+    ebook_id = models.IntegerField(null=True, blank=True)
 
     class Meta(AbstractChapter.Meta):
         db_table = 'syllabus_chapter'

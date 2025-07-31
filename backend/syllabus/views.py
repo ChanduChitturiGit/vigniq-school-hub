@@ -42,6 +42,8 @@ class SyllabusView(APIView):
         """Handle GET requests for syllabus actions."""
         if action == 'getChaptersProgress':
             return SyllabusService().get_chapters_progress(request)
+        elif action == 'getGradeByTeacherId':
+            return SyllabusService().get_grade_by_teacher_id(request)
         return Response({"message": f"GET request for action: {action}"})
 
     def post(self, request, action=None):
