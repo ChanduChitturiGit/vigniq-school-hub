@@ -269,7 +269,7 @@ class ClassesService:
                 chapters = SchoolChapter.objects.using(school_db_name).filter(
                     class_number=class_obj,
                     academic_year=academic_year,
-                    school_board_id=board_id
+                    school_board_id=board_id,
                 )
                 if chapters.exists():
                     for chapter in chapters:
