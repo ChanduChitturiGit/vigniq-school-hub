@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -184,7 +183,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
 
   const isActive = (path: string) => {
     if (path === '#') return false;
-    return location.pathname === path || location.pathname + location.search === path;
+    
+    // For subject-specific paths, match the full path including query params
+    if (path.includes('?')) {
+      return location.pathname + location.search === path;
+    }
+    
+    return location.pathname === path;
   };
   
   const isDropdownActive = (subItems: { path: string; label: string }[]) => {
@@ -296,7 +301,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
                       to={regularItem.path}
                       className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${
                         isActive(regularItem.path) 
-                          ? 'bg-white/20 text-white' 
+                          ? 'bg-white/20 text-white font-medium' 
                           : 'text-white/80 hover:bg-white/10 hover:text-white'
                       }`}
                     >
