@@ -4,13 +4,17 @@ import { X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 
 interface ClassSectionSubjectData {
-  assignment: ClassSectionSubjectData;
   class: string;
+  section: string;
   subject: string;
 }
 
 interface ClassSectionSubjectInputProps {
-  data: any;
+  data: {
+    assignment: ClassSectionSubjectData;
+    subjects: any[];
+    classes: any[];
+  };
   onChange: (data: ClassSectionSubjectData) => void;
   onRemove: () => void;
   canRemove: boolean;
@@ -29,19 +33,8 @@ const ClassSectionSubjectInput: React.FC<ClassSectionSubjectInputProps> = ({
     });
   };
 
-  const sampleClasses = [
-    'Class 1 - A', 'Class 2 - B'
-  ];
-
-  const classes =  data.classes;
-
+  const classes = data.classes;
   const sections = ['A', 'B', 'C', 'D', 'E', 'F'];
-
-  const sampleSubjects =[
-    'Mathematics', 'English', 'Science', 'Physics', 'Chemistry',
-    'Biology', 'History', 'Geography', 'Hindi', 'Sanskrit',
-    'Computer Science', 'Physical Education', 'Art', 'Music'
-  ]
   const subjects = data.subjects;
 
   return (
@@ -63,14 +56,30 @@ const ClassSectionSubjectInput: React.FC<ClassSectionSubjectInputProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
-          <Select value={data.class} onValueChange={(value) => handleInputChange('class', value)}>
+          <Select value={data.assignment?.class || ''} onValueChange={(value) => handleInputChange('class', value)}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select class" />
             </SelectTrigger>
             <SelectContent>
               {classes && classes.map((cls) => (
-                <SelectItem key={cls} value={'Class '+ cls.class_number+' - '+cls.section}>
-                  {'Class '+ cls.class_number+' - '+cls.section}
+                <SelectItem key={cls.id || cls.class_number} value={cls.class_number?.toString() || cls.name}>
+                  Class {cls.class_number || cls.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
+          <Select value={data.assignment?.section || ''} onValueChange={(value) => handleInputChange('section', value)}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select section" />
+            </SelectTrigger>
+            <SelectContent>
+              {sections.map((section) => (
+                <SelectItem key={section} value={section}>
+                  {section}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -79,7 +88,7 @@ const ClassSectionSubjectInput: React.FC<ClassSectionSubjectInputProps> = ({
         
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
-          <Select value={data.subject} onValueChange={(value) => handleInputChange('subject', value)}>
+          <Select value={data.assignment?.subject || ''} onValueChange={(value) => handleInputChange('subject', value)}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select subject" />
             </SelectTrigger>
