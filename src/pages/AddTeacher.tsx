@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import PasswordInput from '../components/ui/password-input';
-import ClassSectionSubjectInput, { ClassSectionSubjectData } from '../components/ui/class-section-subject-input';
+import { ClassSectionSubjectInput, ClassSectionSubjectData } from '../components/ui/class-section-subject-input';
 import { Plus } from 'lucide-react';
 import { getSubjectsBySchoolId } from '../services/subject';
 import { getClassesBySchoolId } from '@/services/class';
@@ -13,7 +13,7 @@ const AddTeacher: React.FC = () => {
   const [password, setPassword] = useState('');
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user") || '{}');
   const [teachingAssignments, setTeachingAssignments] = useState<ClassSectionSubjectData[]>([
-    { class: '', section: '', subject: '' }
+    { class: '', section: '', subject: '', assignment: undefined }
   ]);
   const [classes, setClasses] = useState([]);
   const [formData, setFormData] = useState({
@@ -76,7 +76,8 @@ const AddTeacher: React.FC = () => {
     setTeachingAssignments([...teachingAssignments, {
       class: '',
       section: '',
-      subject: ''
+      subject: '',
+      assignment: undefined
     }]);
   };
 
@@ -126,6 +127,7 @@ const AddTeacher: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-800 mb-6">Add New Teacher</h1>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
@@ -261,15 +263,12 @@ const AddTeacher: React.FC = () => {
               </div>
 
               <div className="space-y-4">
-                {teachingAssignments.map((assignment, index) => (
-                  <ClassSectionSubjectInput
-                    key={index}
-                    data={{ assignment, subjects, classes }}
-                    onChange={(data) => handleAssignmentChange(index, data)}
-                    onRemove={() => removeAssignment(index)}
-                    canRemove={teachingAssignments.length > 1}
-                  />
-                ))}
+                <ClassSectionSubjectInput
+                  data={teachingAssignments}
+                  onChange={setTeachingAssignments}
+                  availableClasses={classes}
+                  availableSubjects={subjects}
+                />
               </div>
             </div>
 

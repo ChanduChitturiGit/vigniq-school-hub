@@ -1,11 +1,10 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Edit, Mail, Phone, Calendar, GraduationCap, BookOpen, Plus, X } from 'lucide-react';
 import { getTeachersById, editTeacher } from '../services/teacher';
-import ClassSectionSubjectInput, { ClassSectionSubjectData } from '../components/ui/class-section-subject-input';
+import { ClassSectionSubjectInput, ClassSectionSubjectData } from '../components/ui/class-section-subject-input';
 import { getSubjectsBySchoolId } from '../services/subject';
 import { getClassesBySchoolId } from '@/services/class';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
@@ -37,7 +36,9 @@ const TeacherDetails: React.FC = () => {
     { label: `Teacher Details - ${formData.teacher_first_name + ' ' + formData.teacher_last_name}` }
   ]);
   const [teachingAssignments, setTeachingAssignments] = useState<ClassSectionSubjectData[]>([{
-    class: '', subject: '',
+    class: '', 
+    section: '',
+    subject: '',
     assignment: undefined
   }]);
   const [teacherAssignments,seTeacherAssignments] = useState([]);
@@ -153,7 +154,9 @@ const TeacherDetails: React.FC = () => {
 
   const addNewAssignment = () => {
     setTeachingAssignments([...teachingAssignments, {
-      class: '', subject: '',
+      class: '', 
+      section: '',
+      subject: '',
       assignment: undefined
     }]);
   };
@@ -221,6 +224,7 @@ const TeacherDetails: React.FC = () => {
             </button>
           </div>
 
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Personal Information</h3>
@@ -427,10 +431,10 @@ const TeacherDetails: React.FC = () => {
                 {teachingAssignments.map((assignment, index) => (
                   <ClassSectionSubjectInput
                     key={index}
-                    data={{ "assignment": assignment, "subject_assignments": formData.subject_assignments, "subjects": subjects, "classes": classes }}
-                    onChange={(data) => handleAssignmentChange(index, data)}
-                    onRemove={() => removeAssignment(index)}
-                    canRemove={teachingAssignments.length > 1}
+                    data={teachingAssignments}
+                    onChange={setTeachingAssignments}
+                    availableClasses={classes}
+                    availableSubjects={subjects}
                   />
                 ))}
               </div>
