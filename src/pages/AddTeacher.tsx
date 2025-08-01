@@ -11,8 +11,10 @@ import { getClassesBySchoolId } from '@/services/class';
 const AddTeacher: React.FC = () => {
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
-  const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
-  const [teachingAssignments, setTeachingAssignments] = useState<ClassSectionSubjectData[]>();
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user") || '{}');
+  const [teachingAssignments, setTeachingAssignments] = useState<ClassSectionSubjectData[]>([
+    { class: '', section: '', subject: '' }
+  ]);
   const [classes, setClasses] = useState([]);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -72,8 +74,9 @@ const AddTeacher: React.FC = () => {
 
   const addNewAssignment = () => {
     setTeachingAssignments([...teachingAssignments, {
-      class: '', subject: '',
-      assignment: undefined
+      class: '',
+      section: '',
+      subject: ''
     }]);
   };
 
@@ -95,9 +98,9 @@ const AddTeacher: React.FC = () => {
     }
 
     // Filter valid assignments (all three fields must be filled) - now optional
-    const validAssignments = teachingAssignments.filter(assignment =>
+    const validAssignments = teachingAssignments?.filter(assignment =>
       assignment.class && assignment.section && assignment.subject
-    );
+    ) || [];
 
     const teacherData = {
       ...formData,
@@ -261,7 +264,7 @@ const AddTeacher: React.FC = () => {
                 {teachingAssignments.map((assignment, index) => (
                   <ClassSectionSubjectInput
                     key={index}
-                    data={{ "assignment": assignment, "subjects": subjects, "classes": classes }}
+                    data={{ assignment, subjects, classes }}
                     onChange={(data) => handleAssignmentChange(index, data)}
                     onRemove={() => removeAssignment(index)}
                     canRemove={teachingAssignments.length > 1}

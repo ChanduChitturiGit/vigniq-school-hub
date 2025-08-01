@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -19,7 +18,8 @@ import {
   FileText,
   UserPlus,
   Upload,
-  Eye
+  Eye,
+  Award
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -114,12 +114,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
             { path: '/students', label: 'students', icon: Users }
           ]
         },
+        { path: '/grades', icon: Award, label: 'Grades', roles: ['teacher'] },
         { path: '/view-ebooks', icon: BookOpen, label: 'E-Books', roles: ['teacher'] }
       ],
       'student': [
         { path: '/profile', icon: User, label: 'My Profile', roles: ['student'] },
-        // { path: '/timetable', icon: Calendar, label: 'Timetable', roles: ['student'] },
-        // { path: '/grades', icon: BarChart3, label: 'Grades', roles: ['student'] },
         { path: '/view-ebooks', icon: BookOpen, label: 'E-Books', roles: ['student'] }
       ]
     };
@@ -128,10 +127,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
     const helpSubItems: { path: string; label: string; icon: React.ComponentType<{ className?: string }> }[] = [];
 
     if (user?.role === 'superadmin') {
-      // superadmin sees responses (from all admins)
       helpSubItems.push({ path: '/responses', label: 'Responses', icon: MessageSquare });
     } else {
-      // Other roles see support, requests, and responses
       helpSubItems.push({ path: '/support', label: 'Support', icon: HelpCircle });
       
       if (user?.role !== 'student') {

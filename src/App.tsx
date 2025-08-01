@@ -33,6 +33,9 @@ import AdminRequests from './pages/AdminRequests';
 import Responses from './pages/Responses';
 import UploadEbooks from './pages/UploadEbooks';
 import ViewEbooks from './pages/ViewEbooks';
+import Grades from './pages/Grades';
+import Syllabus from './pages/Syllabus';
+import GradesProgress from './pages/GradesProgress';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -158,6 +161,24 @@ function App() {
             </ProtectedRoute>
           } />
           
+          <Route path="/grades" element={
+            <ProtectedRoute allowedRoles={['teacher']}>
+              <Grades />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/grades/syllabus/:subjectId" element={
+            <ProtectedRoute allowedRoles={['teacher']}>
+              <Syllabus />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/grades/progress/:subjectId" element={
+            <ProtectedRoute allowedRoles={['teacher']}>
+              <GradesProgress />
+            </ProtectedRoute>
+          } />
+          
           <Route path="/support" element={
             <ProtectedRoute>
               <Support />
@@ -189,7 +210,7 @@ function App() {
           } />
           
           <Route path="/view-ebooks" element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['teacher', 'student', 'admin', 'superadmin']}>
               <ViewEbooks />
             </ProtectedRoute>
           } />
