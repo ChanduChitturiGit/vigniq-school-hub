@@ -7,14 +7,14 @@ def load_fixture(apps, schema_editor):
     
     db_name = getattr(settings, 'CURRENT_MIGRATION_DB', 'default')
 
-    fixtures = ['classes.json']
+    fixtures = ['subjects.json']
     for fixture in fixtures:
         call_command('loaddata', fixture,database=db_name)
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('school', '0006_populate_subjects'),
+        ('teacher', '0001_initial'),
     ]
 
     operations = [

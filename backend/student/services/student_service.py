@@ -391,7 +391,7 @@ class StudentService:
             ).values_list('student_id', flat=True)
 
             students = Student.objects.using(self.school_db_name).filter(
-                id__in=students_instants_ids,
+                student_id__in=students_instants_ids,
             )
 
             formated_students_data = self.get_students_data(students,academic_year_id)

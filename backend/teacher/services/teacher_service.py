@@ -156,8 +156,8 @@ class TeacherService:
         """
         try:
             teacher_id = request.data.get('teacher_id')
-            first_name = request.data.get('first_name')
-            last_name = request.data.get('last_name')
+            first_name = request.data.get('teacher_first_name')
+            last_name = request.data.get('teacher_last_name')
             email = request.data.get('email')
             phone_number = request.data.get('phone_number')
             gender = request.data.get('gender')
