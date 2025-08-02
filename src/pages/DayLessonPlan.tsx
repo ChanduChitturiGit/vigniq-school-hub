@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
@@ -8,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { 
   ArrowLeft, 
   Download, 
-  Print,
+  Printer,
   Play,
   Calculator
 } from 'lucide-react';
@@ -111,7 +110,7 @@ const DayLessonPlan: React.FC = () => {
               <span className="text-2xl font-bold text-gray-900">Lesson Plan</span>
               <div className="flex items-center gap-3">
                 <Button variant="outline" size="sm" className="text-blue-600 hover:text-blue-800 border-blue-300">
-                  <Print className="w-4 h-4 mr-2" />
+                  <Printer className="w-4 h-4 mr-2" />
                   Print
                 </Button>
                 <Button variant="outline" size="sm" className="text-green-600 hover:text-green-800 border-green-300">
