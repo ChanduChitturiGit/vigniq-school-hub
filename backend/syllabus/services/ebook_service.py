@@ -40,7 +40,7 @@ class EbookService:
             class_id = request.data.get('class_id')
             subject_id = request.data.get('subject_id')
             chapter_number = request.data.get('chapter_number')
-            syllabus_year = request.data.get('syllabus_year')
+            syllabus_year = request.data.get('year')
 
             if not file:
                 logger.error("No file provided for upload.")
@@ -125,7 +125,7 @@ class EbookService:
             board_id = request.GET.get("board_id")
             class_id = request.GET.get("class_id")
             subject_id = request.GET.get("subject_id")
-            year = request.GET.get("syllabus_year")
+            year = request.GET.get("year")
             page = int(request.GET.get("page", 1))
 
             if not year:
