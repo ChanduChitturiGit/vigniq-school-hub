@@ -86,8 +86,8 @@ function App() {
             <Route path="/grades" element={<ProtectedRoute><Grades /></ProtectedRoute>} />
             <Route path="/grades/syllabus/:subjectId" element={<ProtectedRoute><Syllabus /></ProtectedRoute>} />
             <Route path="/grades/progress/:subjectId" element={<ProtectedRoute><GradesProgress /></ProtectedRoute>} />
-            <Route path="/grades/view-ebooks/:subjectId" element={<ProtectedRoute><ViewEbooks /></ProtectedRoute>} />
-            <Route path="/grades/upload-ebooks/:subjectId" element={<ProtectedRoute><UploadEbooks /></ProtectedRoute>} />
+            <Route path="/view-ebooks" element={<ProtectedRoute><ViewEbooks /></ProtectedRoute>} />
+            <Route path="/upload-ebooks" element={<ProtectedRoute><UploadEbooks /></ProtectedRoute>} />
             <Route path="/grades/lesson-plan/create/:chapterId" element={<ProtectedRoute><CreateLessonPlan /></ProtectedRoute>} />
             <Route path="/grades/lesson-plan/view/:chapterId/:lessonPlanId" element={<ProtectedRoute><ViewLessonPlan /></ProtectedRoute>} />
             <Route path="/grades/lesson-plan/day/:chapterId/:day" element={<ProtectedRoute><DayLessonPlan /></ProtectedRoute>} />
