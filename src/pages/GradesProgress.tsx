@@ -56,7 +56,7 @@ const GradesProgress: React.FC = () => {
   ];
 
   const sampleStudentPerformance: StudentPerformance[] = [
-    { range: '<60%', count: 5, percentage: '17%', color: 'bg-red-100 text-red-800' },
+    { range: '<60%', count: 5, percentage: '17%', color: 'bg-orange-100 text-orange-800' },
     { range: '60-80%', count: 15, percentage: '50%', color: 'bg-yellow-100 text-yellow-800' },
     { range: '>80%', count: 10, percentage: '33%', color: 'bg-green-100 text-green-800' }
   ];
@@ -81,7 +81,7 @@ const GradesProgress: React.FC = () => {
     if (progress >= 70) return 'bg-blue-500';
     if (progress >= 60) return 'bg-yellow-500';
     if (progress >= 50) return 'bg-orange-500';
-    return 'bg-red-500';
+    return 'bg-orange-400';
   };
 
   const overallProgress = chaptersProgress.reduce((sum, chapter) => sum + chapter.progress, 0) / chaptersProgress.length;
@@ -189,7 +189,7 @@ const GradesProgress: React.FC = () => {
                       chapter.progress >= 70 ? 'bg-blue-100 text-blue-800' :
                       chapter.progress >= 60 ? 'bg-yellow-100 text-yellow-800' :
                       chapter.progress >= 50 ? 'bg-orange-100 text-orange-800' :
-                      'bg-red-100 text-red-800'
+                      'bg-orange-100 text-orange-700'
                     }`}>
                       {chapter.progress >= 80 ? 'Excellent' :
                        chapter.progress >= 70 ? 'Very Good' :
@@ -218,18 +218,18 @@ const GradesProgress: React.FC = () => {
               {studentPerformance.map((performance, index) => (
                 <div key={index} className="text-center bg-white rounded-xl p-6 shadow-md">
                   <div className={`inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4 ${
-                    performance.range === '<60%' ? 'bg-red-100' :
+                    performance.range === '<60%' ? 'bg-orange-100' :
                     performance.range === '60-80%' ? 'bg-yellow-100' : 'bg-green-100'
                   }`}>
                     <span className={`text-3xl font-bold ${
-                      performance.range === '<60%' ? 'text-red-600' :
+                      performance.range === '<60%' ? 'text-orange-600' :
                       performance.range === '60-80%' ? 'text-yellow-600' : 'text-green-600'
                     }`}>
                       {performance.count}
                     </span>
                   </div>
                   <p className={`text-lg font-bold mb-2 ${
-                    performance.range === '<60%' ? 'text-red-600' :
+                    performance.range === '<60%' ? 'text-orange-600' :
                     performance.range === '60-80%' ? 'text-yellow-600' : 'text-green-600'
                   }`}>
                     {performance.range}
