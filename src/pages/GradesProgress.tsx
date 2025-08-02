@@ -56,9 +56,9 @@ const GradesProgress: React.FC = () => {
   ];
 
   const sampleStudentPerformance: StudentPerformance[] = [
-    { range: '<60%', count: 5, percentage: '17%', color: 'bg-orange-100 text-orange-800' },
-    { range: '60-80%', count: 15, percentage: '50%', color: 'bg-yellow-100 text-yellow-800' },
-    { range: '>80%', count: 10, percentage: '33%', color: 'bg-green-100 text-green-800' }
+    { range: '<60%', count: 5, percentage: '17%', color: 'bg-blue-100 text-blue-800' },
+    { range: '60-80%', count: 15, percentage: '50%', color: 'bg-blue-100 text-blue-800' },
+    { range: '>80%', count: 10, percentage: '33%', color: 'bg-blue-100 text-blue-800' }
   ];
 
   useEffect(() => {
@@ -77,11 +77,9 @@ const GradesProgress: React.FC = () => {
   };
 
   const getProgressColor = (progress: number) => {
-    if (progress >= 80) return 'bg-emerald-500';
-    if (progress >= 70) return 'bg-blue-500';
-    if (progress >= 60) return 'bg-yellow-500';
-    if (progress >= 50) return 'bg-orange-500';
-    return 'bg-orange-400';
+    if (progress >= 70) return 'bg-blue-600';
+    if (progress >= 40) return 'bg-blue-500';
+    return 'bg-blue-400';
   };
 
   const overallProgress = chaptersProgress.reduce((sum, chapter) => sum + chapter.progress, 0) / chaptersProgress.length;
@@ -185,16 +183,12 @@ const GradesProgress: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-500">Progress Status</span>
                     <span className={`text-sm font-medium px-3 py-1 rounded-full ${
-                      chapter.progress >= 80 ? 'bg-green-100 text-green-800' :
                       chapter.progress >= 70 ? 'bg-blue-100 text-blue-800' :
-                      chapter.progress >= 60 ? 'bg-yellow-100 text-yellow-800' :
-                      chapter.progress >= 50 ? 'bg-orange-100 text-orange-800' :
-                      'bg-orange-100 text-orange-700'
+                      chapter.progress >= 40 ? 'bg-blue-100 text-blue-700' :
+                      'bg-blue-100 text-blue-600'
                     }`}>
-                      {chapter.progress >= 80 ? 'Excellent' :
-                       chapter.progress >= 70 ? 'Very Good' :
-                       chapter.progress >= 60 ? 'Good' :
-                       chapter.progress >= 50 ? 'Average' : 'Needs Attention'}
+                      {chapter.progress >= 70 ? 'Excellent' :
+                       chapter.progress >= 40 ? 'Good' : 'Needs Attention'}
                     </span>
                   </div>
                 </CardContent>
@@ -218,19 +212,19 @@ const GradesProgress: React.FC = () => {
               {studentPerformance.map((performance, index) => (
                 <div key={index} className="text-center bg-white rounded-xl p-6 shadow-md">
                   <div className={`inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4 ${
-                    performance.range === '<60%' ? 'bg-orange-100' :
-                    performance.range === '60-80%' ? 'bg-yellow-100' : 'bg-green-100'
+                    performance.range === '<60%' ? 'bg-blue-100' :
+                    performance.range === '60-80%' ? 'bg-blue-100' : 'bg-blue-100'
                   }`}>
                     <span className={`text-3xl font-bold ${
-                      performance.range === '<60%' ? 'text-orange-600' :
-                      performance.range === '60-80%' ? 'text-yellow-600' : 'text-green-600'
+                      performance.range === '<60%' ? 'text-blue-500' :
+                      performance.range === '60-80%' ? 'text-blue-600' : 'text-blue-700'
                     }`}>
                       {performance.count}
                     </span>
                   </div>
                   <p className={`text-lg font-bold mb-2 ${
-                    performance.range === '<60%' ? 'text-orange-600' :
-                    performance.range === '60-80%' ? 'text-yellow-600' : 'text-green-600'
+                    performance.range === '<60%' ? 'text-blue-500' :
+                    performance.range === '60-80%' ? 'text-blue-600' : 'text-blue-700'
                   }`}>
                     {performance.range}
                   </p>
