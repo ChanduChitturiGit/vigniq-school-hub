@@ -1,110 +1,161 @@
-
-import React from 'react';
-import { X } from 'lucide-react';
+import React, { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
+import { Input } from './input';
+import { Button } from './button';
+import { Trash2, Plus } from 'lucide-react';
 
-interface ClassSectionSubjectData {
+export interface ClassSectionSubjectData {
   class: string;
   section: string;
   subject: string;
+  assignment?: any;
 }
 
 interface ClassSectionSubjectInputProps {
-  data: {
-    assignment: ClassSectionSubjectData;
-    subjects: any[];
-    classes: any[];
-  };
-  onChange: (data: ClassSectionSubjectData) => void;
-  onRemove: () => void;
-  canRemove: boolean;
+  data: ClassSectionSubjectData[];
+  onChange: (data: ClassSectionSubjectData[]) => void;
+  availableClasses?: any[];
+  availableSubjects?: any[];
 }
 
-const ClassSectionSubjectInput: React.FC<ClassSectionSubjectInputProps> = ({
+export const ClassSectionSubjectInput: React.FC<ClassSectionSubjectInputProps> = ({
   data,
   onChange,
-  onRemove,
-  canRemove
+  availableClasses = [],
+  availableSubjects = []
 }) => {
-  const handleInputChange = (field: keyof ClassSectionSubjectData, value: string) => {
-    onChange({
-      ...data.assignment,
-      [field]: value
-    });
+  const [newEntry, setNewEntry] = useState<ClassSectionSubjectData>({
+    class: '',
+    section: '',
+    subject: '',
+    assignment: undefined
+  });
+
+  const addEntry = () => {
+    if (newEntry.class && newEntry.section && newEntry.subject) {
+      onChange([...data, { ...newEntry }]);
+      setNewEntry({ class: '', section: '', subject: '', assignment: undefined });
+    }
   };
 
-  const classes = data.classes;
-  const sections = ['A', 'B', 'C', 'D', 'E', 'F'];
-  const subjects = data.subjects;
+  const removeEntry = (index: number) => {
+    const updatedData = data.filter((_, i) => i !== index);
+    onChange(updatedData);
+  };
+
+  const updateEntry = (index: number, field: keyof ClassSectionSubjectData, value: string) => {
+    const updatedData = data.map((entry, i) => 
+      i === index ? { ...entry, [field]: value } : entry
+    );
+    onChange(updatedData);
+  };
 
   return (
-    <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-      <div className="flex items-center justify-between mb-3">
-        <h4 className="text-sm font-medium text-gray-700">Teaching Assignment</h4>
-        {canRemove && (
-          <button
-            type="button"
-            onClick={onRemove}
-            className="text-red-500 hover:text-red-700 transition-colors"
-            title="Remove this assignment"
+    <div className="space-y-4">
+      {/* Existing entries */}
+      {data.map((entry, index) => (
+        <div key={index} className="flex gap-2 items-center p-3 bg-gray-50 rounded-lg">
+          <Select
+            value={entry.class}
+            onValueChange={(value) => updateEntry(index, 'class', value)}
           >
-            <X className="w-4 h-4" />
-          </button>
-        )}
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
-          <Select value={data.assignment?.class || ''} onValueChange={(value) => handleInputChange('class', value)}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select class" />
+            <SelectTrigger className="flex-1">
+              <SelectValue placeholder="Select Class" />
             </SelectTrigger>
             <SelectContent>
-              {classes && classes.map((cls) => (
-                <SelectItem key={cls.id || cls.class_number} value={cls.class_number?.toString() || cls.name}>
-                  Class {cls.class_number || cls.name}
+              {availableClasses.map((cls) => (
+                <SelectItem key={cls.id} value={cls.name}>
+                  {cls.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-        </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
-          <Select value={data.assignment?.section || ''} onValueChange={(value) => handleInputChange('section', value)}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select section" />
+          <Input
+            placeholder="Section"
+            value={entry.section}
+            onChange={(e) => updateEntry(index, 'section', e.target.value)}
+            className="flex-1"
+          />
+
+          <Select
+            value={entry.subject}
+            onValueChange={(value) => updateEntry(index, 'subject', value)}
+          >
+            <SelectTrigger className="flex-1">
+              <SelectValue placeholder="Select Subject" />
             </SelectTrigger>
             <SelectContent>
-              {sections.map((section) => (
-                <SelectItem key={section} value={section}>
-                  {section}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
-          <Select value={data.assignment?.subject || ''} onValueChange={(value) => handleInputChange('subject', value)}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select subject" />
-            </SelectTrigger>
-            <SelectContent>
-              {subjects && subjects.map((subject) => (
+              {availableSubjects.map((subject) => (
                 <SelectItem key={subject.id} value={subject.name}>
                   {subject.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => removeEntry(index)}
+            className="text-red-500 hover:text-red-700"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
         </div>
+      ))}
+
+      {/* Add new entry */}
+      <div className="flex gap-2 items-center p-3 border-2 border-dashed border-gray-300 rounded-lg">
+        <Select
+          value={newEntry.class}
+          onValueChange={(value) => setNewEntry({ ...newEntry, class: value })}
+        >
+          <SelectTrigger className="flex-1">
+            <SelectValue placeholder="Select Class" />
+          </SelectTrigger>
+          <SelectContent>
+            {availableClasses.map((cls) => (
+              <SelectItem key={cls.id} value={cls.name}>
+                {cls.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Input
+          placeholder="Section"
+          value={newEntry.section}
+          onChange={(e) => setNewEntry({ ...newEntry, section: e.target.value })}
+          className="flex-1"
+        />
+
+        <Select
+          value={newEntry.subject}
+          onValueChange={(value) => setNewEntry({ ...newEntry, subject: value })}
+        >
+          <SelectTrigger className="flex-1">
+            <SelectValue placeholder="Select Subject" />
+          </SelectTrigger>
+          <SelectContent>
+            {availableSubjects.map((subject) => (
+              <SelectItem key={subject.id} value={subject.name}>
+                {subject.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Button
+          type="button"
+          onClick={addEntry}
+          size="icon"
+          className="bg-blue-500 hover:bg-blue-600"
+        >
+          <Plus className="w-4 h-4" />
+        </Button>
       </div>
     </div>
   );
 };
-
-export default ClassSectionSubjectInput;
-export type { ClassSectionSubjectData };
