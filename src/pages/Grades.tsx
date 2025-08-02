@@ -119,11 +119,9 @@ const Grades: React.FC = () => {
   };
 
   const getProgressColor = (progress: number) => {
-    if (progress >= 80) return 'bg-emerald-500';
-    if (progress >= 70) return 'bg-blue-500';
-    if (progress >= 60) return 'bg-yellow-500';
-    if (progress >= 50) return 'bg-orange-500';
-    return 'bg-orange-400';
+    if (progress >= 70) return 'bg-blue-600';
+    if (progress >= 50) return 'bg-blue-500';
+    return 'bg-blue-400';
   };
 
   const getSubjectIconColor = (subjectName: string) => {
@@ -215,10 +213,8 @@ const Grades: React.FC = () => {
                     <span className="text-sm font-medium">{classItem.student_count} Students</span>
                   </div>
                   <div className="text-xs font-medium px-3 py-1 bg-gray-100 rounded-full text-gray-700">
-                    {classItem.progress >= 80 ? 'Excellent' : 
-                     classItem.progress >= 70 ? 'Very Good' :
-                     classItem.progress >= 60 ? 'Good' : 
-                     classItem.progress >= 50 ? 'Average' : 'Needs Attention'}
+                    {classItem.progress >= 70 ? 'Excellent' : 
+                     classItem.progress >= 50 ? 'Good' : 'Needs Attention'}
                   </div>
                 </div>
               </Link>

@@ -48,6 +48,12 @@ const ViewLessonPlan: React.FC = () => {
     setDays(sampleDays);
   }, []);
 
+  const getProgressColor = (progress: number) => {
+    if (progress >= 70) return 'bg-blue-600';
+    if (progress >= 40) return 'bg-blue-500';
+    return 'bg-blue-400';
+  };
+
   return (
     <MainLayout pageTitle={`Chapter ${chapterId}: ${chapterName}`}>
       <div className="space-y-8">
@@ -76,7 +82,7 @@ const ViewLessonPlan: React.FC = () => {
               <div className="flex items-center gap-2">
                 <div className="w-32 h-3 bg-gray-200 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-blue-500 transition-all duration-500"
+                    className={`h-full ${getProgressColor(overallProgress)} transition-all duration-500`}
                     style={{ width: `${overallProgress}%` }}
                   />
                 </div>
@@ -107,14 +113,13 @@ const ViewLessonPlan: React.FC = () => {
                     <Eye className="w-4 h-4" />
                     View
                   </Link>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-purple-600 hover:text-purple-800 border-purple-200 hover:border-purple-300 hover:bg-purple-50 flex items-center gap-2 flex-1"
+                  <Link
+                    to={`/grades/lesson-plan/ai-chat/${chapterId}/${dayPlan.day}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`}
+                    className="flex items-center gap-2 bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200 hover:border-purple-300 px-3 py-2 rounded-lg transition-colors text-sm font-medium flex-1 justify-center"
                   >
                     <MessageSquare className="w-4 h-4" />
                     Chat with AI Assistant
-                  </Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>
