@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { 
   Home, 
@@ -19,7 +19,10 @@ import {
   UserPlus,
   Upload,
   Eye,
-  Award
+  Award,
+  TrendingUp,
+  Plus,
+  UserCheck
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -47,7 +50,15 @@ type MenuItem = RegularMenuItem | DropdownMenuItem;
 const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
   const { user } = useAuth();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [expandedMenus, setExpandedMenus] = useState<{ [key: string]: boolean }>({});
+
+  // Check if we're in a subject-specific context
+  const isInSubjectContext = location.pathname.includes('/grades/syllabus/') || location.pathname.includes('/grades/progress/');
+  const subject = searchParams.get('subject') || '';
+  const className = searchParams.get('class') || '';
+  const section = searchParams.get('section') || '';
+  const subjectId = location.pathname.split('/').pop()?.split('?')[0] || '';
 
   const toggleMenu = (menuKey: string) => {
     setExpandedMenus(prev => ({
@@ -56,7 +67,25 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
     }));
   };
 
+  const getSubjectSpecificMenuItems = (): MenuItem[] => {
+    const baseSubjectPath = `/grades/syllabus/${subjectId}?class=${className}&section=${section}&subject=${subject}`;
+    const progressPath = `/grades/progress/${subjectId}?class=${className}&section=${section}&subject=${subject}`;
+    
+    return [
+      { path: '/grades', icon: Award, label: 'Grades', roles: ['teacher'] },
+      { path: baseSubjectPath, icon: BookOpen, label: 'Syllabus', roles: ['teacher'] },
+      { path: progressPath, icon: TrendingUp, label: 'Progress', roles: ['teacher'] },
+      { path: '#', icon: Plus, label: 'Create', roles: ['teacher'] },
+      { path: '#', icon: UserCheck, label: 'Engage', roles: ['teacher'] }
+    ];
+  };
+
   const getMenuItems = (): MenuItem[] => {
+    // If we're in subject context, show subject-specific menu
+    if (isInSubjectContext && user?.role === 'teacher') {
+      return getSubjectSpecificMenuItems();
+    }
+
     const baseItems: MenuItem[] = [
       { path: '/dashboard', icon: Home, label: 'Home', roles: ['superadmin', 'admin', 'teacher', 'student'] }
     ];
@@ -152,7 +181,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
     return [...baseItems, ...(roleSpecificItems[user?.role as keyof typeof roleSpecificItems] || []), ...helpItems];
   };
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => {
+    if (path === '#') return false;
+    
+    // For subject-specific paths, match the full path including query params
+    if (path.includes('?')) {
+      return location.pathname + location.search === path;
+    }
+    
+    return location.pathname === path;
+  };
   
   const isDropdownActive = (subItems: { path: string; label: string }[]) => {
     return subItems.some(subItem => isActive(subItem.path));
@@ -188,7 +226,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
             <span className="text-blue-500 font-bold">V</span>
           </div>
           {!isCollapsed && (
-            <span className="text-xl font-bold">VIGNIQ</span>
+            <div>
+              <span className="text-xl font-bold">VIGNIQ</span>
+              {isInSubjectContext && subject && (
+                <div className="text-xs text-blue-100 mt-1">
+                  {subject} - {className} {section}
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -256,7 +301,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
                       to={regularItem.path}
                       className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${
                         isActive(regularItem.path) 
-                          ? 'bg-white/20 text-white' 
+                          ? 'bg-white/20 text-white font-medium' 
                           : 'text-white/80 hover:bg-white/10 hover:text-white'
                       }`}
                     >
