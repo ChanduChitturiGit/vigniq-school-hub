@@ -139,11 +139,9 @@ const Syllabus: React.FC = () => {
   };
 
   const getProgressColor = (progress: number) => {
-    if (progress >= 80) return 'bg-emerald-500';
-    if (progress >= 70) return 'bg-blue-500';
-    if (progress >= 60) return 'bg-yellow-500';
-    if (progress >= 50) return 'bg-orange-500';
-    return 'bg-orange-400';
+    if (progress >= 70) return 'bg-blue-600';
+    if (progress >= 50) return 'bg-blue-500';
+    return 'bg-blue-400';
   };
 
   const handleTopicEdit = (chapterId: string, topicIndex: number, newValue: string) => {

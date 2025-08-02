@@ -5,17 +5,17 @@ import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../components/ui/collapsible';
 import { ScrollArea } from '../components/ui/scroll-area';
 import { 
   ArrowLeft, 
   Send, 
   Calculator,
-  ChevronDown,
+  ChevronLeft,
   ChevronRight,
   MessageSquare,
   Bot,
-  User
+  User,
+  X
 } from 'lucide-react';
 
 interface LessonActivity {
@@ -94,6 +94,15 @@ const AIChatLessonPlan: React.FC = () => {
     ];
     
     setMessages(initialMessages);
+
+    // Hide lesson plan by default on mobile
+    const checkMobile = () => {
+      setIsLessonPlanOpen(window.innerWidth >= 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, [chapterId, chapterName, day]);
 
   const handleSendMessage = () => {
@@ -158,10 +167,10 @@ const AIChatLessonPlan: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="relative flex h-[600px]">
           {/* Chat Section */}
-          <div className="lg:col-span-2">
-            <Card className="shadow-lg border-0 h-[600px] flex flex-col">
+          <div className={`flex-1 transition-all duration-300 ease-in-out ${isLessonPlanOpen ? 'mr-4' : 'mr-0'}`}>
+            <Card className="shadow-lg border-0 h-full flex flex-col">
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-2xl">
                   <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
@@ -233,51 +242,68 @@ const AIChatLessonPlan: React.FC = () => {
           </div>
 
           {/* Sliding Lesson Plan Panel */}
-          <div className="lg:col-span-1">
-            <Collapsible open={isLessonPlanOpen} onOpenChange={setIsLessonPlanOpen}>
-              <Card className="shadow-lg border-0">
-                <CollapsibleTrigger asChild>
-                  <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
-                    <CardTitle className="flex items-center justify-between text-xl">
-                      <span className="text-gray-900">Today's Lesson Plan</span>
-                      {isLessonPlanOpen ? (
-                        <ChevronDown className="w-5 h-5 text-gray-500 transition-transform duration-200" />
-                      ) : (
-                        <ChevronRight className="w-5 h-5 text-gray-500 transition-transform duration-200" />
-                      )}
-                    </CardTitle>
-                  </CardHeader>
-                </CollapsibleTrigger>
+          <div className={`absolute right-0 top-0 h-full transition-all duration-300 ease-in-out z-10 ${
+            isLessonPlanOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}>
+            <div className="relative h-full">
+              {/* Toggle Button */}
+              <Button
+                onClick={() => setIsLessonPlanOpen(!isLessonPlanOpen)}
+                className={`absolute top-4 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-l-lg shadow-lg transition-all duration-300 z-20 ${
+                  isLessonPlanOpen ? '-left-10' : '-left-10'
+                }`}
+                size="sm"
+              >
+                {isLessonPlanOpen ? (
+                  <ChevronRight className="w-4 h-4" />
+                ) : (
+                  <ChevronLeft className="w-4 h-4" />
+                )}
+              </Button>
+
+              {/* Lesson Plan Content */}
+              <Card className="shadow-lg border-0 h-full w-80 md:w-96">
+                <CardHeader className="bg-gray-50 border-b">
+                  <CardTitle className="flex items-center justify-between text-xl">
+                    <span className="text-gray-900">Today's Lesson Plan</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsLessonPlanOpen(false)}
+                      className="md:hidden"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
                 
-                <CollapsibleContent className="transition-all duration-300 ease-in-out">
-                  <CardContent className="pt-0">
-                    <ScrollArea className="h-[500px]">
-                      <div className="space-y-4">
-                        {activities.map((activity) => (
-                          <div key={activity.serialNumber} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                            <div className="flex items-start gap-3">
-                              <div className="flex-shrink-0">
-                                <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm">
-                                  {activity.serialNumber}
-                                </div>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="text-sm font-semibold text-gray-900 mb-1">
-                                  {activity.title}
-                                </h3>
-                                <p className="text-xs text-gray-600 leading-relaxed">
-                                  {activity.description}
-                                </p>
+                <CardContent className="p-0 h-[calc(100%-80px)]">
+                  <ScrollArea className="h-full">
+                    <div className="p-6 space-y-4">
+                      {activities.map((activity) => (
+                        <div key={activity.serialNumber} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                          <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0">
+                              <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm">
+                                {activity.serialNumber}
                               </div>
                             </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-sm font-semibold text-gray-900 mb-1">
+                                {activity.title}
+                              </h3>
+                              <p className="text-xs text-gray-600 leading-relaxed">
+                                {activity.description}
+                              </p>
+                            </div>
                           </div>
-                        ))}
-                      </div>
-                    </ScrollArea>
-                  </CardContent>
-                </CollapsibleContent>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
               </Card>
-            </Collapsible>
+            </div>
           </div>
         </div>
       </div>
