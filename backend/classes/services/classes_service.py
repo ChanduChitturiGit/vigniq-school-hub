@@ -83,7 +83,7 @@ class ClassesService:
                     try:
                         class_teacher_id = class_instance.class_teacher_id
                         if class_teacher_id:
-                            teacher = Teacher.objects.using(school_db_name).get(pk=class_teacher_id)
+                            teacher = Teacher.objects.using(school_db_name).get(teacher_id=class_teacher_id)
                             teacher_name = User.objects.get(
                                 id=teacher.teacher_id,
                                 is_active=True,
@@ -104,7 +104,7 @@ class ClassesService:
                     ).values_list('student_id', flat=True)
 
                     student_count = Student.objects.using(school_db_name).filter(
-                        id__in=student_ids,
+                        student_id__in=student_ids,
                         is_active=True
                     ).count()
 
@@ -163,7 +163,9 @@ class ClassesService:
             teacher = None
             teacher_name = None
             if class_instance and class_instance.class_teacher_id:
-                teacher = Teacher.objects.using(school_db_name).get(pk=class_instance.class_teacher_id)
+                teacher = Teacher.objects.using(school_db_name).get(
+                    teacher_id=class_instance.class_teacher_id
+                )
                 teacher_name = User.objects.get(
                     id=teacher.teacher_id,
                     is_active=True,
@@ -179,7 +181,7 @@ class ClassesService:
             )
 
             students = Student.objects.using(school_db_name).filter(
-                id__in=student_ids,
+                student_id__in=student_ids,
             )
             students_data = StudentService(school_db_name).get_students_data(
                 students,
@@ -315,7 +317,7 @@ class ClassesService:
                     'class_id': class_instance.id,
                     'class_number': class_obj.class_number,
                     'section': class_instance.section,
-                    'teacher_id': class_teacher.id if class_teacher else None,
+                    'teacher_id': class_teacher.teacher_id if class_teacher else None,
                     'academic_year_id': academic_year.id
                 }
                 logger.info(f"Class assignment created successfully: {response_data}")

@@ -2,7 +2,7 @@ from django.db import models
 
 # Create your models here.
 class Student(models.Model):
-    student_id = models.IntegerField()
+    student_id = models.IntegerField(primary_key=True)
     roll_number = models.CharField(max_length=20)
     admission_date = models.DateField()
     parent_name = models.CharField(max_length=100)
@@ -20,7 +20,7 @@ class Student(models.Model):
         ]
 
 class StudentClassAssignment(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    student = models.ForeignKey(Student, to_field='student_id', on_delete=models.CASCADE)
     class_instance = models.ForeignKey('classes.SchoolSection', on_delete=models.CASCADE)
     academic_year = models.ForeignKey('academics.SchoolAcademicYear', on_delete=models.CASCADE)
 
