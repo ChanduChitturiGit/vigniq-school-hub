@@ -66,7 +66,6 @@ const CreateSchool: React.FC = () => {
           value: board.id,
         }))
       );
-
     }
   }
 
@@ -150,7 +149,7 @@ const CreateSchool: React.FC = () => {
         navigate('/schools');
         showSnackbar({
           title: "Success",
-          description: "🏫 School Created successfully ✅",
+          description: "School Created successfully ✅",
           status: "success"
         });
       } else {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
@@ -38,7 +37,6 @@ const Grades: React.FC = () => {
     { label: 'Grades' }
   ];
 
-  // Sample data for teacher's assigned classes and subjects
   const sampleTeacherClasses: TeacherClass[] = [
     {
       class_id: '1',
@@ -121,21 +119,19 @@ const Grades: React.FC = () => {
   };
 
   const getProgressColor = (progress: number) => {
-    if (progress >= 80) return 'bg-emerald-500';
-    if (progress >= 70) return 'bg-blue-500';
-    if (progress >= 60) return 'bg-yellow-500';
-    if (progress >= 50) return 'bg-orange-500';
-    return 'bg-red-500';
+    if (progress >= 70) return 'bg-blue-600';
+    if (progress >= 50) return 'bg-blue-500';
+    return 'bg-blue-400';
   };
 
-  const getSubjectColor = (subjectName: string) => {
+  const getSubjectIconColor = (subjectName: string) => {
     const subject = subjectName.toLowerCase();
-    if (subject.includes('math')) return 'from-blue-50 to-blue-100 border-blue-200 hover:from-blue-100 hover:to-blue-150';
-    if (subject.includes('english')) return 'from-purple-50 to-purple-100 border-purple-200 hover:from-purple-100 hover:to-purple-150';
-    if (subject.includes('science')) return 'from-green-50 to-green-100 border-green-200 hover:from-green-100 hover:to-green-150';
-    if (subject.includes('social')) return 'from-orange-50 to-orange-100 border-orange-200 hover:from-orange-100 hover:to-orange-150';
-    if (subject.includes('art')) return 'from-pink-50 to-pink-100 border-pink-200 hover:from-pink-100 hover:to-pink-150';
-    return 'from-gray-50 to-gray-100 border-gray-200 hover:from-gray-100 hover:to-gray-150';
+    if (subject.includes('math')) return 'text-blue-600 bg-blue-100';
+    if (subject.includes('english')) return 'text-purple-600 bg-purple-100';
+    if (subject.includes('science')) return 'text-green-600 bg-green-100';
+    if (subject.includes('social')) return 'text-orange-600 bg-orange-100';
+    if (subject.includes('art')) return 'text-pink-600 bg-pink-100';
+    return 'text-gray-600 bg-gray-100';
   };
 
   return (
@@ -173,18 +169,18 @@ const Grades: React.FC = () => {
           {filteredClasses.map((classItem) => {
             const SubjectIcon = getSubjectIcon(classItem.subject_name);
             const progressColor = getProgressColor(classItem.progress);
-            const cardColor = getSubjectColor(classItem.subject_name);
+            const iconColor = getSubjectIconColor(classItem.subject_name);
             
             return (
               <Link
                 key={`${classItem.class_id}_${classItem.subject_id}`}
                 to={`/grades/syllabus/${classItem.subject_id}?class=${classItem.class_name}&section=${classItem.section}&subject=${classItem.subject_name}`}
-                className={`bg-gradient-to-br ${cardColor} p-6 rounded-xl shadow-lg border-2 hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 group`}
+                className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 group"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-white rounded-xl shadow-md flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <SubjectIcon className="w-6 h-6 text-gray-700" />
+                    <div className={`w-12 h-12 ${iconColor} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                      <SubjectIcon className="w-6 h-6" />
                     </div>
                     <div>
                       <h3 className="text-xl font-bold text-gray-900">
@@ -203,7 +199,7 @@ const Grades: React.FC = () => {
                     <span className="text-sm font-medium text-gray-700">Progress</span>
                     <span className="text-lg font-bold text-gray-900">{classItem.progress}%</span>
                   </div>
-                  <div className="w-full bg-white/60 rounded-full h-3 overflow-hidden">
+                  <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                     <div 
                       className={`h-full ${progressColor} rounded-full transition-all duration-500 ease-out`}
                       style={{ width: `${classItem.progress}%` }}
@@ -211,18 +207,16 @@ const Grades: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="mt-4 flex items-center justify-between">
+                {/* <div className="mt-4 flex items-center justify-between">
                   <div className="flex items-center gap-2 text-gray-600">
                     <Users className="w-4 h-4" />
                     <span className="text-sm font-medium">{classItem.student_count} Students</span>
                   </div>
-                  <div className="text-xs font-medium px-3 py-1 bg-white/70 rounded-full text-gray-700">
-                    {classItem.progress >= 80 ? 'Excellent' : 
-                     classItem.progress >= 70 ? 'Very Good' :
-                     classItem.progress >= 60 ? 'Good' : 
-                     classItem.progress >= 50 ? 'Average' : 'Needs Attention'}
+                  <div className="text-xs font-medium px-3 py-1 bg-gray-100 rounded-full text-gray-700">
+                    {classItem.progress >= 70 ? 'Excellent' : 
+                     classItem.progress >= 50 ? 'Good' : 'Needs Attention'}
                   </div>
-                </div>
+                </div> */}
               </Link>
             );
           })}

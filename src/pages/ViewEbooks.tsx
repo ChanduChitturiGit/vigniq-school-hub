@@ -240,7 +240,7 @@ const ViewEbooks: React.FC = () => {
 
       showSnackbar({
         title: "Success",
-        description: `📃 PDF downloaded succesfully ✅`,
+        description: `PDF downloaded succesfully ✅`,
         status: "success"
       });
       setDownloadLoader(false);

@@ -139,11 +139,9 @@ const Syllabus: React.FC = () => {
   };
 
   const getProgressColor = (progress: number) => {
-    if (progress >= 80) return 'bg-emerald-500';
-    if (progress >= 70) return 'bg-blue-500';
-    if (progress >= 60) return 'bg-yellow-500';
-    if (progress >= 50) return 'bg-orange-500';
-    return 'bg-red-500';
+    if (progress >= 70) return 'bg-blue-600';
+    if (progress >= 50) return 'bg-blue-500';
+    return 'bg-blue-400';
   };
 
   const handleTopicEdit = (chapterId: string, topicIndex: number, newValue: string) => {
@@ -252,19 +250,31 @@ const Syllabus: React.FC = () => {
                 <CollapsibleContent>
                   <div className="border-t border-gray-200 p-6">
                     <Tabs defaultValue="topics" className="w-full">
-                      <TabsList className="grid w-full grid-cols-3 mb-6">
-                        <TabsTrigger value="topics" className="text-base py-3">Topics</TabsTrigger>
-                        <TabsTrigger value="lessonplan" className="text-base py-3">Lesson Plan</TabsTrigger>
-                        <TabsTrigger value="prerequisites" className="text-base py-3">Prerequisites</TabsTrigger>
+                      <TabsList className="grid w-full grid-cols-3 mb-6 bg-gray-50 p-1 rounded-lg">
+                        <TabsTrigger 
+                          value="topics" 
+                          className="text-base py-3 px-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md transition-all"
+                        >
+                          Topics
+                        </TabsTrigger>
+                        <TabsTrigger 
+                          value="lessonplan" 
+                          className="text-base py-3 px-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md transition-all"
+                        >
+                          Lesson Plan
+                        </TabsTrigger>
+                        <TabsTrigger 
+                          value="prerequisites" 
+                          className="text-base py-3 px-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md transition-all"
+                        >
+                          Prerequisites
+                        </TabsTrigger>
                       </TabsList>
 
                       <TabsContent value="topics" className="mt-6">
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-medium text-gray-800 flex items-center gap-2">
-                              <BookOpen className="w-5 h-5" />
-                              Chapter Topics
-                            </h3>
+                            <h3 className="text-lg font-medium text-gray-800">Chapter Topics</h3>
                             <Button
                               onClick={() => setAddingTopic(chapter.id)}
                               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
@@ -275,9 +285,9 @@ const Syllabus: React.FC = () => {
                           </div>
                           
                           {chapter.topics.map((topic, index) => (
-                            <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
+                            <div key={index} className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors">
                               <div className="flex items-center gap-4 flex-1">
-                                <span className="text-sm font-medium text-blue-600 bg-blue-100 rounded-full w-7 h-7 flex items-center justify-center">
+                                <span className="text-sm font-medium text-blue-600 bg-blue-200 rounded-full w-7 h-7 flex items-center justify-center">
                                   {index + 1}
                                 </span>
                                 {editingTopic?.chapterId === chapter.id && editingTopic?.topicIndex === index ? (
@@ -317,7 +327,7 @@ const Syllabus: React.FC = () => {
                                     </Button>
                                   </div>
                                 ) : (
-                                  <span className="text-base font-normal text-gray-700">{topic}</span>
+                                  <span className="text-base text-gray-700">{topic}</span>
                                 )}
                               </div>
                               {!editingTopic && (
@@ -384,14 +394,14 @@ const Syllabus: React.FC = () => {
                       <TabsContent value="lessonplan" className="mt-6">
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-medium text-gray-800 flex items-center gap-2">
-                              <FileText className="w-5 h-5" />
-                              Saved Lesson Plans
-                            </h3>
-                            <Button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm">
+                            <h3 className="text-lg font-medium text-gray-800">Saved Lesson Plans</h3>
+                            <Link
+                              to={`/grades/lesson-plan/create/${chapter.id}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapter.name)}`}
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                            >
                               <PlusCircle className="w-4 h-4" />
                               Create New Lesson Plan
-                            </Button>
+                            </Link>
                           </div>
                           
                           {chapter.lessonPlans.length > 0 ? (
@@ -404,10 +414,13 @@ const Syllabus: React.FC = () => {
                                       <EditIcon className="w-4 h-4 mr-1" />
                                       Edit
                                     </Button>
-                                    <Button variant="outline" size="sm" className="text-green-600 hover:text-green-800 text-sm">
-                                      <Eye className="w-4 h-4 mr-1" />
+                                    <Link
+                                      to={`/grades/lesson-plan/view/${chapter.id}/${lessonPlan.id}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapter.name)}`}
+                                      className="inline-flex items-center gap-1 text-green-600 hover:text-green-800 text-sm border border-green-300 hover:border-green-400 px-3 py-1 rounded-md transition-colors"
+                                    >
+                                      <Eye className="w-4 h-4" />
                                       View
-                                    </Button>
+                                    </Link>
                                   </div>
                                 </div>
                                 <p className="text-sm text-gray-600">{lessonPlan.description}</p>
@@ -418,10 +431,13 @@ const Syllabus: React.FC = () => {
                               <FileText className="w-16 h-16 mx-auto mb-4 text-gray-400" />
                               <h4 className="text-lg font-medium text-gray-600 mb-2">No lesson plans created yet</h4>
                               <p className="text-base text-gray-500 mb-4">Create your first lesson plan to get started</p>
-                              <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 mx-auto">
+                              <Link
+                                to={`/grades/lesson-plan/create/${chapter.id}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapter.name)}`}
+                                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
+                              >
                                 <PlusCircle className="w-4 h-4" />
                                 Create Lesson Plan
-                              </Button>
+                              </Link>
                             </div>
                           )}
                         </div>
@@ -430,10 +446,7 @@ const Syllabus: React.FC = () => {
                       <TabsContent value="prerequisites" className="mt-6">
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-medium text-gray-800 flex items-center gap-2">
-                              <Lightbulb className="w-5 h-5" />
-                              Prerequisites
-                            </h3>
+                            <h3 className="text-lg font-medium text-gray-800">Prerequisites</h3>
                             <Button
                               onClick={() => setAddingPrerequisite(chapter.id)}
                               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
@@ -444,15 +457,15 @@ const Syllabus: React.FC = () => {
                           </div>
                           
                           {chapter.prerequisites.map((prerequisite, index) => (
-                            <div key={index} className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200 hover:bg-yellow-100 transition-colors">
+                            <div key={index} className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors">
                               <div className="flex items-center gap-4 flex-1">
-                                <Lightbulb className="w-5 h-5 text-yellow-600" />
+                                <Lightbulb className="w-5 h-5 text-blue-600" />
                                 {editingPrerequisite?.chapterId === chapter.id && editingPrerequisite?.prereqIndex === index ? (
                                   <div className="flex items-center gap-3 flex-1">
                                     <Input
                                       value={newPrerequisiteText}
                                       onChange={(e) => setNewPrerequisiteText(e.target.value)}
-                                      className="flex-1 text-base py-2 border-2 border-yellow-300 focus:border-yellow-500"
+                                      className="flex-1 text-base py-2 border-2 border-blue-300 focus:border-blue-500"
                                       onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
                                           handlePrerequisiteEdit(chapter.id, index, newPrerequisiteText);
@@ -484,7 +497,7 @@ const Syllabus: React.FC = () => {
                                     </Button>
                                   </div>
                                 ) : (
-                                  <span className="text-base font-normal text-gray-700">{prerequisite}</span>
+                                  <span className="text-base text-gray-700">{prerequisite}</span>
                                 )}
                               </div>
                               {!editingPrerequisite && (
@@ -495,7 +508,7 @@ const Syllabus: React.FC = () => {
                                   }}
                                   variant="ghost"
                                   size="sm"
-                                  className="text-yellow-700 hover:text-yellow-900 hover:bg-yellow-100 px-3 py-1"
+                                  className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3 py-1"
                                 >
                                   <EditIcon className="w-4 h-4 mr-1" />
                                   Edit
@@ -505,13 +518,13 @@ const Syllabus: React.FC = () => {
                           ))}
 
                           {addingPrerequisite === chapter.id && (
-                            <div className="flex items-center gap-3 p-4 bg-yellow-100 rounded-lg border-2 border-yellow-300">
-                              <Lightbulb className="w-5 h-5 text-yellow-600" />
+                            <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+                              <Lightbulb className="w-5 h-5 text-blue-600" />
                               <Input
                                 value={newPrerequisiteText}
                                 onChange={(e) => setNewPrerequisiteText(e.target.value)}
                                 placeholder="Enter new prerequisite..."
-                                className="flex-1 text-base py-2 border-2 border-yellow-400 focus:border-yellow-500"
+                                className="flex-1 text-base py-2 border-2 border-blue-300 focus:border-blue-500"
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') {
                                     addPrerequisite(chapter.id, newPrerequisiteText);

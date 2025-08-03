@@ -203,7 +203,7 @@ const UploadEbooks: React.FC = () => {
     } else {
       showSnackbar({
         title: "⛔ Error",
-        description: `Please select a valid PDF file 📃`,
+        description: `Please select a valid PDF file`,
         status: "error"
       });
     }
@@ -240,7 +240,7 @@ const UploadEbooks: React.FC = () => {
     } else if (file) {
       showSnackbar({
         title: "⛔ Error",
-        description: `Please select a valid PDF file 📃`,
+        description: `Please select a valid PDF file`,
         status: "error"
       });
     }
@@ -301,10 +301,9 @@ const UploadEbooks: React.FC = () => {
         setChapterListData(prev => [...prev, Number(formData?.chapter?.split(' ')[1])]);
         showSnackbar({
           title: "Success",
-          description: `📃 ${response.message} ✅`,
+          description: `${response.message} ✅`,
           status: "success"
         });
-        setIsUploading(false);
         if (formData.uploadType != 'Chapter Wise PDF') {
           setFormData({
             board: '',
