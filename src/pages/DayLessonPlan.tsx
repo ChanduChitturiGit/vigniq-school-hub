@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Button } from '../components/ui/button';
@@ -22,7 +21,6 @@ interface LessonActivity {
 const DayLessonPlan: React.FC = () => {
   const { chapterId, day } = useParams();
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   
   const subject = searchParams.get('subject') || '';
   const className = searchParams.get('class') || '';
@@ -37,16 +35,6 @@ const DayLessonPlan: React.FC = () => {
     { label: `${subject} - ${className} ${section}`, path: `/grades/syllabus/math_6a?class=${className}&section=${section}&subject=${subject}` },
     { label: 'Day Lesson Plan' }
   ];
-
-  const getProgressColor = (progress: number) => {
-    if (progress >= 70) return 'bg-blue-600';
-    if (progress >= 40) return 'bg-blue-500';
-    return 'bg-blue-400';
-  };
-
-  const handleStartLesson = () => {
-    navigate(`/grades/lesson-plan/whiteboard/${chapterId}/${day}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`);
-  };
 
   useEffect(() => {
     // Sample data for lesson activities
@@ -107,7 +95,7 @@ const DayLessonPlan: React.FC = () => {
             <div className="flex items-center gap-2 mt-2">
               <div className="w-32 h-3 bg-gray-200 rounded-full overflow-hidden">
                 <div 
-                  className={`h-full ${getProgressColor(overallProgress)} transition-all duration-500`}
+                  className="h-full bg-blue-500 transition-all duration-500"
                   style={{ width: `${overallProgress}%` }}
                 />
               </div>
@@ -129,10 +117,7 @@ const DayLessonPlan: React.FC = () => {
                   <Download className="w-4 h-4 mr-2" />
                   Download
                 </Button>
-                <Button 
-                  className="bg-blue-600 hover:bg-blue-700"
-                  onClick={handleStartLesson}
-                >
+                <Button className="bg-blue-600 hover:bg-blue-700">
                   <Play className="w-4 h-4 mr-2" />
                   Start
                 </Button>
