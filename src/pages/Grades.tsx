@@ -207,7 +207,7 @@ const Grades: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="mt-4 flex items-center justify-between">
+                {/* <div className="mt-4 flex items-center justify-between">
                   <div className="flex items-center gap-2 text-gray-600">
                     <Users className="w-4 h-4" />
                     <span className="text-sm font-medium">{classItem.student_count} Students</span>
@@ -216,7 +216,7 @@ const Grades: React.FC = () => {
                     {classItem.progress >= 70 ? 'Excellent' : 
                      classItem.progress >= 50 ? 'Good' : 'Needs Attention'}
                   </div>
-                </div>
+                </div> */}
               </Link>
             );
           })}
