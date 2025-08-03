@@ -39,7 +39,7 @@ class Command(BaseCommand):
                     apps = ['academics','classes','teacher','student','syllabus']
                     with override_settings(CURRENT_MIGRATION_DB=db_key):
                         for app in apps:
-                            call_command("migrate",app, database=db_key,verbosity=2)
+                            call_command("migrate",app, database=db_key,verbosity=1)
                             logger.info(f"Migration successful for {db_key}")
                 except Exception as migrate_error:
                     logger.exception(f"Migration failed for {db_key}: {migrate_error}")

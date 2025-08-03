@@ -63,7 +63,6 @@ class SyllabusService:
                                 status=status.HTTP_400_BAD_REQUEST)
 
             school_db_name = CommonFunctions.get_school_db_name(school_id)
-            print(f"Using school database: {school_db_name}")
             teacher_assignment_obj = TeacherSubjectAssignment.objects.using(school_db_name).filter(
                 teacher__teacher_id=teacher_id,
                 academic_year=academic_year
