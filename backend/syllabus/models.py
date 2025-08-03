@@ -33,14 +33,14 @@ class SchoolPrerequisite(AbstractPrerequisite):
         unique_together = ('chapter', 'topic')
 
 class SchoolClassSubTopic(AbstractSubTopic):
-    chapter = models.ForeignKey(SchoolChapter, on_delete=models.CASCADE)
+    chapter = models.ForeignKey(SchoolChapter, on_delete=models.CASCADE, related_name='class_sub_topics')
     class_section = models.ForeignKey(SchoolSection, on_delete=models.CASCADE,
                                       null=True, blank=True)
     class Meta(AbstractSubTopic.Meta):
         db_table = 'classwise_sub_topic'
 
 class SchoolClassPrerequisite(AbstractPrerequisite):
-    chapter = models.ForeignKey(SchoolChapter, on_delete=models.CASCADE,
+    chapter = models.ForeignKey(SchoolChapter, on_delete=models.CASCADE, related_name='class_prerequisites'
                                 )
     class_section = models.ForeignKey(SchoolSection, on_delete=models.CASCADE,
                                       null=True, blank=True)

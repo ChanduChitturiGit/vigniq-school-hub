@@ -69,7 +69,7 @@ class ClassesService:
 
             data = []
             for class_obj in classes:
-                school_board = SchoolBoard.objects.using(school_db_name).get(
+                school_board = SchoolBoard.objects.get(
                     id=class_obj.board_id
                 )
                 class_instance = ClassAssignment.objects.using(school_db_name).filter(
@@ -153,7 +153,7 @@ class ClassesService:
             
             class_obj = SchoolSection.objects.using(school_db_name).get(
                     pk=class_id)
-            school_board = SchoolBoard.objects.using(school_db_name).get(
+            school_board = SchoolBoard.objects.get(
                 id=class_obj.board_id
             )
             class_instance = ClassAssignment.objects.using(school_db_name).filter(
@@ -229,7 +229,7 @@ class ClassesService:
             class_number = request.data.get('class_number')
             section_name = request.data.get('section')
             teacher_id = request.data.get('teacher_id',None)
-            board_id = request.data.get('board_id', None)
+            board_id = request.data.get('board_id', 1)
             academic_year_id = request.data.get('academic_year_id',1)
 
             if not school_id or not class_number or not section_name or not board_id or not academic_year_id:
