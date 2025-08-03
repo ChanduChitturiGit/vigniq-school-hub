@@ -131,7 +131,7 @@ const AddStudent: React.FC = () => {
       if (response && response.message) {
         showSnackbar({
           title: "sucess",
-          description: `🧑‍🎓 Student added successfully ✅`,
+          description: `Student added successfully ✅`,
           status: "success"
         });
         if (userData.role == 'superadmin') {

@@ -7,6 +7,7 @@ import { ArrowLeft, BookOpen, ChevronDown, Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { addClass } from '../services/class';
 import { getTeachersBySchoolId } from '../services/teacher';
+import { getBoardsList } from '../services/school'
 import { toast } from '../components/ui/sonner';
 import { toast as toaster } from '../hooks/use-toast';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
@@ -18,6 +19,7 @@ const AddClass: React.FC = () => {
   const navigate = useNavigate();
   const [teachers, setTeachers] = useState([]);
   const [loader, setLoader] = useState(false);
+  const [boards, setBoards] = useState([]);
   const [formData, setFormData] = useState({
     class_name: '',
     section: '',
@@ -25,7 +27,9 @@ const AddClass: React.FC = () => {
     teacher_id: 0,
     school_id: 0,
     class_number: 0,
-    class: ''
+    class: '',
+    board: '',
+    board_id: null
   });
   const [suggestions, setSuggestions] = useState({
     class_name: [] as string[],
@@ -81,10 +85,30 @@ const AddClass: React.FC = () => {
     }
   }
 
+  const boardsList = async () => {
+    const response = await getBoardsList();
+    if (response && response.boards) {
+      setBoards(response.boards);
+    }
+  }
+
   useEffect(() => {
     setBreadCrumb();
+    boardsList();
     getTeachersList();
   }, []);
+
+
+  useEffect(() => {
+    if (boards.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        board: boards[0].name,
+        board_id: boards[0].id,
+      }));
+    }
+  }, [boards]);
+
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -140,6 +164,20 @@ const AddClass: React.FC = () => {
     }));
   };
 
+  const getBoardId = (data: string) => {
+    const boardData = boards.find((val: any) => (val.name) == data);
+    const boardId = boardData && boardData.id ? boardData.id : null;
+    return boardId;
+  }
+
+  const handleBoardChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      board: value,
+      board_id: Number(getBoardId(value))
+    }));
+  };
+
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -164,7 +202,7 @@ const AddClass: React.FC = () => {
       if (response?.class) {
         showSnackbar({
           title: "Success",
-          description: "🛄 Class added successfully ✅",
+          description: "Class added successfully ✅",
           status: "success"
         });
 
@@ -234,6 +272,26 @@ const AddClass: React.FC = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+
+            {/* Board Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Board *
+              </label>
+              <Select value={formData.board} onValueChange={handleBoardChange} required>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a board" />
+                </SelectTrigger>
+                <SelectContent>
+                  {boards.map((val, index) => (
+                    <SelectItem key={index} value={val.name}>
+                      {val.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Class Name Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">

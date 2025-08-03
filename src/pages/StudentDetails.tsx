@@ -85,7 +85,7 @@ const StudentDetails: React.FC = () => {
       getStudentData();
       showSnackbar({
         title: "Success",
-        description: "🧑‍🎓 Student data updated successfully ✅",
+        description: "Student data updated successfully ✅",
         status: "success"
       });
     }

@@ -150,7 +150,7 @@ const AdminSchool: React.FC = () => {
         setIsEditing(false);
         showSnackbar({
           title: "Success",
-          description: "🏫 School information updated successfully ✅",
+          description: "School information updated successfully ✅",
           status: "success"
         });
       }
@@ -196,13 +196,15 @@ const AdminSchool: React.FC = () => {
               </div>
               <h2 className="text-xl font-semibold text-gray-800">School Information</h2>
             </div>
-            <button
-              onClick={() => setIsEditing(!isEditing)}
-              className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-            >
-              <Edit className="w-4 h-4" />
-              {isEditing ? 'Cancel' : 'Edit'}
-            </button>
+            {userData.role == 'superadmin' && (
+              <button
+                onClick={() => setIsEditing(!isEditing)}
+                className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              >
+                <Edit className="w-4 h-4" />
+                {isEditing ? 'Cancel' : 'Edit'}
+              </button>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
