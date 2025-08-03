@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Button } from '../components/ui/button';
@@ -21,6 +22,7 @@ interface LessonActivity {
 const DayLessonPlan: React.FC = () => {
   const { chapterId, day } = useParams();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   
   const subject = searchParams.get('subject') || '';
   const className = searchParams.get('class') || '';
@@ -67,6 +69,10 @@ const DayLessonPlan: React.FC = () => {
     ];
     setActivities(sampleActivities);
   }, []);
+
+  const handleStartTeaching = () => {
+    navigate(`/grades/lesson-plan/whiteboard/${chapterId}/${day}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`);
+  };
 
   return (
     <MainLayout pageTitle={`Chapter ${chapterId}: ${chapterName} - Day ${day}`}>
@@ -117,7 +123,7 @@ const DayLessonPlan: React.FC = () => {
                   <Download className="w-4 h-4 mr-2" />
                   Download
                 </Button>
-                <Button className="bg-blue-600 hover:bg-blue-700">
+                <Button onClick={handleStartTeaching} className="bg-blue-600 hover:bg-blue-700">
                   <Play className="w-4 h-4 mr-2" />
                   Start
                 </Button>
