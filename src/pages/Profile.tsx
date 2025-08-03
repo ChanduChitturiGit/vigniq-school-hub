@@ -70,7 +70,7 @@ const Profile: React.FC = () => {
         setIsEditing(false);
         showSnackbar({
           title: "Success",
-          description: "👤 Profile updated successfully ✅",
+          description: "Profile updated successfully ✅",
           status: "success"
         });
       }
