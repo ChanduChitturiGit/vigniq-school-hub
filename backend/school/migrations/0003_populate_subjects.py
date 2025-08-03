@@ -14,7 +14,7 @@ def load_fixture(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('school', '0005_schooldefaultclasses_schooldefaultsubjects_and_more'),
+        ('school', '0002_populate_schoolboards'),
     ]
 
     operations = [

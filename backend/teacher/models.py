@@ -13,7 +13,7 @@ class Subject(AbstractSubject):
 
 
 class Teacher(models.Model):
-    teacher_id = models.IntegerField(unique=True)
+    teacher_id = models.IntegerField(primary_key=True)
     qualification = models.CharField(max_length=255, null=True, blank=True)
     experience = models.FloatField(null=True, blank=True)
     joining_date = models.DateField(null=True, blank=True)
@@ -33,7 +33,7 @@ class Teacher(models.Model):
         db_table = 'teacher'
 
 class TeacherSubjectAssignment(models.Model):
-    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
+    teacher = models.ForeignKey(Teacher, to_field='teacher_id', on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     school_class = models.ForeignKey(SchoolSection, on_delete=models.CASCADE)
     academic_year = models.ForeignKey(SchoolAcademicYear, on_delete=models.CASCADE,null=True, blank=True)
