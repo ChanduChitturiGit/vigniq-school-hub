@@ -13,7 +13,6 @@ import Profile from './pages/Profile';
 import Schools from './pages/Schools';
 import CreateSchool from './pages/CreateSchool';
 import SchoolDetails from './pages/SchoolDetails';
-import AddTeacher from './pages/AddTeacher';
 import Teachers from './pages/Teachers';
 import TeacherDetails from './pages/TeacherDetails';
 import Classes from './pages/Classes';
@@ -81,11 +80,6 @@ function App() {
             </ProtectedRoute>
           } />
 
-          <Route path="/add-teacher" element={
-            <ProtectedRoute allowedRoles={['superadmin']}>
-              <AddTeacher />
-            </ProtectedRoute>
-          } />
 
           <Route path="/teachers" element={
             <ProtectedRoute allowedRoles={['superadmin', 'admin']}>

@@ -149,7 +149,7 @@ const ClassDetails: React.FC = () => {
       if (response && response.message) {
         showSnackbar({
           title: "Success",
-          description: "🛄 Class Teacher Updated successfully ✅",
+          description: "Class Teacher Updated successfully ✅",
           status: "success"
         });
       } else {

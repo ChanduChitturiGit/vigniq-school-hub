@@ -1,10 +1,11 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Edit, Mail, Phone, Calendar, GraduationCap, BookOpen, Plus, X } from 'lucide-react';
 import { getTeachersById, editTeacher } from '../services/teacher';
-import { ClassSectionSubjectInput, ClassSectionSubjectData } from '../components/ui/class-section-subject-input';
+import ClassSectionSubjectInput, { ClassSectionSubjectData } from '../components/ui/class-section-subject-input';
 import { getSubjectsBySchoolId } from '../services/subject';
 import { getClassesBySchoolId } from '@/services/class';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
@@ -25,7 +26,7 @@ const TeacherDetails: React.FC = () => {
     subject: '',
     experience: '',
     qualification: '',
-    joiningDate: '',
+    joining_date: '',
     address: '',
     emergencyContact: '',
     subject_assignments: [],
@@ -36,9 +37,7 @@ const TeacherDetails: React.FC = () => {
     { label: `Teacher Details - ${formData.teacher_first_name + ' ' + formData.teacher_last_name}` }
   ]);
   const [teachingAssignments, setTeachingAssignments] = useState<ClassSectionSubjectData[]>([{
-    class: '', 
-    section: '',
-    subject: '',
+    class: '', subject: '',
     assignment: undefined
   }]);
   const [teacherAssignments,seTeacherAssignments] = useState([]);
@@ -154,9 +153,7 @@ const TeacherDetails: React.FC = () => {
 
   const addNewAssignment = () => {
     setTeachingAssignments([...teachingAssignments, {
-      class: '', 
-      section: '',
-      subject: '',
+      class: '', subject: '',
       assignment: undefined
     }]);
   };
@@ -224,7 +221,6 @@ const TeacherDetails: React.FC = () => {
             </button>
           </div>
 
-          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Personal Information</h3>
@@ -314,7 +310,7 @@ const TeacherDetails: React.FC = () => {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Professional Information</h3>
 
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
                 {isEditing ? (
                   <input
@@ -330,7 +326,7 @@ const TeacherDetails: React.FC = () => {
                     <p className="text-gray-900">{formData.subject}</p>
                   </div>
                 )}
-              </div>
+              </div> */}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Qualification</label>
@@ -370,20 +366,20 @@ const TeacherDetails: React.FC = () => {
                 {isEditing ? (
                   <input
                     type="date"
-                    name="joiningDate"
-                    value={formData.joiningDate}
+                    name="joining_date"
+                    value={formData.joining_date}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 ) : (
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-gray-400" />
-                    <p className="text-gray-900">{new Date(formData.joiningDate).toLocaleDateString()}</p>
+                    <p className="text-gray-900">{new Date(formData.joining_date).toLocaleDateString('en-GB')}</p>
                   </div>
                 )}
               </div>
 
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Emergency Contact</label>
                 {isEditing ? (
                   <input
@@ -396,7 +392,7 @@ const TeacherDetails: React.FC = () => {
                 ) : (
                   <p className="text-gray-900">{formData.emergencyContact}</p>
                 )}
-              </div>
+              </div> */}
             </div>
           </div>
 
@@ -431,10 +427,10 @@ const TeacherDetails: React.FC = () => {
                 {teachingAssignments.map((assignment, index) => (
                   <ClassSectionSubjectInput
                     key={index}
-                    data={teachingAssignments}
-                    onChange={setTeachingAssignments}
-                    availableClasses={classes}
-                    availableSubjects={subjects}
+                    data={{ "assignment": assignment, "subject_assignments": formData.subject_assignments, "subjects": subjects, "classes": classes }}
+                    onChange={(data) => handleAssignmentChange(index, data)}
+                    onRemove={() => removeAssignment(index)}
+                    canRemove={teachingAssignments.length > 1}
                   />
                 ))}
               </div>
