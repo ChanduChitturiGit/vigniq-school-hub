@@ -16,6 +16,8 @@ import {
   RotateCcw,
   Save
 } from 'lucide-react';
+import WhiteBoard from '../pages/WhiteBoard'
+
 
 interface LessonActivity {
   serialNumber: number;
@@ -310,6 +312,7 @@ const WhiteboardTeaching: React.FC = () => {
                 className="w-full h-full cursor-crosshair"
                 style={{ touchAction: 'none' }}
               />
+              {/* <WhiteBoard></WhiteBoard> */}
             </div>
           </div>
         </div>
