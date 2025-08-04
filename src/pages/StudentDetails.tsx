@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
@@ -7,7 +6,6 @@ import { Edit, Save, X } from 'lucide-react';
 import { getStudentsById, editStudent } from '../services/student';
 import { getClassesBySchoolId } from '@/services/class';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { toast } from '../components/ui/sonner';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 
 const StudentDetails: React.FC = () => {
@@ -19,7 +17,6 @@ const StudentDetails: React.FC = () => {
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const schoolId = localStorage.getItem('current_school_id');
 
-  // Mock student data
   const [studentData, setStudentData] = useState({
     student_id: id,
     student_first_name: 'Alice Johnson',
@@ -44,16 +41,24 @@ const StudentDetails: React.FC = () => {
     emergency_contact: 'Jane Johnson (+91 98765 43213)'
   });
 
+  const [errors, setErrors] = useState({
+    student_first_name: '',
+    student_last_name: '',
+    roll_number: '',
+    class: '',
+    date_of_birth: '',
+    gender: '',
+    admission_date: '',
+    parent_name: '',
+    parent_phone: ''
+  });
+
   const breadcrumbItems = [
-    // { label: 'User Management', path: '/user-management' },
     { label: 'My School', path: (userData.role == 'superadmin' ? `/school-details/${schoolId}` : '/admin-school') },
-    // { label: 'School Details', path: '/school-details/1' },
     { label: 'Class Details', path: `/class-details/${studentData.class_id}` },
     { label: studentData.student_first_name }
   ];
 
-
-  //classes list api
   const getClasses = async () => {
     const classesData = await getClassesBySchoolId(userData.school_id);
     if (classesData && classesData.classes) {
@@ -68,7 +73,6 @@ const StudentDetails: React.FC = () => {
     const response = await getStudentsById(Number(id), userData.school_id);
     if (response && response.student) {
       setStudentData(response.student);
-      //console.log(response.student);
     }
   }
 
@@ -77,8 +81,101 @@ const StudentDetails: React.FC = () => {
     getClasses();
   }, [])
 
+  // --- Validation logic ---
+  const validateField = (name: string, value: any) => {
+    let error = '';
+    switch (name) {
+      case 'student_first_name':
+        if (!value) error = 'First Name is required';
+        break;
+      case 'student_last_name':
+        if (!value) error = 'Last Name is required';
+        break;
+      case 'roll_number':
+        if (!value) error = 'Roll Number is required';
+        break;
+      case 'class':
+        if (!value) error = 'Class is required';
+        break;
+      case 'date_of_birth':
+        if (!value) error = 'Date of Birth is required';
+        break;
+      case 'gender':
+        if (!value) error = 'Gender is required';
+        break;
+      case 'admission_date':
+        if (!value) error = 'Admission Date is required';
+        break;
+      case 'parent_name':
+        if (!value) error = 'Parent/Guardian Name is required';
+        break;
+      case 'parent_phone':
+        if (!value) error = 'Parent Phone is required';
+        else if (!/^\d{10,15}$/.test(value)) error = 'Parent Phone must be 10-15 digits';
+        break;
+      default:
+        break;
+    }
+    setErrors(prev => ({ ...prev, [name]: error }));
+  };
+
+  const handleBlur = (field: string, value: string) => {
+    validateField(field, value);
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setStudentData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    setErrors(prev => ({ ...prev, [field]: '' }));
+  };
+
+  const handleClassChange = (value: string) => {
+    setStudentData(prev => ({
+      ...prev,
+      class: value,
+      class_id: getClassId(value)
+    }));
+    setErrors(prev => ({ ...prev, class: '' }));
+  };
+
+  const handleGenderChange = (value: string) => {
+    setStudentData(prev => ({
+      ...prev,
+      gender: value
+    }));
+    setErrors(prev => ({ ...prev, gender: '' }));
+  };
+
+  const getClassId = (className: string) => {
+    const classdata = classes.find((val: any) => ('Class ' + val.class_number + ' - ' + val.section) == className);
+    return classdata?.class_id || 0;
+  };
+
   const handleSave = async () => {
-    // Here you would typically save to backend
+    // Validate all fields before API call
+    const fieldsToValidate = [
+      'student_first_name', 'student_last_name', 'roll_number', 'class',
+      'date_of_birth', 'gender', 'admission_date', 'parent_name', 'parent_phone'
+    ];
+    fieldsToValidate.forEach(field => {
+      validateField(field, (studentData as any)[field]);
+    });
+
+    const hasError =
+      fieldsToValidate.some(field => !(studentData as any)[field]) ||
+      fieldsToValidate.some(field => errors[field as keyof typeof errors]);
+
+    if (hasError) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: "Please fill all the details in the form.",
+        status: "error"
+      });
+      return;
+    }
+
     setIsEditing(false);
     const response = await editStudent(studentData);
     if (response && response.message) {
@@ -89,42 +186,6 @@ const StudentDetails: React.FC = () => {
         status: "success"
       });
     }
-  };
-
-  const getClassId = (className: string) => {
-    const classdata = classes.find((val: any) => ('Class ' + val.class_number + ' - ' + val.section) == className);
-    const classId = classdata.class_id;
-    return classId;
-  }
-
-  const handleInputChange = (field: string, value: string) => {
-    setStudentData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    // if (field == 'class') {
-    //   const classId = getClassId(value);
-    //   setStudentData(prev => ({
-    //     ...prev,
-    //     'class_id': classId
-    //   }));
-    // }
-  };
-
-  const handleClassChange = (value: string) => {
-    studentData.class = value;
-    const classId = getClassId(value);
-    setStudentData(prev => ({
-      ...prev,
-      'class_id': classId
-    }));
-  };
-
-  const handleGenderChange = (value: string) => {
-    setStudentData(prev => ({
-      ...prev,
-      gender: value
-    }));
   };
 
   return (
@@ -185,12 +246,16 @@ const StudentDetails: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
               {isEditing ? (
-                <input
-                  type="text"
-                  value={studentData.student_first_name}
-                  onChange={(e) => handleInputChange('student_first_name', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <>
+                  <input
+                    type="text"
+                    value={studentData.student_first_name}
+                    onChange={(e) => handleInputChange('student_first_name', e.target.value)}
+                    onBlur={(e) => handleBlur('student_first_name', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {errors.student_first_name && <p className="text-red-500 text-xs mt-1">{errors.student_first_name}</p>}
+                </>
               ) : (
                 <p className="text-gray-900">{studentData.student_first_name}</p>
               )}

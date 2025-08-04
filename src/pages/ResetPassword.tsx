@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { KeyRound, Eye, EyeOff } from 'lucide-react';
@@ -19,6 +18,13 @@ const ResetPassword: React.FC = () => {
     confirm_password: '',
     old_password: ''
   });
+  const [errors, setErrors] = useState({
+    email: '',
+    otp: '',
+    new_password: '',
+    confirm_password: '',
+    old_password: ''
+  });
   const [step, setStep] = useState<'email' | 'otp' | 'password'>(fromProfile ? 'password' : 'email');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -33,21 +39,58 @@ const ResetPassword: React.FC = () => {
     }
   }, [fromProfile]);
 
+  const validateField = (name: string, value: string) => {
+    let error = '';
+    switch (name) {
+      case 'email':
+        if (!value) error = 'Email is required';
+        else if (!/\S+@\S+\.\S+/.test(value)) error = 'Email is invalid';
+        break;
+      case 'otp':
+        if (!value) error = 'Verification code is required';
+        else if (value.length !== 6) error = 'Code must be 6 digits';
+        break;
+      case 'new_password':
+        if (!value) error = 'New password is required';
+        else if (value.length < 8) error = 'Password must be at least 8 characters';
+        break;
+      case 'confirm_password':
+        if (!value) error = 'Confirm password is required';
+        else if (value !== formData.new_password) error = 'Passwords do not match';
+        break;
+      case 'old_password':
+        if (fromProfile && !value) error = 'Old password is required';
+        break;
+      default:
+        break;
+    }
+    setErrors(prev => ({ ...prev, [name]: error }));
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+    setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    validateField('email', formData.email);
 
-    // Simulate API call
+    if (!formData.email || errors.email) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: "Please fill all the details in the form.",
+        status: "error"
+      });
+      return;
+    }
+
+    setIsLoading(true);
     setTimeout(() => {
-      // console.log('Sending OTP to:', formData.email);
       showSnackbar({
         title: "OTP Sent",
         description: "A verification code has been sent to your email. ✅",
@@ -60,11 +103,19 @@ const ResetPassword: React.FC = () => {
 
   const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    validateField('otp', formData.otp);
 
-    // Simulate API call
+    if (!formData.otp || errors.otp) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: "Please fill all the details in the form.",
+        status: "error"
+      });
+      return;
+    }
+
+    setIsLoading(true);
     setTimeout(() => {
-      console.log('Verifying OTP:', formData.otp);
       if (formData.otp === '123456') {
         showSnackbar({
           title: "OTP Verified",
@@ -83,22 +134,17 @@ const ResetPassword: React.FC = () => {
     }, 1000);
   };
 
-  const setPassword = async (data) => {
+  const setPassword = async (data: any) => {
     try {
       const response = await resetPasswordApi(data);
       if (response && response.message) {
         setTimeout(() => {
-          console.log('Resetting password for:', formData.email);
-
-          // Clear stored email
           localStorage.removeItem('reset_password_email');
-
           showSnackbar({
             title: "Password Updated",
             description: "Password updated successfully. Please login again. ✅",
             status: "success"
           });
-
           navigate('/login');
           setIsLoading(false);
         }, 1000);
@@ -115,6 +161,27 @@ const ResetPassword: React.FC = () => {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate all fields
+    if (fromProfile) {
+      validateField('old_password', formData.old_password);
+    }
+    validateField('new_password', formData.new_password);
+    validateField('confirm_password', formData.confirm_password);
+
+    const hasError =
+      (fromProfile && (!formData.old_password || errors.old_password)) ||
+      !formData.new_password || errors.new_password ||
+      !formData.confirm_password || errors.confirm_password;
+
+    if (hasError) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: "Please fill all the details in the form.",
+        status: "error"
+      });
+      return;
+    }
 
     if (formData.new_password !== formData.confirm_password) {
       showSnackbar({
@@ -170,12 +237,12 @@ const ResetPassword: React.FC = () => {
                   id="email"
                   name="email"
                   type="email"
-                  required
                   value={formData.email}
                   onChange={handleInputChange}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Enter your email"
                 />
+                {errors.email && <p className="mt-2 text-sm text-red-600">{errors.email}</p>}
               </div>
 
               <button
@@ -198,13 +265,13 @@ const ResetPassword: React.FC = () => {
                   id="otp"
                   name="otp"
                   type="text"
-                  required
                   value={formData.otp}
                   onChange={handleInputChange}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Enter 6-digit code"
                   maxLength={6}
                 />
+                {errors.otp && <p className="mt-2 text-sm text-red-600">{errors.otp}</p>}
               </div>
 
               <button
@@ -237,7 +304,6 @@ const ResetPassword: React.FC = () => {
                     id="old_password"
                     name="old_password"
                     type={showPassword ? 'text' : 'password'}
-                    required
                     value={formData.old_password}
                     onChange={handleInputChange}
                     className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
@@ -255,6 +321,7 @@ const ResetPassword: React.FC = () => {
                     )}
                   </button>
                 </div>
+                {errors.old_password && <p className="mt-2 text-sm text-red-600">{errors.old_password}</p>}
               </div>
 
               <div>
@@ -266,7 +333,6 @@ const ResetPassword: React.FC = () => {
                     id="new_password"
                     name="new_password"
                     type={showPassword ? 'text' : 'password'}
-                    required
                     value={formData.new_password}
                     onChange={handleInputChange}
                     className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
@@ -284,6 +350,7 @@ const ResetPassword: React.FC = () => {
                     )}
                   </button>
                 </div>
+                {errors.new_password && <p className="mt-2 text-sm text-red-600">{errors.new_password}</p>}
               </div>
 
               <div>
@@ -295,7 +362,6 @@ const ResetPassword: React.FC = () => {
                     id="confirm_password"
                     name="confirm_password"
                     type={showConfirmPassword ? 'text' : 'password'}
-                    required
                     value={formData.confirm_password}
                     onChange={handleInputChange}
                     className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
@@ -313,6 +379,7 @@ const ResetPassword: React.FC = () => {
                     )}
                   </button>
                 </div>
+                {errors.confirm_password && <p className="mt-2 text-sm text-red-600">{errors.confirm_password}</p>}
               </div>
 
               <button
