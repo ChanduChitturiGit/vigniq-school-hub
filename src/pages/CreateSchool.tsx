@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
@@ -41,6 +40,21 @@ const CreateSchool: React.FC = () => {
   });
   const [boardInput, setBoardInput] = useState('');
   const [showBoardSuggestions, setShowBoardSuggestions] = useState(false);
+  const [errors, setErrors] = useState({
+    schoolName: '',
+    address: '',
+    phone: '',
+    email: '',
+    adminFirstName: '',
+    adminLastName: '',
+    adminUserName: '',
+    adminEmail: '',
+    adminPassword: '',
+    adminPhone: '',
+    selectedBoards: '',
+    academic_start_year: '',
+    academic_end_year: ''
+  });
   const boardSuggestions = [
     { boardId: 1, boardName: 'SSC' },
     { boardId: 2, boardName: 'CBSE' },
@@ -73,37 +87,80 @@ const CreateSchool: React.FC = () => {
     boardsList();
   }, []);
 
+  // Validation function for all fields
+  const validateField = (name: string, value: any) => {
+    let error = '';
+    switch (name) {
+      case 'schoolName':
+        if (!value) error = 'School Name is required';
+        break;
+      case 'address':
+        if (!value) error = 'Address is required';
+        break;
+      case 'phone':
+        if (!value) error = 'Phone is required';
+        else if (!/^\d{10,15}$/.test(value)) error = 'Phone must be 10-15 digits';
+        break;
+      case 'email':
+        if (!value) error = 'Email is required';
+        else if (!/\S+@\S+\.\S+/.test(value)) error = 'Email is invalid';
+        break;
+      case 'adminFirstName':
+        if (!value) error = 'Admin First Name is required';
+        break;
+      case 'adminLastName':
+        if (!value) error = 'Admin Last Name is required';
+        break;
+      case 'adminUserName':
+        if (!value) error = 'Admin User Name is required';
+        break;
+      case 'adminEmail':
+        if (!value) error = 'Admin Email is required';
+        else if (!/\S+@\S+\.\S+/.test(value)) error = 'Admin Email is invalid';
+        break;
+      case 'adminPassword':
+        if (!value) error = 'Admin Password is required';
+        else if (value.length < 6) error = 'Password must be at least 6 characters';
+        break;
+      case 'adminPhone':
+        if (!value) error = 'Admin Phone is required';
+        else if (!/^\d{10,15}$/.test(value)) error = 'Admin Phone must be 10-15 digits';
+        break;
+      case 'selectedBoards':
+        if (!formData.selectedBoards || formData.selectedBoards.length === 0) error = 'At least one board is required';
+        break;
+      case 'academic_start_year':
+        if (!value) error = 'Academic Start Year is required';
+        break;
+      case 'academic_end_year':
+        if (!value) error = 'Academic End Year is required';
+        break;
+      default:
+        break;
+    }
+    setErrors(prev => ({ ...prev, [name]: error }));
+  };
+
+  // Handle input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
+  // Handle blur (unfocus)
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    validateField(name, value);
+  };
+
+  // For PasswordInput
   const handlePasswordChange = (value: string) => {
     setFormData(prev => ({ ...prev, adminPassword: value }));
+    setErrors(prev => ({ ...prev, adminPassword: '' }));
   };
 
-  const getBoardId = (data: string) => {
-    const boardData = boards.find((val: any) => (val.name) == data);
-    const boardId = boardData.id ? boardData.id : null;
-    return boardId;
-  }
-
-  const handleStartYearChange = (value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      academic_start_year: value,
-    }));
-    const selectedYear = parseInt(value);
-    setEndYears(Array.from({ length: 6 }, (_, i) => (selectedYear + i).toString()));
-  };
-
-  const handleEndYearChange = (value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      academic_end_year: value,
-    }));
-  };
-
+  // For Board Select
   const handleBoardChange = (
     selectedOptions: MultiValue<OptionType>,
     _actionMeta: ActionMeta<OptionType>
@@ -113,6 +170,26 @@ const CreateSchool: React.FC = () => {
       selectedBoards: selectedOptions as OptionType[],
       board_ids: selectedOptions.map((option) => option.value),
     }));
+    validateField('selectedBoards', selectedOptions);
+    setErrors(prev => ({ ...prev, selectedBoards: '' }));
+  };
+
+  // For Start/End Year
+  const handleStartYearChange = (value: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      academic_start_year: value,
+    }));
+    setErrors(prev => ({ ...prev, academic_start_year: '' }));
+    const selectedYear = parseInt(value);
+    setEndYears(Array.from({ length: 6 }, (_, i) => (selectedYear + i).toString()));
+  };
+  const handleEndYearChange = (value: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      academic_end_year: value,
+    }));
+    setErrors(prev => ({ ...prev, academic_end_year: '' }));
   };
 
   const filteredSuggestions = boardSuggestions.filter(
@@ -121,53 +198,84 @@ const CreateSchool: React.FC = () => {
       !boards.includes(suggestion.boardName)
   );
 
+  // On submit, validate all fields
   const handleSubmit = async (e: React.FormEvent) => {
-    setLoader(true);
     e.preventDefault();
+    setLoader(true);
 
-    //console.log("schoolForm",formData,boards);
-
-    const schoolPayload = {
-      school_name: formData.schoolName,
-      address: formData.address,
-      contact_number: formData.phone,
-      email: formData.email,
-      boards: formData.board_ids,
-      admin_first_name: formData.adminFirstName,
-      admin_last_name: formData.adminLastName,
-      admin_email: formData.adminEmail,
-      admin_phone_number: formData.adminPhone,
-      admin_username: formData.adminUserName,
-      password: formData.adminPassword,
-      academic_start_year: Number(formData.academic_start_year),
-      academic_end_year: Number(formData.academic_end_year)
-    }
-
-    try {
-      const school = await createSchoolApi(schoolPayload);
-      if (school && school.message) {
-        navigate('/schools');
-        showSnackbar({
-          title: "Success",
-          description: "School Created successfully ✅",
-          status: "success"
-        });
-      } else {
+    // Validate all fields
+    const fieldsToValidate = [
+      'schoolName', 'address', 'phone', 'email',
+      'adminFirstName', 'adminLastName', 'adminUserName', 'adminEmail', 'adminPassword', 'adminPhone',
+      'selectedBoards', 'academic_start_year', 'academic_end_year'
+    ];
+    let valid = true;
+    fieldsToValidate.forEach(field => {
+      const value = field === 'selectedBoards' ? formData.selectedBoards : (formData as any)[field];
+      validateField(field, value);
+      if (
+        (field === 'selectedBoards' && (!formData.selectedBoards || formData.selectedBoards.length === 0)) ||
+        errors[field]
+      ) {
+        valid = false;
         showSnackbar({
           title: "⛔ Error",
           description: "Something went wrong",
           status: "error"
         });
+        return;
       }
-    }catch(error){
+    });
+
+    // Wait for errors state to update
+    setTimeout(async () => {
+      if (Object.values(errors).some(error => error)) {
+        setLoader(false);
+        return;
+      }
+
+      const schoolPayload = {
+        school_name: formData.schoolName,
+        address: formData.address,
+        contact_number: formData.phone,
+        email: formData.email,
+        boards: formData.board_ids,
+        admin_first_name: formData.adminFirstName,
+        admin_last_name: formData.adminLastName,
+        admin_email: formData.adminEmail,
+        admin_phone_number: formData.adminPhone,
+        admin_username: formData.adminUserName,
+        password: formData.adminPassword,
+        academic_start_year: Number(formData.academic_start_year),
+        academic_end_year: Number(formData.academic_end_year)
+      };
+
+      try {
+        const school = await createSchoolApi(schoolPayload);
+        if (school && school.message) {
+          navigate('/schools');
+          showSnackbar({
+            title: "Success",
+            description: "School Created successfully ✅",
+            status: "success"
+          });
+        } else {
+          showSnackbar({
+            title: "⛔ Error",
+            description: "Something went wrong",
+            status: "error"
+          });
+        }
+      } catch (error) {
+        setLoader(false);
+        showSnackbar({
+          title: "⛔ Error",
+          description: error?.response?.data?.error || "Something went wrong",
+          status: "error"
+        });
+      }
       setLoader(false);
-       showSnackbar({
-        title: "⛔ Error",
-        description: error?.response?.data?.error || "Something went wrong",
-        status: "error"
-      });
-    }
-    setLoader(false);
+    }, 0);
   };
 
   return (
@@ -190,9 +298,10 @@ const CreateSchool: React.FC = () => {
                   name="schoolName"
                   value={formData.schoolName}
                   onChange={handleChange}
-                  required
+                  onBlur={handleBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {errors.schoolName && <p className="text-red-500 text-sm mt-1">{errors.schoolName}</p>}
               </div>
 
               <div>
@@ -208,6 +317,7 @@ const CreateSchool: React.FC = () => {
                     value={formData.selectedBoards}
                   />
                 </div>
+                {errors.selectedBoards && <p className="text-red-500 text-sm mt-1">{errors.selectedBoards}</p>}
               </div>
 
               <div>
@@ -226,6 +336,7 @@ const CreateSchool: React.FC = () => {
                     ))}
                   </SelectContent>
                 </UISelect>
+                {errors.academic_start_year && <p className="text-red-500 text-sm mt-1">{errors.academic_start_year}</p>}
               </div>
 
 
@@ -245,6 +356,7 @@ const CreateSchool: React.FC = () => {
                     ))}
                   </SelectContent>
                 </UISelect>
+                {errors.academic_end_year && <p className="text-red-500 text-sm mt-1">{errors.academic_end_year}</p>}
               </div>
 
               <div>
@@ -253,10 +365,11 @@ const CreateSchool: React.FC = () => {
                   name="address"
                   value={formData.address}
                   onChange={handleChange}
-                  required
+                  onBlur={handleBlur}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -267,9 +380,10 @@ const CreateSchool: React.FC = () => {
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    required
+                    onBlur={handleBlur}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                  {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
                 </div>
 
                 <div>
@@ -279,9 +393,10 @@ const CreateSchool: React.FC = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    required
+                    onBlur={handleBlur}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                  {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
                 </div>
               </div>
             </div>
@@ -299,9 +414,10 @@ const CreateSchool: React.FC = () => {
                     name="adminFirstName"
                     value={formData.adminFirstName}
                     onChange={handleChange}
-                    required
+                    onBlur={handleBlur}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                  {errors.adminFirstName && <p className="text-red-500 text-sm mt-1">{errors.adminFirstName}</p>}
                 </div>
 
                 <div>
@@ -311,9 +427,10 @@ const CreateSchool: React.FC = () => {
                     name="adminLastName"
                     value={formData.adminLastName}
                     onChange={handleChange}
-                    required
+                    onBlur={handleBlur}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                  {errors.adminLastName && <p className="text-red-500 text-sm mt-1">{errors.adminLastName}</p>}
                 </div>
               </div>
 
@@ -325,9 +442,10 @@ const CreateSchool: React.FC = () => {
                     name="adminEmail"
                     value={formData.adminEmail}
                     onChange={handleChange}
-                    required
+                    onBlur={handleBlur}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                  {errors.adminEmail && <p className="text-red-500 text-sm mt-1">{errors.adminEmail}</p>}
                 </div>
 
                 <div>
@@ -337,9 +455,10 @@ const CreateSchool: React.FC = () => {
                     name="adminPhone"
                     value={formData.adminPhone}
                     onChange={handleChange}
-                    required
+                    onBlur={handleBlur}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                  {errors.adminPhone && <p className="text-red-500 text-sm mt-1">{errors.adminPhone}</p>}
                 </div>
               </div>
 
@@ -351,9 +470,10 @@ const CreateSchool: React.FC = () => {
                     name="adminUserName"
                     value={formData.adminUserName}
                     onChange={handleChange}
-                    required
+                    onBlur={handleBlur}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                  {errors.adminUserName && <p className="text-red-500 text-sm mt-1">{errors.adminUserName}</p>}
                 </div>
 
                 <div>
@@ -362,8 +482,9 @@ const CreateSchool: React.FC = () => {
                     value={formData.adminPassword}
                     onChange={handlePasswordChange}
                     placeholder="Enter admin password"
-                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                  {errors.adminPassword && <p className="text-red-500 text-sm mt-1">{errors.adminPassword}</p>}
                 </div>
               </div>
             </div>
