@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
@@ -32,6 +31,15 @@ const TeacherDetails: React.FC = () => {
     subject_assignments: [],
     school_id : null
   });
+  const [errors, setErrors] = useState({
+    teacher_first_name: '',
+    teacher_last_name: '',
+    email: '',
+    phone_number: '',
+    qualification: '',
+    joining_date: '',
+    address: ''
+  });
   const [breadcrumbItems, setBreadCrumbItems] = useState([
     { label: 'My School', path: '/admin-school' },
     { label: `Teacher Details - ${formData.teacher_first_name + ' ' + formData.teacher_last_name}` }
@@ -41,9 +49,6 @@ const TeacherDetails: React.FC = () => {
     assignment: undefined
   }]);
   const [teacherAssignments,seTeacherAssignments] = useState([]);
-
-
-
 
   const setBreadCrumb = () => {
     if (userData.role == 'superadmin') {
@@ -60,11 +65,6 @@ const TeacherDetails: React.FC = () => {
     }
   }
 
-  const sampleClasses = [
-    { id: '1', name: 'Class 9', section: 'A', students: 25 },
-    { id: '2', name: 'Class 10', section: 'B', students: 28 }
-  ];
-
   const getTeacher = async () => {
     if (userData && userData.role && userData.role == 'superadmin') {
       userData.school_id = localStorage.getItem('current_school_id');
@@ -79,24 +79,92 @@ const TeacherDetails: React.FC = () => {
     }
   }
 
+  // --- Validation logic ---
+  const validateField = (name: string, value: any) => {
+    let error = '';
+    switch (name) {
+      case 'teacher_first_name':
+        if (!value) error = 'First Name is required';
+        break;
+      case 'teacher_last_name':
+        if (!value) error = 'Last Name is required';
+        break;
+      case 'email':
+        if (!value) error = 'Email is required';
+        else if (!/\S+@\S+\.\S+/.test(value)) error = 'Email is invalid';
+        break;
+      case 'phone_number':
+        if (!value) error = 'Phone is required';
+        else if (!/^\d{10,15}$/.test(value)) error = 'Phone must be 10-15 digits';
+        break;
+      case 'qualification':
+        if (!value) error = 'Qualification is required';
+        break;
+      case 'joining_date':
+        if (!value) error = 'Joining Date is required';
+        break;
+      case 'address':
+        if (!value) error = 'Address is required';
+        break;
+      default:
+        break;
+    }
+    setErrors(prev => ({ ...prev, [name]: error }));
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    setErrors(prev => ({ ...prev, [name]: '' }));
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    validateField(name, value);
+  };
+
   const editTeacherData = async () => {
+    // Validate all fields before API call
+    const fieldsToValidate = [
+      'teacher_first_name', 'teacher_last_name', 'email', 'phone_number', 'qualification', 'joining_date', 'address'
+    ];
+    fieldsToValidate.forEach(field => {
+      validateField(field, (formData as any)[field]);
+    });
+
+    // Check for errors or missing fields
+    const hasError =
+      fieldsToValidate.some(field => !(formData as any)[field]) ||
+      fieldsToValidate.some(field => errors[field as keyof typeof errors]);
+
+    if (hasError) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: "Please fill all  the details in the form.",
+        status: "error"
+      });
+      return;
+    }
+
     try {
-      // setTeachingAssignments([...teachingAssignments,...teacherAssignments]);
       let validAssignments = teachingAssignments.filter(assignment =>
         assignment.class && assignment.subject
       );
-      validAssignments = [...validAssignments,...teacherAssignments];
-      // console.log("validAssignments",validAssignments);
+      validAssignments = [...validAssignments, ...teacherAssignments];
       formData.subject_assignments = validAssignments;
       formData.school_id = Number(userData.role == 'superadmin' ? schoolId : userData.schoo_id);
       const response = await editTeacher(formData);
       if (response && response.message) {
-        // console.log("editTeacherData", response);
         showSnackbar({
-          title: "Sucess",
+          title: "Success",
           description: response.message,
           status: "success"
         });
+        setIsEditing(false);
+        getTeacher();
       }
     } catch (error: any) {
       showSnackbar({
@@ -105,8 +173,7 @@ const TeacherDetails: React.FC = () => {
         status: "error"
       });
     }
-    getTeacher();
-  }
+  };
 
   const subjectsList = async () => {
     const response = await getSubjectsBySchoolId(userData.role == 'superadmin' ? schoolId : userData.school_id);
@@ -127,8 +194,13 @@ const TeacherDetails: React.FC = () => {
 
   useEffect(() => {
     getTeacher();
-    // setBreadCrumb();
   }, [])
+
+   useEffect(() => {
+    if(!isEditing){
+      getTeacher();
+    }
+  }, [isEditing])
 
   useEffect(() => {
     if (formData.teacher_first_name && formData.teacher_last_name) {
@@ -156,14 +228,6 @@ const TeacherDetails: React.FC = () => {
       class: '', subject: '',
       assignment: undefined
     }]);
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
   };
 
   const removeAssignment = (index: number) => {
@@ -228,13 +292,17 @@ const TeacherDetails: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
                 {isEditing ? (
-                  <input
-                    type="text"
-                    name="teacher_first_name"
-                    value={formData.teacher_first_name}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <>
+                    <input
+                      type="text"
+                      name="teacher_first_name"
+                      value={formData.teacher_first_name}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {errors.teacher_first_name && <p className="text-red-500 text-xs mt-1">{errors.teacher_first_name}</p>}
+                  </>
                 ) : (
                   <p className="text-gray-900">{formData.teacher_first_name}</p>
                 )}
@@ -243,13 +311,17 @@ const TeacherDetails: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
                 {isEditing ? (
-                  <input
-                    type="text"
-                    name="teacher_last_name"
-                    value={formData.teacher_last_name}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <>
+                    <input
+                      type="text"
+                      name="teacher_last_name"
+                      value={formData.teacher_last_name}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {errors.teacher_last_name && <p className="text-red-500 text-xs mt-1">{errors.teacher_last_name}</p>}
+                  </>
                 ) : (
                   <p className="text-gray-900">{formData.teacher_last_name}</p>
                 )}
@@ -258,13 +330,17 @@ const TeacherDetails: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
                 {isEditing ? (
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                  </>
                 ) : (
                   <div className="flex items-center gap-2">
                     <Mail className="w-4 h-4 text-gray-400" />
@@ -276,13 +352,17 @@ const TeacherDetails: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
                 {isEditing ? (
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone_number}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <>
+                    <input
+                      type="tel"
+                      name="phone_number"
+                      value={formData.phone_number}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {errors.phone_number && <p className="text-red-500 text-xs mt-1">{errors.phone_number}</p>}
+                  </>
                 ) : (
                   <div className="flex items-center gap-2">
                     <Phone className="w-4 h-4 text-gray-400" />
@@ -294,13 +374,17 @@ const TeacherDetails: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
                 {isEditing ? (
-                  <textarea
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <>
+                    <textarea
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
+                  </>
                 ) : (
                   <p className="text-gray-900">{formData.address}</p>
                 )}
@@ -309,35 +393,20 @@ const TeacherDetails: React.FC = () => {
 
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Professional Information</h3>
-
-              {/* <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    name="subject"
-                    value={formData.subject}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <BookOpen className="w-4 h-4 text-gray-400" />
-                    <p className="text-gray-900">{formData.subject}</p>
-                  </div>
-                )}
-              </div> */}
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Qualification</label>
                 {isEditing ? (
-                  <input
-                    type="text"
-                    name="qualification"
-                    value={formData.qualification}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <>
+                    <input
+                      type="text"
+                      name="qualification"
+                      value={formData.qualification}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {errors.qualification && <p className="text-red-500 text-xs mt-1">{errors.qualification}</p>}
+                  </>
                 ) : (
                   <div className="flex items-center gap-2">
                     <GraduationCap className="w-4 h-4 text-gray-400" />
@@ -345,32 +414,20 @@ const TeacherDetails: React.FC = () => {
                   </div>
                 )}
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Experience</label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    name="experience"
-                    value={formData.experience}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                ) : (
-                  <p className="text-gray-900">{formData.experience}</p>
-                )}
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Joining Date</label>
                 {isEditing ? (
-                  <input
-                    type="date"
-                    name="joining_date"
-                    value={formData.joining_date}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <>
+                    <input
+                      type="date"
+                      name="joining_date"
+                      value={formData.joining_date}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {errors.joining_date && <p className="text-red-500 text-xs mt-1">{errors.joining_date}</p>}
+                  </>
                 ) : (
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-gray-400" />
@@ -440,7 +497,7 @@ const TeacherDetails: React.FC = () => {
           {isEditing && (
             <div className="flex gap-2 mt-6 pt-4 border-t">
               <button
-                onClick={handleSave}
+                onClick={editTeacherData}
                 className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
               >
                 Save Changes

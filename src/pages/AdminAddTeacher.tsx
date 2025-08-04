@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
@@ -17,7 +16,7 @@ const AdminAddTeacher: React.FC = () => {
   const { showSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
-  const [loader,setLoader] = useState(false);
+  const [loader, setLoader] = useState(false);
   const [teachingAssignments, setTeachingAssignments] = useState<ClassSectionSubjectData[]>([{
     class: '', subject: '',
     assignment: undefined
@@ -38,6 +37,21 @@ const AdminAddTeacher: React.FC = () => {
     gender: '',
     emergency_contact: ''
   });
+  const [errors, setErrors] = useState({
+    first_name: '',
+    last_name: '',
+    user_name: '',
+    email: '',
+    phone_number: '',
+    qualification: '',
+    experience: '',
+    address: '',
+    joining_date: '',
+    date_of_birth: '',
+    gender: '',
+    emergency_contact: '',
+    password: ''
+  });
   const [classes, setClasses] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [breadcrumbItems, setBreadCrumbItems] = useState([
@@ -46,7 +60,6 @@ const AdminAddTeacher: React.FC = () => {
     { label: 'Add Teacher' }
   ]);
   const genderList = ["Male", "Female", "Others"];
-
 
   const setBreadCrumb = () => {
     if (userData.role == 'superadmin') {
@@ -70,15 +83,12 @@ const AdminAddTeacher: React.FC = () => {
     }
   }
 
-  //classes list api
   const getClasses = async () => {
-    //classes list api
     const classesData = await getClassesBySchoolId(userData.role == 'superadmin' ? schoolId : userData.school_id);
     if (classesData && classesData.classes) {
       setClasses(classesData.classes);
     }
   }
-
 
   useEffect(() => {
     getClasses();
@@ -86,12 +96,61 @@ const AdminAddTeacher: React.FC = () => {
     setBreadCrumb();
   }, [])
 
+  // --- Validation logic ---
+  const validateField = (name: string, value: any) => {
+    let error = '';
+    switch (name) {
+      case 'first_name':
+        if (!value) error = 'First Name is required';
+        break;
+      case 'last_name':
+        if (!value) error = 'Last Name is required';
+        break;
+      case 'user_name':
+        if (!value) error = 'User Name is required';
+        break;
+      case 'email':
+        if (!value) error = 'Email is required';
+        else if (!/\S+@\S+\.\S+/.test(value)) error = 'Email is invalid';
+        break;
+      case 'phone_number':
+        if (!value) error = 'Phone is required';
+        else if (!/^\d{10,15}$/.test(value)) error = 'Phone must be 10-15 digits';
+        break;
+      case 'qualification':
+        if (!value) error = 'Qualification is required';
+        break;
+      case 'joining_date':
+        if (!value) error = 'Joining Date is required';
+        break;
+      case 'date_of_birth':
+        if (!value) error = 'Date of Birth is required';
+        break;
+      case 'gender':
+        if (!value) error = 'Gender is required';
+        break;
+      case 'password':
+        if (!value) error = 'Password is required';
+        else if (value.length < 6) error = 'Password must be at least 6 characters';
+        break;
+      default:
+        break;
+    }
+    setErrors(prev => ({ ...prev, [name]: error }));
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+    setErrors(prev => ({ ...prev, [name]: '' }));
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    validateField(name, value);
   };
 
   const handleGenderChange = (value: string) => {
@@ -99,25 +158,30 @@ const AdminAddTeacher: React.FC = () => {
       ...prev,
       gender: value
     }));
+    setErrors(prev => ({ ...prev, gender: '' }));
+  };
+
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+    setErrors(prev => ({ ...prev, password: '' }));
   };
 
   const getClassId = (className: string) => {
     const classdata = classes.find((val: any) => ('Class ' + val.class_number + ' - ' + val.section) == className);
-    const classId = classdata.class_id ? classdata.class_id : 0;
+    const classId = classdata?.class_id ? classdata.class_id : 0;
     return classId;
   }
 
-  
   const getSubjectId = (subjectName: string) => {
     const subjectdata = subjects.find((val: any) => (val.name) == subjectName);
-    const subjectId = subjectdata.id ? subjectdata.id : 0;
+    const subjectId = subjectdata?.id ? subjectdata.id : 0;
     return subjectId;
   }
 
   const handleAssignmentChange = (index: number, data: ClassSectionSubjectData) => {
     const updatedAssignments = [...teachingAssignments];
-    data[`class_id`] = (data.class!= '' && !data['class_id']) ?  getClassId(data.class) : data['class_id'] ? data['class_id'] : null;
-    data[`subject_id`] = (data.subject != '' &&  !data['subject_id']) ?  getSubjectId(data.subject) : null;
+    data[`class_id`] = (data.class != '' && !data['class_id']) ? getClassId(data.class) : data['class_id'] ? data['class_id'] : null;
+    data[`subject_id`] = (data.subject != '' && !data['subject_id']) ? getSubjectId(data.subject) : null;
     updatedAssignments[index] = data;
     setTeachingAssignments(updatedAssignments);
   };
@@ -136,13 +200,36 @@ const AdminAddTeacher: React.FC = () => {
     }
   };
 
+  // --- Validate all fields on submit ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.first_name || !formData.last_name || !formData.user_name ||
-      !formData.email || !formData.phone_number || !formData.qualification ||
-      !formData.joining_date || !password) {
-      alert('Please fill in all required fields including password');
+    const fieldsToValidate = [
+      'first_name', 'last_name', 'user_name', 'email', 'phone_number',
+      'qualification', 'joining_date', 'date_of_birth', 'gender', 'password'
+    ];
+
+    // Validate all fields using your validateField function
+    fieldsToValidate.forEach(field => {
+      const value = field === 'password' ? password : (formData as any)[field];
+      validateField(field, value);
+    });
+
+    // Check if any errors exist or any required field is missing
+    const hasError =
+      fieldsToValidate.some(field => {
+        const value = field === 'password' ? password : (formData as any)[field];
+        return !value;
+      }) ||
+      fieldsToValidate.some(field => errors[field as keyof typeof errors]);
+
+    if (hasError) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: "Please fill all  the details in the form.",
+        status: "error"
+      });
+      setLoader(false);
       return;
     }
 
@@ -163,7 +250,6 @@ const AdminAddTeacher: React.FC = () => {
       const response = await addTeacher(teacherData);
 
       if (response) {
-        // alert('Teacher added successfully!');
         showSnackbar({
           title: "Success",
           description: "Teacher added successfully ✅",
@@ -198,9 +284,10 @@ const AdminAddTeacher: React.FC = () => {
                   name="first_name"
                   value={formData.first_name}
                   onChange={handleInputChange}
-                  required
+                  onBlur={handleBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {errors.first_name && <p className="text-red-500 text-xs mt-1">{errors.first_name}</p>}
               </div>
 
               <div>
@@ -210,21 +297,23 @@ const AdminAddTeacher: React.FC = () => {
                   name="last_name"
                   value={formData.last_name}
                   onChange={handleInputChange}
-                  required
+                  onBlur={handleBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {errors.last_name && <p className="text-red-500 text-xs mt-1">{errors.last_name}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">user name *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">User Name *</label>
                 <input
                   type="text"
                   name="user_name"
                   value={formData.user_name}
                   onChange={handleInputChange}
-                  required
+                  onBlur={handleBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {errors.user_name && <p className="text-red-500 text-xs mt-1">{errors.user_name}</p>}
               </div>
 
               <div>
@@ -234,20 +323,21 @@ const AdminAddTeacher: React.FC = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  required
+                  onBlur={handleBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Password *</label>
                 <PasswordInput
                   value={password}
-                  onChange={setPassword}
+                  onChange={handlePasswordChange}
                   placeholder="Enter password"
-                  required
                   showGenerator
                 />
+                {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
               </div>
 
               <div>
@@ -257,9 +347,10 @@ const AdminAddTeacher: React.FC = () => {
                   name="phone_number"
                   value={formData.phone_number}
                   onChange={handleInputChange}
-                  required
+                  onBlur={handleBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {errors.phone_number && <p className="text-red-500 text-xs mt-1">{errors.phone_number}</p>}
               </div>
 
               <div>
@@ -269,10 +360,11 @@ const AdminAddTeacher: React.FC = () => {
                   name="qualification"
                   value={formData.qualification}
                   onChange={handleInputChange}
-                  required
+                  onBlur={handleBlur}
                   placeholder="e.g., M.Sc Mathematics"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {errors.qualification && <p className="text-red-500 text-xs mt-1">{errors.qualification}</p>}
               </div>
 
               <div>
@@ -282,9 +374,11 @@ const AdminAddTeacher: React.FC = () => {
                   name="experience"
                   value={formData.experience}
                   onChange={handleInputChange}
+                  onBlur={handleBlur}
                   placeholder="e.g., 5 years"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {/* Experience is optional, so no error display */}
               </div>
 
               <div>
@@ -294,9 +388,10 @@ const AdminAddTeacher: React.FC = () => {
                   name="joining_date"
                   value={formData.joining_date}
                   onChange={handleInputChange}
-                  required
+                  onBlur={handleBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {errors.joining_date && <p className="text-red-500 text-xs mt-1">{errors.joining_date}</p>}
               </div>
 
               <div>
@@ -306,16 +401,17 @@ const AdminAddTeacher: React.FC = () => {
                   name="date_of_birth"
                   value={formData.date_of_birth}
                   onChange={handleInputChange}
-                  required
+                  onBlur={handleBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {errors.date_of_birth && <p className="text-red-500 text-xs mt-1">{errors.date_of_birth}</p>}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Gender *
                 </label>
-                <Select value={formData.gender} onValueChange={handleGenderChange} required>
+                <Select value={formData.gender} onValueChange={handleGenderChange}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a Gender" />
                   </SelectTrigger>
@@ -327,6 +423,7 @@ const AdminAddTeacher: React.FC = () => {
                     ))}
                   </SelectContent>
                 </Select>
+                {errors.gender && <p className="text-red-500 text-xs mt-1">{errors.gender}</p>}
               </div>
 
               <div>
@@ -336,11 +433,12 @@ const AdminAddTeacher: React.FC = () => {
                   name="emergency_contact"
                   value={formData.emergency_contact}
                   onChange={handleInputChange}
+                  onBlur={handleBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {/* Emergency contact is optional, so no error display */}
               </div>
             </div>
-
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -374,9 +472,11 @@ const AdminAddTeacher: React.FC = () => {
                 name="address"
                 value={formData.address}
                 onChange={handleInputChange}
+                onBlur={handleBlur}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+              {/* Address is optional, so no error display */}
             </div>
 
             <div className="flex gap-4 pt-4">
@@ -390,11 +490,12 @@ const AdminAddTeacher: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    // onClick={() => navigate('/admin-school')}
+                    onClick={() => navigate(userData.role == 'admin' ? '/admin-school' : '/school-details/' + schoolId)}
                     className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors"
                   >
                     Cancel
-                  </button></>
+                  </button>
+                </>
               )}
               {loader && (
                 <Loader2 className="w-10 h-10 mx-auto text-blue animate-spin" />

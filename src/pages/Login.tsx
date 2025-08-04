@@ -24,16 +24,70 @@ const Login: React.FC = () => {
   const [forgotLoading, setForgotLoading] = useState(false);
   const { login, isAuthenticated } = useAuth();
 
-
+  const [loginErrors, setLoginErrors] = useState({ username: '', password: '' });
+  const [forgotErrors, setForgotErrors] = useState({ username: '', code: '', newPassword: '', confirmPassword: '' });
 
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
 
+  const validateLoginField = (name: string, value: string) => {
+    let error = '';
+    switch (name) {
+      case 'username':
+        if (!value) error = 'Username is required';
+        break;
+      case 'password':
+        if (!value) error = 'Password is required';
+        break;
+      default:
+        break;
+    }
+    setLoginErrors(prev => ({ ...prev, [name]: error }));
+  };
+
+  const validateForgotField = (name: string, value: string) => {
+    let error = '';
+    switch (name) {
+      case 'username':
+        if (!value) error = 'Username is required';
+        break;
+      case 'code':
+        if (!value) error = 'Validation code is required';
+        break;
+      case 'newPassword':
+        if (!value) error = 'New password is required';
+        else if (value.length < 8) error = 'Password must be at least 8 characters long.';
+        break;
+      case 'confirmPassword':
+        if (!value) error = 'Confirm password is required';
+        else if (value !== newPassword) error = 'Passwords do not match.';
+        break;
+      default:
+        break;
+    }
+    setForgotErrors(prev => ({ ...prev, [name]: error }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
+
+    // Validate login fields
+    validateLoginField('username', username);
+    validateLoginField('password', password);
+
+    const hasError = !username || !password || loginErrors.username || loginErrors.password;
+    if (hasError) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: "Please fill all the details in the form.",
+        status: "error"
+      });
+      setLoading(false);
+      return;
+    }
 
     try {
       const success = await login(username, password);
@@ -66,6 +120,43 @@ const Login: React.FC = () => {
     e.preventDefault();
     setForgotLoading(true);
     setError('');
+
+    // Step-wise validation
+    if (forgotStep === 1) {
+      validateForgotField('username', forgotUsername);
+      if (!forgotUsername || forgotErrors.username) {
+        showSnackbar({
+          title: "⛔ Error",
+          description: "Please fill all the details in the form.",
+          status: "error"
+        });
+        setForgotLoading(false);
+        return;
+      }
+    } else if (forgotStep === 2) {
+      validateForgotField('code', validationCode);
+      if (!validationCode || forgotErrors.code) {
+        showSnackbar({
+          title: "⛔ Error",
+          description: "Please fill all the details in the form.",
+          status: "error"
+        });
+        setForgotLoading(false);
+        return;
+      }
+    } else if (forgotStep === 3) {
+      validateForgotField('newPassword', newPassword);
+      validateForgotField('confirmPassword', confirmPassword);
+      if (!newPassword || !confirmPassword || forgotErrors.newPassword || forgotErrors.confirmPassword) {
+        showSnackbar({
+          title: "⛔ Error",
+          description: "Please fill all the details in the form.",
+          status: "error"
+        });
+        setForgotLoading(false);
+        return;
+      }
+    }
 
     try {
       if (forgotStep === 1) {
@@ -206,15 +297,18 @@ const Login: React.FC = () => {
                     <input
                       type="text"
                       value={username}
-                      onChange={(e) => setUsername(e.target.value)}
+                      onChange={(e) => {
+                        setUsername(e.target.value);
+                        setLoginErrors(prev => ({ ...prev, username: '' }));
+                      }}
+                      onBlur={(e) => validateLoginField('username', e.target.value)}
                       placeholder="Enter your username"
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                       title="Username must contain only letters and numbers"
                       minLength={3}
-                      required
                     />
                   </div>
-                  {/* <p className="text-xs text-gray-500 mt-1">Minimum 3 characters, letters and numbers only</p> */}
+                  {loginErrors.username && <p className="text-red-500 text-xs mt-1">{loginErrors.username}</p>}
                 </div>
 
                 <div>
@@ -226,10 +320,14 @@ const Login: React.FC = () => {
                     <input
                       type={showPassword ? "text" : "password"}
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setLoginErrors(prev => ({ ...prev, password: '' }));
+                      }}
+                      onBlur={(e) => validateLoginField('password', e.target.value)}
                       placeholder="Enter your password"
                       className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                      required
+                      
                     />
                     <button
                       type="button"
@@ -239,6 +337,7 @@ const Login: React.FC = () => {
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
+                  {loginErrors.password && <p className="text-red-500 text-xs mt-1">{loginErrors.password}</p>}
                 </div>
 
                 <div className="flex items-center justify-end">
