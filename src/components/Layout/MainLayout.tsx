@@ -10,33 +10,41 @@ interface MainLayoutProps {
 // 👇 use forwardRef here
 const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
   ({ children, pageTitle }, ref) => {
-  // Default to collapsed on tablet screens (768px - 1024px)
+  // Default to collapsed only on screens smaller than 1024px
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
-      return window.innerWidth >= 768 && window.innerWidth <= 1024;
+      return window.innerWidth < 1024;
     }
     return false;
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleSidebar = () => {
-    if (window.innerWidth >= 768) {
+    if (window.innerWidth >= 1024) {
+      // For screens 1024px and above, behave like 1440px screen (allow toggle)
+      setIsCollapsed(!isCollapsed);
+    } else if (window.innerWidth >= 768) {
+      // For tablet screens (768px - 1023px), toggle collapse state
       setIsCollapsed(!isCollapsed);
     } else {
+      // For mobile screens, toggle mobile menu
       setIsMobileMenuOpen(!isMobileMenuOpen);
     }
   };
 
-  // Handle window resize to auto-collapse on tablet screens
+  // Handle window resize
   React.useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 768 && window.innerWidth <= 1024) {
-        setIsCollapsed(true);
-      } else if (window.innerWidth > 1024) {
+      if (window.innerWidth >= 1024) {
+        // For screens 1024px and above, keep current state (like 1440px)
+        // Don't auto-change the collapsed state
+        setIsMobileMenuOpen(false);
+      } else if (window.innerWidth >= 768) {
+        // For tablet screens, allow collapsed state but close mobile menu
+        setIsMobileMenuOpen(false);
+      } else {
+        // For mobile screens, always expand sidebar in mobile view and close mobile menu
         setIsCollapsed(false);
-      }
-      // Close mobile menu when resizing to larger screens
-      if (window.innerWidth >= 768) {
         setIsMobileMenuOpen(false);
       }
     };
@@ -50,7 +58,7 @@ const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
         {/* Mobile Overlay */}
         {isMobileMenuOpen && (
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
           />
         )}
@@ -58,9 +66,9 @@ const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
         {/* Sidebar */}
         <div className={`
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} 
-          md:translate-x-0 
-          fixed md:relative 
-          z-50 md:z-auto 
+          lg:translate-x-0 
+          fixed lg:relative 
+          z-50 lg:z-auto 
           transition-transform duration-300 ease-in-out
         `}>
           <Sidebar 

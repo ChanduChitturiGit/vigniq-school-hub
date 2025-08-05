@@ -227,7 +227,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
   };
 
   const handleIconClick = (path: string) => {
-    // If sidebar is collapsed and we're on desktop/tablet, expand it first then navigate
+    // For screens 1024px and above, behave like 1440px screen
+    // For screens below 1024px, expand if collapsed then navigate
     if (isCollapsed && window.innerWidth >= 768 && onExpandSidebar) {
       onExpandSidebar();
       // Navigate after a short delay to allow the sidebar to expand
