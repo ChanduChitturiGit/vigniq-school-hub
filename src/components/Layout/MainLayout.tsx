@@ -1,4 +1,3 @@
-
 import React, { useState, forwardRef } from 'react';
 import Sidebar from './Sidebar';
 import TopNavbar from './TopNavbar';
@@ -11,26 +10,34 @@ interface MainLayoutProps {
 // 👇 use forwardRef here
 const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
   ({ children, pageTitle }, ref) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  // Default to collapsed on tablet screens (768px - 1024px)
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 768 && window.innerWidth <= 1024;
+    }
+    return false;
+  });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleSidebar = () => {
-    if (window.innerWidth < 768) {
-      // Mobile: toggle mobile menu
-      setIsMobileMenuOpen(!isMobileMenuOpen);
-    } else {
-      // Desktop/Tablet: toggle collapsed state
+    if (window.innerWidth >= 768) {
       setIsCollapsed(!isCollapsed);
+    } else {
+      setIsMobileMenuOpen(!isMobileMenuOpen);
     }
   };
 
-  // Handle window resize to maintain consistent behavior
+  // Handle window resize to auto-collapse on tablet screens
   React.useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 768) {
-        // Mobile: close mobile menu and reset collapsed state
-        setIsMobileMenuOpen(false);
+      if (window.innerWidth >= 768 && window.innerWidth <= 1024) {
+        setIsCollapsed(true);
+      } else if (window.innerWidth > 1024) {
         setIsCollapsed(false);
+      }
+      // Close mobile menu when resizing to larger screens
+      if (window.innerWidth >= 768) {
+        setIsMobileMenuOpen(false);
       }
     };
 
