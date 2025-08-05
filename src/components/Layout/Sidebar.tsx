@@ -27,6 +27,8 @@ import {
 
 interface SidebarProps {
   isCollapsed: boolean;
+  isMobileMenuOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
 interface BaseMenuItem {
@@ -47,7 +49,7 @@ interface DropdownMenuItem extends BaseMenuItem {
 
 type MenuItem = RegularMenuItem | DropdownMenuItem;
 
-const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobileClose }) => {
   const { user } = useAuth();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -215,9 +217,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
     });
   }, [location.pathname]);
 
+  const handleLinkClick = () => {
+    if (onMobileClose && window.innerWidth < 768) {
+      onMobileClose();
+    }
+  };
+
   return (
     <div className={`bg-gradient-to-b from-blue-400 to-blue-500 text-white h-screen transition-all duration-300 ${
-      isCollapsed ? 'w-16' : 'w-64'
+      isCollapsed && window.innerWidth >= 768 ? 'w-16' : 'w-64'
     } flex flex-col`}>
       {/* Logo Section */}
       <div className="p-4 border-b border-blue-300">
@@ -225,7 +233,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
           <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
             <span className="text-blue-500 font-bold">V</span>
           </div>
-          {!isCollapsed && (
+          {(!isCollapsed || window.innerWidth < 768) && (
             <div>
               <span className="text-xl font-bold">VIGNIQ</span>
               {isInSubjectContext && subject && (
@@ -259,34 +267,35 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
                           : 'text-white/80 hover:bg-white/10 hover:text-white'
                       }`}
                     >
-                      <div className="flex items-center gap-3">
-                        <Icon className="w-5 h-5 flex-shrink-0" />
-                        {!isCollapsed && (
-                          <span className="truncate">{item.label}</span>
-                        )}
-                      </div>
-                      {!isCollapsed && (
-                        isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
-                      )}
+                       <div className="flex items-center gap-3">
+                         <Icon className="w-5 h-5 flex-shrink-0" />
+                         {(!isCollapsed || window.innerWidth < 768) && (
+                           <span className="truncate">{item.label}</span>
+                         )}
+                       </div>
+                       {(!isCollapsed || window.innerWidth < 768) && (
+                         isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
+                       )}
                     </button>
-                    {isExpanded && !isCollapsed && item.subItems && (
+                    {isExpanded && (!isCollapsed || window.innerWidth < 768) && item.subItems && (
                       <ul className="ml-8 mt-1 space-y-1">
                         {item.subItems.map((subItem) => {
                           const SubIcon = subItem.icon;
                           return (
-                            <li key={subItem.path}>
-                              <Link
-                                to={subItem.path}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                                  isActive(subItem.path) 
-                                    ? 'bg-white/20 text-white font-medium' 
-                                    : 'text-white/70 hover:bg-white/10 hover:text-white'
-                                }`}
-                              >
-                                {SubIcon && <SubIcon className="w-4 h-4" />}
-                                {subItem.label}
-                              </Link>
-                            </li>
+                             <li key={subItem.path}>
+                               <Link
+                                 to={subItem.path}
+                                 onClick={handleLinkClick}
+                                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                                   isActive(subItem.path) 
+                                     ? 'bg-white/20 text-white font-medium' 
+                                     : 'text-white/70 hover:bg-white/10 hover:text-white'
+                                 }`}
+                               >
+                                 {SubIcon && <SubIcon className="w-4 h-4" />}
+                                 {subItem.label}
+                               </Link>
+                             </li>
                           );
                         })}
                       </ul>
@@ -296,21 +305,22 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
               } else {
                 const regularItem = item as RegularMenuItem;
                 return (
-                  <li key={regularItem.path}>
-                    <Link
-                      to={regularItem.path}
-                      className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${
-                        isActive(regularItem.path) 
-                          ? 'bg-white/20 text-white font-medium' 
-                          : 'text-white/80 hover:bg-white/10 hover:text-white'
-                      }`}
-                    >
-                      <Icon className="w-5 h-5 flex-shrink-0" />
-                      {!isCollapsed && (
-                        <span className="truncate">{regularItem.label}</span>
-                      )}
-                    </Link>
-                  </li>
+                   <li key={regularItem.path}>
+                     <Link
+                       to={regularItem.path}
+                       onClick={handleLinkClick}
+                       className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${
+                         isActive(regularItem.path) 
+                           ? 'bg-white/20 text-white font-medium' 
+                           : 'text-white/80 hover:bg-white/10 hover:text-white'
+                       }`}
+                     >
+                       <Icon className="w-5 h-5 flex-shrink-0" />
+                       {(!isCollapsed || window.innerWidth < 768) && (
+                         <span className="truncate">{regularItem.label}</span>
+                       )}
+                     </Link>
+                   </li>
                 );
               }
             }
