@@ -10,7 +10,13 @@ interface MainLayoutProps {
 // 👇 use forwardRef here
 const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
   ({ children, pageTitle }, ref) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  // Default to collapsed on tablet screens (768px - 1024px)
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 768 && window.innerWidth <= 1024;
+    }
+    return false;
+  });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleSidebar = () => {
@@ -20,6 +26,24 @@ const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
       setIsMobileMenuOpen(!isMobileMenuOpen);
     }
   };
+
+  // Handle window resize to auto-collapse on tablet screens
+  React.useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768 && window.innerWidth <= 1024) {
+        setIsCollapsed(true);
+      } else if (window.innerWidth > 1024) {
+        setIsCollapsed(false);
+      }
+      // Close mobile menu when resizing to larger screens
+      if (window.innerWidth >= 768) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
     return (
       <div className="flex h-screen bg-gray-50 relative">
