@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { 
   Home, 
@@ -53,6 +53,7 @@ type MenuItem = RegularMenuItem | DropdownMenuItem;
 const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobileClose, onExpandSidebar }) => {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [expandedMenus, setExpandedMenus] = useState<{ [key: string]: boolean }>({});
 
@@ -231,6 +232,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
     }
   };
 
+  const handleNavigationClick = (path: string, e: React.MouseEvent) => {
+    if (isCollapsed && window.innerWidth >= 768) {
+      // Expand sidebar first, then navigate after a brief delay
+      e.preventDefault();
+      if (onExpandSidebar) {
+        onExpandSidebar();
+        setTimeout(() => {
+          navigate(path);
+        }, 150);
+      }
+    } else {
+      handleLinkClick();
+    }
+  };
+
   return (
     <div className={`bg-gradient-to-b from-blue-400 to-blue-500 text-white h-screen transition-all duration-300 ${
       isCollapsed && window.innerWidth >= 768 ? 'w-16' : 'w-64'
@@ -297,9 +313,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                           const SubIcon = subItem.icon;
                           return (
                              <li key={subItem.path}>
-                               <Link
-                                 to={subItem.path}
-                                 onClick={handleLinkClick}
+                                <Link
+                                  to={subItem.path}
+                                  onClick={(e) => handleNavigationClick(subItem.path, e)}
                                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                                    isActive(subItem.path) 
                                      ? 'bg-white/20 text-white font-medium' 
@@ -321,15 +337,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                 return (
                    <li key={regularItem.path}>
                      <Link
-                       to={regularItem.path}
-                       onClick={(e) => {
-                         if (isCollapsed && window.innerWidth >= 768) {
-                           e.preventDefault();
-                           handleIconClick();
-                         } else {
-                           handleLinkClick();
-                         }
-                       }}
+                        to={regularItem.path}
+                        onClick={(e) => handleNavigationClick(regularItem.path, e)}
                        className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${
                          isActive(regularItem.path) 
                            ? 'bg-white/20 text-white font-medium' 
