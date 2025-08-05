@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -232,8 +231,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
       window.innerWidth < 768 ? (isMobileMenuOpen ? 'w-64' : 'w-0') : (isCollapsed ? 'w-16' : 'w-64')
     } flex flex-col`}>
       {/* Logo Section */}
-      <div className="p-4 border-b border-blue-300">
-        <div className="flex items-center gap-3">
+      <div className={`p-4 border-b border-blue-300 ${isCollapsed ? 'px-2' : ''}`}>
+        <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
           <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
             <span className="text-blue-500 font-bold">V</span>
           </div>
@@ -330,11 +329,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                      <Link
                        to={regularItem.path}
                        onClick={handleLinkClick}
-                       className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-all duration-300 ease-in-out ${
+                       className={`flex items-center ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3'} mx-2 rounded-lg transition-all duration-300 ease-in-out ${
                          isActive(regularItem.path) 
                            ? 'bg-white/20 text-white font-medium' 
                            : 'text-white/80 hover:bg-white/10 hover:text-white'
-                       } ${isCollapsed ? 'justify-center' : ''}`}
+                       }`}
                        title={isCollapsed ? regularItem.label : ''}
                      >
                        <Icon className="w-5 h-5 flex-shrink-0" />
