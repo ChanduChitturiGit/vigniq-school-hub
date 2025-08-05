@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -221,6 +220,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
   }, [location.pathname]);
 
   const handleLinkClick = () => {
+    // Only close sidebar on mobile screens (< 768px)
     if (onMobileClose && window.innerWidth < 768) {
       onMobileClose();
     }
