@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { 
   Home, 
@@ -53,6 +53,7 @@ type MenuItem = RegularMenuItem | DropdownMenuItem;
 const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobileClose, onExpandSidebar }) => {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [expandedMenus, setExpandedMenus] = useState<{ [key: string]: boolean }>({});
 
@@ -224,15 +225,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
     }
   };
 
-  const handleIconClick = () => {
-    // If sidebar is collapsed and we're on desktop/tablet, expand it
+  const handleIconClick = (path: string) => {
+    // If sidebar is collapsed and we're on desktop/tablet, expand it and navigate
     if (isCollapsed && window.innerWidth >= 768 && onExpandSidebar) {
       onExpandSidebar();
+      // Navigate after a short delay to allow sidebar to expand
+      setTimeout(() => {
+        if (path !== '#') {
+          navigate(path);
+        }
+      }, 150);
     }
   };
 
   return (
-    <div className={`bg-gradient-to-b from-blue-400 to-blue-500 text-white h-screen transition-all duration-300 ${
+    <div className={`bg-gradient-to-b from-blue-400 to-blue-500 text-white h-screen transition-all duration-700 ease-in-out ${
       isCollapsed && window.innerWidth >= 768 ? 'w-16' : 'w-64'
     } flex flex-col`}>
       {/* Logo Section */}
@@ -270,7 +277,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                     <button
                       onClick={() => {
                         if (isCollapsed && window.innerWidth >= 768) {
-                          handleIconClick();
+                          // For dropdown items, just expand the sidebar without navigation
+                          if (onExpandSidebar) onExpandSidebar();
                         } else {
                           toggleMenu(item.key);
                         }
@@ -322,14 +330,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                    <li key={regularItem.path}>
                      <Link
                        to={regularItem.path}
-                       onClick={(e) => {
-                         if (isCollapsed && window.innerWidth >= 768) {
-                           e.preventDefault();
-                           handleIconClick();
-                         } else {
-                           handleLinkClick();
-                         }
-                       }}
+                        onClick={(e) => {
+                          if (isCollapsed && window.innerWidth >= 768) {
+                            e.preventDefault();
+                            handleIconClick(regularItem.path);
+                          } else {
+                            handleLinkClick();
+                          }
+                        }}
                        className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${
                          isActive(regularItem.path) 
                            ? 'bg-white/20 text-white font-medium' 
