@@ -224,10 +224,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
     }
   };
 
-  const handleIconClick = () => {
-    // If sidebar is collapsed and we're on desktop/tablet, expand it
+  const handleIconClick = (path?: string) => {
+    // If sidebar is collapsed and we're on desktop/tablet, expand it and navigate
     if (isCollapsed && window.innerWidth >= 768 && onExpandSidebar) {
       onExpandSidebar();
+      // Small delay to allow sidebar to expand before navigation
+      if (path && path !== '#') {
+        setTimeout(() => {
+          window.location.href = path;
+        }, 100);
+      }
     }
   };
 
@@ -270,7 +276,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                     <button
                       onClick={() => {
                         if (isCollapsed && window.innerWidth >= 768) {
-                          handleIconClick();
+                          // For dropdown items, expand sidebar and navigate to first available sub-item
+                          const firstValidSubItem = item.subItems.find(subItem => subItem.path !== '#');
+                          handleIconClick(firstValidSubItem?.path);
                         } else {
                           toggleMenu(item.key);
                         }
@@ -325,7 +333,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                        onClick={(e) => {
                          if (isCollapsed && window.innerWidth >= 768) {
                            e.preventDefault();
-                           handleIconClick();
+                           handleIconClick(regularItem.path);
                          } else {
                            handleLinkClick();
                          }
