@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -227,9 +226,22 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
     }
   };
 
+  const handleIconClick = (path: string) => {
+    // If sidebar is collapsed and we're on desktop/tablet, expand it first then navigate
+    if (isCollapsed && window.innerWidth >= 768 && onExpandSidebar) {
+      onExpandSidebar();
+      // Navigate after a short delay to allow the sidebar to expand
+      setTimeout(() => {
+        if (path !== '#') {
+          navigate(path);
+        }
+      }, 100);
+    }
+  };
+
   return (
     <div className={`bg-gradient-to-b from-blue-400 to-blue-500 text-white h-screen transition-all duration-500 ease-in-out ${
-      window.innerWidth < 768 ? (isCollapsed ? 'w-0' : 'w-64') : 'w-64'
+      isCollapsed && window.innerWidth >= 768 ? 'w-16' : 'w-64'
     } flex flex-col`}>
       {/* Logo Section */}
       <div className="p-4 border-b border-blue-300">
@@ -237,14 +249,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
           <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
             <span className="text-blue-500 font-bold">V</span>
           </div>
-          <div className="transition-opacity duration-500 ease-in-out">
-            <span className="text-xl font-bold">VIGNIQ</span>
-            {isInSubjectContext && subject && (
-              <div className="text-xs text-blue-100 mt-1">
-                {subject} - {className} {section}
-              </div>
-            )}
-          </div>
+          {(!isCollapsed || window.innerWidth < 768) && (
+            <div className="transition-opacity duration-500 ease-in-out">
+              <span className="text-xl font-bold">VIGNIQ</span>
+              {isInSubjectContext && subject && (
+                <div className="text-xs text-blue-100 mt-1">
+                  {subject} - {className} {section}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -262,7 +276,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                 return (
                   <li key={item.key}>
                     <button
-                      onClick={() => toggleMenu(item.key)}
+                      onClick={() => {
+                        if (isCollapsed && window.innerWidth >= 768) {
+                          handleIconClick('#');
+                        } else {
+                          toggleMenu(item.key);
+                        }
+                      }}
                       className={`w-full flex items-center justify-between gap-3 px-4 py-3 mx-2 rounded-lg transition-all duration-300 ease-in-out ${
                         isDropdownHighlighted 
                           ? 'bg-white/20 text-white' 
@@ -271,13 +291,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                     >
                        <div className="flex items-center gap-3">
                          <Icon className="w-5 h-5 flex-shrink-0" />
-                         <span className="truncate transition-opacity duration-500 ease-in-out">{item.label}</span>
+                         {(!isCollapsed || window.innerWidth < 768) && (
+                           <span className="truncate transition-opacity duration-500 ease-in-out">{item.label}</span>
+                         )}
                        </div>
-                       <div className="transition-transform duration-300 ease-in-out">
-                         {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                       </div>
+                       {(!isCollapsed || window.innerWidth < 768) && (
+                         <div className="transition-transform duration-300 ease-in-out">
+                           {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                         </div>
+                       )}
                     </button>
-                    {isExpanded && item.subItems && (
+                    {isExpanded && (!isCollapsed || window.innerWidth < 768) && item.subItems && (
                       <ul className="ml-8 mt-1 space-y-1 transition-all duration-300 ease-in-out">
                         {item.subItems.map((subItem) => {
                           const SubIcon = subItem.icon;
@@ -308,7 +332,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                    <li key={regularItem.path}>
                      <Link
                        to={regularItem.path}
-                       onClick={handleLinkClick}
+                       onClick={(e) => {
+                         if (isCollapsed && window.innerWidth >= 768) {
+                           e.preventDefault();
+                           handleIconClick(regularItem.path);
+                         } else {
+                           handleLinkClick();
+                         }
+                       }}
                        className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-all duration-300 ease-in-out ${
                          isActive(regularItem.path) 
                            ? 'bg-white/20 text-white font-medium' 
@@ -316,7 +347,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                        }`}
                      >
                        <Icon className="w-5 h-5 flex-shrink-0" />
-                       <span className="truncate transition-opacity duration-500 ease-in-out">{regularItem.label}</span>
+                       {(!isCollapsed || window.innerWidth < 768) && (
+                         <span className="truncate transition-opacity duration-500 ease-in-out">{regularItem.label}</span>
+                       )}
                      </Link>
                    </li>
                 );
