@@ -29,7 +29,6 @@ interface SidebarProps {
   isCollapsed: boolean;
   isMobileMenuOpen?: boolean;
   onMobileClose?: () => void;
-  onExpandSidebar?: () => void;
 }
 
 interface BaseMenuItem {
@@ -50,7 +49,7 @@ interface DropdownMenuItem extends BaseMenuItem {
 
 type MenuItem = RegularMenuItem | DropdownMenuItem;
 
-const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobileClose, onExpandSidebar }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobileClose }) => {
   const { user } = useAuth();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -224,13 +223,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
     }
   };
 
-  const handleIconClick = () => {
-    // If sidebar is collapsed and we're on desktop/tablet, expand it
-    if (isCollapsed && window.innerWidth >= 768 && onExpandSidebar) {
-      onExpandSidebar();
-    }
-  };
-
   return (
     <div className={`bg-gradient-to-b from-blue-400 to-blue-500 text-white h-screen transition-all duration-300 ${
       isCollapsed && window.innerWidth >= 768 ? 'w-16' : 'w-64'
@@ -268,13 +260,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                 return (
                   <li key={item.key}>
                     <button
-                      onClick={() => {
-                        if (isCollapsed && window.innerWidth >= 768) {
-                          handleIconClick();
-                        } else {
-                          toggleMenu(item.key);
-                        }
-                      }}
+                      onClick={() => toggleMenu(item.key)}
                       className={`w-full flex items-center justify-between gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${
                         isDropdownHighlighted 
                           ? 'bg-white/20 text-white' 
@@ -322,14 +308,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                    <li key={regularItem.path}>
                      <Link
                        to={regularItem.path}
-                       onClick={(e) => {
-                         if (isCollapsed && window.innerWidth >= 768) {
-                           e.preventDefault();
-                           handleIconClick();
-                         } else {
-                           handleLinkClick();
-                         }
-                       }}
+                       onClick={handleLinkClick}
                        className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${
                          isActive(regularItem.path) 
                            ? 'bg-white/20 text-white font-medium' 

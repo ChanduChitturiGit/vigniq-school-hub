@@ -67,7 +67,6 @@ const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
             isCollapsed={isCollapsed} 
             isMobileMenuOpen={isMobileMenuOpen}
             onMobileClose={() => setIsMobileMenuOpen(false)}
-            onExpandSidebar={() => setIsCollapsed(false)}
           />
         </div>
         
