@@ -10,10 +10,10 @@ interface MainLayoutProps {
 // 👇 use forwardRef here
 const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
   ({ children, pageTitle }, ref) => {
-  // Default to collapsed on tablet screens (768px - 1024px)
+  // Default to expanded for screens 1024px and above (like 1440px behavior)
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
-      return window.innerWidth >= 768 && window.innerWidth <= 1024;
+      return window.innerWidth < 1024;
     }
     return false;
   });
@@ -27,13 +27,15 @@ const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
     }
   };
 
-  // Handle window resize to auto-collapse on tablet screens
+  // Handle window resize - keep expanded for 1024px+ screens
   React.useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 768 && window.innerWidth <= 1024) {
+      // For screens 1024px and above, default to expanded (like 1440px behavior)
+      if (window.innerWidth >= 1024) {
+        // Don't auto-change state, let user control it
+      } else {
+        // Below 1024px, collapse the sidebar
         setIsCollapsed(true);
-      } else if (window.innerWidth > 1024) {
-        setIsCollapsed(false);
       }
       // Close mobile menu when resizing to larger screens
       if (window.innerWidth >= 768) {
