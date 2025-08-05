@@ -220,21 +220,27 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
   }, [location.pathname]);
 
   const handleLinkClick = () => {
+    // Only close on mobile screens
     if (onMobileClose && window.innerWidth < 768) {
       onMobileClose();
     }
   };
 
   const handleIconClick = (path: string) => {
-    // If sidebar is collapsed and we're on desktop/tablet, expand it and navigate
-    if (isCollapsed && window.innerWidth >= 768 && onExpandSidebar) {
-      onExpandSidebar();
-      // Navigate after a short delay to allow sidebar to expand
-      setTimeout(() => {
-        if (path !== '#') {
-          navigate(path);
-        }
-      }, 150);
+    // For tablet+ screens, expand if collapsed and navigate
+    if (window.innerWidth >= 768) {
+      if (isCollapsed && onExpandSidebar) {
+        onExpandSidebar();
+        // Navigate after a short delay to allow sidebar to expand
+        setTimeout(() => {
+          if (path !== '#') {
+            navigate(path);
+          }
+        }, 150);
+      } else if (path !== '#') {
+        // If already expanded, just navigate
+        navigate(path);
+      }
     }
   };
 
