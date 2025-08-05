@@ -1,3 +1,4 @@
+
 import React, { useState, forwardRef } from 'react';
 import Sidebar from './Sidebar';
 import TopNavbar from './TopNavbar';
@@ -13,30 +14,31 @@ const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
   // Default to collapsed on tablet screens (768px - 1024px)
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
-      return window.innerWidth >= 768 && window.innerWidth <= 1024;
+      return window.innerWidth < 768;
     }
     return false;
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleSidebar = () => {
-    if (window.innerWidth >= 768) {
-      setIsCollapsed(!isCollapsed);
-    } else {
+    if (window.innerWidth < 768) {
       setIsMobileMenuOpen(!isMobileMenuOpen);
+    } else {
+      // For desktop/tablet screens, sidebar stays open - only toggle hamburger state
+      setIsCollapsed(!isCollapsed);
     }
   };
 
-  // Handle window resize to auto-collapse on tablet screens
+  // Handle window resize to maintain consistent behavior
   React.useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 768 && window.innerWidth <= 1024) {
+      if (window.innerWidth < 768) {
+        // Mobile: use mobile menu state
         setIsCollapsed(true);
-      } else if (window.innerWidth > 1024) {
+        setIsMobileMenuOpen(false);
+      } else {
+        // Desktop/Tablet: sidebar always visible, no collapse
         setIsCollapsed(false);
-      }
-      // Close mobile menu when resizing to larger screens
-      if (window.innerWidth >= 768) {
         setIsMobileMenuOpen(false);
       }
     };
