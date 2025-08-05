@@ -15,6 +15,7 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ isCollapsed, toggleSidebar, pageT
   const navigate = useNavigate();
   const [showUserMenu, setShowUserMenu] = React.useState(false);
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
+  const userMenuRef = React.useRef<HTMLDivElement>(null);
 
   const handleLogout = () => {
     logout();
@@ -32,6 +33,23 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ isCollapsed, toggleSidebar, pageT
     setShowUserMenu(false);
   };
 
+  // Close user menu when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+
+    if (showUserMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUserMenu]);
+
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 h-16 flex items-center justify-between px-4">
       {/* Left Section */}
@@ -46,7 +64,7 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ isCollapsed, toggleSidebar, pageT
       </div>
 
       {/* Right Section */}
-      <div className="relative">
+      <div className="relative" ref={userMenuRef}>
         <button
           onClick={() => setShowUserMenu(!showUserMenu)}
           className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
