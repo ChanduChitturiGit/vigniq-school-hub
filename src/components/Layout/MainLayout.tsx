@@ -11,20 +11,15 @@ interface MainLayoutProps {
 // 👇 use forwardRef here
 const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
   ({ children, pageTitle }, ref) => {
-  // Default to collapsed on tablet screens (768px - 1024px)
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return window.innerWidth < 768;
-    }
-    return false;
-  });
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleSidebar = () => {
     if (window.innerWidth < 768) {
+      // Mobile: toggle mobile menu
       setIsMobileMenuOpen(!isMobileMenuOpen);
     } else {
-      // For desktop/tablet screens, sidebar stays open - only toggle hamburger state
+      // Desktop/Tablet: toggle collapsed state
       setIsCollapsed(!isCollapsed);
     }
   };
@@ -33,13 +28,9 @@ const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
   React.useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 768) {
-        // Mobile: use mobile menu state
-        setIsCollapsed(true);
+        // Mobile: close mobile menu and reset collapsed state
         setIsMobileMenuOpen(false);
-      } else {
-        // Desktop/Tablet: sidebar always visible, no collapse
         setIsCollapsed(false);
-        setIsMobileMenuOpen(false);
       }
     };
 

@@ -229,7 +229,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
 
   return (
     <div className={`bg-gradient-to-b from-blue-400 to-blue-500 text-white h-screen transition-all duration-500 ease-in-out ${
-      window.innerWidth < 768 ? (isCollapsed ? 'w-0' : 'w-64') : 'w-64'
+      window.innerWidth < 768 ? (isMobileMenuOpen ? 'w-64' : 'w-0') : (isCollapsed ? 'w-16' : 'w-64')
     } flex flex-col`}>
       {/* Logo Section */}
       <div className="p-4 border-b border-blue-300">
@@ -237,14 +237,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
           <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
             <span className="text-blue-500 font-bold">V</span>
           </div>
-          <div className="transition-opacity duration-500 ease-in-out">
-            <span className="text-xl font-bold">VIGNIQ</span>
-            {isInSubjectContext && subject && (
-              <div className="text-xs text-blue-100 mt-1">
-                {subject} - {className} {section}
-              </div>
-            )}
-          </div>
+          {!isCollapsed && (
+            <div className="transition-opacity duration-500 ease-in-out">
+              <span className="text-xl font-bold">VIGNIQ</span>
+              {isInSubjectContext && subject && (
+                <div className="text-xs text-blue-100 mt-1">
+                  {subject} - {className} {section}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -258,6 +260,25 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
               if ('isDropdown' in item && item.isDropdown) {
                 const isExpanded = expandedMenus[item.key];
                 const isDropdownHighlighted = isDropdownActive(item.subItems);
+                
+                // Don't show dropdown in collapsed state
+                if (isCollapsed) {
+                  return (
+                    <li key={item.key}>
+                      <button
+                        onClick={() => onExpandSidebar?.()}
+                        className={`w-full flex items-center justify-center p-3 mx-2 rounded-lg transition-all duration-300 ease-in-out ${
+                          isDropdownHighlighted 
+                            ? 'bg-white/20 text-white' 
+                            : 'text-white/80 hover:bg-white/10 hover:text-white'
+                        }`}
+                        title={item.label}
+                      >
+                        <Icon className="w-5 h-5" />
+                      </button>
+                    </li>
+                  );
+                }
                 
                 return (
                   <li key={item.key}>
@@ -313,10 +334,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                          isActive(regularItem.path) 
                            ? 'bg-white/20 text-white font-medium' 
                            : 'text-white/80 hover:bg-white/10 hover:text-white'
-                       }`}
+                       } ${isCollapsed ? 'justify-center' : ''}`}
+                       title={isCollapsed ? regularItem.label : ''}
                      >
                        <Icon className="w-5 h-5 flex-shrink-0" />
-                       <span className="truncate transition-opacity duration-500 ease-in-out">{regularItem.label}</span>
+                       {!isCollapsed && (
+                         <span className="truncate transition-opacity duration-500 ease-in-out">{regularItem.label}</span>
+                       )}
                      </Link>
                    </li>
                 );
