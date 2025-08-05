@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { 
   Home, 
@@ -53,6 +53,7 @@ type MenuItem = RegularMenuItem | DropdownMenuItem;
 const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobileClose, onExpandSidebar }) => {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [expandedMenus, setExpandedMenus] = useState<{ [key: string]: boolean }>({});
 
@@ -219,20 +220,27 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
   }, [location.pathname]);
 
   const handleLinkClick = () => {
+    // Only close sidebar on mobile screens (< 768px)
     if (onMobileClose && window.innerWidth < 768) {
       onMobileClose();
     }
   };
 
-  const handleIconClick = () => {
-    // If sidebar is collapsed and we're on desktop/tablet, expand it
+  const handleIconClick = (path: string) => {
+    // If sidebar is collapsed and we're on desktop/tablet, expand it first then navigate
     if (isCollapsed && window.innerWidth >= 768 && onExpandSidebar) {
       onExpandSidebar();
+      // Navigate after a short delay to allow the sidebar to expand
+      setTimeout(() => {
+        if (path !== '#') {
+          navigate(path);
+        }
+      }, 100);
     }
   };
 
   return (
-    <div className={`bg-gradient-to-b from-blue-400 to-blue-500 text-white h-screen transition-all duration-300 ${
+    <div className={`bg-gradient-to-b from-blue-400 to-blue-500 text-white h-screen transition-all duration-500 ease-in-out ${
       isCollapsed && window.innerWidth >= 768 ? 'w-16' : 'w-64'
     } flex flex-col`}>
       {/* Logo Section */}
@@ -242,7 +250,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
             <span className="text-blue-500 font-bold">V</span>
           </div>
           {(!isCollapsed || window.innerWidth < 768) && (
-            <div>
+            <div className="transition-opacity duration-500 ease-in-out">
               <span className="text-xl font-bold">VIGNIQ</span>
               {isInSubjectContext && subject && (
                 <div className="text-xs text-blue-100 mt-1">
@@ -270,12 +278,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                     <button
                       onClick={() => {
                         if (isCollapsed && window.innerWidth >= 768) {
-                          handleIconClick();
+                          handleIconClick('#');
                         } else {
                           toggleMenu(item.key);
                         }
                       }}
-                      className={`w-full flex items-center justify-between gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${
+                      className={`w-full flex items-center justify-between gap-3 px-4 py-3 mx-2 rounded-lg transition-all duration-300 ease-in-out ${
                         isDropdownHighlighted 
                           ? 'bg-white/20 text-white' 
                           : 'text-white/80 hover:bg-white/10 hover:text-white'
@@ -284,15 +292,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                        <div className="flex items-center gap-3">
                          <Icon className="w-5 h-5 flex-shrink-0" />
                          {(!isCollapsed || window.innerWidth < 768) && (
-                           <span className="truncate">{item.label}</span>
+                           <span className="truncate transition-opacity duration-500 ease-in-out">{item.label}</span>
                          )}
                        </div>
                        {(!isCollapsed || window.innerWidth < 768) && (
-                         isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
+                         <div className="transition-transform duration-300 ease-in-out">
+                           {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                         </div>
                        )}
                     </button>
                     {isExpanded && (!isCollapsed || window.innerWidth < 768) && item.subItems && (
-                      <ul className="ml-8 mt-1 space-y-1">
+                      <ul className="ml-8 mt-1 space-y-1 transition-all duration-300 ease-in-out">
                         {item.subItems.map((subItem) => {
                           const SubIcon = subItem.icon;
                           return (
@@ -300,7 +310,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                                <Link
                                  to={subItem.path}
                                  onClick={handleLinkClick}
-                                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ease-in-out ${
                                    isActive(subItem.path) 
                                      ? 'bg-white/20 text-white font-medium' 
                                      : 'text-white/70 hover:bg-white/10 hover:text-white'
@@ -325,12 +335,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                        onClick={(e) => {
                          if (isCollapsed && window.innerWidth >= 768) {
                            e.preventDefault();
-                           handleIconClick();
+                           handleIconClick(regularItem.path);
                          } else {
                            handleLinkClick();
                          }
                        }}
-                       className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${
+                       className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-all duration-300 ease-in-out ${
                          isActive(regularItem.path) 
                            ? 'bg-white/20 text-white font-medium' 
                            : 'text-white/80 hover:bg-white/10 hover:text-white'
@@ -338,7 +348,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                      >
                        <Icon className="w-5 h-5 flex-shrink-0" />
                        {(!isCollapsed || window.innerWidth < 768) && (
-                         <span className="truncate">{regularItem.label}</span>
+                         <span className="truncate transition-opacity duration-500 ease-in-out">{regularItem.label}</span>
                        )}
                      </Link>
                    </li>
