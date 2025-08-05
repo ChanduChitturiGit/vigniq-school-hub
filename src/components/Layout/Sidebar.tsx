@@ -220,10 +220,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
   }, [location.pathname]);
 
   const handleLinkClick = () => {
-    // Only close on mobile screens
+    // Only close on mobile screens (below 768px)
     if (onMobileClose && window.innerWidth < 768) {
       onMobileClose();
     }
+    // For tablet+ screens, do nothing - sidebar stays open
   };
 
   const handleIconClick = (path: string) => {
@@ -238,8 +239,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
           }
         }, 150);
       } else if (path !== '#') {
-        // If already expanded, just navigate
+        // If already expanded, just navigate without closing
         navigate(path);
+      }
+    } else {
+      // On mobile, navigate and close sidebar
+      if (path !== '#') {
+        navigate(path);
+        if (onMobileClose) {
+          onMobileClose();
+        }
       }
     }
   };
