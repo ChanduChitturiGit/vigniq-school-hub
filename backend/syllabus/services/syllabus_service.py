@@ -1,16 +1,30 @@
 """Syllabus Service Module"""
 
 import logging
+from io import BytesIO
 
 from django.db.models import Prefetch
 
 from rest_framework.response import Response
 from rest_framework import status
 
-from syllabus.models import SchoolChapter, SchoolClassPrerequisite, SchoolClassSubTopic
+from syllabus.models import (
+    SchoolChapter,
+    SchoolClassPrerequisite,
+    SchoolClassSubTopic,
+    SchoolLessonPlanDay,
+)
+
 from core.common_modules.common_functions import CommonFunctions
+from core import s3_client
+from core.lang_chain.lang_chain import LangChainService
+
 from teacher.models import TeacherSubjectAssignment
+
 from classes.models import SchoolSection
+
+from school.models import SchoolSyllabusEbooks
+
 logger = logging.getLogger(__name__)
 
 class SyllabusService:
@@ -350,10 +364,111 @@ class SyllabusService:
             return Response({"error": "Something went wrong while deleting prerequisite."},
                             status=status.HTTP_400_BAD_REQUEST)
     
-    # def generate_lesson_plan(self, request):
-    #     """Generate a lesson plan based on chapter details."""
-    #     try:
-    #         school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
-    #         chapter_id = request.data.get("chapter_id")
-    #         num_days = request.data.get("num_days")
-    #         time_period = request.data.get("time_period")
+    def generate_lesson_plan(self, request):
+        """Generate a lesson plan based on chapter details."""
+        try:
+            school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
+            chapter_id = request.data.get("chapter_id")
+            num_days = request.data.get("num_days")
+            time_period = request.data.get("time_period")
+
+            if not all([school_id, chapter_id, num_days, time_period]):
+                logger.error("Missing required parameters for generating lesson plan.")
+                return Response({"error": "Missing required parameters."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            school_db_name = CommonFunctions.get_school_db_name(school_id)
+
+            chapter = SchoolChapter.objects.using(school_db_name).filter(
+                id=chapter_id
+            ).first()
+            
+            if not chapter:
+                logger.error("Chapter not found.")
+                return Response({"error": "Chapter not found."},
+                                status=status.HTTP_404_NOT_FOUND)
+            
+            ebook_instance = SchoolSyllabusEbooks.objects.filter(
+                id=chapter.ebook_id
+            ).first()
+
+            if not ebook_instance:
+                logger.error("Ebook not found for the chapter.")
+                return Response({"error": "Ebook not found for the chapter."},
+                                status=status.HTTP_404_NOT_FOUND)
+            pdf_bytes_io = BytesIO()
+            s3_status = s3_client.download_file(ebook_instance.file_path, pdf_bytes_io)
+            if not s3_status:
+                logger.error("Failed to download ebook from S3.")
+                return Response({"error": "Failed to download ebook."},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            lang_chain_service = LangChainService()
+            lesson_plan = lang_chain_service.generate_lesson_plan(
+                chapter_number=chapter.chapter_number,
+                chapter_title=chapter.chapter_name,
+                num_days=num_days,
+                time_period=time_period,
+                pdf_file=pdf_bytes_io
+            )
+
+            normalized = {k.lower(): v for k, v in lesson_plan.items()}
+            lesson_plan_data = normalized.get("lesson_plan", [])
+            
+            return Response({"data": normalized},
+                            status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error("Error in generate_lesson_plan: %s", e)
+            return Response({"error": "Something went wrong while generating lesson plan. Please try again."},
+                            status=status.HTTP_400_BAD_REQUEST)
+    
+    def save_lesson_plan(self, request):
+        """Save the generated lesson plan."""
+        try:
+            school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
+            chapter_id = request.data.get("chapter_id")
+            class_section_id = request.data.get("class_section_id")
+            lesson_plan_data = request.data.get("lesson_plan_data")
+
+            if not all([school_id, chapter_id, class_section_id, lesson_plan_data]):
+                logger.error("Missing required parameters for saving lesson plan.")
+                return Response({"error": "Missing required parameters."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            school_db_name = CommonFunctions.get_school_db_name(school_id)
+
+            chapter = SchoolChapter.objects.using(school_db_name).filter(
+                id=chapter_id
+            ).first()
+
+            if not chapter:
+                logger.error("Chapter not found.")
+                return Response({"error": "Chapter not found."},
+                                status=status.HTTP_404_NOT_FOUND)
+
+            class_section = SchoolSection.objects.using(school_db_name).filter(
+                id=class_section_id
+            ).first()
+
+            if not class_section:
+                logger.error("Class section not found.")
+                return Response({"error": "Class section not found."},
+                                status=status.HTTP_404_NOT_FOUND)
+
+            for day in lesson_plan_data['']:
+                lesson_plan_day = SchoolLessonPlanDay(
+                    chapter=chapter,
+                    class_section=class_section,
+                    day=day,
+                    learning_outcomes=data.get("learning_outcomes"),
+                    real_world_applications=data.get("real_world_applications"),
+                    taxonomy_alignment=data.get("taxonomy_alignment"),
+                    status=data.get("status")
+                )
+                lesson_plan_day.save(using=school_db_name)
+
+            return Response({"message": "Lesson plan saved successfully."},
+                            status=status.HTTP_201_CREATED)
+        except Exception as e:
+            logger.error("Error in save_lesson_plan: %s", e)
+            return Response({"error": "Something went wrong while saving lesson plan."},
+                            status=status.HTTP_400_BAD_REQUEST)

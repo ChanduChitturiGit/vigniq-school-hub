@@ -32,6 +32,8 @@ class SchoolActionView(APIView):
             return SchoolService().get_schools(request)
         elif action == 'board_list':
             return SchoolService().get_boards(request)
+        elif action == 'getBoardsBySchoolId':
+            return SchoolService().get_boards_by_school_id(request)
         elif action == 'getSchoolById':
             return SchoolService().get_school(request)
         return Response({"error": "Invalid GET action"}, status=status.HTTP_400_BAD_REQUEST)

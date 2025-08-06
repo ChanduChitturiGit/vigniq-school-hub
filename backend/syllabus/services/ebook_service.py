@@ -2,6 +2,7 @@
 
 import logging
 from io import BytesIO
+from datetime import datetime
 from django.db import transaction
 from collections import OrderedDict
 from django.utils import timezone
@@ -49,10 +50,30 @@ class EbookService:
                 logger.error("Missing required fields for eBook upload.")
                 return Response({"error": "Missing required fields."},
                                 status=status.HTTP_400_BAD_REQUEST)
+            
+            if upload_type not in ['single', 'chapter_wise']:
+                logger.error("Invalid upload type provided.")
+                return Response({"error": "Invalid upload type."},
+                                status=status.HTTP_400_BAD_REQUEST)
 
             class_obj = SchoolDefaultClasses.objects.get(id=class_id)
             board_obj = SchoolBoard.objects.get(id=board_id)
             subject_obj = SchoolDefaultSubjects.objects.get(id=subject_id)
+
+            upload_type_check = "single"
+            if upload_type == 'single':
+                upload_type_check = "chapter_wise"
+            ebook_available_status = SchoolSyllabusEbooks.objects.filter(
+                board=board_obj,
+                subject=subject_obj,
+                class_number=class_obj,
+                ebook_type=upload_type_check,
+                syllabus_year=syllabus_year,
+            ).exists()
+            if ebook_available_status:
+                logger.error("Ebook with upload type: %s exists for the given board, class, and subject.", upload_type_check)
+                return Response({"error": f"Ebook with upload type: {upload_type_check} exists for the given board, class, and subject. Please delete the existing ebook before uploading a new one."},
+                                status=status.HTTP_400_BAD_REQUEST)
 
             if upload_type == 'chapter_wise':
                 if not chapter_number:
@@ -125,7 +146,7 @@ class EbookService:
             board_id = request.GET.get("board_id")
             class_id = request.GET.get("class_id")
             subject_id = request.GET.get("subject_id")
-            year = request.GET.get("year")
+            year = request.GET.get("year", datetime.today().year)
             page = int(request.GET.get("page", 1))
 
             if not year:

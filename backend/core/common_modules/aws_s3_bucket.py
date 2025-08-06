@@ -66,9 +66,10 @@ class AwsS3Bucket:
             logger.error("Error generating URL: %s", e)
             return None
 
-    def download_file(self, s3_key: str, file_path: str) -> bool:
+    def download_file(self, s3_key: str, file) -> bool:
         try:
-            self.s3.download_file(self.bucket_name, s3_key, file_path)
+            self.s3.download_fileobj(self.bucket_name, s3_key, file)
+            file.seek(0)
             logger.info("File downloaded successfully from S3: %s", s3_key)
             return True
         except ClientError as e:

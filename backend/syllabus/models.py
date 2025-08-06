@@ -33,16 +33,72 @@ class SchoolPrerequisite(AbstractPrerequisite):
         unique_together = ('chapter', 'topic')
 
 class SchoolClassSubTopic(AbstractSubTopic):
-    chapter = models.ForeignKey(SchoolChapter, on_delete=models.CASCADE, related_name='class_sub_topics')
+    chapter = models.ForeignKey(SchoolChapter, on_delete=models.CASCADE,
+                                related_name='class_sub_topics')
     class_section = models.ForeignKey(SchoolSection, on_delete=models.CASCADE,
                                       null=True, blank=True)
     class Meta(AbstractSubTopic.Meta):
         db_table = 'classwise_sub_topic'
 
 class SchoolClassPrerequisite(AbstractPrerequisite):
-    chapter = models.ForeignKey(SchoolChapter, on_delete=models.CASCADE, related_name='class_prerequisites'
+    chapter = models.ForeignKey(SchoolChapter, on_delete=models.CASCADE,
+                                related_name='class_prerequisites'
                                 )
     class_section = models.ForeignKey(SchoolSection, on_delete=models.CASCADE,
                                       null=True, blank=True)
     class Meta(AbstractPrerequisite.Meta):
         db_table = 'classwise_prerequisite'
+
+
+class SchoolLessonPlanDay(models.Model):
+    STATUS_CHOICES = [
+        ('not_started', 'Not Started'),
+        ('started', 'Started'),
+        ('completed', 'Completed'),
+    ]
+
+    chapter = models.ForeignKey(
+        SchoolChapter,
+        related_name='school_chapter_lesson_plan_days',
+        on_delete=models.CASCADE
+    )
+    class_section = models.ForeignKey(
+        SchoolSection,
+        related_name='school_class_lesson_plan_days',
+        on_delete=models.CASCADE
+    )
+    day = models.IntegerField()
+    learning_outcomes = models.TextField()
+    real_world_applications = models.TextField()
+    taxonomy_alignment = models.CharField(max_length=255)
+    
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='not_started'
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'school_lesson_plan_day'
+
+
+class Topic(models.Model):
+    lesson_day = models.ForeignKey(
+        SchoolLessonPlanDay,
+        related_name='school_lesson_topics',
+        on_delete=models.CASCADE
+    )
+    title = models.CharField(max_length=255)
+    summary = models.TextField()
+    time_minutes = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'school_lesson_topic'
+
+    def __str__(self):
+        return self.title
