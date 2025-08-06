@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
@@ -7,9 +6,8 @@ import PasswordInput from '../components/ui/password-input';
 import { getClassesBySchoolId } from '../services/class';
 import { addStudent } from '../services/student';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { toast } from '../components/ui/sonner';
-import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import { Loader2 } from 'lucide-react';
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
 
 const AddStudent: React.FC = () => {
   const { showSnackbar } = useSnackbar();
@@ -28,7 +26,6 @@ const AddStudent: React.FC = () => {
     class: '',
     class_id: 1,
     school_id: userData.school_id,
-    // section: '',
     roll_number: '',
     date_of_birth: '',
     gender: '',
@@ -38,17 +35,25 @@ const AddStudent: React.FC = () => {
     parent_email: '',
     admission_date: ''
   });
+  const [errors, setErrors] = useState({
+    first_name: '',
+    last_name: '',
+    user_name: '',
+    class: '',
+    roll_number: '',
+    date_of_birth: '',
+    gender: '',
+    parent_name: '',
+    parent_phone: '',
+    admission_date: '',
+    password: ''
+  });
   const genderList = ["Male", "Female", "Others"];
 
-
   const [breadcrumbItems, setBreadCrumbItems] = useState([
-    // { label: 'User Management', path: '/user-management' },
     { label: 'My School', path: '/admin-school' },
-    //   // { label: 'Greenwood High School', path: '/school-details/1' },
-    //  // { label: 'Dashboard', path: '/dashboard' },
     { label: 'Add Student' }
   ]);
-
 
   const setBreadCrumb = () => {
     if (userData.role == 'teacher') {
@@ -71,29 +76,82 @@ const AddStudent: React.FC = () => {
       ...prev,
       [name]: value
     }));
+    setErrors(prev => ({ ...prev, [name]: '' }));
   };
-
 
   const handleClassChange = (value: string) => {
-    formData.class = value;
-    const classId = getClassId(value);
     setFormData(prev => ({
       ...prev,
-      'class_id': classId
+      class: value,
+      class_id: getClassId(value)
     }));
+    setErrors(prev => ({ ...prev, class: '' }));
   };
-
 
   const handleGenderChange = (value: string) => {
     setFormData(prev => ({
       ...prev,
       gender: value
     }));
+    setErrors(prev => ({ ...prev, gender: '' }));
   };
 
-  //classes list api
+  // --- Validation logic ---
+  const validateField = (name: string, value: any) => {
+    let error = '';
+    switch (name) {
+      case 'first_name':
+        if (!value) error = 'First Name is required';
+        break;
+      case 'last_name':
+        if (!value) error = 'Last Name is required';
+        break;
+      case 'user_name':
+        if (!value) error = 'User Name is required';
+        break;
+      case 'class':
+        if (!value) error = 'Class is required';
+        break;
+      case 'roll_number':
+        if (!value) error = 'Roll Number is required';
+        break;
+      case 'date_of_birth':
+        if (!value) error = 'Date of Birth is required';
+        break;
+      case 'gender':
+        if (!value) error = 'Gender is required';
+        break;
+      case 'parent_name':
+        if (!value) error = 'Parent/Guardian Name is required';
+        break;
+      case 'parent_phone':
+        if (!value) error = 'Parent Phone is required';
+        else if (!/^\d{10,15}$/.test(value)) error = 'Parent Phone must be 10-15 digits';
+        break;
+      case 'admission_date':
+        if (!value) error = 'Admission Date is required';
+        break;
+      case 'password':
+        if (!value) error = 'Password is required';
+        else if (value.length < 6) error = 'Password must be at least 6 characters';
+        break;
+      default:
+        break;
+    }
+    setErrors(prev => ({ ...prev, [name]: error }));
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    validateField(name, value);
+  };
+
+  useEffect(() => {
+    getClasses();
+    setBreadCrumb();
+  }, []);
+
   const getClasses = async () => {
-    //classes list api
     const classesData = await getClassesBySchoolId(userData.role == 'superadmin' ? schoolId : userData.school_id);
     if (classesData && classesData.classes) {
       setClasses(classesData.classes);
@@ -101,20 +159,35 @@ const AddStudent: React.FC = () => {
     }
   }
 
-  useEffect(() => {
-    getClasses();
-    setBreadCrumb();
-  }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
-    if (!formData.first_name || !formData.last_name || !formData.user_name ||
-      !formData.class || !formData.roll_number ||
-      !formData.date_of_birth || !formData.gender || !formData.parent_name ||
-      !formData.parent_phone || !formData.admission_date || !password) {
-      alert('Please fill in all required fields including password');
+    const fieldsToValidate = [
+      'first_name', 'last_name', 'user_name', 'class', 'roll_number',
+      'date_of_birth', 'gender', 'parent_name', 'parent_phone', 'admission_date', 'password'
+    ];
+
+    // Validate all fields using validateField
+    fieldsToValidate.forEach(field => {
+      const value = field === 'password' ? password : (formData as any)[field];
+      validateField(field, value);
+    });
+
+    // Check if any errors exist or any required field is missing
+    const hasError =
+      fieldsToValidate.some(field => {
+        const value = field === 'password' ? password : (formData as any)[field];
+        return !value;
+      }) ||
+      fieldsToValidate.some(field => errors[field as keyof typeof errors]);
+
+    if (hasError) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: "Please fill all the details in the form.",
+        status: "error"
+      });
+      setLoader(false);
       return;
     }
 
@@ -130,7 +203,7 @@ const AddStudent: React.FC = () => {
 
       if (response && response.message) {
         showSnackbar({
-          title: "sucess",
+          title: "success",
           description: `Student added successfully ✅`,
           status: "success"
         });
@@ -167,9 +240,10 @@ const AddStudent: React.FC = () => {
                   name="first_name"
                   value={formData.first_name}
                   onChange={handleInputChange}
-                  required
+                  onBlur={handleBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {errors.first_name && <p className="text-red-500 text-xs mt-1">{errors.first_name}</p>}
               </div>
 
               <div>
@@ -179,9 +253,10 @@ const AddStudent: React.FC = () => {
                   name="last_name"
                   value={formData.last_name}
                   onChange={handleInputChange}
-                  required
+                  onBlur={handleBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {errors.last_name && <p className="text-red-500 text-xs mt-1">{errors.last_name}</p>}
               </div>
 
               <div>
@@ -191,9 +266,10 @@ const AddStudent: React.FC = () => {
                   name="user_name"
                   value={formData.user_name}
                   onChange={handleInputChange}
-                  required
+                  onBlur={handleBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {errors.user_name && <p className="text-red-500 text-xs mt-1">{errors.user_name}</p>}
               </div>
 
               <div>
@@ -203,6 +279,7 @@ const AddStudent: React.FC = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
+                  onBlur={handleBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -213,9 +290,9 @@ const AddStudent: React.FC = () => {
                   value={password}
                   onChange={setPassword}
                   placeholder="Enter password"
-                  required
                   showGenerator
                 />
+                {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
               </div>
 
               <div>
@@ -225,33 +302,16 @@ const AddStudent: React.FC = () => {
                   name="phone_number"
                   value={formData.phone_number}
                   onChange={handleInputChange}
+                  onBlur={handleBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-
-              {/* <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Class *</label>
-                <select
-                  name="class"
-                  value={formData.class}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select Class</option>
-                  {classes.map((classItem) => (
-                    <option key={'Class ' + classItem.class_number + ' - ' + classItem.section} value={'Class ' + classItem.class_number + ' - ' + classItem.section}>
-                      {'Class ' + classItem.class_number + ' - ' + classItem.section}
-                    </option>
-                  ))}
-                </select>
-              </div> */}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Class *
                 </label>
-                <Select value={formData.class} onValueChange={handleClassChange} required>
+                <Select value={formData.class} onValueChange={handleClassChange}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a Class" />
                   </SelectTrigger>
@@ -263,6 +323,7 @@ const AddStudent: React.FC = () => {
                     ))}
                   </SelectContent>
                 </Select>
+                {errors.class && <p className="text-red-500 text-xs mt-1">{errors.class}</p>}
               </div>
 
               <div>
@@ -272,9 +333,10 @@ const AddStudent: React.FC = () => {
                   name="roll_number"
                   value={formData.roll_number}
                   onChange={handleInputChange}
-                  required
+                  onBlur={handleBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {errors.roll_number && <p className="text-red-500 text-xs mt-1">{errors.roll_number}</p>}
               </div>
 
               <div>
@@ -284,32 +346,17 @@ const AddStudent: React.FC = () => {
                   name="date_of_birth"
                   value={formData.date_of_birth}
                   onChange={handleInputChange}
-                  required
+                  onBlur={handleBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {errors.date_of_birth && <p className="text-red-500 text-xs mt-1">{errors.date_of_birth}</p>}
               </div>
-
-              {/* <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
-                <select
-                  name="gender"
-                  value={formData.gender}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select Gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div> */}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Gender *
                 </label>
-                <Select value={formData.gender} onValueChange={handleGenderChange} required>
+                <Select value={formData.gender} onValueChange={handleGenderChange}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a Gender" />
                   </SelectTrigger>
@@ -321,6 +368,7 @@ const AddStudent: React.FC = () => {
                     ))}
                   </SelectContent>
                 </Select>
+                {errors.gender && <p className="text-red-500 text-xs mt-1">{errors.gender}</p>}
               </div>
 
               <div>
@@ -330,9 +378,10 @@ const AddStudent: React.FC = () => {
                   name="admission_date"
                   value={formData.admission_date}
                   onChange={handleInputChange}
-                  required
+                  onBlur={handleBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {errors.admission_date && <p className="text-red-500 text-xs mt-1">{errors.admission_date}</p>}
               </div>
 
               <div>
@@ -342,9 +391,10 @@ const AddStudent: React.FC = () => {
                   name="parent_name"
                   value={formData.parent_name}
                   onChange={handleInputChange}
-                  required
+                  onBlur={handleBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {errors.parent_name && <p className="text-red-500 text-xs mt-1">{errors.parent_name}</p>}
               </div>
 
               <div>
@@ -354,9 +404,10 @@ const AddStudent: React.FC = () => {
                   name="parent_phone"
                   value={formData.parent_phone}
                   onChange={handleInputChange}
-                  required
+                  onBlur={handleBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {errors.parent_phone && <p className="text-red-500 text-xs mt-1">{errors.parent_phone}</p>}
               </div>
 
               <div>
@@ -366,6 +417,7 @@ const AddStudent: React.FC = () => {
                   name="parent_email"
                   value={formData.parent_email}
                   onChange={handleInputChange}
+                  onBlur={handleBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -377,26 +429,26 @@ const AddStudent: React.FC = () => {
                 name="address"
                 value={formData.address}
                 onChange={handleInputChange}
+                onBlur={handleBlur}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             {!loader && (
-              <div className="flex gap-4 pt-4">
+              <div className="flex justify-center gap-4 pt-2">
                 <button
                   type="submit"
-                  className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors"
+                  className="bg-green-500 text-white px-6 lg:px-20 py-2 rounded-lg hover:bg-green-600 transition-colors"
                 >
                   Add Student
                 </button>
-                <button
+                {/* <button
                   type="button"
-                  // onClick={() => navigate('/school-details/1')}
                   className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors"
                 >
                   Cancel
-                </button>
+                </button> */}
               </div>
             )}
             {loader && (

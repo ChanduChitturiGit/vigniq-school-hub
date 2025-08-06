@@ -16,7 +16,6 @@ import {
   AlertDialogTrigger,
 } from '../components/ui/alert-dialog';
 import { getUserByUserName, editProfile } from '../services/user';
-import { toast } from '../components/ui/sonner';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 
 const Profile: React.FC = () => {
@@ -35,6 +34,13 @@ const Profile: React.FC = () => {
     qualification: '',
     joining_date: ''
   });
+  const [errors, setErrors] = useState({
+    first_name: '',
+    last_name: '',
+    phone_number: '',
+    address: '',
+    qualification: ''
+  });
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
 
   const breadcrumbItems = [
@@ -43,7 +49,6 @@ const Profile: React.FC = () => {
 
   //classes list api
   const getUserDetails = async () => {
-    //classes list api
     const userInfo = await getUserByUserName(userData.user_name);
     if (userInfo && userInfo.user) {
       setFormData(userInfo.user);
@@ -60,13 +65,64 @@ const Profile: React.FC = () => {
       ...prev,
       [name]: value
     }));
+    setErrors(prev => ({ ...prev, [name]: '' }));
+  };
+
+  // --- Validation logic ---
+  const validateField = (name: string, value: any) => {
+    let error = '';
+    switch (name) {
+      case 'first_name':
+        if (!value) error = 'First Name is required';
+        break;
+      case 'last_name':
+        if (!value) error = 'Last Name is required';
+        break;
+      case 'phone_number':
+        if (!value) error = 'Phone is required';
+        else if (!/^\d{10,15}$/.test(value)) error = 'Phone must be 10-15 digits';
+        break;
+      case 'address':
+        if (!value) error = 'Address is required';
+        break;
+      case 'qualification':
+        if (!value && user?.role == 'teacher') error = 'Qualification is required';
+        break;
+      default:
+        break;
+    }
+    setErrors(prev => ({ ...prev, [name]: error }));
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    validateField(name, value);
   };
 
   const editData = async (data: any) => {
+    // Validate all fields before API call
+    const fieldsToValidate = ['first_name', 'last_name', 'phone_number', 'address'];
+    if (user?.role == 'teacher') fieldsToValidate.push('qualification');
+    fieldsToValidate.forEach(field => {
+      validateField(field, (formData as any)[field]);
+    });
+
+    const hasError =
+      fieldsToValidate.some(field => !(formData as any)[field]) ||
+      fieldsToValidate.some(field => errors[field as keyof typeof errors]);
+
+    if (hasError) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: "Please fill all the details in the form.",
+        status: "error"
+      });
+      return;
+    }
+
     try {
       const response = await editProfile(data);
       if (response && response.message) {
-        console.log('Saving profile data:', formData);
         setIsEditing(false);
         showSnackbar({
           title: "Success",
@@ -93,7 +149,6 @@ const Profile: React.FC = () => {
   };
 
   const handleResetPassword = () => {
-    // Store current user email in localStorage before logout
     localStorage.setItem('reset_password_email', user?.email || '');
     logout();
     navigate('/reset-password?fromProfile=true');
@@ -179,13 +234,17 @@ const Profile: React.FC = () => {
                   First Name
                 </label>
                 {isEditing ? (
-                  <input
-                    type="text"
-                    name="first_name"
-                    value={formData.first_name}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <>
+                    <input
+                      type="text"
+                      name="first_name"
+                      value={formData.first_name}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {errors.first_name && <p className="text-red-500 text-xs mt-1">{errors.first_name}</p>}
+                  </>
                 ) : (
                   <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.first_name}</p>
                 )}
@@ -197,13 +256,17 @@ const Profile: React.FC = () => {
                   Last Name
                 </label>
                 {isEditing ? (
-                  <input
-                    type="text"
-                    name="last_name"
-                    value={formData.last_name}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <>
+                    <input
+                      type="text"
+                      name="last_name"
+                      value={formData.last_name}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {errors.last_name && <p className="text-red-500 text-xs mt-1">{errors.last_name}</p>}
+                  </>
                 ) : (
                   <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.last_name}</p>
                 )}
@@ -233,13 +296,17 @@ const Profile: React.FC = () => {
                   Phone
                 </label>
                 {isEditing ? (
-                  <input
-                    type="tel"
-                    name="phone_number"
-                    value={formData.phone_number}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <>
+                    <input
+                      type="tel"
+                      name="phone_number"
+                      value={formData.phone_number}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {errors.phone_number && <p className="text-red-500 text-xs mt-1">{errors.phone_number}</p>}
+                  </>
                 ) : (
                   <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.phone_number}</p>
                 )}
@@ -257,6 +324,7 @@ const Profile: React.FC = () => {
                       name="date_of_birth"
                       value={formData.date_of_birth}
                       onChange={handleInputChange}
+                      onBlur={handleBlur}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   ) : (
@@ -273,13 +341,17 @@ const Profile: React.FC = () => {
                   Address
                 </label>
                 {isEditing ? (
-                  <textarea
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <>
+                    <textarea
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
+                  </>
                 ) : (
                   <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.address}</p>
                 )}
@@ -292,13 +364,17 @@ const Profile: React.FC = () => {
                     {user?.role != 'student' ? 'Qualification' : 'Education'}
                   </label>
                   {isEditing ? (
-                    <input
-                      type="text"
-                      name="qualification"
-                      value={formData.qualification}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    <>
+                      <input
+                        type="text"
+                        name="qualification"
+                        value={formData.qualification}
+                        onChange={handleInputChange}
+                        onBlur={handleBlur}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      {errors.qualification && <p className="text-red-500 text-xs mt-1">{errors.qualification}</p>}
+                    </>
                   ) : (
                     <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.qualification}</p>
                   )}
@@ -317,6 +393,7 @@ const Profile: React.FC = () => {
                       name="joining_date"
                       value={formData.joining_date}
                       onChange={handleInputChange}
+                      onBlur={handleBlur}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   ) : (

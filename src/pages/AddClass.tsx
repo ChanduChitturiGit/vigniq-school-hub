@@ -1,18 +1,13 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { ArrowLeft, BookOpen, ChevronDown, Loader2 } from 'lucide-react';
+import { ArrowLeft, BookOpen, Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { addClass } from '../services/class';
 import { getTeachersBySchoolId } from '../services/teacher';
 import { getBoardsList } from '../services/school'
-import { toast } from '../components/ui/sonner';
-import { toast as toaster } from '../hooks/use-toast';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
-
-
 
 const AddClass: React.FC = () => {
   const { showSnackbar } = useSnackbar();
@@ -31,6 +26,11 @@ const AddClass: React.FC = () => {
     board: '',
     board_id: null
   });
+  const [errors, setErrors] = useState({
+    board: '',
+    class: '',
+    section: ''
+  });
   const [suggestions, setSuggestions] = useState({
     class_name: [] as string[],
     section: [] as string[]
@@ -42,18 +42,8 @@ const AddClass: React.FC = () => {
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const schoolId = JSON.parse(localStorage.getItem("current_school_id"));
 
-  // Mock data for suggestions
   const classOptions = ['Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12'];
   const sectionOptions = ['A', 'B', 'C', 'D'];
-  const teacherOptions = [
-    'John Smith - Mathematics',
-    'Sarah Johnson - English',
-    'Mike Wilson - Science',
-    'Emily Davis - History',
-    'Robert Brown - Geography',
-    'Lisa White - Physics',
-    'David Green - Chemistry'
-  ];
   const classNum = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
   const [breadcrumbItems, setBreadCrumbItems] = useState([
@@ -61,7 +51,6 @@ const AddClass: React.FC = () => {
     { label: 'My School', path: '/admin-school' },
     { label: 'Add Class' }
   ]);
-
 
   const setBreadCrumb = () => {
     if (userData.role == 'superadmin') {
@@ -98,7 +87,6 @@ const AddClass: React.FC = () => {
     getTeachersList();
   }, []);
 
-
   useEffect(() => {
     if (boards.length > 0) {
       setFormData((prev) => ({
@@ -109,12 +97,31 @@ const AddClass: React.FC = () => {
     }
   }, [boards]);
 
+  // --- Validation logic ---
+  const validateField = (name: string, value: any) => {
+    let error = '';
+    switch (name) {
+      case 'board':
+        if (!value) error = 'Board is required';
+        break;
+      case 'class':
+        if (!value) error = 'Class is required';
+        break;
+      case 'section':
+        if (!value) error = 'Section is required';
+        break;
+      default:
+        break;
+    }
+    setErrors(prev => ({ ...prev, [name]: error }));
+  };
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
+    setErrors(prev => ({ ...prev, [field]: '' }));
 
     // Filter suggestions based on input (only for name and section)
     let filteredSuggestions: string[] = [];
@@ -162,6 +169,7 @@ const AddClass: React.FC = () => {
       class: value,
       class_number: Number(value.split(' ')[1])
     }));
+    setErrors(prev => ({ ...prev, class: '' }));
   };
 
   const getBoardId = (data: string) => {
@@ -176,16 +184,50 @@ const AddClass: React.FC = () => {
       board: value,
       board_id: Number(getBoardId(value))
     }));
+    setErrors(prev => ({ ...prev, board: '' }));
   };
 
+  const handleFocus = (field: string) => {
+    setShowSuggestions(prev => ({
+      ...prev,
+      [field]: true
+    }));
+  };
 
+  const handleBlur = (field: string) => {
+    setTimeout(() => {
+      setShowSuggestions(prev => ({
+        ...prev,
+        [field]: false
+      }));
+    }, 200);
+    // Validate on blur
+    validateField(field, (formData as any)[field]);
+  };
 
+  // --- Validate all fields on submit ---
   const handleSubmit = async (e: React.FormEvent) => {
     setLoader(true);
     e.preventDefault();
 
-    if (!formData.class_number || !formData.section) {
-      alert('Please fill in all required fields');
+    const fieldsToValidate = ['board', 'class', 'section'];
+    fieldsToValidate.forEach(field => {
+      validateField(field, (formData as any)[field]);
+    });
+
+    // Synchronously check if any field is missing
+    const hasError = fieldsToValidate.some(field => {
+      const value = (formData as any)[field];
+      return !value;
+    });
+
+    if (hasError) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: "Please fill all  the details in the form.",
+        status: "error"
+      });
+      setLoader(false);
       return;
     }
 
@@ -210,7 +252,7 @@ const AddClass: React.FC = () => {
       } else if (response?.error) {
         showSnackbar({
           title: "⛔ Error",
-          description: response?.errorr || "Something went wrong",
+          description: response?.error || "Something went wrong",
           status: "error"
         });
       } else {
@@ -221,7 +263,6 @@ const AddClass: React.FC = () => {
         });
       }
     } catch (error: any) {
-      // In case of network errors or exceptions
       showSnackbar({
         title: "⛔ Error",
         description: error?.response?.data?.error || "Something went wrong",
@@ -229,23 +270,6 @@ const AddClass: React.FC = () => {
       });
     }
     setLoader(false);
-  };
-
-  const handleFocus = (field: string) => {
-    setShowSuggestions(prev => ({
-      ...prev,
-      [field]: true
-    }));
-  };
-
-  const handleBlur = (field: string) => {
-    // Delay hiding suggestions to allow clicking on them
-    setTimeout(() => {
-      setShowSuggestions(prev => ({
-        ...prev,
-        [field]: false
-      }));
-    }, 200);
   };
 
   return (
@@ -278,7 +302,7 @@ const AddClass: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Board *
               </label>
-              <Select value={formData.board} onValueChange={handleBoardChange} required>
+              <Select value={formData.board} onValueChange={handleBoardChange}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select a board" />
                 </SelectTrigger>
@@ -290,6 +314,7 @@ const AddClass: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
+              {errors.board && <p className="text-red-500 text-xs mt-1">{errors.board}</p>}
             </div>
 
             {/* Class Name Field */}
@@ -297,7 +322,7 @@ const AddClass: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Class *
               </label>
-              <Select value={formData.class} onValueChange={handleClassChange} required>
+              <Select value={formData.class} onValueChange={handleClassChange}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select a class" />
                 </SelectTrigger>
@@ -309,8 +334,8 @@ const AddClass: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
+              {errors.class && <p className="text-red-500 text-xs mt-1">{errors.class}</p>}
             </div>
-
 
             {/* Section Field */}
             <div className="relative">
@@ -325,9 +350,9 @@ const AddClass: React.FC = () => {
                 onFocus={() => handleFocus('section')}
                 onBlur={() => handleBlur('section')}
                 placeholder="Type or select section..."
-                required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+              {errors.section && <p className="text-red-500 text-xs mt-1">{errors.section}</p>}
               {showSuggestions.section && suggestions.section.length > 0 && (
                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto">
                   {suggestions.section.map((suggestion, index) => (
@@ -364,13 +389,21 @@ const AddClass: React.FC = () => {
 
             {/* Form Actions */}
             <div className="flex gap-4 pt-6">
-              <button
-                type="submit"
-                disabled={loader}
-                // hover:bg-green-600
-                className="flex-1 bg-green-500 text-white py-2 px-4 rounded-lg transition-colors font-medium">
-                {loader ? 'Adding...' : 'Add Class'}
-              </button>
+              {!loader &&
+                (
+                  <>
+                    <button
+                      type="submit"
+                      disabled={loader}
+                      className="flex-1 bg-green-500 text-white py-2 px-4 rounded-lg transition-colors font-medium">
+                      {loader ? 'Adding...' : 'Add Class'}
+                    </button>
+                  </>
+                )
+              }
+              {loader && (
+                <Loader2 className="w-10 h-10 mx-auto text-blue animate-spin" />
+              )}
             </div>
           </form>
         </div>

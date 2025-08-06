@@ -81,7 +81,7 @@ const SuperAdminDashboard: React.FC = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Link to="/schools" className="group">
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between">
@@ -117,7 +117,7 @@ const SuperAdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+        {/* <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">System Admins</p>
@@ -130,7 +130,7 @@ const SuperAdminDashboard: React.FC = () => {
           <div className="flex items-center mt-4 text-sm">
             <span className="text-purple-600 font-medium">Active monitoring</span>
           </div>
-        </div>
+        </div> */}
 
         <Link to="/admin-requests" className="group">
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
