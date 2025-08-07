@@ -59,6 +59,8 @@ class SyllabusView(APIView):
             return SyllabusService().create_prerequisite(request)
         elif action == 'generateLessonPlan':
             return SyllabusService().generate_lesson_plan(request)
+        elif action == "saveLessonPlan":
+            return SyllabusService().save_lesson_plan(request)
         return Response({"message": f"POST request for action: {action}"})
     
     def put(self, request, action=None):

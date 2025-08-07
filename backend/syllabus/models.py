@@ -86,7 +86,7 @@ class SchoolLessonPlanDay(models.Model):
 
 
 class Topic(models.Model):
-    lesson_day = models.ForeignKey(
+    lesson_plan_day = models.ForeignKey(
         SchoolLessonPlanDay,
         related_name='school_lesson_topics',
         on_delete=models.CASCADE

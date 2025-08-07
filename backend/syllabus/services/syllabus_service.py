@@ -13,6 +13,7 @@ from syllabus.models import (
     SchoolClassPrerequisite,
     SchoolClassSubTopic,
     SchoolLessonPlanDay,
+    Topic
 )
 
 from core.common_modules.common_functions import CommonFunctions
@@ -411,9 +412,8 @@ class SyllabusService:
                 pdf_file=pdf_bytes_io
             )
 
-            normalized = {k.lower(): v for k, v in lesson_plan.items()}
-            lesson_plan_data = normalized.get("lesson_plan", [])
-            
+            normalized = CommonFunctions.normalize_keys(lesson_plan)
+
             return Response({"data": normalized},
                             status=status.HTTP_200_OK)
         except Exception as e:
@@ -424,6 +424,7 @@ class SyllabusService:
     def save_lesson_plan(self, request):
         """Save the generated lesson plan."""
         try:
+            logger.info("Saving lesson plan...")
             school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
             chapter_id = request.data.get("chapter_id")
             class_section_id = request.data.get("class_section_id")
@@ -454,21 +455,27 @@ class SyllabusService:
                 return Response({"error": "Class section not found."},
                                 status=status.HTTP_404_NOT_FOUND)
 
-            for day in lesson_plan_data['']:
-                lesson_plan_day = SchoolLessonPlanDay(
+            for day in lesson_plan_data['lesson_plan']:
+                lesson_plan_day = SchoolLessonPlanDay.objects.using(school_db_name).create(
                     chapter=chapter,
                     class_section=class_section,
-                    day=day,
-                    learning_outcomes=data.get("learning_outcomes"),
-                    real_world_applications=data.get("real_world_applications"),
-                    taxonomy_alignment=data.get("taxonomy_alignment"),
-                    status=data.get("status")
+                    day=day.get('day'),
+                    learning_outcomes=day.get("learning_outcomes"),
+                    real_world_applications=day.get("real_world_applications"),
+                    taxonomy_alignment=day.get("taxonomy_alignment")
                 )
-                lesson_plan_day.save(using=school_db_name)
-
+                topics = day.get("topics", [])
+                for topic in topics:
+                    topic_instance = Topic.objects.using(school_db_name).create(
+                        lesson_plan_day=lesson_plan_day,
+                        title=topic.get("title"),
+                        summary=topic.get("summary"),
+                        time_minutes=topic.get("time_minutes")
+                    )
+            logger.info("Lesson plan saved successfully.")
             return Response({"message": "Lesson plan saved successfully."},
                             status=status.HTTP_201_CREATED)
         except Exception as e:
-            logger.error("Error in save_lesson_plan: %s", e)
+            logger.exception("Error in save_lesson_plan: %s", e)
             return Response({"error": "Something went wrong while saving lesson plan."},
                             status=status.HTTP_400_BAD_REQUEST)

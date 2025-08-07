@@ -49,7 +49,7 @@ class Migration(migrations.Migration):
                 ('time_minutes', models.PositiveIntegerField()),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
-                ('lesson_day', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='school_lesson_topics', to='syllabus.schoollessonplanday')),
+                ('lesson_plan_day', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='school_lesson_topics', to='syllabus.schoollessonplanday')),
             ],
             options={
                 'db_table': 'school_lesson_topic',
