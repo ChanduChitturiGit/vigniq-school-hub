@@ -35,3 +35,12 @@ class CommonFunctions:
             page_text = page.extract_text()
             pdf_text += (page_text or "") + "\n\n"
         return pdf_text
+    
+    @staticmethod
+    def normalize_keys(obj):
+        if isinstance(obj, dict):
+            return {k.lower(): CommonFunctions.normalize_keys(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [CommonFunctions.normalize_keys(item) for item in obj]
+        else:
+            return obj

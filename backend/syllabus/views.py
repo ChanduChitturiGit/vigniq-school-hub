@@ -36,7 +36,10 @@ class EbookView(APIView):
 class SyllabusView(APIView):
     """View for managing syllabus."""
 
-    permission_classes = [IsAuthenticated, IsSuperAdminOrAdminOrTeacher]
+    def get_permissions(self):
+        if self.kwargs.get('action') in ['getSyllabusBySubject', 'getChaptersProgress']:
+            return [IsAuthenticated()]
+        return [IsAuthenticated(), IsSuperAdminOrAdminOrTeacher()]
 
     def get(self, request, action=None):
         """Handle GET requests for syllabus actions."""
@@ -44,20 +47,40 @@ class SyllabusView(APIView):
             return SyllabusService().get_chapters_progress(request)
         elif action == 'getGradeByTeacherId':
             return SyllabusService().get_grade_by_teacher_id(request)
+        elif action == 'getSyllabusBySubject':
+            return SyllabusService().get_syllabus_by_subject(request)
+        elif action == 'getlessionPlan':
+            return SyllabusService().get_lesson_plan_by_chapter_id(request)
+        elif action == "getlessonDayPlan":
+            return SyllabusService().get_lesson_plan_day_by_id(request)
         return Response({"message": f"GET request for action: {action}"})
 
     def post(self, request, action=None):
         """Handle POST requests for syllabus actions."""
-        
+        if action == 'addSubTopic':
+            return SyllabusService().create_sub_topic(request)
+        elif action == 'addPrerequisite':
+            return SyllabusService().create_prerequisite(request)
+        elif action == 'generateLessonPlan':
+            return SyllabusService().generate_lesson_plan(request)
+        elif action == "saveLessonPlan":
+            return SyllabusService().save_lesson_plan(request)
         return Response({"message": f"POST request for action: {action}"})
     
     def put(self, request, action=None):
         """Handle PUT requests for syllabus actions."""
-        
+        if action == 'editSubTopicById':
+            return SyllabusService().edit_sub_topic_by_id(request)
+        elif action == 'editPrerequisiteById':
+            return SyllabusService().edit_prerequisite_by_id(request)
+        elif action == 'editLessonPlan':
+            return SyllabusService().edit_lesson_plan(request)
         return Response({"message": f"PUT request for action: {action}"})
     
     def delete(self, request, action=None):
         """Handle DELETE requests for syllabus actions."""
-        if action == 'deleteSyllabusById':
-            return EbookService().delete_syllabus_by_id(request)
+        if action == 'deleteSubTopicById':
+            return SyllabusService().delete_sub_topic_by_id(request)
+        elif action == 'deletePrerequisiteById':
+            return SyllabusService().delete_prerequisite_by_id(request)
         return Response({"message": f"DELETE request for action: {action}"})
