@@ -106,7 +106,7 @@ class SyllabusService:
             ).values('school_class_id', 'school_class__class_instance_id',
                           'school_class__section', 'subject_id','subject__name',
                           'school_class__board_id')
-            
+
             data = []
             for assignment in teacher_assignment_obj:
                 progress = self.get_subject_progress(
