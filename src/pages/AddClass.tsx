@@ -6,7 +6,7 @@ import { ArrowLeft, BookOpen, Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { addClass } from '../services/class';
 import { getTeachersBySchoolId } from '../services/teacher';
-import { getBoardsList } from '../services/school'
+import { getBoardsListBySchoolId } from '../services/school'
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 
 const AddClass: React.FC = () => {
@@ -75,9 +75,9 @@ const AddClass: React.FC = () => {
   }
 
   const boardsList = async () => {
-    const response = await getBoardsList();
-    if (response && response.boards) {
-      setBoards(response.boards);
+    const response = await getBoardsListBySchoolId(userData.role == 'superadmin' ? schoolId : userData.school_id);
+    if (response && response.data) {
+      setBoards(response.data);
     }
   }
 

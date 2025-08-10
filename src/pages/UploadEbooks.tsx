@@ -172,12 +172,12 @@ const UploadEbooks: React.FC = () => {
     } else if (field == 'uploadType') {
       setFormData(prev => ({
         ...prev,
-        'upload_type': value == 'Single PDF' ? 'single' : 'chapter'
+        'upload_type': value == 'Single PDF' ? 'single' : 'chapter_wise'
       }));
     } else if (field == 'chapter') {
       setFormData(prev => ({
         ...prev,
-        'chapter_id': value.split(' ')[1] || null
+        'chaptchapter_numberer_id': value.split(' ')[1] || null
       }));
     }else if (field == 'yearString') {
       setFormData(prev => ({
