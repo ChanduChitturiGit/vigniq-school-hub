@@ -700,6 +700,13 @@ class SyllabusService:
                 logger.error("Class section not found.")
                 return Response({"error": "Class section not found."},
                                 status=status.HTTP_404_NOT_FOUND)
+            
+            school_lesson_plan_day = SchoolLessonPlanDay.objects.using(school_db_name).filter(
+                chapter=chapter,
+                class_section=class_section
+            ).first()
+            if school_lesson_plan_day:
+                school_lesson_plan_day.delete(using=school_db_name)
 
             for day in lesson_plan_data['lesson_plan']:
                 lesson_plan_day = SchoolLessonPlanDay.objects.using(school_db_name).create(
