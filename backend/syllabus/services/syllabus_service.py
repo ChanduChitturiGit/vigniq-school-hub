@@ -528,7 +528,12 @@ class SyllabusService:
 
             lesson_plan_day = SchoolLessonPlanDay.objects.using(school_db_name).filter(
                 id=lesson_plan_day_id
-            ).prefetch_related('school_lesson_topics').first()
+            ).prefetch_related(
+                Prefetch(
+                    'school_lesson_topics',
+                    queryset=Topic.objects.using(school_db_name)
+                )
+            ).first()
 
             if not lesson_plan_day:
                 logger.error("Lesson plan day not found.")

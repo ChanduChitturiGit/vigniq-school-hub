@@ -49,6 +49,10 @@ class SyllabusView(APIView):
             return SyllabusService().get_grade_by_teacher_id(request)
         elif action == 'getSyllabusBySubject':
             return SyllabusService().get_syllabus_by_subject(request)
+        elif action == 'getlessionPlan':
+            return SyllabusService().get_lesson_plan_by_chapter_id(request)
+        elif action == "getlessonDayPlan":
+            return SyllabusService().get_lesson_plan_day_by_id(request)
         return Response({"message": f"GET request for action: {action}"})
 
     def post(self, request, action=None):
@@ -69,6 +73,8 @@ class SyllabusView(APIView):
             return SyllabusService().edit_sub_topic_by_id(request)
         elif action == 'editPrerequisiteById':
             return SyllabusService().edit_prerequisite_by_id(request)
+        elif action == 'editLessonPlan':
+            return SyllabusService().edit_lesson_plan(request)
         return Response({"message": f"PUT request for action: {action}"})
     
     def delete(self, request, action=None):
