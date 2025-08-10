@@ -479,3 +479,83 @@ class SyllabusService:
             logger.exception("Error in save_lesson_plan: %s", e)
             return Response({"error": "Something went wrong while saving lesson plan."},
                             status=status.HTTP_400_BAD_REQUEST)
+    
+    def get_lesson_plan_by_chapter_id(self, request):
+        """Fetch lesson plan by chapter ID."""
+        try:
+            school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
+            chapter_id = request.GET.get("chapter_id")
+            class_section_id = request.GET.get("class_section_id")
+
+            if not all([school_id, chapter_id, class_section_id]):
+                logger.error("Missing required parameters for fetching lesson plan.")
+                return Response({"error": "Missing required parameters."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            school_db_name = CommonFunctions.get_school_db_name(school_id)
+
+            lesson_plan_days = SchoolLessonPlanDay.objects.using(school_db_name).filter(
+                chapter_id=chapter_id,
+                class_section_id=class_section_id
+            )
+
+            data = []
+            for day in lesson_plan_days:
+                data.append({
+                    "lesson_plan_day_id": day.id,
+                    "day": day.day,
+                    "status": day.status,
+                })
+
+            return Response({"data": data}, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"Error fetching lesson plan by chapter ID: {e}")
+            return Response({"error": "Failed to fetch lesson plan."},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    def get_lesson_plan_day_by_id(self, request):
+        """Fetch lesson plan day by ID."""
+        try:
+            school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
+            lesson_plan_day_id = request.GET.get("lesson_plan_day_id")
+
+            if not all([school_id, lesson_plan_day_id]):
+                logger.error("Missing required parameters for fetching lesson plan day.")
+                return Response({"error": "Missing required parameters."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            school_db_name = CommonFunctions.get_school_db_name(school_id)
+
+            lesson_plan_day = SchoolLessonPlanDay.objects.using(school_db_name).filter(
+                id=lesson_plan_day_id
+            ).prefetch_related('school_lesson_topics').first()
+
+            if not lesson_plan_day:
+                logger.error("Lesson plan day not found.")
+                return Response({"error": "Lesson plan day not found."},
+                                status=status.HTTP_404_NOT_FOUND)
+
+            topics = lesson_plan_day.school_lesson_topics.all()
+
+            data = {
+                "lesson_plan_day_id": lesson_plan_day.id,
+                "day": lesson_plan_day.day,
+                "learning_outcomes": lesson_plan_day.learning_outcomes,
+                "real_world_applications": lesson_plan_day.real_world_applications,
+                "taxonomy_alignment": lesson_plan_day.taxonomy_alignment,
+                "status": lesson_plan_day.status,
+                "topics": [
+                    {
+                        "topic_id": topic.id,
+                        "title": topic.title,
+                        "summary": topic.summary,
+                        "time_minutes": topic.time_minutes
+                    } for topic in topics
+                ]
+            }
+
+            return Response({"data": data}, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"Error fetching lesson plan day by ID: {e}")
+            return Response({"error": "Failed to fetch lesson plan day."},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
