@@ -115,7 +115,8 @@ class SchoolService:
                     user_name=admin_user.user_name,
                     password=data.get('password'),
                 )
-            DbLoader().load_databases()
+            r = redis.Redis(host='localhost', port=6379, db=0)
+            r.publish('new_db_created', school_db_metadata.db_name)
             copy_status = EbookService().copy_syllabus_data_to_school_db(school_db_metadata,
                                                                          academic_year.id)
             if not copy_status:
@@ -270,7 +271,30 @@ class SchoolService:
             logger.error("Error while fetching school boards.")
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    
+    def get_boards_by_school_id(self, request):
+        """
+        Get all school boards associated with a specific school.
+        Args:
+            request: The HTTP request containing the school ID.
+        Returns:
+            Response: A response with the list of school boards for the specified school.
+        """
+        try:
+            school_id = request.query_params.get('school_id', None)
+            if not school_id:
+                return Response({"error": "School id is required."},
+                                status=status.HTTP_400_BAD_REQUEST)
+            school = School.objects.get(pk=school_id)
+            boards = school.boards.all()
+            boards_data = [{"id": board.id, "name": board.board_name} for board in boards]
+            return Response({"data": boards_data}, status=status.HTTP_200_OK)
+        except School.DoesNotExist:
+            logger.error(f"School with id {school_id} does not exist.")
+            return Response({"error": "School not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error("Error while fetching school boards.")
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     def create_school_database(self, school_db_metadata):
         """
         Create a database for the school.

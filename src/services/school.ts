@@ -37,3 +37,9 @@ export const getBoardsList = async () => {
   const response = await api.get(baseurl+suburl+'/board_list');
   return response.data;
 };
+
+//get school list
+export const getBoardsListBySchoolId = async (id : Number) => {
+  const response = await api.get(baseurl+suburl+'/getBoardsBySchoolId', { params: { school_id: id } });
+  return response.data;
+};
