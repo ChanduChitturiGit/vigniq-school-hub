@@ -37,14 +37,14 @@ class SyllabusView(APIView):
     """View for managing syllabus."""
 
     def get_permissions(self):
-        if self.kwargs.get('action') in ['getSyllabusBySubject', 'getChaptersProgress']:
+        if self.kwargs.get('action') in ['getSyllabusBySubject', 'getChaptersBySubject']:
             return [IsAuthenticated()]
         return [IsAuthenticated(), IsSuperAdminOrAdminOrTeacher()]
 
     def get(self, request, action=None):
         """Handle GET requests for syllabus actions."""
-        if action == 'getChaptersProgress':
-            return SyllabusService().get_chapters_progress(request)
+        if action == 'getChaptersBySubject':
+            return SyllabusService().get_chapters_by_subject(request)
         elif action == 'getGradeByTeacherId':
             return SyllabusService().get_grade_by_teacher_id(request)
         elif action == 'getSyllabusBySubject':
@@ -73,8 +73,8 @@ class SyllabusView(APIView):
             return SyllabusService().edit_sub_topic_by_id(request)
         elif action == 'editPrerequisiteById':
             return SyllabusService().edit_prerequisite_by_id(request)
-        elif action == 'editLessonPlan':
-            return SyllabusService().edit_lesson_plan(request)
+        # elif action == 'editLessonPlan':
+        #     return SyllabusService().edit_lesson_plan(request)
         return Response({"message": f"PUT request for action: {action}"})
     
     def delete(self, request, action=None):
