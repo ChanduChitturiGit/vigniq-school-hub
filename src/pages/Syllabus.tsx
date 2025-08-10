@@ -7,6 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../componen
 import { Progress } from '../components/ui/progress';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
+import { Card, CardContent } from '../components/ui/card';
 import { 
   ChevronDown, 
   ChevronUp, 
@@ -20,22 +21,23 @@ import {
   Lightbulb,
   TrendingUp,
   PlusCircle,
-  EditIcon
+  EditIcon,
+  MessageSquare,
+  RotateCcw
 } from 'lucide-react';
+
+interface DayPlan {
+  day: number;
+  date: string;
+}
 
 interface Chapter {
   id: string;
   name: string;
   progress: number;
   topics: string[];
-  lessonPlans: LessonPlan[];
+  dayPlans: DayPlan[];
   prerequisites: string[];
-}
-
-interface LessonPlan {
-  id: string;
-  title: string;
-  description: string;
 }
 
 const Syllabus: React.FC = () => {
@@ -71,12 +73,12 @@ const Syllabus: React.FC = () => {
         'Estimation',
         'Roman Numerals'
       ],
-      lessonPlans: [
-        {
-          id: '1',
-          title: 'My Custom Lesson Plan for Chapter 1',
-          description: 'Comprehensive lesson plan covering number systems and basic operations'
-        }
+      dayPlans: [
+        { day: 1, date: 'October 26, 2023' },
+        { day: 2, date: 'October 27, 2023' },
+        { day: 3, date: 'October 28, 2023' },
+        { day: 4, date: 'October 29, 2023' },
+        { day: 5, date: 'October 30, 2023' }
       ],
       prerequisites: [
         'Understanding Basic Arithmetic Operations',
@@ -94,7 +96,7 @@ const Syllabus: React.FC = () => {
         'Operations on Whole Numbers',
         'Patterns in Whole Numbers'
       ],
-      lessonPlans: [],
+      dayPlans: [],
       prerequisites: [
         'Understanding Natural Numbers',
         'Basic Addition and Subtraction',
@@ -112,12 +114,10 @@ const Syllabus: React.FC = () => {
         'Common Factors and Multiples',
         'Prime Factorization'
       ],
-      lessonPlans: [
-        {
-          id: '2',
-          title: 'Interactive Number Games',
-          description: 'Engaging activities to teach factors and multiples'
-        }
+      dayPlans: [
+        { day: 1, date: 'November 15, 2023' },
+        { day: 2, date: 'November 16, 2023' },
+        { day: 3, date: 'November 17, 2023' }
       ],
       prerequisites: [
         'Multiplication Tables',
@@ -392,44 +392,65 @@ const Syllabus: React.FC = () => {
                       </TabsContent>
 
                       <TabsContent value="lessonplan" className="mt-6">
-                        <div className="space-y-4">
+                        <div className="space-y-6">
                           <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-medium text-gray-800">Saved Lesson Plans</h3>
+                            <h3 className="text-lg font-medium text-gray-800">Lesson Plan</h3>
                             <Link
                               to={`/grades/lesson-plan/create/${chapter.id}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapter.name)}`}
-                              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors"
                             >
-                              <PlusCircle className="w-4 h-4" />
-                              Create New Lesson Plan
+                              {chapter.dayPlans.length > 0 ? (
+                                <>
+                                  <RotateCcw className="w-4 h-4" />
+                                  Re-generate Lesson Plan
+                                </>
+                              ) : (
+                                <>
+                                  <PlusCircle className="w-4 h-4" />
+                                  Create Lesson Plan
+                                </>
+                              )}
                             </Link>
                           </div>
                           
-                          {chapter.lessonPlans.length > 0 ? (
-                            chapter.lessonPlans.map((lessonPlan) => (
-                              <div key={lessonPlan.id} className="p-5 bg-gray-50 rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
-                                <div className="flex items-center justify-between mb-3">
-                                  <h4 className="text-base font-medium text-gray-800">{lessonPlan.title}</h4>
-                                  <div className="flex items-center gap-3">
-                                    <Button variant="outline" size="sm" className="text-blue-600 hover:text-blue-800 text-sm">
-                                      <EditIcon className="w-4 h-4 mr-1" />
-                                      Edit
-                                    </Button>
-                                    <Link
-                                      to={`/grades/lesson-plan/view/${chapter.id}/${lessonPlan.id}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapter.name)}`}
-                                      className="inline-flex items-center gap-1 text-green-600 hover:text-green-800 text-sm border border-green-300 hover:border-green-400 px-3 py-1 rounded-md transition-colors"
-                                    >
-                                      <Eye className="w-4 h-4" />
-                                      View
-                                    </Link>
-                                  </div>
-                                </div>
-                                <p className="text-sm text-gray-600">{lessonPlan.description}</p>
-                              </div>
-                            ))
+                          {chapter.dayPlans.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              {chapter.dayPlans.map((dayPlan) => (
+                                <Card key={dayPlan.day} className="shadow-md border border-gray-200 hover:shadow-lg transition-shadow">
+                                  <CardContent className="p-4">
+                                    <div className="space-y-3">
+                                      <div>
+                                        <h4 className="text-lg font-semibold text-gray-900">
+                                          Day {dayPlan.day}
+                                        </h4>
+                                        <p className="text-sm text-gray-600">{dayPlan.date}</p>
+                                      </div>
+
+                                      <div className="flex flex-col gap-2">
+                                        <Link
+                                          to={`/grades/lesson-plan/day/${chapter.id}/${dayPlan.day}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapter.name)}`}
+                                          className="flex items-center justify-center gap-2 bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
+                                        >
+                                          <Eye className="w-4 h-4" />
+                                          View
+                                        </Link>
+                                        <Link
+                                          to={`/grades/lesson-plan/ai-chat/${chapter.id}/${dayPlan.day}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapter.name)}`}
+                                          className="flex items-center justify-center gap-2 bg-purple-100 text-purple-700 hover:bg-purple-200 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
+                                        >
+                                          <MessageSquare className="w-4 h-4" />
+                                          Chat with AI Assistant
+                                        </Link>
+                                      </div>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              ))}
+                            </div>
                           ) : (
                             <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                               <FileText className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                              <h4 className="text-lg font-medium text-gray-600 mb-2">No lesson plans created yet</h4>
+                              <h4 className="text-lg font-medium text-gray-600 mb-2">No lesson plan created yet</h4>
                               <p className="text-base text-gray-500 mb-4">Create your first lesson plan to get started</p>
                               <Link
                                 to={`/grades/lesson-plan/create/${chapter.id}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapter.name)}`}
