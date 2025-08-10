@@ -34,6 +34,7 @@ class SyllabusService:
     def get_chapters_by_subject(self, request):
         """Fetch chapters by subject ID."""
         try:
+            logger.info("Fetching chapters by subject...")
             school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
             school_board_id = request.GET.get("school_board_id")
             academic_year_id = request.GET.get("academic_year_id", 1)
@@ -62,7 +63,7 @@ class SyllabusService:
                         "chapter_number": chapter.chapter_number,
                         "progress": self.get_chapter_progress(school_db_name, chapter.id),
                     })
-
+            logger.info("Chapters fetched successfully.")
             return Response({"data": chapters_list},
                             status=status.HTTP_200_OK)
 
@@ -91,6 +92,7 @@ class SyllabusService:
     def get_grade_by_teacher_id(self, request):
         """Fetch grade by teacher ID."""
         try:
+            logger.info("Fetching grade by teacher ID...")
             school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
             teacher_id = request.GET.get("teacher_id")
             academic_year = request.GET.get("academic_year", 1)
@@ -124,6 +126,7 @@ class SyllabusService:
                     "board_id": assignment["school_class__board_id"],
                     "progress": round(progress, 2),
                 })
+            logger.info("Grade by teacher ID fetched successfully.")
             return Response({"data": data}, status=status.HTTP_200_OK)
 
         except Exception as e:
@@ -164,9 +167,10 @@ class SyllabusService:
 
         return round(total_progress, 2)
 
-    def get_syllabus_by_subject(self, request):
+    def get_chapters_and_topics_by_subject(self, request):
         """Fetch syllabus by subject."""
         try:
+            logger.info("Fetching syllabus by subject...")
             school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
             class_id = request.GET.get("class_id")
             subject_id = request.GET.get("subject_id")
@@ -203,12 +207,6 @@ class SyllabusService:
                         queryset=SchoolClassSubTopic.objects.using(school_db_name).filter(
                             class_section=school_class
                         )
-                    ),
-                    Prefetch(
-                        'class_prerequisites',
-                        queryset=SchoolClassPrerequisite.objects.using(school_db_name).filter(
-                            class_section=school_class
-                        )
                     )
                 )
             )
@@ -216,33 +214,211 @@ class SyllabusService:
             data = []
             for chapter in chapters:
                 sub_topics = chapter.class_sub_topics.all()
-                prerequisites = chapter.class_prerequisites.all()
                 
                 renamed_sub_topics = [
                     {'sub_topic_id': item['id'], 'sub_topic': item['name']}
                     for item in sub_topics.values('id', 'name')
-                ]
-                renamed_prerequisites = [
-                    {'prerequisite_id': item['id'], 'topic': item['topic'], 'explanation': item['explanation']}
-                    for item in prerequisites.values('id', 'topic', 'explanation')
                 ]
                 data.append({
                     "chapter_id": chapter.id,
                     "chapter_name": chapter.chapter_name,
                     "chapter_number": chapter.chapter_number,
                     "sub_topics": renamed_sub_topics,
-                    "prerequisites": renamed_prerequisites,
                 })
-
+            logger.info("Syllabus by subject fetched successfully.")
             return Response({"data": data}, status=status.HTTP_200_OK)
         except Exception as e:
             logger.exception(f"Error fetching syllabus by class: {e}")
             return Response({"error": "Failed to fetch syllabus."},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    def get_prerequisites(self, request):
+        """Fetch lesson plan and prerequisites for a chapter."""
+        try:
+            logger.info("Fetching lesson plan and prerequisites...")
+            school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
+            chapter_id = request.GET.get("chapter_id")
+            class_section_id = request.GET.get("class_section_id")
+
+            if not all([school_id, chapter_id, class_section_id]):
+                logger.error("Missing required parameters for fetching lesson plan.")
+                return Response({"error": "Missing required parameters."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            school_db_name = CommonFunctions.get_school_db_name(school_id)
+
+
+            prerequisites = SchoolClassPrerequisite.objects.using(school_db_name).filter(
+                chapter_id=chapter_id,
+                class_section_id=class_section_id
+            )
+
+            prerequisites_data = [
+                {
+                    "prerequisite_id": prerequisite.id,
+                    "topic": prerequisite.topic,
+                    "explanation": prerequisite.explanation
+                }
+                for prerequisite in prerequisites
+            ]
+            logger.info("Lesson plan and prerequisites fetched successfully.")
+            return Response({"data":prerequisites_data}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error(f"Error fetching lesson plan and prerequisites: {e}")
+            return Response({"error": "Failed to fetch lesson plan and prerequisites."},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def get_lesson_plan_by_chapter_id(self, request):
+        """Fetch lesson plan by chapter ID."""
+        try:
+            logger.info("Fetching lesson plan by chapter ID...")
+            school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
+            chapter_id = request.GET.get("chapter_id")
+            class_section_id = request.GET.get("class_section_id")
+
+            if not all([school_id, chapter_id, class_section_id]):
+                logger.error("Missing required parameters for fetching lesson plan.")
+                return Response({"error": "Missing required parameters."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            school_db_name = CommonFunctions.get_school_db_name(school_id)
+
+            lesson_plan_days = SchoolLessonPlanDay.objects.using(school_db_name).filter(
+                chapter_id=chapter_id,
+                class_section_id=class_section_id
+            )
+
+            data = []
+            for day in lesson_plan_days:
+                data.append({
+                    "lesson_plan_day_id": day.id,
+                    "day": day.day,
+                    "status": day.status,
+                })
+            logger.info("Lesson plan by chapter ID fetched successfully.")
+            return Response({"data": data}, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"Error fetching lesson plan by chapter ID: {e}")
+            return Response({"error": "Failed to fetch lesson plan."},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    def get_lesson_plan_day_by_id(self, request):
+        """Fetch lesson plan day by ID."""
+        try:
+            logger.info("Fetching lesson plan day by ID...")
+            school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
+            lesson_plan_day_id = request.GET.get("lesson_plan_day_id")
+
+            if not all([school_id, lesson_plan_day_id]):
+                logger.error("Missing required parameters for fetching lesson plan day.")
+                return Response({"error": "Missing required parameters."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            school_db_name = CommonFunctions.get_school_db_name(school_id)
+
+            lesson_plan_day = SchoolLessonPlanDay.objects.using(school_db_name).filter(
+                id=lesson_plan_day_id
+            ).prefetch_related(
+                Prefetch(
+                    'school_lesson_topics',
+                    queryset=Topic.objects.using(school_db_name)
+                )
+            ).first()
+
+            if not lesson_plan_day:
+                logger.error("Lesson plan day not found.")
+                return Response({"error": "Lesson plan day not found."},
+                                status=status.HTTP_404_NOT_FOUND)
+
+            topics = lesson_plan_day.school_lesson_topics.all()
+
+            data = {
+                "lesson_plan_day_id": lesson_plan_day.id,
+                "day": lesson_plan_day.day,
+                "learning_outcomes": lesson_plan_day.learning_outcomes,
+                "real_world_applications": lesson_plan_day.real_world_applications,
+                "taxonomy_alignment": lesson_plan_day.taxonomy_alignment,
+                "status": lesson_plan_day.status,
+                "topics": [
+                    {
+                        "topic_id": topic.id,
+                        "title": topic.title,
+                        "summary": topic.summary,
+                        "time_minutes": topic.time_minutes
+                    } for topic in topics
+                ]
+            }
+            logger.info("Lesson plan day by ID fetched successfully.")
+            return Response({"data": data}, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"Error fetching lesson plan day by ID: {e}")
+            return Response({"error": "Failed to fetch lesson plan day."},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def edit_lesson_plan_day_by_id(self,request):
+        """Edit lesson plan day by ID."""
+        try:
+            logger.info("Editing lesson plan day by ID...")
+            school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
+            lesson_plan_day_id = request.data.get("lesson_plan_day_id")
+
+            if not all([school_id, lesson_plan_day_id]):
+                logger.error("Missing required parameters for editing lesson plan day.")
+                return Response({"error": "Missing required parameters."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            school_db_name = CommonFunctions.get_school_db_name(school_id)
+
+            lesson_plan_day = SchoolLessonPlanDay.objects.using(school_db_name).filter(
+                id=lesson_plan_day_id
+            ).first()
+
+            if not lesson_plan_day:
+                logger.error("Lesson plan day not found.")
+                return Response({"error": "Lesson plan day not found."},
+                                status=status.HTTP_404_NOT_FOUND)
+
+            data = request.data
+
+            for field in ['learning_outcomes', 'real_world_applications',
+                          'taxonomy_alignment']:
+                if field in data:
+                    setattr(lesson_plan_day, field, data[field])
+            lesson_plan_day.save(using=school_db_name)
+
+            if 'topics' in data:
+                topics_data = data['topics']
+
+                for topic_data in topics_data:
+                    topic_id = topic_data.get('topic_id')
+                    if not topic_id:
+                        continue
+
+                    topic = Topic.objects.using(school_db_name).filter(id=topic_id).first()
+                    if not topic:
+                        continue
+
+                    for t_field in ['title', 'summary', 'time_minutes']:
+                        if t_field in topic_data:
+                            setattr(topic, t_field, topic_data[t_field])
+                    topic.save(using=school_db_name)
+
+            logger.info("Lesson plan day updated successfully.")
+
+            return Response({"message": "Lesson plan day updated successfully"},
+                            status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error("Error editing lesson plan day by ID: %s", e)
+            return Response({"error": "Failed to edit lesson plan day."},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
     def create_sub_topic(self, request):
         """Add a topic to a chapter."""
         try:
+            logger.info("Adding sub-topic to chapter...")
             school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
             chapter_id = request.data.get("chapter_id")
             sub_topic = request.data.get("sub_topic")
@@ -260,6 +436,7 @@ class SyllabusService:
                 name=sub_topic,
                 class_section_id=class_section_id
             )
+            logger.info("Sub-topic added successfully.")
             return Response({"message": "Sub-topic added successfully."},
                             status=status.HTTP_201_CREATED)
         except Exception as e:
@@ -270,6 +447,7 @@ class SyllabusService:
     def edit_sub_topic_by_id(self, request):
         """Edit a sub-topic."""
         try:
+            logger.info("Editing sub-topic by ID...")
             school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
             sub_topic_id = request.data.get("sub_topic_id")
             new_sub_topic_name = request.data.get("sub_topic")
@@ -292,6 +470,7 @@ class SyllabusService:
 
             sub_topic.name = new_sub_topic_name
             sub_topic.save(using=school_db_name)
+            logger.info("Sub-topic updated successfully.")
             return Response({"message": "Sub-topic updated successfully."},
                             status=status.HTTP_200_OK)
 
@@ -303,6 +482,7 @@ class SyllabusService:
     def delete_sub_topic_by_id(self, request):
         """Delete a sub-topic."""
         try:
+            logger.info("Deleting sub-topic by ID...")
             school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
             sub_topic_id = request.data.get("sub_topic_id")
 
@@ -323,6 +503,7 @@ class SyllabusService:
                                 status=status.HTTP_404_NOT_FOUND)
 
             sub_topic.delete(using=school_db_name)
+            logger.info("Sub-topic deleted successfully.")
             return Response({"message": "Sub-topic deleted successfully."},
                             status=status.HTTP_200_OK)
         except Exception as e:
@@ -333,6 +514,7 @@ class SyllabusService:
     def create_prerequisite(self, request):
         """Create a prerequisite for a chapter."""
         try:
+            logger.info("Creating prerequisite for chapter...")
             school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
             chapter_id = request.data.get("chapter_id")
             topic = request.data.get("topic")
@@ -352,6 +534,7 @@ class SyllabusService:
                 explanation=explanation,
                 class_section_id=class_section_id
             )
+            logger.info("Prerequisite created successfully.")
             return Response({"message": "Prerequisite created successfully."},
                             status=status.HTTP_201_CREATED)
         except Exception as e:
@@ -362,6 +545,7 @@ class SyllabusService:
     def edit_prerequisite_by_id(self, request):
         """Edit a prerequisite for a chapter."""
         try:
+            logger.info("Editing prerequisite by ID...")
             school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
             prerequisite_id = request.data.get("prerequisite_id")
             topic = request.data.get("topic")
@@ -386,6 +570,7 @@ class SyllabusService:
             prerequisite.topic = topic
             prerequisite.explanation = explanation
             prerequisite.save(using=school_db_name)
+            logger.info("Prerequisite updated successfully.")
             return Response({"message": "Prerequisite updated successfully."},
                             status=status.HTTP_200_OK)
         except Exception as e:
@@ -396,6 +581,7 @@ class SyllabusService:
     def delete_prerequisite_by_id(self, request):
         """Delete a prerequisite for a chapter."""
         try:
+            logger.info("Deleting prerequisite by ID...")
             school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
             prerequisite_id = request.data.get("prerequisite_id")
 
@@ -416,6 +602,7 @@ class SyllabusService:
                                 status=status.HTTP_404_NOT_FOUND)
 
             prerequisite.delete(using=school_db_name)
+            logger.info("Prerequisite deleted successfully.")
             return Response({"message": "Prerequisite deleted successfully."},
                             status=status.HTTP_200_OK)
         except Exception as e:
@@ -426,6 +613,7 @@ class SyllabusService:
     def generate_lesson_plan(self, request):
         """Generate a lesson plan based on chapter details."""
         try:
+            logger.info("Generating lesson plan...")
             school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
             chapter_id = request.data.get("chapter_id")
             num_days = request.data.get("num_days")
@@ -471,7 +659,7 @@ class SyllabusService:
             )
 
             normalized = CommonFunctions.normalize_keys(lesson_plan)
-
+            logger.info("Lesson plan generated successfully.")
             return Response({"data": normalized},
                             status=status.HTTP_200_OK)
         except Exception as e:
@@ -537,88 +725,3 @@ class SyllabusService:
             logger.exception("Error in save_lesson_plan: %s", e)
             return Response({"error": "Something went wrong while saving lesson plan."},
                             status=status.HTTP_400_BAD_REQUEST)
-
-    def get_lesson_plan_by_chapter_id(self, request):
-        """Fetch lesson plan by chapter ID."""
-        try:
-            school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
-            chapter_id = request.GET.get("chapter_id")
-            class_section_id = request.GET.get("class_section_id")
-
-            if not all([school_id, chapter_id, class_section_id]):
-                logger.error("Missing required parameters for fetching lesson plan.")
-                return Response({"error": "Missing required parameters."},
-                                status=status.HTTP_400_BAD_REQUEST)
-
-            school_db_name = CommonFunctions.get_school_db_name(school_id)
-
-            lesson_plan_days = SchoolLessonPlanDay.objects.using(school_db_name).filter(
-                chapter_id=chapter_id,
-                class_section_id=class_section_id
-            )
-
-            data = []
-            for day in lesson_plan_days:
-                data.append({
-                    "lesson_plan_day_id": day.id,
-                    "day": day.day,
-                    "status": day.status,
-                })
-
-            return Response({"data": data}, status=status.HTTP_200_OK)
-        except Exception as e:
-            logger.error(f"Error fetching lesson plan by chapter ID: {e}")
-            return Response({"error": "Failed to fetch lesson plan."},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-    def get_lesson_plan_day_by_id(self, request):
-        """Fetch lesson plan day by ID."""
-        try:
-            school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
-            lesson_plan_day_id = request.GET.get("lesson_plan_day_id")
-
-            if not all([school_id, lesson_plan_day_id]):
-                logger.error("Missing required parameters for fetching lesson plan day.")
-                return Response({"error": "Missing required parameters."},
-                                status=status.HTTP_400_BAD_REQUEST)
-
-            school_db_name = CommonFunctions.get_school_db_name(school_id)
-
-            lesson_plan_day = SchoolLessonPlanDay.objects.using(school_db_name).filter(
-                id=lesson_plan_day_id
-            ).prefetch_related(
-                Prefetch(
-                    'school_lesson_topics',
-                    queryset=Topic.objects.using(school_db_name)
-                )
-            ).first()
-
-            if not lesson_plan_day:
-                logger.error("Lesson plan day not found.")
-                return Response({"error": "Lesson plan day not found."},
-                                status=status.HTTP_404_NOT_FOUND)
-
-            topics = lesson_plan_day.school_lesson_topics.all()
-
-            data = {
-                "lesson_plan_day_id": lesson_plan_day.id,
-                "day": lesson_plan_day.day,
-                "learning_outcomes": lesson_plan_day.learning_outcomes,
-                "real_world_applications": lesson_plan_day.real_world_applications,
-                "taxonomy_alignment": lesson_plan_day.taxonomy_alignment,
-                "status": lesson_plan_day.status,
-                "topics": [
-                    {
-                        "topic_id": topic.id,
-                        "title": topic.title,
-                        "summary": topic.summary,
-                        "time_minutes": topic.time_minutes
-                    } for topic in topics
-                ]
-            }
-
-            return Response({"data": data}, status=status.HTTP_200_OK)
-        except Exception as e:
-            logger.error(f"Error fetching lesson plan day by ID: {e}")
-            return Response({"error": "Failed to fetch lesson plan day."},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
