@@ -71,7 +71,7 @@ class SyllabusService:
             return Response({"error": "Failed to fetch chapters."},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def get_chapter_progress(school_db_name, chapter_id):
+    def get_chapter_progress(self, school_db_name, chapter_id):
 
         total_days = SchoolLessonPlanDay.objects.using(school_db_name).filter(
             chapter_id=chapter_id
