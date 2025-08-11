@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Search, Plus, BookOpen, Users, LoaderCircle } from 'lucide-react';
+import { Edit, Search, Plus, BookOpen, Users, LoaderCircle, ExternalLink } from 'lucide-react';
 import { getSchoolById, editSchool } from '../services/school';
 import { getTeachersBySchoolId } from '../services/teacher';
 import { getClassesBySchoolId } from '../services/class';
@@ -178,10 +178,6 @@ const AdminSchool: React.FC = () => {
     navigate(`/class-details/${classId}`);
   };
 
-  // const superAdminRouteHandling = ()=> {
-
-  // }
-
   return (
     <MainLayout pageTitle={`My School - ${schoolData.school_name}`}>
       <div className="space-y-6">
@@ -269,17 +265,6 @@ const AdminSchool: React.FC = () => {
             </div>
           </div>
 
-          {/* view more click */}
-          {/* <div className="flex justify-end mt-4">
-            <button
-              onClick={() => setShowMore(!showMore)}
-              className="text-blue-600 hover:underline focus:outline-none"
-            >
-              {showMore ? 'Show Less' : 'View More'}
-            </button>
-          </div> */}
-
-
           {isEditing && (
             <div className="flex gap-2 mt-6">
               <button
@@ -307,13 +292,22 @@ const AdminSchool: React.FC = () => {
               </div>
               <h2 className="text-xl font-semibold text-gray-800">Teachers</h2>
             </div>
-            <Link
-              to="/admin-add-teacher"
-              className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              Add Teacher
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                to="/teachers"
+                className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                title="View all teachers"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </Link>
+              <Link
+                to="/admin-add-teacher"
+                className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Add Teacher
+              </Link>
+            </div>
           </div>
 
           <div className="mb-4">
@@ -365,13 +359,22 @@ const AdminSchool: React.FC = () => {
               </div>
               <h2 className="text-xl font-semibold text-gray-800">Classes</h2>
             </div>
-            <Link
-              to="/add-class"
-              className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              Add Class
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                to="/classes"
+                className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                title="View all classes"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </Link>
+              <Link
+                to="/add-class"
+                className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Add Class
+              </Link>
+            </div>
           </div>
 
           <div className="mb-4">
