@@ -37,23 +37,25 @@ class SyllabusView(APIView):
     """View for managing syllabus."""
 
     def get_permissions(self):
-        if self.kwargs.get('action') in ['getSyllabusBySubject', 'getChaptersProgress']:
+        if self.kwargs.get('action') in ['getChaptersTopicsBySubject', 'getChaptersProgressBySubject']:
             return [IsAuthenticated()]
         return [IsAuthenticated(), IsSuperAdminOrAdminOrTeacher()]
 
     def get(self, request, action=None):
         """Handle GET requests for syllabus actions."""
-        if action == 'getChaptersProgress':
-            return SyllabusService().get_chapters_progress(request)
+        if action == 'getChaptersProgressBySubject':
+            return SyllabusService().get_chapters_by_subject(request)
         elif action == 'getGradeByTeacherId':
             return SyllabusService().get_grade_by_teacher_id(request)
-        elif action == 'getSyllabusBySubject':
-            return SyllabusService().get_syllabus_by_subject(request)
-        elif action == 'getlessionPlan':
+        elif action == 'getChaptersTopicsBySubject':
+            return SyllabusService().get_chapters_and_topics_by_subject(request)
+        elif action == 'getPrerequisites':
+            return SyllabusService().get_prerequisites(request)
+        elif action == 'getLessionPlan':
             return SyllabusService().get_lesson_plan_by_chapter_id(request)
-        elif action == "getlessonDayPlan":
+        elif action == "getLessonDayPlan":
             return SyllabusService().get_lesson_plan_day_by_id(request)
-        return Response({"message": f"GET request for action: {action}"})
+        return Response({"error": f"GET request not found for action: {action}"}, status=400)
 
     def post(self, request, action=None):
         """Handle POST requests for syllabus actions."""
@@ -65,7 +67,7 @@ class SyllabusView(APIView):
             return SyllabusService().generate_lesson_plan(request)
         elif action == "saveLessonPlan":
             return SyllabusService().save_lesson_plan(request)
-        return Response({"message": f"POST request for action: {action}"})
+        return Response({"error": f"POST request not found for action: {action}"}, status=400)
     
     def put(self, request, action=None):
         """Handle PUT requests for syllabus actions."""
@@ -73,9 +75,9 @@ class SyllabusView(APIView):
             return SyllabusService().edit_sub_topic_by_id(request)
         elif action == 'editPrerequisiteById':
             return SyllabusService().edit_prerequisite_by_id(request)
-        elif action == 'editLessonPlan':
-            return SyllabusService().edit_lesson_plan(request)
-        return Response({"message": f"PUT request for action: {action}"})
+        elif action == 'editLessonPlanByDayId':
+            return SyllabusService().edit_lesson_plan_day_by_id(request)
+        return Response({"error": f"PUT request not found for action: {action}"},status=400)
     
     def delete(self, request, action=None):
         """Handle DELETE requests for syllabus actions."""
@@ -83,4 +85,4 @@ class SyllabusView(APIView):
             return SyllabusService().delete_sub_topic_by_id(request)
         elif action == 'deletePrerequisiteById':
             return SyllabusService().delete_prerequisite_by_id(request)
-        return Response({"message": f"DELETE request for action: {action}"})
+        return Response({"error": f"DELETE request not found for action: {action}"}, status=400)
