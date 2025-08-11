@@ -4,11 +4,11 @@ import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Progress } from '../components/ui/progress';
 import { Input } from '../components/ui/input';
-import { 
-  Award, 
-  BookOpen, 
-  Users, 
-  ChevronRight, 
+import {
+  Award,
+  BookOpen,
+  Users,
+  ChevronRight,
   Search,
   Calculator,
   Globe,
@@ -17,10 +17,14 @@ import {
   Languages,
   Palette
 } from 'lucide-react';
+import { getGradeByTeacherId } from '../services/grades'
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
 
 interface TeacherClass {
   class_id: string;
   class_name: string;
+  class_number: Number,
+  board_id: Number,
   section: string;
   subject_name: string;
   subject_id: string;
@@ -29,9 +33,11 @@ interface TeacherClass {
 }
 
 const Grades: React.FC = () => {
+  const { showSnackbar } = useSnackbar();
   const [teacherClasses, setTeacherClasses] = useState<TeacherClass[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredClasses, setFilteredClasses] = useState<TeacherClass[]>([]);
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
 
   const breadcrumbItems = [
     { label: 'Grades' }
@@ -41,6 +47,8 @@ const Grades: React.FC = () => {
     {
       class_id: '1',
       class_name: 'Class 06',
+      class_number: 6,
+      board_id: 1,
       section: 'A',
       subject_name: 'Mathematics',
       subject_id: 'math_6a',
@@ -50,6 +58,8 @@ const Grades: React.FC = () => {
     {
       class_id: '2',
       class_name: 'Class 07',
+      class_number: 6,
+      board_id: 1,
       section: 'B',
       subject_name: 'Mathematics',
       subject_id: 'math_7b',
@@ -59,6 +69,8 @@ const Grades: React.FC = () => {
     {
       class_id: '3',
       class_name: 'Class 06',
+      class_number: 6,
+      board_id: 1,
       section: 'A',
       subject_name: 'English',
       subject_id: 'eng_6a',
@@ -68,6 +80,8 @@ const Grades: React.FC = () => {
     {
       class_id: '4',
       class_name: 'Class 07',
+      class_number: 6,
+      board_id: 1,
       section: 'B',
       subject_name: 'Science',
       subject_id: 'sci_7b',
@@ -77,6 +91,8 @@ const Grades: React.FC = () => {
     {
       class_id: '5',
       class_name: 'Class 08',
+      class_number: 6,
+      board_id: 1,
       section: 'A',
       subject_name: 'Social Studies',
       subject_id: 'social_8a',
@@ -86,6 +102,8 @@ const Grades: React.FC = () => {
     {
       class_id: '6',
       class_name: 'Class 09',
+      class_number: 6,
+      board_id: 1,
       section: 'C',
       subject_name: 'Art',
       subject_id: 'art_9c',
@@ -94,13 +112,34 @@ const Grades: React.FC = () => {
     }
   ];
 
+  const getGradesData = async () => {
+    try {
+      const schoolId = userData.school_id ?? 1; // Replace with actual school ID
+      const teacherId = userData.teacher_id ?? 3; // Replace with actual teacher ID
+      const data = await getGradeByTeacherId(schoolId, teacherId);
+      console.log('Fetched Grades Data:', data);
+      if (data && data.data) {
+        setTeacherClasses(data.data);
+        setFilteredClasses(data.data);
+      } else {
+        setTeacherClasses(sampleTeacherClasses);
+        setFilteredClasses(sampleTeacherClasses);
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
   useEffect(() => {
-    setTeacherClasses(sampleTeacherClasses);
-    setFilteredClasses(sampleTeacherClasses);
+    getGradesData();
   }, []);
 
   useEffect(() => {
-    const filtered = teacherClasses.filter(classItem => 
+    const filtered = teacherClasses.filter(classItem =>
       classItem.subject_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       classItem.class_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       classItem.section.toLowerCase().includes(searchTerm.toLowerCase())
@@ -170,11 +209,11 @@ const Grades: React.FC = () => {
             const SubjectIcon = getSubjectIcon(classItem.subject_name);
             const progressColor = getProgressColor(classItem.progress);
             const iconColor = getSubjectIconColor(classItem.subject_name);
-            
+
             return (
               <Link
-                key={`${classItem.class_id}_${classItem.subject_id}`}
-                to={`/grades/syllabus/${classItem.subject_id}?class=${classItem.class_name}&section=${classItem.section}&subject=${classItem.subject_name}`}
+                key={`${classItem.class_number}_${classItem.subject_id}`}
+                to={`/grades/syllabus/${classItem.subject_id}?class=${'Class '+classItem.class_number}&class_id=${classItem.class_id}&section=${classItem.section}&subject=${classItem.subject_name}&subject_id=${classItem.subject_id}&school_board_id=${classItem.board_id}&school_id=${userData.school_id}`}
                 className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 group"
               >
                 <div className="flex items-start justify-between mb-4">
@@ -187,7 +226,7 @@ const Grades: React.FC = () => {
                         {classItem.subject_name}
                       </h3>
                       <p className="text-md text-gray-600 font-medium">
-                        {classItem.class_name} - {classItem.section}
+                        {'Class' + classItem.class_number} - {classItem.section}
                       </p>
                     </div>
                   </div>
@@ -200,7 +239,7 @@ const Grades: React.FC = () => {
                     <span className="text-lg font-bold text-gray-900">{classItem.progress}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                    <div 
+                    <div
                       className={`h-full ${progressColor} rounded-full transition-all duration-500 ease-out`}
                       style={{ width: `${classItem.progress}%` }}
                     />
