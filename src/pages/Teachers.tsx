@@ -4,49 +4,17 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Plus, Mail, Phone, Search, Users as UsersIcon,LoaderCircle } from 'lucide-react';
-import {getTeachersBySchoolId} from '../services/teacher';
+import { Edit, Plus, Mail, Phone, Search, Users as UsersIcon, LoaderCircle, Grid, List, Eye, Trash2 } from 'lucide-react';
+import { getTeachersBySchoolId } from '../services/teacher';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const Teachers: React.FC = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [teachers,setTeachers] = useState([]);
-  const [loader,setLoader] = useState(true);
+  const [teachers, setTeachers] = useState([]);
+  const [loader, setLoader] = useState(true);
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
-
-  // Mock teacher data
-  const sampleData =  [
-    {
-      teacher_id: '1',
-      teacher_first_name: 'Jane Doe',
-      teacher_last_name : 'K',
-      email: 'jane.doe@greenwood.edu',
-      phone: '+91 98765 43210',
-      subject: 'Mathematics',
-      classes: ['Class 10-A', 'Class 9-B'],
-      status: 'Active'
-    },
-    {
-      teacher_id: '2',
-      teacher_first_name: 'John Smith',
-      teacher_last_name : 'K',
-      email: 'john.smith@greenwood.edu',
-      phone: '+91 98765 43211',
-      subject: 'English',
-      classes: ['Class 8-A', 'Class 7-B'],
-      status: 'Active'
-    },
-    {
-      teacher_id: '3',
-      teacher_first_name: 'Sarah Wilson',
-      teacher_last_name : 'K',
-      email: 'sarah.wilson@greenwood.edu',
-      phone: '+91 98765 43212',
-      subject: 'Science',
-      classes: ['Class 9-A', 'Class 8-B'],
-      status: 'Active'
-    }
-  ];
   
   const getTeachersList = async () => {
     setLoader(true);
@@ -54,8 +22,7 @@ const Teachers: React.FC = () => {
     if(response && response.teachers){
       setLoader(false);
       setTeachers(response.teachers);
-      // filteredTeachers = teachers;
-      console.log("teachers",teachers,filteredTeachers);
+      console.log("teachers", teachers);
     }
   }
 
@@ -80,6 +47,135 @@ const Teachers: React.FC = () => {
         { label: 'Teachers' }
       ];
 
+  const handleDelete = (teacherId: string) => {
+    // Delete functionality - you can implement this based on your API
+    console.log('Delete teacher:', teacherId);
+  };
+
+  const renderGridView = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {filteredTeachers.map((teacher) => (
+        <Link
+          key={teacher.teacher_id}
+          to={`/teacher-details/${teacher.teacher_id}`}
+          className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+        >
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                <span className="text-white font-semibold">
+                  {teacher.teacher_first_name.charAt(0)}
+                </span>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">{teacher.teacher_first_name + " "+teacher.teacher_last_name }</h3>
+                <p className="text-sm text-gray-500">{teacher.subject}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Mail className="w-4 h-4 text-gray-400" />
+              <p className="text-sm text-gray-600">{teacher.email}</p>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Phone className="w-4 h-4 text-gray-400" />
+              <p className="text-sm text-gray-600">{teacher.phone_number}</p>
+            </div>
+            
+            <div>
+              <p className="text-sm text-gray-500 mb-1">Classes:</p>
+              <div className="flex flex-wrap gap-1">
+                {teacher.classes && teacher.classes.map((className, index) => (
+                  <span
+                    key={index}
+                    className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded"
+                  >
+                    {className}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+              {teacher.status || 'Active'}
+            </span>
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
+
+  const renderTableView = () => (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="font-medium">Name</TableHead>
+              <TableHead className="font-medium">Subject</TableHead>
+              <TableHead className="font-medium">Email</TableHead>
+              <TableHead className="font-medium">Phone</TableHead>
+              <TableHead className="font-medium">Status</TableHead>
+              <TableHead className="font-medium text-center">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredTeachers.map((teacher) => (
+              <TableRow key={teacher.teacher_id} className="hover:bg-gray-50">
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm font-semibold">
+                        {teacher.teacher_first_name.charAt(0)}
+                      </span>
+                    </div>
+                    <span className="font-medium">{teacher.teacher_first_name + " " + teacher.teacher_last_name}</span>
+                  </div>
+                </TableCell>
+                <TableCell>{teacher.subject}</TableCell>
+                <TableCell className="max-w-xs truncate">{teacher.email}</TableCell>
+                <TableCell>{teacher.phone_number}</TableCell>
+                <TableCell>
+                  <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                    {teacher.status || 'Active'}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center justify-center gap-2">
+                    <Link
+                      to={`/teacher-details/${teacher.teacher_id}`}
+                      className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="View Details"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Link>
+                    {(user?.role === 'admin' || user?.role === 'superadmin') && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleDelete(teacher.teacher_id);
+                        }}
+                        className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete Teacher"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+
   return (
     <MainLayout pageTitle="teachers">
       <div className="space-y-6">
@@ -92,15 +188,41 @@ const Teachers: React.FC = () => {
             </div>
             <h1 className="text-2xl font-bold text-gray-800">Teachers</h1>
           </div>
-          {(user?.role === 'admin' || user?.role === 'superadmin') && (
-            <Link
-              to={user?.role === 'admin' ? "/admin-add-teacher" : "/add-teacher"}
-              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add Teacher
-            </Link>
-          )}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded-md transition-colors ${
+                  viewMode === 'grid' 
+                    ? 'bg-white text-blue-600 shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+                title="Grid View"
+              >
+                <Grid className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('table')}
+                className={`p-2 rounded-md transition-colors ${
+                  viewMode === 'table' 
+                    ? 'bg-white text-blue-600 shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+                title="Table View"
+              >
+                <List className="w-4 h-4" />
+              </button>
+            </div>
+            {(user?.role === 'admin' || user?.role === 'superadmin') && (
+              <Link
+                to={user?.role === 'admin' ? "/admin-add-teacher" : "/add-teacher"}
+                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add Teacher
+              </Link>
+            )}
+          </div>
         </div>
 
         <div className="mb-4">
@@ -116,66 +238,8 @@ const Teachers: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTeachers.map((teacher) => (
-            <Link
-              key={teacher.teacher_id}
-              to={`/teacher-details/${teacher.teacher_id}`}
-              className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-                    <span className="text-white font-semibold">
-                      {teacher.teacher_first_name.charAt(0)}
-                    </span>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800">{teacher.teacher_first_name + " "+teacher.teacher_last_name }</h3>
-                    <p className="text-sm text-gray-500">{teacher.subject}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-gray-400" />
-                  <p className="text-sm text-gray-600">{teacher.email}</p>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-gray-400" />
-                  <p className="text-sm text-gray-600">{teacher.phone_number}</p>
-                </div>
-                
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Classes:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {teacher.classes && teacher.classes.map((className, index) => (
-                      <span
-                        key={index}
-                        className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded"
-                      >
-                        {className}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                  {teacher.status || 'Active'}
-                </span>
-              </div>
-            </Link>
-          ))}
-          {/* {filteredTeachers.length == 0 && (
-              <div>
-                No teachers found yet. You can add a new teacher by clicking the 'Add Teacher' button.
-              </div>
-            )} */}
-        </div>
+        {viewMode === 'grid' ? renderGridView() : renderTableView()}
+
         {filteredTeachers.length === 0 && !loader &&(
           <div className="text-center py-12">
             <UsersIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
