@@ -25,6 +25,8 @@ import {
   MessageSquare,
   RotateCcw
 } from 'lucide-react';
+import {getGradeByChapter} from '../services/grades'
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
 
 interface DayPlan {
   day: number;
@@ -41,11 +43,16 @@ interface Chapter {
 }
 
 const Syllabus: React.FC = () => {
-  const { subjectId } = useParams();
+  const { showSnackbar } = useSnackbar();
+  //const { subjectId } = useParams();
   const [searchParams] = useSearchParams();
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
   const subject = searchParams.get('subject') || '';
+  const classId = searchParams.get('class_id') || '';
+  const subjectId = searchParams.get('subject_id') || '';
+  const schoolId = searchParams.get('school_id') || '';
+  const boardId = searchParams.get('school_board_id') || '';
 
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [openChapters, setOpenChapters] = useState<{ [key: string]: boolean }>({});
@@ -127,7 +134,29 @@ const Syllabus: React.FC = () => {
     }
   ];
 
+  const getGradesData = async () => {
+    try{
+      const data = {
+        class_number_id : classId,
+        subject_id : subjectId,
+        school_id : schoolId,
+        school_board_id : boardId
+      };
+      const response = await getGradeByChapter(data);
+      if(response){
+        console.log(response);
+      }
+    }catch(error){
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
   useEffect(() => {
+    getGradesData();
     setChapters(sampleChapters);
   }, []);
 
