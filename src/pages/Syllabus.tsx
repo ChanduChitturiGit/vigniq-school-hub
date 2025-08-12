@@ -4,10 +4,13 @@ import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../components/ui/collapsible';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../components/ui/accordion';
 import { Progress } from '../components/ui/progress';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
+import { Textarea } from '../components/ui/textarea';
+import { Label } from '../components/ui/label';
 import {
   ChevronDown,
   ChevronUp,
@@ -27,7 +30,6 @@ import {
 } from 'lucide-react';
 import { getGradeByChapter, getLessonPlanData, getPrerequisitesData } from '../services/grades'
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
-
 
 interface DayPlan {
   day: number;
@@ -61,7 +63,8 @@ const Syllabus: React.FC = () => {
   const [editingTopic, setEditingTopic] = useState<{ chapterId: string; topicIndex: number } | null>(null);
   const [editingPrerequisite, setEditingPrerequisite] = useState<{ chapterId: string; prereqIndex: number } | null>(null);
   const [newTopicText, setNewTopicText] = useState('');
-  const [newPrerequisiteText, setNewPrerequisiteText] = useState('');
+  const [newPrerequisiteTitle, setNewPrerequisiteTitle] = useState('');
+  const [newPrerequisiteExplanation, setNewPrerequisiteExplanation] = useState('');
   const [addingTopic, setAddingTopic] = useState<string | null>(null);
   const [addingPrerequisite, setAddingPrerequisite] = useState<string | null>(null);
   //const [chaptersData, setChaptersData] = useState<any[]>([]);
@@ -336,17 +339,22 @@ const Syllabus: React.FC = () => {
     setNewTopicText('');
   };
 
-  const handlePrerequisiteEdit = (chapterId: string, prereqIndex: number, newValue: string) => {
+  const handlePrerequisiteEdit = (chapterId: string, prereqIndex: number, newTitle: string, newExplanation: string) => {
     setChapters(prev => prev.map(chapter => {
       if (chapter.chapter_id === chapterId) {
         const newPrerequisites = [...chapter.prerequisites];
-        newPrerequisites[prereqIndex] = newValue;
+        newPrerequisites[prereqIndex] = {
+          ...newPrerequisites[prereqIndex],
+          topic: newTitle,
+          explanation: newExplanation
+        };
         return { ...chapter, prerequisites: newPrerequisites };
       }
       return chapter;
     }));
     setEditingPrerequisite(null);
-    setNewPrerequisiteText('');
+    setNewPrerequisiteTitle('');
+    setNewPrerequisiteExplanation('');
   };
 
   const addTopic = (chapterId: string, newTopic: string) => {
@@ -362,17 +370,23 @@ const Syllabus: React.FC = () => {
     setNewTopicText('');
   };
 
-  const addPrerequisite = (chapterId: string, newPrerequisite: string) => {
-    if (newPrerequisite.trim()) {
+  const addPrerequisite = (chapterId: string, newTitle: string, newExplanation: string) => {
+    if (newTitle.trim() && newExplanation.trim()) {
       setChapters(prev => prev.map(chapter => {
         if (chapter.chapter_id === chapterId) {
-          return { ...chapter, prerequisites: [...chapter.prerequisites, newPrerequisite.trim()] };
+          const newPrerequisite = {
+            prerequisite_id: chapter.prerequisites.length + 1,
+            topic: newTitle.trim(),
+            explanation: newExplanation.trim()
+          };
+          return { ...chapter, prerequisites: [...chapter.prerequisites, newPrerequisite] };
         }
         return chapter;
       }));
     }
     setAddingPrerequisite(null);
-    setNewPrerequisiteText('');
+    setNewPrerequisiteTitle('');
+    setNewPrerequisiteExplanation('');
   };
 
   return (
@@ -656,104 +670,156 @@ const Syllabus: React.FC = () => {
                             </Button>
                           </div>
 
-                          {chapter.prerequisites.map((prerequisite, index) => (
-                            <div key={index} className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors">
-                              <div className="flex items-center gap-4 flex-1">
-                                <Lightbulb className="w-5 h-5 text-blue-600" />
-                                {editingPrerequisite?.chapterId === chapter.chapter_id && editingPrerequisite?.prereqIndex === index ? (
-                                  <div className="flex items-center gap-3 flex-1">
-                                    <Input
-                                      value={newPrerequisiteText}
-                                      onChange={(e) => setNewPrerequisiteText(e.target.value)}
-                                      className="flex-1 text-base py-2 border-2 border-blue-300 focus:border-blue-500"
-                                      onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                          handlePrerequisiteEdit(chapter.chapter_id, index, newPrerequisiteText);
-                                        }
-                                        if (e.key === 'Escape') {
-                                          setEditingPrerequisite(null);
-                                          setNewPrerequisiteText('');
-                                        }
-                                      }}
-                                      autoFocus
-                                    />
-                                    <Button
-                                      onClick={() => handlePrerequisiteEdit(chapter.chapter_id, index, newPrerequisiteText)}
-                                      size="sm"
-                                      className="bg-green-600 hover:bg-green-700 px-3 py-1"
-                                    >
-                                      <Save className="w-4 h-4" />
-                                    </Button>
-                                    <Button
-                                      onClick={() => {
-                                        setEditingPrerequisite(null);
-                                        setNewPrerequisiteText('');
-                                      }}
-                                      size="sm"
-                                      variant="outline"
-                                      className="px-3 py-1"
-                                    >
-                                      <X className="w-4 h-4" />
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <span className="text-base text-gray-700">{prerequisite.topic}</span>
-                                )}
+                          {addingPrerequisite === chapter.chapter_id && (
+                            <div className="p-4 bg-blue-50 rounded-lg border-2 border-blue-200 space-y-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="prerequisite-title" className="text-sm font-medium text-gray-700">
+                                  Prerequisite Title
+                                </Label>
+                                <Input
+                                  id="prerequisite-title"
+                                  value={newPrerequisiteTitle}
+                                  onChange={(e) => setNewPrerequisiteTitle(e.target.value)}
+                                  placeholder="Enter prerequisite title..."
+                                  className="text-base py-2 border-2 border-blue-300 focus:border-blue-500"
+                                />
                               </div>
-                              {!editingPrerequisite && (
+                              <div className="space-y-2">
+                                <Label htmlFor="prerequisite-explanation" className="text-sm font-medium text-gray-700">
+                                  Explanation
+                                </Label>
+                                <Textarea
+                                  id="prerequisite-explanation"
+                                  value={newPrerequisiteExplanation}
+                                  onChange={(e) => setNewPrerequisiteExplanation(e.target.value)}
+                                  placeholder="Enter detailed explanation..."
+                                  className="text-base py-2 border-2 border-blue-300 focus:border-blue-500"
+                                  rows={4}
+                                />
+                              </div>
+                              <div className="flex gap-3">
+                                <Button
+                                  onClick={() => addPrerequisite(chapter.chapter_id, newPrerequisiteTitle, newPrerequisiteExplanation)}
+                                  className="bg-green-600 hover:bg-green-700 px-4 py-2"
+                                  disabled={!newPrerequisiteTitle.trim() || !newPrerequisiteExplanation.trim()}
+                                >
+                                  <Save className="w-4 h-4 mr-2" />
+                                  Save
+                                </Button>
                                 <Button
                                   onClick={() => {
-                                    setEditingPrerequisite({ chapterId: chapter.chapter_id, prereqIndex: index });
-                                    setNewPrerequisiteText(prerequisite);
-                                  }}
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3 py-1"
-                                >
-                                  <EditIcon className="w-4 h-4 mr-1" />
-                                  Edit
-                                </Button>
-                              )}
-                            </div>
-                          ))}
-
-                          {addingPrerequisite === chapter.chapter_id && (
-                            <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
-                              <Lightbulb className="w-5 h-5 text-blue-600" />
-                              <Input
-                                value={newPrerequisiteText}
-                                onChange={(e) => setNewPrerequisiteText(e.target.value)}
-                                placeholder="Enter new prerequisite..."
-                                className="flex-1 text-base py-2 border-2 border-blue-300 focus:border-blue-500"
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    addPrerequisite(chapter.chapter_id, newPrerequisiteText);
-                                  }
-                                  if (e.key === 'Escape') {
                                     setAddingPrerequisite(null);
-                                    setNewPrerequisiteText('');
-                                  }
-                                }}
-                                autoFocus
-                              />
-                              <Button
-                                onClick={() => addPrerequisite(chapter.chapter_id, newPrerequisiteText)}
-                                className="bg-green-600 hover:bg-green-700 px-3 py-2"
-                              >
-                                <Save className="w-4 h-4 mr-1" />
-                                Save
-                              </Button>
-                              <Button
-                                onClick={() => {
-                                  setAddingPrerequisite(null);
-                                  setNewPrerequisiteText('');
-                                }}
-                                variant="outline"
-                                className="px-3 py-2"
-                              >
-                                <X className="w-4 h-4 mr-1" />
-                                Cancel
-                              </Button>
+                                    setNewPrerequisiteTitle('');
+                                    setNewPrerequisiteExplanation('');
+                                  }}
+                                  variant="outline"
+                                  className="px-4 py-2"
+                                >
+                                  <X className="w-4 h-4 mr-2" />
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+
+                          {chapter.prerequisites.length > 0 && (
+                            <Accordion type="single" collapsible className="space-y-2">
+                              {chapter.prerequisites.map((prerequisite, index) => (
+                                <AccordionItem 
+                                  key={index} 
+                                  value={`prerequisite-${index}`}
+                                  className="bg-blue-50 rounded-lg border border-blue-200 px-4"
+                                >
+                                  <AccordionTrigger className="hover:no-underline py-4">
+                                    <div className="flex items-center gap-3 text-left">
+                                      <Lightbulb className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                                      <span className="text-base font-medium text-gray-800">
+                                        {prerequisite.topic}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2 ml-4">
+                                      {!editingPrerequisite && (
+                                        <Button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setEditingPrerequisite({ chapterId: chapter.chapter_id, prereqIndex: index });
+                                            setNewPrerequisiteTitle(prerequisite.topic);
+                                            setNewPrerequisiteExplanation(prerequisite.explanation);
+                                          }}
+                                          variant="ghost"
+                                          size="sm"
+                                          className="text-blue-600 hover:text-blue-800 hover:bg-blue-100 px-2 py-1"
+                                        >
+                                          <EditIcon className="w-4 h-4" />
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </AccordionTrigger>
+                                  <AccordionContent className="pb-4">
+                                    {editingPrerequisite?.chapterId === chapter.chapter_id && editingPrerequisite?.prereqIndex === index ? (
+                                      <div className="space-y-4 pt-2">
+                                        <div className="space-y-2">
+                                          <Label htmlFor={`edit-title-${index}`} className="text-sm font-medium text-gray-700">
+                                            Title
+                                          </Label>
+                                          <Input
+                                            id={`edit-title-${index}`}
+                                            value={newPrerequisiteTitle}
+                                            onChange={(e) => setNewPrerequisiteTitle(e.target.value)}
+                                            className="text-base py-2 border-2 border-blue-300 focus:border-blue-500"
+                                          />
+                                        </div>
+                                        <div className="space-y-2">
+                                          <Label htmlFor={`edit-explanation-${index}`} className="text-sm font-medium text-gray-700">
+                                            Explanation
+                                          </Label>
+                                          <Textarea
+                                            id={`edit-explanation-${index}`}
+                                            value={newPrerequisiteExplanation}
+                                            onChange={(e) => setNewPrerequisiteExplanation(e.target.value)}
+                                            className="text-base py-2 border-2 border-blue-300 focus:border-blue-500"
+                                            rows={4}
+                                          />
+                                        </div>
+                                        <div className="flex gap-3">
+                                          <Button
+                                            onClick={() => handlePrerequisiteEdit(chapter.chapter_id, index, newPrerequisiteTitle, newPrerequisiteExplanation)}
+                                            size="sm"
+                                            className="bg-green-600 hover:bg-green-700 px-3 py-1"
+                                          >
+                                            <Save className="w-4 h-4 mr-1" />
+                                            Save
+                                          </Button>
+                                          <Button
+                                            onClick={() => {
+                                              setEditingPrerequisite(null);
+                                              setNewPrerequisiteTitle('');
+                                              setNewPrerequisiteExplanation('');
+                                            }}
+                                            size="sm"
+                                            variant="outline"
+                                            className="px-3 py-1"
+                                          >
+                                            <X className="w-4 h-4 mr-1" />
+                                            Cancel
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="text-gray-700 leading-relaxed pt-2">
+                                        {prerequisite.explanation}
+                                      </div>
+                                    )}
+                                  </AccordionContent>
+                                </AccordionItem>
+                              ))}
+                            </Accordion>
+                          )}
+
+                          {chapter.prerequisites.length === 0 && !addingPrerequisite && (
+                            <div className="text-center py-8 text-gray-500">
+                              <Lightbulb className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                              <p className="text-base">No prerequisites added yet</p>
                             </div>
                           )}
                         </div>
