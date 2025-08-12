@@ -294,18 +294,18 @@ const AdminSchool: React.FC = () => {
             </div>
             <div className="flex items-center gap-2">
               <Link
-                to="/teachers"
-                className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                title="View all teachers"
-              >
-                <ExternalLink className="w-4 h-4" />
-              </Link>
-              <Link
                 to="/admin-add-teacher"
                 className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Add Teacher
+              </Link>
+              <Link
+                to="/teachers"
+                className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                title="View all teachers"
+              >
+                <ExternalLink className="w-4 h-4" />
               </Link>
             </div>
           </div>
@@ -361,18 +361,18 @@ const AdminSchool: React.FC = () => {
             </div>
             <div className="flex items-center gap-2">
               <Link
-                to="/classes"
-                className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                title="View all classes"
-              >
-                <ExternalLink className="w-4 h-4" />
-              </Link>
-              <Link
                 to="/add-class"
                 className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Add Class
+              </Link>
+              <Link
+                to="/classes"
+                className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                title="View all classes"
+              >
+                <ExternalLink className="w-4 h-4" />
               </Link>
             </div>
           </div>
