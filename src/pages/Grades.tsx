@@ -115,7 +115,7 @@ const Grades: React.FC = () => {
   const getGradesData = async () => {
     try {
       const schoolId = userData.school_id ?? 1; // Replace with actual school ID
-      const teacherId = userData.teacher_id ?? 3; // Replace with actual teacher ID
+      const teacherId = userData.user_id ?? 3; // Replace with actual teacher ID
       const data = await getGradeByTeacherId(schoolId, teacherId);
       console.log('Fetched Grades Data:', data);
       if (data && data.data) {
