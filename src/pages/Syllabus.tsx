@@ -8,12 +8,12 @@ import { Progress } from '../components/ui/progress';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
-import { 
-  ChevronDown, 
-  ChevronUp, 
-  Plus, 
-  Edit2, 
-  Save, 
+import {
+  ChevronDown,
+  ChevronUp,
+  Plus,
+  Edit2,
+  Save,
   X,
   BookOpen,
   FileText,
@@ -25,8 +25,9 @@ import {
   MessageSquare,
   RotateCcw
 } from 'lucide-react';
-import {getGradeByChapter} from '../services/grades'
+import { getGradeByChapter, getLessonPlanData, getPrerequisitesData } from '../services/grades'
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
+
 
 interface DayPlan {
   day: number;
@@ -34,12 +35,13 @@ interface DayPlan {
 }
 
 interface Chapter {
-  id: string;
-  name: string;
+  chapter_id: string;
+  chapter_name: string;
+  chapter_number: number;
   progress: number;
-  topics: string[];
+  sub_topics: any[];
   dayPlans: DayPlan[];
-  prerequisites: string[];
+  prerequisites: any[];
 }
 
 const Syllabus: React.FC = () => {
@@ -62,6 +64,9 @@ const Syllabus: React.FC = () => {
   const [newPrerequisiteText, setNewPrerequisiteText] = useState('');
   const [addingTopic, setAddingTopic] = useState<string | null>(null);
   const [addingPrerequisite, setAddingPrerequisite] = useState<string | null>(null);
+  //const [chaptersData, setChaptersData] = useState<any[]>([]);
+  const [lessonPlanData, setLessonPlanData] = useState<any[]>([]);
+  const [prerequisitesData, setPrerequisitesData] = useState<any[]>([]);
 
   const breadcrumbItems = [
     { label: 'Grades', path: '/grades' },
@@ -70,15 +75,39 @@ const Syllabus: React.FC = () => {
 
   const sampleChapters: Chapter[] = [
     {
-      id: '1',
-      name: 'Knowing Our Numbers',
+      chapter_id: '1',
+      chapter_name: 'Knowing Our Numbers',
+      chapter_number: 1,
       progress: 75,
-      topics: [
-        'Introduction to Numbers',
-        'Comparing Numbers',
-        'Large Numbers in Practice',
-        'Estimation',
-        'Roman Numerals'
+      sub_topics: [
+        {
+          "sub_topic_id": 1,
+          "sub_topic": "Euclid's Division Algorithm"
+        },
+        {
+          "sub_topic_id": 2,
+          "sub_topic": "Exponents and Logarithms"
+        },
+        {
+          "sub_topic_id": 3,
+          "sub_topic": "Fundamental Theorem of Arithmetic"
+        },
+        {
+          "sub_topic_id": 4,
+          "sub_topic": "Introduction to Real Numbers"
+        },
+        {
+          "sub_topic_id": 5,
+          "sub_topic": "Irrational Numbers"
+        },
+        {
+          "sub_topic_id": 6,
+          "sub_topic": "Properties of Logarithms"
+        },
+        {
+          "sub_topic_id": 7,
+          "sub_topic": "Rational Numbers and Decimal Expansions"
+        }
       ],
       dayPlans: [
         { day: 1, date: 'October 26, 2023' },
@@ -88,38 +117,101 @@ const Syllabus: React.FC = () => {
         { day: 5, date: 'October 30, 2023' }
       ],
       prerequisites: [
-        'Understanding Basic Arithmetic Operations',
-        'Concept of Place Value',
-        'Introduction to Number Systems'
+        {
+          "prerequisite_id": 6,
+          "topic": "Basic Number Systems",
+          "explanation": "Familiarity with natural numbers, whole numbers, integers, rational numbers. Understanding different categories of numbers like natural numbers (1, 2, 3...), whole numbers (0, 1, 2, 3...), integers (..., -1, 0, 1,...), and rational numbers (fractions). Sets often categorize these numbers."
+        },
+        {
+          "prerequisite_id": 7,
+          "topic": "Logical Thinking/Classification",
+          "explanation": "Ability to group objects based on common properties. This involves the ability to identify shared characteristics among items and sort them into groups, or to understand rules that define a collection of items. This is fundamental to defining what belongs in a set."
+        }
       ]
     },
     {
-      id: '2',
-      name: 'Whole Numbers',
+      chapter_id: '2',
+      chapter_name: 'Whole Numbers',
+      chapter_number: 2,
       progress: 45,
-      topics: [
-        'Introduction to Whole Numbers',
-        'Properties of Whole Numbers',
-        'Operations on Whole Numbers',
-        'Patterns in Whole Numbers'
+      sub_topics: [
+        {
+          "sub_topic_id": 8,
+          "sub_topic": "Cardinality of Sets"
+        },
+        {
+          "sub_topic_id": 9,
+          "sub_topic": "Introduction to Sets"
+        },
+        {
+          "sub_topic_id": 10,
+          "sub_topic": "Set Operations (Union, Intersection, Difference)"
+        },
+        {
+          "sub_topic_id": 11,
+          "sub_topic": "Set Representation (Roster, Set Builder)"
+        },
+        {
+          "sub_topic_id": 12,
+          "sub_topic": "Subsets and Equal Sets"
+        },
+        {
+          "sub_topic_id": 13,
+          "sub_topic": "Types of Sets (Empty, Finite, Infinite, Universal)"
+        },
+        {
+          "sub_topic_id": 14,
+          "sub_topic": "Venn Diagrams"
+        }
       ],
       dayPlans: [],
       prerequisites: [
-        'Understanding Natural Numbers',
-        'Basic Addition and Subtraction',
-        'Number Line Concepts'
+        {
+          "prerequisite_id": 6,
+          "topic": "Basic Number Systems",
+          "explanation": "Familiarity with natural numbers, whole numbers, integers, rational numbers. Understanding different categories of numbers like natural numbers (1, 2, 3...), whole numbers (0, 1, 2, 3...), integers (..., -1, 0, 1,...), and rational numbers (fractions). Sets often categorize these numbers."
+        },
+        {
+          "prerequisite_id": 7,
+          "topic": "Logical Thinking/Classification",
+          "explanation": "Ability to group objects based on common properties. This involves the ability to identify shared characteristics among items and sort them into groups, or to understand rules that define a collection of items. This is fundamental to defining what belongs in a set."
+        }
       ]
     },
     {
-      id: '3',
-      name: 'Playing with Numbers',
+      chapter_id: '3',
+      chapter_name: 'Playing with Numbers',
+      chapter_number: 3,
       progress: 90,
-      topics: [
-        'Factors and Multiples',
-        'Prime and Composite Numbers',
-        'Tests for Divisibility',
-        'Common Factors and Multiples',
-        'Prime Factorization'
+      sub_topics: [
+        {
+          "sub_topic_id": 8,
+          "sub_topic": "Cardinality of Sets"
+        },
+        {
+          "sub_topic_id": 9,
+          "sub_topic": "Introduction to Sets"
+        },
+        {
+          "sub_topic_id": 10,
+          "sub_topic": "Set Operations (Union, Intersection, Difference)"
+        },
+        {
+          "sub_topic_id": 11,
+          "sub_topic": "Set Representation (Roster, Set Builder)"
+        },
+        {
+          "sub_topic_id": 12,
+          "sub_topic": "Subsets and Equal Sets"
+        },
+        {
+          "sub_topic_id": 13,
+          "sub_topic": "Types of Sets (Empty, Finite, Infinite, Universal)"
+        },
+        {
+          "sub_topic_id": 14,
+          "sub_topic": "Venn Diagrams"
+        }
       ],
       dayPlans: [
         { day: 1, date: 'November 15, 2023' },
@@ -127,26 +219,80 @@ const Syllabus: React.FC = () => {
         { day: 3, date: 'November 17, 2023' }
       ],
       prerequisites: [
-        'Multiplication Tables',
-        'Division Concepts',
-        'Understanding of Factors'
+        {
+          "prerequisite_id": 6,
+          "topic": "Basic Number Systems",
+          "explanation": "Familiarity with natural numbers, whole numbers, integers, rational numbers. Understanding different categories of numbers like natural numbers (1, 2, 3...), whole numbers (0, 1, 2, 3...), integers (..., -1, 0, 1,...), and rational numbers (fractions). Sets often categorize these numbers."
+        },
+        {
+          "prerequisite_id": 7,
+          "topic": "Logical Thinking/Classification",
+          "explanation": "Ability to group objects based on common properties. This involves the ability to identify shared characteristics among items and sort them into groups, or to understand rules that define a collection of items. This is fundamental to defining what belongs in a set."
+        }
       ]
     }
   ];
 
   const getGradesData = async () => {
-    try{
+    try {
       const data = {
-        class_number_id : classId,
-        subject_id : subjectId,
-        school_id : schoolId,
-        school_board_id : boardId
+        class_id: classId,
+        subject_id: subjectId,
+        school_id: schoolId,
+        school_board_id: boardId
       };
       const response = await getGradeByChapter(data);
-      if(response){
-        console.log(response);
+      if (response && response.data) {
+        console.log("topics", response);
+        //setChapters(response.data);
       }
-    }catch(error){
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
+  const getLessonPlan = async (id: Number) => {
+    try {
+      const data = {
+        class_section_id: classId,
+        subject_id: subjectId,
+        school_id: schoolId,
+        school_board_id: boardId,
+        chapter_id: id
+      };
+      const response = await getLessonPlanData(data);
+      if (response && response.data) {
+        console.log('lessonData', response);
+        setLessonPlanData(response.data);
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
+  const getPrerequisites = async (id: Number) => {
+    try {
+      const data = {
+        class_section_id: classId,
+        subject_id: subjectId,
+        school_id: schoolId,
+        school_board_id: boardId,
+        chapter_id: id
+      };
+      const response = await getPrerequisitesData(data);
+      if (response && response.data) {
+        console.log('prerequisitesData', response);
+        setPrerequisitesData(response.data);
+      }
+    } catch (error) {
       showSnackbar({
         title: "⛔ Error",
         description: error?.response?.data?.error || "Something went wrong",
@@ -165,6 +311,10 @@ const Syllabus: React.FC = () => {
       ...prev,
       [chapterId]: !prev[chapterId]
     }));
+    if (!openChapters[chapterId]) {
+      getLessonPlan(Number(chapterId));
+      getPrerequisites(Number(chapterId));
+    }
   };
 
   const getProgressColor = (progress: number) => {
@@ -175,8 +325,8 @@ const Syllabus: React.FC = () => {
 
   const handleTopicEdit = (chapterId: string, topicIndex: number, newValue: string) => {
     setChapters(prev => prev.map(chapter => {
-      if (chapter.id === chapterId) {
-        const newTopics = [...chapter.topics];
+      if (chapter.chapter_id === chapterId) {
+        const newTopics = [...chapter.sub_topics];
         newTopics[topicIndex] = newValue;
         return { ...chapter, topics: newTopics };
       }
@@ -188,7 +338,7 @@ const Syllabus: React.FC = () => {
 
   const handlePrerequisiteEdit = (chapterId: string, prereqIndex: number, newValue: string) => {
     setChapters(prev => prev.map(chapter => {
-      if (chapter.id === chapterId) {
+      if (chapter.chapter_id === chapterId) {
         const newPrerequisites = [...chapter.prerequisites];
         newPrerequisites[prereqIndex] = newValue;
         return { ...chapter, prerequisites: newPrerequisites };
@@ -202,8 +352,8 @@ const Syllabus: React.FC = () => {
   const addTopic = (chapterId: string, newTopic: string) => {
     if (newTopic.trim()) {
       setChapters(prev => prev.map(chapter => {
-        if (chapter.id === chapterId) {
-          return { ...chapter, topics: [...chapter.topics, newTopic.trim()] };
+        if (chapter.chapter_id === chapterId) {
+          return { ...chapter, topics: [...chapter.sub_topics, newTopic.trim()] };
         }
         return chapter;
       }));
@@ -215,7 +365,7 @@ const Syllabus: React.FC = () => {
   const addPrerequisite = (chapterId: string, newPrerequisite: string) => {
     if (newPrerequisite.trim()) {
       setChapters(prev => prev.map(chapter => {
-        if (chapter.id === chapterId) {
+        if (chapter.chapter_id === chapterId) {
           return { ...chapter, prerequisites: [...chapter.prerequisites, newPrerequisite.trim()] };
         }
         return chapter;
@@ -248,21 +398,21 @@ const Syllabus: React.FC = () => {
         {/* Chapters */}
         <div className="space-y-6">
           {chapters.map((chapter) => (
-            <div key={chapter.id} className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            <div key={chapter.chapter_id} className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
               <Collapsible
-                open={openChapters[chapter.id]}
-                onOpenChange={() => toggleChapter(chapter.id)}
+                open={openChapters[chapter.chapter_id]}
+                onOpenChange={() => toggleChapter(chapter.chapter_id)}
               >
                 <CollapsibleTrigger className="w-full p-6 flex items-center justify-between hover:bg-gray-50 transition-colors">
                   <div className="flex items-center gap-6">
                     <div className="flex items-center gap-4">
                       <span className="text-xl font-medium text-gray-900">
-                        Chapter {chapter.id}: {chapter.name}
+                        Chapter {chapter.chapter_id}: {chapter.chapter_name}
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className={`w-32 h-3 bg-gray-200 rounded-full overflow-hidden`}>
-                        <div 
+                        <div
                           className={`h-full ${getProgressColor(chapter.progress)} transition-all duration-500`}
                           style={{ width: `${chapter.progress}%` }}
                         />
@@ -270,8 +420,8 @@ const Syllabus: React.FC = () => {
                       <span className="text-base font-medium text-gray-600 min-w-[50px]">{chapter.progress}%</span>
                     </div>
                   </div>
-                  {openChapters[chapter.id] ? 
-                    <ChevronUp className="w-6 h-6 text-gray-500" /> : 
+                  {openChapters[chapter.chapter_id] ?
+                    <ChevronUp className="w-6 h-6 text-gray-500" /> :
                     <ChevronDown className="w-6 h-6 text-gray-500" />
                   }
                 </CollapsibleTrigger>
@@ -280,20 +430,20 @@ const Syllabus: React.FC = () => {
                   <div className="border-t border-gray-200 p-6">
                     <Tabs defaultValue="topics" className="w-full">
                       <TabsList className="grid w-full grid-cols-3 mb-6 bg-gray-50 p-1 rounded-lg">
-                        <TabsTrigger 
-                          value="topics" 
+                        <TabsTrigger
+                          value="topics"
                           className="text-base py-3 px-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md transition-all"
                         >
                           Topics
                         </TabsTrigger>
-                        <TabsTrigger 
-                          value="lessonplan" 
+                        <TabsTrigger
+                          value="lessonplan"
                           className="text-base py-3 px-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md transition-all"
                         >
                           Lesson Plan
                         </TabsTrigger>
-                        <TabsTrigger 
-                          value="prerequisites" 
+                        <TabsTrigger
+                          value="prerequisites"
                           className="text-base py-3 px-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md transition-all"
                         >
                           Prerequisites
@@ -305,21 +455,21 @@ const Syllabus: React.FC = () => {
                           <div className="flex items-center justify-between">
                             <h3 className="text-lg font-medium text-gray-800">Chapter Topics</h3>
                             <Button
-                              onClick={() => setAddingTopic(chapter.id)}
+                              onClick={() => setAddingTopic(chapter.chapter_id)}
                               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
                             >
                               <PlusCircle className="w-4 h-4" />
                               Add Topic
                             </Button>
                           </div>
-                          
-                          {chapter.topics.map((topic, index) => (
+
+                          {chapter.sub_topics.map((topic, index) => (
                             <div key={index} className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors">
                               <div className="flex items-center gap-4 flex-1">
                                 <span className="text-sm font-medium text-blue-600 bg-blue-200 rounded-full w-7 h-7 flex items-center justify-center">
                                   {index + 1}
                                 </span>
-                                {editingTopic?.chapterId === chapter.id && editingTopic?.topicIndex === index ? (
+                                {editingTopic?.chapterId === chapter.chapter_id && editingTopic?.topicIndex === index ? (
                                   <div className="flex items-center gap-3 flex-1">
                                     <Input
                                       value={newTopicText}
@@ -327,7 +477,7 @@ const Syllabus: React.FC = () => {
                                       className="flex-1 text-base py-2 border-2 border-blue-300 focus:border-blue-500"
                                       onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
-                                          handleTopicEdit(chapter.id, index, newTopicText);
+                                          handleTopicEdit(chapter.chapter_id, index, newTopicText);
                                         }
                                         if (e.key === 'Escape') {
                                           setEditingTopic(null);
@@ -337,7 +487,7 @@ const Syllabus: React.FC = () => {
                                       autoFocus
                                     />
                                     <Button
-                                      onClick={() => handleTopicEdit(chapter.id, index, newTopicText)}
+                                      onClick={() => handleTopicEdit(chapter.chapter_id, index, newTopicText)}
                                       size="sm"
                                       className="bg-green-600 hover:bg-green-700 px-3 py-1"
                                     >
@@ -356,14 +506,14 @@ const Syllabus: React.FC = () => {
                                     </Button>
                                   </div>
                                 ) : (
-                                  <span className="text-base text-gray-700">{topic}</span>
+                                  <span className="text-base text-gray-700">{topic.sub_topic}</span>
                                 )}
                               </div>
                               {!editingTopic && (
                                 <Button
                                   onClick={() => {
-                                    setEditingTopic({ chapterId: chapter.id, topicIndex: index });
-                                    setNewTopicText(topic);
+                                    setEditingTopic({ chapterId: chapter.chapter_id, topicIndex: index });
+                                    setNewTopicText(topic.sub_topic);
                                   }}
                                   variant="ghost"
                                   size="sm"
@@ -376,10 +526,10 @@ const Syllabus: React.FC = () => {
                             </div>
                           ))}
 
-                          {addingTopic === chapter.id && (
+                          {addingTopic === chapter.chapter_id && (
                             <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
                               <span className="text-sm font-medium text-blue-600 bg-blue-200 rounded-full w-7 h-7 flex items-center justify-center">
-                                {chapter.topics.length + 1}
+                                {chapter.sub_topics.length + 1}
                               </span>
                               <Input
                                 value={newTopicText}
@@ -388,7 +538,7 @@ const Syllabus: React.FC = () => {
                                 className="flex-1 text-base py-2 border-2 border-blue-300 focus:border-blue-500"
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') {
-                                    addTopic(chapter.id, newTopicText);
+                                    addTopic(chapter.chapter_id, newTopicText);
                                   }
                                   if (e.key === 'Escape') {
                                     setAddingTopic(null);
@@ -398,7 +548,7 @@ const Syllabus: React.FC = () => {
                                 autoFocus
                               />
                               <Button
-                                onClick={() => addTopic(chapter.id, newTopicText)}
+                                onClick={() => addTopic(chapter.chapter_id, newTopicText)}
                                 className="bg-green-600 hover:bg-green-700 px-3 py-2"
                               >
                                 <Save className="w-4 h-4 mr-1" />
@@ -425,7 +575,7 @@ const Syllabus: React.FC = () => {
                           <div className="flex items-center justify-between">
                             <h3 className="text-lg font-medium text-gray-800">Lesson Plan</h3>
                             <Link
-                              to={`/grades/lesson-plan/create/${chapter.id}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapter.name)}`}
+                              to={`/grades/lesson-plan/create/${chapter.chapter_id}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapter.chapter_name)}`}
                               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors"
                             >
                               {chapter.dayPlans.length > 0 ? (
@@ -441,7 +591,7 @@ const Syllabus: React.FC = () => {
                               )}
                             </Link>
                           </div>
-                          
+
                           {chapter.dayPlans.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                               {chapter.dayPlans.map((dayPlan) => (
@@ -457,14 +607,14 @@ const Syllabus: React.FC = () => {
 
                                       <div className="flex flex-col gap-2">
                                         <Link
-                                          to={`/grades/lesson-plan/day/${chapter.id}/${dayPlan.day}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapter.name)}`}
+                                          to={`/grades/lesson-plan/day/${chapter.chapter_id}/${dayPlan.day}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapter.chapter_name)}`}
                                           className="flex items-center justify-center gap-2 bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
                                         >
                                           <Eye className="w-4 h-4" />
                                           View
                                         </Link>
                                         <Link
-                                          to={`/grades/lesson-plan/ai-chat/${chapter.id}/${dayPlan.day}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapter.name)}`}
+                                          to={`/grades/lesson-plan/ai-chat/${chapter.chapter_id}/${dayPlan.day}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapter.chapter_name)}`}
                                           className="flex items-center justify-center gap-2 bg-purple-100 text-purple-700 hover:bg-purple-200 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
                                         >
                                           <MessageSquare className="w-4 h-4" />
@@ -482,7 +632,7 @@ const Syllabus: React.FC = () => {
                               <h4 className="text-lg font-medium text-gray-600 mb-2">No lesson plan created yet</h4>
                               <p className="text-base text-gray-500 mb-4">Create your first lesson plan to get started</p>
                               <Link
-                                to={`/grades/lesson-plan/create/${chapter.id}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapter.name)}`}
+                                to={`/grades/lesson-plan/create/${chapter.chapter_id}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapter.chapter_name)}`}
                                 className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
                               >
                                 <PlusCircle className="w-4 h-4" />
@@ -498,19 +648,19 @@ const Syllabus: React.FC = () => {
                           <div className="flex items-center justify-between">
                             <h3 className="text-lg font-medium text-gray-800">Prerequisites</h3>
                             <Button
-                              onClick={() => setAddingPrerequisite(chapter.id)}
+                              onClick={() => setAddingPrerequisite(chapter.chapter_id)}
                               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
                             >
                               <PlusCircle className="w-4 h-4" />
                               Add Prerequisite
                             </Button>
                           </div>
-                          
+
                           {chapter.prerequisites.map((prerequisite, index) => (
                             <div key={index} className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors">
                               <div className="flex items-center gap-4 flex-1">
                                 <Lightbulb className="w-5 h-5 text-blue-600" />
-                                {editingPrerequisite?.chapterId === chapter.id && editingPrerequisite?.prereqIndex === index ? (
+                                {editingPrerequisite?.chapterId === chapter.chapter_id && editingPrerequisite?.prereqIndex === index ? (
                                   <div className="flex items-center gap-3 flex-1">
                                     <Input
                                       value={newPrerequisiteText}
@@ -518,7 +668,7 @@ const Syllabus: React.FC = () => {
                                       className="flex-1 text-base py-2 border-2 border-blue-300 focus:border-blue-500"
                                       onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
-                                          handlePrerequisiteEdit(chapter.id, index, newPrerequisiteText);
+                                          handlePrerequisiteEdit(chapter.chapter_id, index, newPrerequisiteText);
                                         }
                                         if (e.key === 'Escape') {
                                           setEditingPrerequisite(null);
@@ -528,7 +678,7 @@ const Syllabus: React.FC = () => {
                                       autoFocus
                                     />
                                     <Button
-                                      onClick={() => handlePrerequisiteEdit(chapter.id, index, newPrerequisiteText)}
+                                      onClick={() => handlePrerequisiteEdit(chapter.chapter_id, index, newPrerequisiteText)}
                                       size="sm"
                                       className="bg-green-600 hover:bg-green-700 px-3 py-1"
                                     >
@@ -547,13 +697,13 @@ const Syllabus: React.FC = () => {
                                     </Button>
                                   </div>
                                 ) : (
-                                  <span className="text-base text-gray-700">{prerequisite}</span>
+                                  <span className="text-base text-gray-700">{prerequisite.topic}</span>
                                 )}
                               </div>
                               {!editingPrerequisite && (
                                 <Button
                                   onClick={() => {
-                                    setEditingPrerequisite({ chapterId: chapter.id, prereqIndex: index });
+                                    setEditingPrerequisite({ chapterId: chapter.chapter_id, prereqIndex: index });
                                     setNewPrerequisiteText(prerequisite);
                                   }}
                                   variant="ghost"
@@ -567,7 +717,7 @@ const Syllabus: React.FC = () => {
                             </div>
                           ))}
 
-                          {addingPrerequisite === chapter.id && (
+                          {addingPrerequisite === chapter.chapter_id && (
                             <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
                               <Lightbulb className="w-5 h-5 text-blue-600" />
                               <Input
@@ -577,7 +727,7 @@ const Syllabus: React.FC = () => {
                                 className="flex-1 text-base py-2 border-2 border-blue-300 focus:border-blue-500"
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') {
-                                    addPrerequisite(chapter.id, newPrerequisiteText);
+                                    addPrerequisite(chapter.chapter_id, newPrerequisiteText);
                                   }
                                   if (e.key === 'Escape') {
                                     setAddingPrerequisite(null);
@@ -587,7 +737,7 @@ const Syllabus: React.FC = () => {
                                 autoFocus
                               />
                               <Button
-                                onClick={() => addPrerequisite(chapter.id, newPrerequisiteText)}
+                                onClick={() => addPrerequisite(chapter.chapter_id, newPrerequisiteText)}
                                 className="bg-green-600 hover:bg-green-700 px-3 py-2"
                               >
                                 <Save className="w-4 h-4 mr-1" />

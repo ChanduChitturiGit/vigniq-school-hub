@@ -13,8 +13,21 @@ export const getGradeByTeacherId = async (schoolId : Number,teacherId : Number) 
 }
 
 
-//get grades by chapter
+//get chapter wise data with topics data.
 export const getGradeByChapter = async (data : any) => {
-  const response = await api.get(baseurl+suburl+'/getChaptersProgressBySubject',{params : {...data}});
+  const response = await api.get(baseurl+suburl+'/getChaptersTopicsBySubject',{params : {...data}});
   return response.data;
 }
+
+//get lesson plan data with topics data.
+export const getLessonPlanData = async (data : any) => {
+  const response = await api.get(baseurl+suburl+'/getLessionPlan',{params : {...data}});
+  return response.data;
+}
+
+//get lesson plan data with topics data.
+export const getPrerequisitesData = async (data : any) => {
+  const response = await api.get(baseurl+suburl+'/getPrerequisites',{params : {...data}});
+  return response.data;
+}
+
