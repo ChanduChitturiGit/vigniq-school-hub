@@ -42,7 +42,7 @@ interface Chapter {
   chapter_number: number;
   progress: number;
   sub_topics: any[];
-  dayPlans: DayPlan[];
+  lesson_plan_days: any[];
   prerequisites: any[];
 }
 
@@ -57,6 +57,7 @@ const Syllabus: React.FC = () => {
   const subjectId = searchParams.get('subject_id') || '';
   const schoolId = searchParams.get('school_id') || '';
   const boardId = searchParams.get('school_board_id') || '';
+  const pathData = `${subjectId}?class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
 
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [openChapters, setOpenChapters] = useState<{ [key: string]: boolean }>({});
@@ -112,12 +113,12 @@ const Syllabus: React.FC = () => {
           "sub_topic": "Rational Numbers and Decimal Expansions"
         }
       ],
-      dayPlans: [
-        { day: 1, date: 'October 26, 2023' },
-        { day: 2, date: 'October 27, 2023' },
-        { day: 3, date: 'October 28, 2023' },
-        { day: 4, date: 'October 29, 2023' },
-        { day: 5, date: 'October 30, 2023' }
+      lesson_plan_days: [
+        { "lesson_plan_day_id": 1, day: 1, date: 'October 26, 2023', "status": "not_started" },
+        { "lesson_plan_day_id": 2, day: 2, date: 'October 27, 2023', "status": "not_started" },
+        { "lesson_plan_day_id": 3, day: 3, date: 'October 28, 2023', "status": "not_started" },
+        { "lesson_plan_day_id": 4, day: 4, date: 'October 29, 2023', "status": "not_started" },
+        { "lesson_plan_day_id": 5, day: 5, date: 'October 30, 2023', "status": "not_started" }
       ],
       prerequisites: [
         {
@@ -167,7 +168,7 @@ const Syllabus: React.FC = () => {
           "sub_topic": "Venn Diagrams"
         }
       ],
-      dayPlans: [],
+      lesson_plan_days: [],
       prerequisites: [
         {
           "prerequisite_id": 6,
@@ -216,10 +217,7 @@ const Syllabus: React.FC = () => {
           "sub_topic": "Venn Diagrams"
         }
       ],
-      dayPlans: [
-        { day: 1, date: 'November 15, 2023' },
-        { day: 2, date: 'November 16, 2023' },
-        { day: 3, date: 'November 17, 2023' }
+      lesson_plan_days: [
       ],
       prerequisites: [
         {
@@ -244,10 +242,11 @@ const Syllabus: React.FC = () => {
         school_id: schoolId,
         school_board_id: boardId
       };
+      localStorage.setItem('gradesData', JSON.stringify(data));
       const response = await getGradeByChapter(data);
       if (response && response.data) {
         console.log("topics", response);
-        //setChapters(response.data);
+        setChapters(response.data);
       }
     } catch (error) {
       showSnackbar({
@@ -258,55 +257,10 @@ const Syllabus: React.FC = () => {
     }
   }
 
-  const getLessonPlan = async (id: Number) => {
-    try {
-      const data = {
-        class_section_id: classId,
-        subject_id: subjectId,
-        school_id: schoolId,
-        school_board_id: boardId,
-        chapter_id: id
-      };
-      const response = await getLessonPlanData(data);
-      if (response && response.data) {
-        console.log('lessonData', response);
-        setLessonPlanData(response.data);
-      }
-    } catch (error) {
-      showSnackbar({
-        title: "⛔ Error",
-        description: error?.response?.data?.error || "Something went wrong",
-        status: "error"
-      });
-    }
-  }
-
-  const getPrerequisites = async (id: Number) => {
-    try {
-      const data = {
-        class_section_id: classId,
-        subject_id: subjectId,
-        school_id: schoolId,
-        school_board_id: boardId,
-        chapter_id: id
-      };
-      const response = await getPrerequisitesData(data);
-      if (response && response.data) {
-        console.log('prerequisitesData', response);
-        setPrerequisitesData(response.data);
-      }
-    } catch (error) {
-      showSnackbar({
-        title: "⛔ Error",
-        description: error?.response?.data?.error || "Something went wrong",
-        status: "error"
-      });
-    }
-  }
 
   useEffect(() => {
     getGradesData();
-    setChapters(sampleChapters);
+    //setChapters(sampleChapters);
   }, []);
 
   const toggleChapter = (chapterId: string) => {
@@ -314,10 +268,6 @@ const Syllabus: React.FC = () => {
       ...prev,
       [chapterId]: !prev[chapterId]
     }));
-    if (!openChapters[chapterId]) {
-      getLessonPlan(Number(chapterId));
-      getPrerequisites(Number(chapterId));
-    }
   };
 
   const getProgressColor = (progress: number) => {
@@ -401,7 +351,7 @@ const Syllabus: React.FC = () => {
             <p className="text-base text-gray-500 mt-1">Manage syllabus content and track progress</p>
           </div>
           <Link
-            to={`/grades/progress/${subjectId}?class=${className}&section=${section}&subject=${subject}`}
+            to={`/grades/progress/${pathData}`}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-lg"
           >
             <TrendingUp className="w-5 h-5" />
@@ -588,27 +538,22 @@ const Syllabus: React.FC = () => {
                         <div className="space-y-6">
                           <div className="flex items-center justify-between">
                             <h3 className="text-lg font-medium text-gray-800">Lesson Plan</h3>
-                            <Link
-                              to={`/grades/lesson-plan/create/${chapter.chapter_id}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapter.chapter_name)}`}
-                              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors"
-                            >
-                              {chapter.dayPlans.length > 0 ? (
+                            {chapter.lesson_plan_days.length > 0 && (
+                              <Link
+                                to={`/grades/lesson-plan/create/${chapter.chapter_id}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapter.chapter_name)}&schoolId=${schoolId}&boardId=${boardId}&subjectId=${subjectId}&classId=${classId}`}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors"
+                              >
                                 <>
                                   <RotateCcw className="w-4 h-4" />
                                   Re-generate Lesson Plan
                                 </>
-                              ) : (
-                                <>
-                                  <PlusCircle className="w-4 h-4" />
-                                  Create Lesson Plan
-                                </>
-                              )}
-                            </Link>
+                              </Link>
+                            )}
                           </div>
 
-                          {chapter.dayPlans.length > 0 ? (
+                          {chapter.lesson_plan_days.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                              {chapter.dayPlans.map((dayPlan) => (
+                              {chapter.lesson_plan_days.map((dayPlan) => (
                                 <Card key={dayPlan.day} className="shadow-md border border-gray-200 hover:shadow-lg transition-shadow">
                                   <CardContent className="p-4">
                                     <div className="space-y-3">
@@ -616,12 +561,12 @@ const Syllabus: React.FC = () => {
                                         <h4 className="text-lg font-semibold text-gray-900">
                                           Day {dayPlan.day}
                                         </h4>
-                                        <p className="text-sm text-gray-600">{dayPlan.date}</p>
+                                        <p className="text-sm text-gray-600">{dayPlan.status}</p>
                                       </div>
 
                                       <div className="flex flex-col gap-2">
                                         <Link
-                                          to={`/grades/lesson-plan/day/${chapter.chapter_id}/${dayPlan.day}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapter.chapter_name)}`}
+                                          to={`/grades/lesson-plan/day/${chapter.chapter_id}/${dayPlan.lesson_plan_day_id}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapter.chapter_name)}&schoolId=${schoolId}&boardId=${boardId}&subjectId=${subjectId}&classId=${classId}`}
                                           className="flex items-center justify-center gap-2 bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
                                         >
                                           <Eye className="w-4 h-4" />
@@ -646,7 +591,7 @@ const Syllabus: React.FC = () => {
                               <h4 className="text-lg font-medium text-gray-600 mb-2">No lesson plan created yet</h4>
                               <p className="text-base text-gray-500 mb-4">Create your first lesson plan to get started</p>
                               <Link
-                                to={`/grades/lesson-plan/create/${chapter.chapter_id}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapter.chapter_name)}`}
+                                to={`/grades/lesson-plan/create/${chapter.chapter_id}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapter.chapter_name)}&schoolId=${schoolId}&boardId=${boardId}&subjectId=${subjectId}&classId=${classId}`}
                                 className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
                               >
                                 <PlusCircle className="w-4 h-4" />
@@ -725,8 +670,8 @@ const Syllabus: React.FC = () => {
                           {chapter.prerequisites.length > 0 && (
                             <Accordion type="single" collapsible className="space-y-2">
                               {chapter.prerequisites.map((prerequisite, index) => (
-                                <AccordionItem 
-                                  key={index} 
+                                <AccordionItem
+                                  key={index}
                                   value={`prerequisite-${index}`}
                                   className="bg-blue-50 rounded-lg border border-blue-200 px-4"
                                 >

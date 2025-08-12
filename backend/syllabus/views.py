@@ -45,6 +45,8 @@ class SyllabusView(APIView):
         """Handle GET requests for syllabus actions."""
         if action == 'getChaptersProgressBySubject':
             return SyllabusService().get_chapters_by_subject(request)
+        elif action == 'getSyllabusBySubject':
+            return SyllabusService().get_syllabus_subject(request)
         elif action == 'getGradeByTeacherId':
             return SyllabusService().get_grade_by_teacher_id(request)
         elif action == 'getChaptersTopicsBySubject':
