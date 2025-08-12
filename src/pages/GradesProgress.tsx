@@ -4,22 +4,25 @@ import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Progress } from '../components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { 
-  ArrowLeft, 
-  BookOpen, 
-  TrendingUp, 
-  Users, 
+import { getProgressBySubject } from '../services/grades';
+import {
+  ArrowLeft,
+  BookOpen,
+  TrendingUp,
+  Users,
   Calculator,
   Globe,
   Beaker,
   BookIcon,
   Languages,
-  Palette 
+  Palette
 } from 'lucide-react';
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
 
 interface ChapterProgress {
-  id: string;
-  name: string;
+  chapter_id: Number;
+  chapter_number: Number;
+  chapter_name: string;
   progress: number;
 }
 
@@ -31,28 +34,36 @@ interface StudentPerformance {
 }
 
 const GradesProgress: React.FC = () => {
-  const { subjectId } = useParams();
+  const { showSnackbar } = useSnackbar();
+  //const { subjectId } = useParams();
   const [searchParams] = useSearchParams();
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
   const subject = searchParams.get('subject') || '';
+  const classId = searchParams.get('class_id') || '';
+  const subjectId = searchParams.get('subject_id') || '';
+  const schoolId = searchParams.get('school_id') || '';
+  const boardId = searchParams.get('school_board_id') || '';
+  const pathData = `${subjectId}?class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
+
+  const payload = JSON.parse(localStorage.getItem('gradesData') || '{}');
 
   const [chaptersProgress, setChaptersProgress] = useState<ChapterProgress[]>([]);
   const [studentPerformance, setStudentPerformance] = useState<StudentPerformance[]>([]);
 
   const breadcrumbItems = [
     { label: 'Grades', path: '/grades' },
-    { label: `${subject} - ${className} ${section}`, path: `/grades/syllabus/${subjectId}?class=${className}&section=${section}&subject=${subject}` },
+    { label: `${subject} - ${className} ${section}`, path: `/grades/syllabus/${pathData}` },
     { label: 'Progress' }
   ];
 
   const sampleChaptersProgress: ChapterProgress[] = [
-    { id: '1', name: 'Knowing Our Numbers', progress: 75 },
-    { id: '2', name: 'Whole Numbers', progress: 45 },
-    { id: '3', name: 'Playing with Numbers', progress: 90 },
-    { id: '4', name: 'Basic Geometrical Ideas', progress: 30 },
-    { id: '5', name: 'Understanding Elementary Shapes', progress: 60 },
-    { id: '6', name: 'Integers', progress: 25 }
+    { chapter_id: 1, chapter_number : 1,chapter_name: 'Knowing Our Numbers', progress: 75 },
+    { chapter_id: 2, chapter_number : 2,chapter_name: 'Whole Numbers', progress: 45 },
+    { chapter_id: 3, chapter_number : 3,chapter_name: 'Playing with Numbers', progress: 90 },
+    { chapter_id: 4, chapter_number : 4,chapter_name: 'Basic Geometrical chapter_ideas', progress: 30 },
+    { chapter_id: 5, chapter_number : 5,chapter_name: 'Understanding Elementary Shapes', progress: 60 },
+    { chapter_id: 6, chapter_number : 6,chapter_name: 'Integers', progress: 25 }
   ];
 
   const sampleStudentPerformance: StudentPerformance[] = [
@@ -61,9 +72,27 @@ const GradesProgress: React.FC = () => {
     { range: '>80%', count: 10, percentage: '33%', color: 'bg-blue-100 text-blue-800' }
   ];
 
+  const progressData = async () => {
+    try {
+      payload.class_number_id = payload?.class_id;
+      const response = await getProgressBySubject(payload);
+      if (response && response.data) {
+        console.log("topics", response);
+        setChaptersProgress(response.data);
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
   useEffect(() => {
-    setChaptersProgress(sampleChaptersProgress);
-    setStudentPerformance(sampleStudentPerformance);
+    // setChaptersProgress(sampleChaptersProgress);
+    // setStudentPerformance(sampleStudentPerformance);
+    progressData();
   }, []);
 
   const getSubjectIcon = (subjectName: string) => {
@@ -93,7 +122,7 @@ const GradesProgress: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link
-              to={`/grades/syllabus/${subjectId}?class=${className}&section=${section}&subject=${subject}`}
+              to={`/grades/syllabus/${pathData}`}
               className="flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -127,7 +156,7 @@ const GradesProgress: React.FC = () => {
             <div className="flex items-center gap-6">
               <div className="flex-1">
                 <div className="w-full bg-white/60 rounded-full h-4 overflow-hidden mb-2">
-                  <div 
+                  <div
                     className={`h-full ${getProgressColor(overallProgress)} transition-all duration-700 ease-out`}
                     style={{ width: `${overallProgress}%` }}
                   />
@@ -152,18 +181,18 @@ const GradesProgress: React.FC = () => {
             </div>
             Chapter-wise Progress
           </h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {chaptersProgress.map((chapter) => (
-              <Card key={chapter.id} className="shadow-md hover:shadow-lg transition-shadow border-0 bg-gradient-to-br from-white to-gray-50">
+              <Card key={''+chapter.chapter_id} className="shadow-md hover:shadow-lg transition-shadow border-0 bg-gradient-to-br from-white to-gray-50">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex-1">
                       <h3 className="text-xl font-semibold text-gray-900 mb-1">
-                        Chapter {chapter.id}
+                        Chapter {''+chapter.chapter_number}
                       </h3>
                       <p className="text-lg text-gray-600">
-                        {chapter.name}
+                        {chapter.chapter_name}
                       </p>
                     </div>
                     <div className="text-right">
@@ -172,23 +201,22 @@ const GradesProgress: React.FC = () => {
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden mb-4">
-                    <div 
+                    <div
                       className={`h-full ${getProgressColor(chapter.progress)} transition-all duration-500`}
                       style={{ width: `${chapter.progress}%` }}
                     />
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-500">Progress Status</span>
-                    <span className={`text-sm font-medium px-3 py-1 rounded-full ${
-                      chapter.progress >= 70 ? 'bg-blue-100 text-blue-800' :
-                      chapter.progress >= 40 ? 'bg-blue-100 text-blue-700' :
-                      'bg-blue-100 text-blue-600'
-                    }`}>
+                    <span className={`text-sm font-medium px-3 py-1 rounded-full ${chapter.progress >= 70 ? 'bg-blue-100 text-blue-800' :
+                        chapter.progress >= 40 ? 'bg-blue-100 text-blue-700' :
+                          'bg-blue-100 text-blue-600'
+                      }`}>
                       {chapter.progress >= 70 ? 'Excellent' :
-                       chapter.progress >= 40 ? 'Good' : 'Needs Attention'}
+                        chapter.progress >= 40 ? 'Good' : 'Needs Attention'}
                     </span>
                   </div>
                 </CardContent>
@@ -211,21 +239,18 @@ const GradesProgress: React.FC = () => {
             <div className="grid grid-cols-3 gap-6">
               {studentPerformance.map((performance, index) => (
                 <div key={index} className="text-center bg-white rounded-xl p-6 shadow-md">
-                  <div className={`inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4 ${
-                    performance.range === '<60%' ? 'bg-blue-100' :
-                    performance.range === '60-80%' ? 'bg-blue-100' : 'bg-blue-100'
-                  }`}>
-                    <span className={`text-3xl font-bold ${
-                      performance.range === '<60%' ? 'text-blue-500' :
-                      performance.range === '60-80%' ? 'text-blue-600' : 'text-blue-700'
+                  <div className={`inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4 ${performance.range === '<60%' ? 'bg-blue-100' :
+                      performance.range === '60-80%' ? 'bg-blue-100' : 'bg-blue-100'
                     }`}>
+                    <span className={`text-3xl font-bold ${performance.range === '<60%' ? 'text-blue-500' :
+                        performance.range === '60-80%' ? 'text-blue-600' : 'text-blue-700'
+                      }`}>
                       {performance.count}
                     </span>
                   </div>
-                  <p className={`text-lg font-bold mb-2 ${
-                    performance.range === '<60%' ? 'text-blue-500' :
-                    performance.range === '60-80%' ? 'text-blue-600' : 'text-blue-700'
-                  }`}>
+                  <p className={`text-lg font-bold mb-2 ${performance.range === '<60%' ? 'text-blue-500' :
+                      performance.range === '60-80%' ? 'text-blue-600' : 'text-blue-700'
+                    }`}>
                     {performance.range}
                   </p>
                   <p className="text-sm text-gray-500">

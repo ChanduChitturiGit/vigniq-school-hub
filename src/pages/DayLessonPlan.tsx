@@ -16,6 +16,8 @@ import {
   Globe,
   BookMarked
 } from 'lucide-react';
+import { useSnackbar } from '../components/snackbar/SnackbarContext';
+import { getLessonPlanDataByDay } from '../services/grades';
 
 interface Topic {
   topic_id: number;
@@ -35,6 +37,7 @@ interface LessonPlanDay {
 }
 
 const DayLessonPlan: React.FC = () => {
+  const { showSnackbar } = useSnackbar();
   const { chapterId, day } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -42,19 +45,58 @@ const DayLessonPlan: React.FC = () => {
   const subject = searchParams.get('subject') || '';
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
-  const chapterName = decodeURIComponent(searchParams.get('chapterName') || '');
+  const classId = searchParams.get('classId') || '';
+  const subjectId = searchParams.get('subjectId') || '';
+  const schoolId = searchParams.get('schoolId') || '';
+  const boardId = searchParams.get('boardId') || '';
+  const chapterName = searchParams.get('chapterName') || '';
+  const pathData = `${subjectId}?class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
+  
 
   const [lessonData, setLessonData] = useState<LessonPlanDay | null>(null);
   const [overallProgress] = useState(75);
 
   const breadcrumbItems = [
     { label: 'Grades', path: '/grades' },
-    { label: `${subject} - ${className} ${section}`, path: `/grades/syllabus/math_6a?class=${className}&section=${section}&subject=${subject}` },
+    { label: `${subject} - ${className} ${section}`, path: `/grades/syllabus/${pathData}` },
     { label: 'Day Lesson Plan' }
   ];
 
+  const getLessonData = async () => {
+    try {
+      const data = {
+        chapter_id: chapterId,
+        lesson_plan_day_id: day,
+        subject: subject,
+        class: className,
+        section: section,
+        school_id: schoolId,
+        board_id: boardId,
+        subject_id: subjectId,
+        class_id: classId
+      };
+      const response = await getLessonPlanDataByDay(data);
+      if (response && response.data) {
+        setLessonData(response.data);
+      } else {
+        showSnackbar({
+          title: 'Error',
+          description: response.message || 'Failed to fetch lesson plan data.',
+          status: 'error'
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: 'Error',
+        description: 'An unexpected error occurred while fetching lesson plan data.',
+        status: 'error'
+      });
+    }
+  }
+
   useEffect(() => {
     // Sample data for lesson plan day
+    getLessonData();
     const sampleActivities: LessonPlanDay = {
       "lesson_plan_day_id": 31,
       "day": 1,
@@ -83,7 +125,7 @@ const DayLessonPlan: React.FC = () => {
         }
       ]
     };
-    setLessonData(sampleActivities);
+    // setLessonData(sampleActivities);
   }, []);
 
   const handleStartTeaching = () => {
@@ -113,7 +155,8 @@ const DayLessonPlan: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link
-              to={`/grades/lesson-plan/view/${chapterId}/1?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`}
+              //to={`/grades/lesson-plan/view/${chapterId}/1?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`}
+              to={`/grades/syllabus/${pathData}`}
               className="flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />

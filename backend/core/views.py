@@ -16,6 +16,7 @@ from django.conf import settings
 from .serializers import CustomTokenObtainPairSerializer
 from core.services.password_manager_service import PasswordManagerService
 from core.services.user_profile_service import UserProfileService
+from core.services.dashboard_service import DashboardService
 
 logger = logging.getLogger(__name__)
 
@@ -99,3 +100,19 @@ class UserProfileView(APIView):
         if action == 'editUserByUserName':
             return UserProfileService().edit_user_by_username(request)
         return Response({"error": "Invalid PUT action"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DashboardView(APIView):
+    """
+    View to handle dashboard actions.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, action=None):
+        """
+        Get the dashboard data for the authenticated user.
+        """
+        if action == 'getDashboardData':
+            return DashboardService().get_dashboard_data(request)
+        return Response({"error": "Invalid GET action"}, status=status.HTTP_400_BAD_REQUEST)
