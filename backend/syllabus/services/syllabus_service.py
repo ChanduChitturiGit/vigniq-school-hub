@@ -167,7 +167,7 @@ class SyllabusService:
 
         return round(total_progress, 2)
 
-    def get_chapters_and_topics_by_subject(self, request):
+    def get_syllabus_subject(self, request):
         """Fetch syllabus by subject."""
         try:
             logger.info("Fetching syllabus by subject...")
@@ -207,6 +207,18 @@ class SyllabusService:
                         queryset=SchoolClassSubTopic.objects.using(school_db_name).filter(
                             class_section=school_class
                         )
+                    ),
+                    Prefetch(
+                        'class_prerequisites',
+                        queryset=SchoolClassPrerequisite.objects.using(school_db_name).filter(
+                            class_section=school_class
+                        )
+                    ),
+                    Prefetch(
+                        'school_chapter_lesson_plan_days',
+                        queryset=SchoolLessonPlanDay.objects.using(school_db_name).filter(
+                            class_section=school_class
+                        )
                     )
                 )
             )
@@ -214,16 +226,33 @@ class SyllabusService:
             data = []
             for chapter in chapters:
                 sub_topics = chapter.class_sub_topics.all()
+                prerequisites = chapter.class_prerequisites.all()
+                lesson_plan_days = chapter.school_chapter_lesson_plan_days.all()
+
                 
                 renamed_sub_topics = [
                     {'sub_topic_id': item['id'], 'sub_topic': item['name']}
                     for item in sub_topics.values('id', 'name')
+                ]
+                renamed_prerequisites = [
+                    {'prerequisite_id': item['id'], 'topic': item['topic'], 'explanation': item['explanation']}
+                    for item in prerequisites.values('id', 'topic', 'explanation')
+                ]
+                lesson_plan_days_data = [
+                    {
+                        "lesson_plan_day_id": day.id,
+                        "day": day.day,
+                        "status": day.status,
+                    }
+                    for day in lesson_plan_days
                 ]
                 data.append({
                     "chapter_id": chapter.id,
                     "chapter_name": chapter.chapter_name,
                     "chapter_number": chapter.chapter_number,
                     "sub_topics": renamed_sub_topics,
+                    "prerequisites": renamed_prerequisites,
+                    "lesson_plan_days": lesson_plan_days_data,
                 })
             logger.info("Syllabus by subject fetched successfully.")
             return Response({"data": data}, status=status.HTTP_200_OK)
