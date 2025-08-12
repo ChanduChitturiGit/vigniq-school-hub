@@ -12,10 +12,16 @@ export const getGradeByTeacherId = async (schoolId : Number,teacherId : Number) 
   return response.data;
 }
 
+//get chapter wise data with topics data.
+export const getProgressBySubject = async (data : any) => {
+  const response = await api.get(baseurl+suburl+'/getChaptersProgressBySubject',{params : {...data}});
+  return response.data;
+}
 
 //get chapter wise data with topics data.
+//getChaptersTopicsBySubject
 export const getGradeByChapter = async (data : any) => {
-  const response = await api.get(baseurl+suburl+'/getChaptersTopicsBySubject',{params : {...data}});
+  const response = await api.get(baseurl+suburl+'/getSyllabusBySubject',{params : {...data}});
   return response.data;
 }
 
@@ -31,3 +37,22 @@ export const getPrerequisitesData = async (data : any) => {
   return response.data;
 }
 
+//get lesson plan data with topics data.
+export const getLessonPlanDataByDay = async (data : any) => {
+  const response = await api.get(baseurl+suburl+'/getLessonDayPlan',{params : {...data}});
+  return response.data;
+}
+
+ 
+//generate lesson plan
+export const generateLessonData = async (data: any): Promise<any> => {
+  const response = await api.post<any>(baseurl+suburl+'/generateLessonPlan', data);
+  return response.data;
+};
+
+
+//save lesson plan
+export const saveLessonData = async (data: any): Promise<any> => {
+  const response = await api.post<any>(baseurl+suburl+'/saveLessonPlan', data);
+  return response.data;
+};

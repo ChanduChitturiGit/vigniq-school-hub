@@ -122,8 +122,13 @@ const Grades: React.FC = () => {
         setTeacherClasses(data.data);
         setFilteredClasses(data.data);
       } else {
-        setTeacherClasses(sampleTeacherClasses);
-        setFilteredClasses(sampleTeacherClasses);
+        // setTeacherClasses(sampleTeacherClasses);
+        // setFilteredClasses(sampleTeacherClasses);
+        showSnackbar({
+          title: "⛔ Error",
+          description: "Something went wrong",
+          status: "error"
+        });
       }
     } catch (error) {
       showSnackbar({
@@ -213,7 +218,7 @@ const Grades: React.FC = () => {
             return (
               <Link
                 key={`${classItem.class_number}_${classItem.subject_id}`}
-                to={`/grades/syllabus/${classItem.subject_id}?class=${'Class '+classItem.class_number}&class_id=${classItem.class_id}&section=${classItem.section}&subject=${classItem.subject_name}&subject_id=${classItem.subject_id}&school_board_id=${classItem.board_id}&school_id=${userData.school_id}`}
+                to={`/grades/syllabus/${classItem.subject_id}?class=${'Class ' + classItem.class_number}&class_id=${classItem.class_id}&section=${classItem.section}&subject=${classItem.subject_name}&subject_id=${classItem.subject_id}&school_board_id=${classItem.board_id}&school_id=${userData.school_id}`}
                 className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 group"
               >
                 <div className="flex items-start justify-between mb-4">

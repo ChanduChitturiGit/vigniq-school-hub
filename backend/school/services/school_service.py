@@ -3,7 +3,7 @@ import logging
 import psycopg2
 
 import redis
-from django.db import transaction,IntegrityError
+from django.db import transaction,IntegrityError,connections
 from django.conf import settings
 from django.test.utils import override_settings
 from django.apps import apps
@@ -43,6 +43,8 @@ class SchoolService:
             Response: A response indicating success or failure.
         """
         try:
+            is_school_db_created = False
+            db_name = None
             with transaction.atomic():
                 data = request.data
 
@@ -101,6 +103,8 @@ class SchoolService:
                 if not success:
                     logger.error("Database creation failed. Rolling back transaction.")
                     raise Exception("Failed to create database for school.")
+                is_school_db_created = True
+                db_name = school_db_metadata.db_name
 
                 academic_year = SchoolAcademicYear.objects.using(school_db_metadata.db_name).create(
                     start_year=data.get('academic_start_year'),
@@ -115,28 +119,32 @@ class SchoolService:
                     user_name=admin_user.user_name,
                     password=data.get('password'),
                 )
-            r = redis.Redis(host='localhost', port=6379, db=0)
-            r.publish('new_db_created', school_db_metadata.db_name)
-            copy_status = EbookService().copy_syllabus_data_to_school_db(school_db_metadata,
+                r = redis.Redis(host='localhost', port=6379, db=0)
+                r.publish('new_db_created', school_db_metadata.db_name)
+                copy_status = EbookService().copy_syllabus_data_to_school_db(school_db_metadata,
                                                                          academic_year.id)
-            if not copy_status:
-                logger.error("Failed to copy syllabus data to school database.")
-            return Response({"message": "School created successfully."}, status=status.HTTP_201_CREATED)
+                if not copy_status:
+                    logger.error("Failed to copy syllabus data to school database.")
+                return Response({"message": "School created successfully."}, status=status.HTTP_201_CREATED)
 
         except Role.DoesNotExist:
             logger.error("Role 'admin' does not exist.")
+            self.delete_database(db_name) if is_school_db_created else None
             return Response({"error": "Admin role is not configured in the system."},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except User.DoesNotExist:
             logger.error("User creation failed.")
+            self.delete_database(db_name) if is_school_db_created else None
             return Response({"error": "Failed to create admin user."},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except SchoolBoard.DoesNotExist:
             logger.error("School board does not exist.")
+            self.delete_database(db_name) if is_school_db_created else None
             return Response({"error": "At least one valid board must be selected."},
                             status=status.HTTP_400_BAD_REQUEST)
         except IntegrityError as e:
             logger.error("Integrity error while creating school: %s", str(e))
+            self.delete_database(db_name) if is_school_db_created else None
             if 'duplicate key value violates unique constraint' in str(e):
                 return Response({"error": "A school with this email already exists."},
                                 status=status.HTTP_400_BAD_REQUEST)
@@ -147,6 +155,7 @@ class SchoolService:
                             status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logger.error("Error while creating school. Error: %s", str(e))
+            self.delete_database(db_name) if is_school_db_created else None
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def edit_school(self, request):
@@ -359,3 +368,38 @@ class SchoolService:
                     logger.info(f"Migrated {app_label} on {db_name}")
             except Exception as e:
                 logger.error(f"Migration failed for {app_label} on {db_name}: {e}")
+    
+    def delete_database(self, db_name): 
+        """
+        Delete the database for the school.
+        Args:
+            school_db_metadata: The SchoolDbMetadata object containing database details.
+        Returns:
+            bool: True if the database was deleted successfully, False otherwise.
+        """
+        try:
+            logger.info("Deleting database for school: %s", db_name)
+
+            if db_name in connections:
+                connections[db_name].close()
+
+            conn = psycopg2.connect(
+                dbname=settings.DB_CONFIG['NAME'],
+                user=settings.DB_CONFIG['USER'],
+                password=settings.DB_CONFIG['PASSWORD'],
+                host=settings.DB_CONFIG['HOST'],
+                port=settings.DB_CONFIG['PORT']
+            )
+            conn.autocommit = True
+            cursor = conn.cursor()
+
+            cursor.execute(f'DROP DATABASE IF EXISTS "{db_name}"')
+
+            cursor.close()
+            conn.close()
+
+            logger.info("Database %s deleted successfully.", db_name)
+            return True
+        except Exception as e:
+            logger.error("Failed to delete database for school %s: %s", db_name, str(e))
+            return False
