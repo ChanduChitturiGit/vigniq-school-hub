@@ -77,7 +77,7 @@ const GradesProgress: React.FC = () => {
       payload.class_number_id = payload?.class_id;
       const response = await getProgressBySubject(payload);
       if (response && response.data) {
-        console.log("topics", response);
+        //console.log("topics", response);
         setChaptersProgress(response.data);
       }
     } catch (error) {
