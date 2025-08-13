@@ -92,12 +92,12 @@ const CreateLessonPlan: React.FC = () => {
       payload = { ...payload, num_days: parseInt(formData.numberOfDays), time_period: parseInt(formData.minutesPerClass) * parseInt(formData.classesPerDay) };
       const response = await generateLessonData(payload);
       if (response && response.data) {
-        console.log('Generated Lesson Plan:', response.data);
+        //console.log('Generated Lesson Plan:', response.data);
         setGeneratedPlan(response.data);
         setShowPreview(true);
       }
     } catch (error) {
-      console.error('Error generating lesson plan:', error);
+      //console.error('Error generating lesson plan:', error);
       showSnackbar({
         title: "⛔ Error",
         description: error?.response?.data?.error || "Something went wrong",
@@ -131,7 +131,7 @@ const CreateLessonPlan: React.FC = () => {
         navigate(`/grades/syllabus/${pathData}`);
       }
     } catch (error) {
-      console.error('Error saving lesson plan:', error);
+      //console.error('Error saving lesson plan:', error);
       showSnackbar({
         title: "⛔ Error",
         description: error?.response?.data?.error || "Something went wrong",

@@ -28,7 +28,7 @@ import {
   MessageSquare,
   RotateCcw
 } from 'lucide-react';
-import { getGradeByChapter, getLessonPlanData, getPrerequisitesData } from '../services/grades'
+import { getGradeByChapter, saveTopicByLesson, editTopicByLesson,savePrerequisite,editPrerequisiteByLesson } from '../services/grades'
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 
 interface DayPlan {
@@ -69,8 +69,6 @@ const Syllabus: React.FC = () => {
   const [addingTopic, setAddingTopic] = useState<string | null>(null);
   const [addingPrerequisite, setAddingPrerequisite] = useState<string | null>(null);
   //const [chaptersData, setChaptersData] = useState<any[]>([]);
-  const [lessonPlanData, setLessonPlanData] = useState<any[]>([]);
-  const [prerequisitesData, setPrerequisitesData] = useState<any[]>([]);
 
   const breadcrumbItems = [
     { label: 'Grades', path: '/grades' },
@@ -258,6 +256,129 @@ const Syllabus: React.FC = () => {
   }
 
 
+  //save topic by lesson
+  const saveTopic = async (data: any) => {
+    try {
+      const payload = {
+        class_section_id: Number(classId),
+        subject_id: Number(subjectId),
+        school_id: Number(schoolId),
+        school_board_id: Number(boardId),
+        chapter_id: Number(data.chapter_id),
+        sub_topic: data.sub_topic
+      };
+      const response = await saveTopicByLesson(payload);
+      if (response && response.message) {
+        getGradesData();
+        showSnackbar({
+          title: "✅ Success",
+          description: `${response.message}`,
+          status: "success"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
+
+  //edit topic by lesson
+  const editTopic = async (data: any) => {
+    try {
+      const payload = {
+        class_section_id: Number(classId),
+        subject_id: Number(subjectId),
+        school_id: Number(schoolId),
+        school_board_id: Number(boardId),
+        chapter_id: Number(data.chapter_id),
+        sub_topic_id: data.sub_topic_id,
+        sub_topic: data.sub_topic
+      };
+      const response = await editTopicByLesson(payload);
+      if (response && response.message) {
+        getGradesData();
+        showSnackbar({
+          title: "✅ Success",
+          description: `${response.message}`,
+          status: "success"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
+
+  //save prerequiste by lesson
+  const savePrerequisteData = async (data: any) => {
+    try {
+      const payload = {
+        class_section_id: Number(classId),
+        subject_id: Number(subjectId),
+        school_id: Number(schoolId),
+        school_board_id: Number(boardId),
+        chapter_id: Number(data.chapter_id),
+        topic: data.topic,
+        explanation: data.explanation
+      };
+      const response = await savePrerequisite(payload);
+      if (response && response.message) {
+        getGradesData();
+        showSnackbar({
+          title: "✅ Success",
+          description: `${response.message}`,
+          status: "success"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
+  //edit prerequisite by lesson
+  const editPrerequisite = async (data: any) => {
+    try {
+      const payload = {
+        class_section_id: Number(classId),
+        subject_id: Number(subjectId),
+        school_id: Number(schoolId),
+        school_board_id: Number(boardId),
+        chapter_id: Number(data.chapter_id),
+        prerequisite_id: data.prerequisite_id,
+        topic: data.topic,
+        explanation: data.explanation
+      };
+      const response = await editPrerequisiteByLesson(payload);
+      if (response && response.message) {
+        getGradesData();
+        showSnackbar({
+          title: "✅ Success",
+          description: `${response.message}`,
+          status: "success"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
+
   useEffect(() => {
     getGradesData();
     //setChapters(sampleChapters);
@@ -276,32 +397,33 @@ const Syllabus: React.FC = () => {
     return 'bg-blue-400';
   };
 
-  const handleTopicEdit = (chapterId: string, topicIndex: number, newValue: string) => {
-    setChapters(prev => prev.map(chapter => {
-      if (chapter.chapter_id === chapterId) {
-        const newTopics = [...chapter.sub_topics];
-        newTopics[topicIndex] = newValue;
-        return { ...chapter, topics: newTopics };
-      }
-      return chapter;
-    }));
+  const handleTopicEdit = (chapterId: string, topicId: number, newValue: string) => {
+    // setChapters(prev => prev.map(chapter => {
+    //   if (chapter.chapter_id === chapterId) {
+    //     const newTopics = [...chapter.sub_topics];
+    //     newTopics[topicId] = newValue;
+    //     return { ...chapter, sub_topic_id : topicId, sub_topic: newValue };
+    //   }
+    //   return chapter;
+    // }));
+    editTopic({ chapter_id: chapterId, sub_topic_id: topicId, sub_topic: newValue.trim() });
     setEditingTopic(null);
     setNewTopicText('');
   };
 
   const handlePrerequisiteEdit = (chapterId: string, prereqIndex: number, newTitle: string, newExplanation: string) => {
-    setChapters(prev => prev.map(chapter => {
+    chapters.map(chapter => {
       if (chapter.chapter_id === chapterId) {
-        const newPrerequisites = [...chapter.prerequisites];
-        newPrerequisites[prereqIndex] = {
-          ...newPrerequisites[prereqIndex],
-          topic: newTitle,
-          explanation: newExplanation
-        };
-        return { ...chapter, prerequisites: newPrerequisites };
+        // const newPrerequisites = [...chapter.prerequisites];
+        // newPrerequisites[prereqIndex] = {
+        //   ...newPrerequisites[prereqIndex],
+        //   topic: newTitle,
+        //   explanation: newExplanation
+        // };
+        // return { ...chapter, prerequisites: newPrerequisites };
+        editPrerequisite({ chapter_id: chapterId, prerequisite_id: chapter.prerequisites[prereqIndex].prerequisite_id, topic: newTitle.trim(), explanation: newExplanation.trim() }); // Save the edited prerequisite
       }
-      return chapter;
-    }));
+    });
     setEditingPrerequisite(null);
     setNewPrerequisiteTitle('');
     setNewPrerequisiteExplanation('');
@@ -309,12 +431,13 @@ const Syllabus: React.FC = () => {
 
   const addTopic = (chapterId: string, newTopic: string) => {
     if (newTopic.trim()) {
-      setChapters(prev => prev.map(chapter => {
-        if (chapter.chapter_id === chapterId) {
-          return { ...chapter, topics: [...chapter.sub_topics, newTopic.trim()] };
-        }
-        return chapter;
-      }));
+      // setChapters(prev => prev.map(chapter => {
+      //   if (chapter.chapter_id === chapterId) {
+      //     return { ...chapter, topics: [...chapter.sub_topics, newTopic.trim()] };
+      //   }
+      //   return chapter;
+      // }));
+      saveTopic({ chapter_id: chapterId, sub_topic: newTopic.trim() }); // Save the new topic
     }
     setAddingTopic(null);
     setNewTopicText('');
@@ -322,17 +445,24 @@ const Syllabus: React.FC = () => {
 
   const addPrerequisite = (chapterId: string, newTitle: string, newExplanation: string) => {
     if (newTitle.trim() && newExplanation.trim()) {
-      setChapters(prev => prev.map(chapter => {
-        if (chapter.chapter_id === chapterId) {
-          const newPrerequisite = {
-            prerequisite_id: chapter.prerequisites.length + 1,
-            topic: newTitle.trim(),
-            explanation: newExplanation.trim()
-          };
-          return { ...chapter, prerequisites: [...chapter.prerequisites, newPrerequisite] };
-        }
-        return chapter;
-      }));
+      // setChapters(prev => prev.map(chapter => {
+      //   if (chapter.chapter_id === chapterId) {
+      //     const newPrerequisite = {
+      //       prerequisite_id: chapter.prerequisites.length + 1,
+      //       topic: newTitle.trim(),
+      //       explanation: newExplanation.trim()
+      //     };
+      //     return { ...chapter, prerequisites: [...chapter.prerequisites, newPrerequisite] };
+      //   }
+      //   return chapter;
+      // }));
+      savePrerequisteData({ chapter_id: chapterId, topic: newTitle.trim(), explanation: newExplanation.trim() }); // Save the new prerequisite
+    }else{
+      showSnackbar({
+        title: "⛔ Error",
+        description: "Title and explanation cannot be empty",
+        status: "error"
+      });
     }
     setAddingPrerequisite(null);
     setNewPrerequisiteTitle('');
@@ -441,7 +571,7 @@ const Syllabus: React.FC = () => {
                                       className="flex-1 text-base py-2 border-2 border-blue-300 focus:border-blue-500"
                                       onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
-                                          handleTopicEdit(chapter.chapter_id, index, newTopicText);
+                                          handleTopicEdit(chapter.chapter_id, topic.sub_topic_id, newTopicText);
                                         }
                                         if (e.key === 'Escape') {
                                           setEditingTopic(null);
@@ -451,7 +581,7 @@ const Syllabus: React.FC = () => {
                                       autoFocus
                                     />
                                     <Button
-                                      onClick={() => handleTopicEdit(chapter.chapter_id, index, newTopicText)}
+                                      onClick={() => handleTopicEdit(chapter.chapter_id, topic.sub_topic_id, newTopicText)}
                                       size="sm"
                                       className="bg-green-600 hover:bg-green-700 px-3 py-1"
                                     >
@@ -675,32 +805,15 @@ const Syllabus: React.FC = () => {
                                   value={`prerequisite-${index}`}
                                   className="bg-blue-50 rounded-lg border border-blue-200 px-4"
                                 >
-                                  <AccordionTrigger className="hover:no-underline py-4">
+                                  <AccordionTrigger className="hover:no-underline py-4 flex items-between cursor-pointer">
                                     <div className="flex items-center gap-3 text-left">
                                       <Lightbulb className="w-5 h-5 text-blue-600 flex-shrink-0" />
                                       <span className="text-base font-medium text-gray-800">
                                         {prerequisite.topic}
                                       </span>
                                     </div>
-                                    <div className="flex items-center gap-2 ml-4">
-                                      {!editingPrerequisite && (
-                                        <Button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setEditingPrerequisite({ chapterId: chapter.chapter_id, prereqIndex: index });
-                                            setNewPrerequisiteTitle(prerequisite.topic);
-                                            setNewPrerequisiteExplanation(prerequisite.explanation);
-                                          }}
-                                          variant="ghost"
-                                          size="sm"
-                                          className="text-blue-600 hover:text-blue-800 hover:bg-blue-100 px-2 py-1"
-                                        >
-                                          <EditIcon className="w-4 h-4" />
-                                        </Button>
-                                      )}
-                                    </div>
                                   </AccordionTrigger>
-                                  <AccordionContent className="pb-4">
+                                  <AccordionContent className={`pb-4 ${!editingPrerequisite ? 'flex justify-between' : ''}`}>
                                     {editingPrerequisite?.chapterId === chapter.chapter_id && editingPrerequisite?.prereqIndex === index ? (
                                       <div className="space-y-4 pt-2">
                                         <div className="space-y-2">
@@ -755,6 +868,23 @@ const Syllabus: React.FC = () => {
                                         {prerequisite.explanation}
                                       </div>
                                     )}
+                                    <div className="flex items-center gap-2 ml-4">
+                                      {!editingPrerequisite && (
+                                        <Button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setEditingPrerequisite({ chapterId: chapter.chapter_id, prereqIndex: index });
+                                            setNewPrerequisiteTitle(prerequisite.topic);
+                                            setNewPrerequisiteExplanation(prerequisite.explanation);
+                                          }}
+                                          variant="ghost"
+                                          size="sm"
+                                          className="text-blue-600 hover:text-blue-800 hover:bg-blue-100 px-2 py-1"
+                                        >
+                                          <EditIcon className="w-4 h-4" />
+                                        </Button>
+                                      )}
+                                    </div>
                                   </AccordionContent>
                                 </AccordionItem>
                               ))}
