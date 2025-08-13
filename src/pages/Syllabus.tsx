@@ -691,7 +691,7 @@ const Syllabus: React.FC = () => {
                                         <h4 className="text-lg font-semibold text-gray-900">
                                           Day {dayPlan.day}
                                         </h4>
-                                        <p className="text-sm text-gray-600">{dayPlan.status}</p>
+                                        <p className="text-sm text-gray-600">{dayPlan.status == 'not_started' ? 'Pending' : 'Completed'}</p>
                                       </div>
 
                                       <div className="flex flex-col gap-2">
