@@ -75,7 +75,7 @@ const CreateLessonPlan: React.FC = () => {
 
   const breadcrumbItems = [
     { label: 'Grades', path: '/grades' },
-    { label: `${subject} - ${className} ${section}`, path: `/grades/syllabus/math_6a?class=${className}&section=${section}&subject=${subject}` },
+    { label: `${subject} - ${className} ${section}`, path: `/grades/syllabus/${pathData}` },
     { label: 'Create Lesson Plan' }
   ];
 
@@ -336,14 +336,14 @@ const CreateLessonPlan: React.FC = () => {
                         </div>
                         Day {day.day}
                       </CardTitle>
-                      <Button
+                      {/* <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setEditingDay(editingDay === index ? null : index)}
                         className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
                       >
                         <Edit className="w-4 h-4" />
-                      </Button>
+                      </Button> */}
                     </div>
                   </CardHeader>
                   <CardContent className="p-6">
