@@ -1,9 +1,8 @@
 """Aws s3 Bucket Module"""
 
 import logging
-import os
+
 from typing import Optional, List
-import mimetypes
 
 import boto3
 from botocore.exceptions import ClientError

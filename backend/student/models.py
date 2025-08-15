@@ -31,3 +31,33 @@ class StudentClassAssignment(models.Model):
             models.UniqueConstraint(fields=['student', 'academic_year'],
                                     name='unique_student_academic_year')
         ]
+
+
+class StudentAttendance(models.Model):
+    """Stores attendance for each student per session per date."""
+    SESSION_CHOICES = [
+        ('M', 'Morning'),
+        ('A', 'Afternoon'),
+    ]
+    student = models.ForeignKey(Student, on_delete=models.CASCADE,
+                                related_name="attendances")
+    date = models.DateField()
+    session = models.CharField(max_length=1, choices=SESSION_CHOICES)
+    present = models.BooleanField(default=True)
+    academic_year = models.ForeignKey('academics.SchoolAcademicYear', on_delete=models.CASCADE,
+                                      null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['student', 'date', 'session'],
+                name='unique_student_date_session'
+            )
+        ]
+        indexes = [
+            models.Index(fields=['date']),
+            models.Index(fields=['session']),
+            models.Index(fields=['student', 'date']),
+        ]
+
+        db_table = 'student_attendance'
