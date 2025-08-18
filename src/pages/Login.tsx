@@ -251,7 +251,8 @@ const Login: React.FC = () => {
           <div className="text-center">
             <div className="w-32 h-32 bg-white/20 rounded-lg flex items-center justify-center mb-8 mx-auto">
               <div className="w-16 h-16 bg-white rounded flex items-center justify-center">
-                <span className="text-2xl font-bold text-amber-600">V</span>
+                {/* <span className="text-2xl font-bold text-amber-600">V</span> */}
+                <img src="/assets/logo.png" alt="Logo" className="w-6 h-6 object-contain" />
               </div>
             </div>
             <h2 className="text-3xl font-bold text-gray-800 mb-4">Unlock Your Potential</h2>
@@ -264,10 +265,11 @@ const Login: React.FC = () => {
           <div className="max-w-md mx-auto">
             <div className="text-center mb-8">
               <div className="flex items-center justify-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center">
-                  <span className="text-white font-bold">V</span>
+                <div className="w-8 h-8  rounded flex items-center justify-center">
+                  {/* <span className="text-white font-bold">V</span> */}
+                  <img src="/assets/logo.png" alt="Logo" className="w-6 h-6 object-contain" />
                 </div>
-                <span className="text-2xl font-bold text-gray-800">VIGNIQ</span>
+                <span className="text-2xl font-bold text-gray-800">VIGYS AI</span>
               </div>
               <h1 className="text-2xl font-bold text-blue-600 mb-2">
                 {showForgotPassword ? 'Reset Password' : ''}
@@ -327,7 +329,7 @@ const Login: React.FC = () => {
                       onBlur={(e) => validateLoginField('password', e.target.value)}
                       placeholder="Enter your password"
                       className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                      
+
                     />
                     <button
                       type="button"

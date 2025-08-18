@@ -29,7 +29,7 @@ const AdminSchool: React.FC = () => {
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const { id } = useParams();
   const [breadcrumbItems, setBreadCrumbItems] = useState([
-    { label: 'Dashboard', path: '/dashboard' },
+    { label: 'Home', path: '/dashboard' },
     { label: 'My School' }
   ]);
   const [showMore, setShowMore] = useState(false);
@@ -50,7 +50,7 @@ const AdminSchool: React.FC = () => {
   const setBreadCrumb = () => {
     if (userData.role == 'superadmin') {
       setBreadCrumbItems([
-        { label: 'Dashboard', path: '/dashboard' },
+        { label: 'Home', path: '/dashboard' },
         { label: 'Schools', path: '/schools' },
         { label: 'My School' }
       ])

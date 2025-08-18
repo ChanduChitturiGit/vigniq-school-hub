@@ -209,8 +209,10 @@ const AddStudent: React.FC = () => {
         });
         if (userData.role == 'superadmin') {
           navigate(`/school-details/${schoolId}`);
+        } else  if (userData.role == 'admin') {
+          navigate(`/admin-school`);
         } else {
-          navigate('/admin-school');
+          navigate('/students');
         }
       }
     } catch (error) {
