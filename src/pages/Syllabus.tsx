@@ -703,7 +703,7 @@ const Syllabus: React.FC = () => {
                                           View
                                         </Link>
                                         <Link
-                                          to={`/grades/lesson-plan/ai-chat/${chapter.chapter_id}/${dayPlan.day}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapter.chapter_name)}`}
+                                          to={`/grades/lesson-plan/ai-chat/${chapter.chapter_id}/${dayPlan.lesson_plan_day_id}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapter.chapter_name)}&schoolId=${schoolId}&boardId=${boardId}&subjectId=${subjectId}&classId=${classId}&dayCount=${dayPlan.day}`}
                                           className="flex items-center justify-center gap-2 bg-purple-100 text-purple-700 hover:bg-purple-200 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
                                         >
                                           <MessageSquare className="w-4 h-4" />
