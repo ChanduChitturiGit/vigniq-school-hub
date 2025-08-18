@@ -10,6 +10,7 @@ import { createSchool as createSchoolApi, getBoardsList } from '../services/scho
 import { SpinnerOverlay } from '../pages/SpinnerOverlay';
 import Select, { ActionMeta, MultiValue } from 'react-select';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
+import path from 'path';
 
 type OptionType = {
   label: string;
@@ -63,7 +64,7 @@ const CreateSchool: React.FC = () => {
     { boardId: 5, boardName: 'IB' }
   ];
   const breadcrumbItems = [
-    { label: 'School Management' },
+    { label: 'Home', path: '/dashboard' },
     { label: 'Create School' }
   ];
   const currentYear = new Date().getFullYear();
@@ -498,7 +499,7 @@ const CreateSchool: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => navigate('/schools')}
+                onClick={() => navigate('/dashboard')}
                 className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors"
               >
                 Cancel
