@@ -15,10 +15,11 @@ const Teachers: React.FC = () => {
   const [loader, setLoader] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
+  const schoolId = JSON.parse(localStorage.getItem("current_school_id"));
   
   const getTeachersList = async () => {
     setLoader(true);
-    const response = await getTeachersBySchoolId(userData.school_id);
+    const response = await getTeachersBySchoolId(userData.school_id ? userData.school_id : schoolId);
     if(response && response.teachers){
       setLoader(false);
       setTeachers(response.teachers);
@@ -43,7 +44,7 @@ const Teachers: React.FC = () => {
         { label: 'Teachers' }
       ]
     : [
-        { label: 'User Management', path: '/user-management' },
+        { label: 'School Management' },
         { label: 'Teachers' }
       ];
 
