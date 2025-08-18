@@ -57,7 +57,7 @@ const UploadEbooks: React.FC = () => {
   const sampleSubjects = ['Mathematics', 'English', 'Science', 'Physics', 'Chemistry', 'Biology', 'History', 'Geography', 'Hindi', 'Computer Science'];
   const uploadTypes = ['Chapter Wise PDF', 'Single PDF'];
 
-  const [numberList, setNumberList] = useState(Array.from({ length: 20 }, (_, i) => i + 1));
+  const [numberList, setNumberList] = useState(Array.from({ length: 25 }, (_, i) => i + 1));
   const [chapterListData, setChapterListData] = useState([]);
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 10 }, (_, i) => (currentYear - i).toString());
@@ -177,7 +177,7 @@ const UploadEbooks: React.FC = () => {
     } else if (field == 'chapter') {
       setFormData(prev => ({
         ...prev,
-        'chaptchapter_numberer_id': value.split(' ')[1] || null
+        'chapter_number': value.split(' ')[1] || null
       }));
     }else if (field == 'yearString') {
       setFormData(prev => ({
