@@ -64,7 +64,7 @@ DATABASE_ROUTERS = [
 CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8080"
+    "http://localhost:8080", "http://3.111.47.117:8000", "https://3.111.47.117:8000"
 ]
 
 ALLOWED_HOSTS = APP_CONFIG['ALLOWED_HOSTS']

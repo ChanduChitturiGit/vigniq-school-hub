@@ -6,42 +6,10 @@ import { getHomePageData } from '@/services/home';
 
 
 const TeacherDashboard: React.FC = () => {
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const { showSnackbar } = useSnackbar();
   const navigate = useNavigate();
-  const stats = [
-    {
-      title: 'My Classes',
-      value: '3',
-      subValue: '85 total students',
-      icon: BookOpen,
-      color: 'bg-blue-500',
-      link: '/classes'
-    },
-    {
-      title: 'Total Students',
-      value: '85',
-      subValue: 'across all classes',
-      icon: Users,
-      color: 'bg-green-500',
-      link: '/students'
-    },
-    {
-      title: 'Pending Requests',
-      value: '7',
-      subValue: 'from students',
-      icon: Clock,
-      color: 'bg-yellow-500',
-      link: '/requests'
-    },
-    {
-      title: 'Completed Today',
-      value: '12',
-      subValue: 'tasks completed',
-      icon: CheckCircle,
-      color: 'bg-purple-500',
-      link: '/requests'
-    }
-  ];
+  const [stats, setStats] = useState([]);
 
   // Mock recent requests from students
   const recentRequests = [
@@ -111,6 +79,26 @@ const TeacherDashboard: React.FC = () => {
       console.log(response);
       if (response && response.data) {
         console.log(response.data);
+        setStats(
+          [
+            {
+              title: 'My Classes',
+              value: response.data.total_classes || 0,
+              subValue: response.data.total_students+' total students',
+              icon: BookOpen,
+              color: 'bg-blue-500',
+              link: '/classes'
+            },
+            {
+              title: 'Total Students',
+              value: response.data.total_students || 0,
+              subValue: 'across all classes',
+              icon: Users,
+              color: 'bg-green-500',
+              link: '/students'
+            }
+          ]
+        )
       } else {
         showSnackbar({
           title: "⛔ Error fetching dashboard data",
@@ -128,7 +116,7 @@ const TeacherDashboard: React.FC = () => {
   }
 
 
- 
+
 
 
   useEffect(() => {
@@ -181,7 +169,7 @@ const TeacherDashboard: React.FC = () => {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Requests */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        {/* <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="p-6 border-b border-gray-200 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-800">Recent Requests</h2>
             <Link
@@ -222,10 +210,10 @@ const TeacherDashboard: React.FC = () => {
               )}
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* My Classes */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        {/* <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="p-6 border-b border-gray-200 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-800">My Classes</h2>
             <Link
@@ -266,7 +254,7 @@ const TeacherDashboard: React.FC = () => {
               )}
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

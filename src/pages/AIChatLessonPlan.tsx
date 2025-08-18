@@ -6,19 +6,22 @@ import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { ScrollArea } from '../components/ui/scroll-area';
-import { 
-  ArrowLeft, 
-  Send, 
+import {
+  ArrowLeft,
+  Send,
   Calculator,
   MessageSquare,
   Bot,
   User
 } from 'lucide-react';
+import { useSnackbar } from '../components/snackbar/SnackbarContext';
+import { getLessonPlanDataByDay } from '../services/grades';
 
 interface LessonActivity {
   serialNumber: number;
   title: string;
   description: string;
+  summary?: string; // Optional summary field for shorter descriptions
 }
 
 interface ChatMessage {
@@ -29,13 +32,22 @@ interface ChatMessage {
 }
 
 const AIChatLessonPlan: React.FC = () => {
+  const { showSnackbar } = useSnackbar();
   const { chapterId, day } = useParams();
   const [searchParams] = useSearchParams();
-  
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
+
   const subject = searchParams.get('subject') || '';
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
-  const chapterName = decodeURIComponent(searchParams.get('chapterName') || '');
+  const classId = searchParams.get('classId') || '';
+  const subjectId = searchParams.get('subjectId') || '';
+  const schoolId = searchParams.get('schoolId') || '';
+  const boardId = searchParams.get('boardId') || '';
+  const chapterName = searchParams.get('chapterName') || '';
+  const dayCount = searchParams.get('dayCount') || '';
+  const pathData = `${subjectId}?class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
+
 
   const [activities, setActivities] = useState<LessonActivity[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -44,7 +56,7 @@ const AIChatLessonPlan: React.FC = () => {
 
   const breadcrumbItems = [
     { label: 'Grades', path: '/grades' },
-    { label: `${subject} - ${className} ${section}`, path: `/grades/syllabus/math_6a?class=${className}&section=${section}&subject=${subject}` },
+    { label: `${subject} - ${className} ${section}`, path: `/grades/syllabus/${pathData}` },
     { label: 'AI Chat Assistant' }
   ];
 
@@ -52,42 +64,78 @@ const AIChatLessonPlan: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const getLessonData = async () => {
+    try {
+      const data = {
+        chapter_id: chapterId,
+        lesson_plan_day_id: day,
+        subject: subject,
+        class: className,
+        section: section,
+        school_id: schoolId ? schoolId : userData.school_id,
+        board_id: boardId,
+        subject_id: subjectId,
+        class_id: classId
+      };
+      const response = await getLessonPlanDataByDay(data);
+      if (response && response.data) {
+        setActivities(response.data.topics);
+      } else {
+        showSnackbar({
+          title: 'Error',
+          description: response.message || 'Failed to fetch lesson plan data.',
+          status: 'error'
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: 'Error',
+        description: 'An unexpected error occurred while fetching lesson plan data.',
+        status: 'error'
+      });
+    }
+  }
+
+  useEffect(() => {
+    getLessonData();
+  }, []);
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
   useEffect(() => {
     // Sample data for lesson activities
-    const sampleActivities: LessonActivity[] = [
-      {
-        serialNumber: 1,
-        title: 'Introduction to Numbers',
-        description: 'Brief overview of the chapter and importance of numbers in daily life. Icebreaker activity related to numbers.'
-      },
-      {
-        serialNumber: 2,
-        title: 'Comparing Numbers',
-        description: 'Understanding place value, identifying greater and smaller numbers. Examples and practice exercises.'
-      },
-      {
-        serialNumber: 3,
-        title: 'Break',
-        description: 'Short break for students.'
-      },
-      {
-        serialNumber: 4,
-        title: 'Large Numbers in Practice',
-        description: 'Reading and writing large numbers. Use of commas. Real-world examples of large numbers.'
-      },
-      {
-        serialNumber: 5,
-        title: 'Recap and Q&A',
-        description: 'Summarize the topics covered. Address student questions and doubts.'
-      }
-    ];
-    
-    setActivities(sampleActivities);
-    
+    // const sampleActivities: LessonActivity[] = [
+    //   {
+    //     serialNumber: 1,
+    //     title: 'Introduction to Numbers',
+    //     description: 'Brief overview of the chapter and importance of numbers in daily life. Icebreaker activity related to numbers.'
+    //   },
+    //   {
+    //     serialNumber: 2,
+    //     title: 'Comparing Numbers',
+    //     description: 'Understanding place value, identifying greater and smaller numbers. Examples and practice exercises.'
+    //   },
+    //   {
+    //     serialNumber: 3,
+    //     title: 'Break',
+    //     description: 'Short break for students.'
+    //   },
+    //   {
+    //     serialNumber: 4,
+    //     title: 'Large Numbers in Practice',
+    //     description: 'Reading and writing large numbers. Use of commas. Real-world examples of large numbers.'
+    //   },
+    //   {
+    //     serialNumber: 5,
+    //     title: 'Recap and Q&A',
+    //     description: 'Summarize the topics covered. Address student questions and doubts.'
+    //   }
+    // ];
+
+    // setActivities(sampleActivities);
+
     // Sample initial messages
     const initialMessages: ChatMessage[] = [
       {
@@ -97,7 +145,7 @@ const AIChatLessonPlan: React.FC = () => {
         timestamp: new Date()
       }
     ];
-    
+
     setMessages(initialMessages);
   }, [chapterId, chapterName, day]);
 
@@ -112,7 +160,7 @@ const AIChatLessonPlan: React.FC = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
-    
+
     // Simulate AI response
     setTimeout(() => {
       const aiResponse: ChatMessage = {
@@ -121,7 +169,7 @@ const AIChatLessonPlan: React.FC = () => {
         content: `Thank you for your question about "${inputMessage}". I can help you with teaching strategies, curriculum guidance, and lesson plan modifications. For this chapter on ${chapterName}, I recommend focusing on practical examples and interactive activities to keep students engaged.`,
         timestamp: new Date()
       };
-      
+
       setMessages(prev => [...prev, aiResponse]);
     }, 1000);
 
@@ -136,14 +184,14 @@ const AIChatLessonPlan: React.FC = () => {
   };
 
   return (
-    <MainLayout pageTitle={`AI Chat - Chapter ${chapterId}: ${chapterName} - Day ${day}`}>
+    <MainLayout pageTitle={`AI Chat - Chapter ${chapterId}: ${chapterName} - Day ${dayCount}`}>
       <div className="space-y-8">
         <Breadcrumb items={breadcrumbItems} />
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link
-              to={`/grades/lesson-plan/view/${chapterId}/1?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`}
+              to={ `/grades/syllabus/${pathData}`}
               className="flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -158,7 +206,7 @@ const AIChatLessonPlan: React.FC = () => {
           </div>
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-gray-900">AI Teaching Assistant</h1>
-            <p className="text-xl text-blue-600 font-medium">Chapter {chapterId}: {chapterName} - Day {day}</p>
+            <p className="text-xl text-blue-600 font-medium">Chapter {chapterId}: {chapterName} - Day {dayCount}</p>
             <p className="text-lg text-gray-500">{className} {section}</p>
           </div>
         </div>
@@ -175,7 +223,7 @@ const AIChatLessonPlan: React.FC = () => {
                   Chat with AI Assistant
                 </CardTitle>
               </CardHeader>
-              
+
               <CardContent className="flex-1 flex flex-col p-0 min-h-0">
                 {/* Messages Area */}
                 <div className="flex-1 overflow-hidden">
@@ -184,9 +232,8 @@ const AIChatLessonPlan: React.FC = () => {
                       {messages.map((message) => (
                         <div
                           key={message.id}
-                          className={`flex items-start gap-3 ${
-                            message.type === 'user' ? 'justify-end' : 'justify-start'
-                          }`}
+                          className={`flex items-start gap-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'
+                            }`}
                         >
                           {message.type === 'ai' && (
                             <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
@@ -194,11 +241,10 @@ const AIChatLessonPlan: React.FC = () => {
                             </div>
                           )}
                           <div
-                            className={`max-w-[80%] p-4 rounded-lg ${
-                              message.type === 'user'
-                                ? 'bg-blue-600 text-white rounded-br-sm'
-                                : 'bg-gray-100 text-gray-900 rounded-bl-sm'
-                            }`}
+                            className={`max-w-[80%] p-4 rounded-lg ${message.type === 'user'
+                              ? 'bg-blue-600 text-white rounded-br-sm'
+                              : 'bg-gray-100 text-gray-900 rounded-bl-sm'
+                              }`}
                           >
                             <p className="text-sm leading-relaxed">{message.content}</p>
                             <span className="text-xs opacity-70 mt-2 block">
@@ -247,16 +293,16 @@ const AIChatLessonPlan: React.FC = () => {
               <CardHeader className="flex-shrink-0 bg-gray-50 border-b">
                 <CardTitle className="text-xl text-gray-900">Today's Lesson Plan</CardTitle>
               </CardHeader>
-              
+
               <CardContent className="flex-1 p-0 min-h-0">
                 <ScrollArea className="h-full">
                   <div className="p-6 space-y-4">
-                    {activities.map((activity) => (
+                    {activities.map((activity,index) => (
                       <div key={activity.serialNumber} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                         <div className="flex items-start gap-3">
                           <div className="flex-shrink-0">
                             <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm">
-                              {activity.serialNumber}
+                              {index+1}
                             </div>
                           </div>
                           <div className="flex-1 min-w-0">
@@ -264,7 +310,7 @@ const AIChatLessonPlan: React.FC = () => {
                               {activity.title}
                             </h3>
                             <p className="text-xs text-gray-600 leading-relaxed">
-                              {activity.description}
+                              {activity.summary || activity.description}
                             </p>
                           </div>
                         </div>
