@@ -244,34 +244,36 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-blue-50 to-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 flex items-center justify-center p-4">
       <div className="w-full max-w-4xl flex bg-white rounded-2xl shadow-2xl overflow-hidden">
         {/* Left Side - Hero Section */}
-        <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-amber-100 to-amber-200 items-center justify-center p-12">
-          <div className="text-center">
-            <div className="w-32 h-32 bg-white/20 rounded-lg flex items-center justify-center mb-8 mx-auto">
-              <div className="w-16 h-16 bg-white rounded flex items-center justify-center">
-                {/* <span className="text-2xl font-bold text-amber-600">V</span> */}
-                <img src="/assets/logo.png" alt="Logo" className="w-6 h-6 object-contain" />
+        <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 items-center justify-center p-12 relative">
+          <div className="text-center text-white">
+            <div className="w-32 h-32 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-8 mx-auto border border-white/20">
+              <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center">
+                <img src="/assets/logo.png" alt="Logo" className="w-8 h-8 object-contain" />
               </div>
             </div>
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">Unlock Your Potential</h2>
-            <p className="text-gray-600 text-lg">With AI-Powered Learning</p>
+            <h2 className="text-4xl font-bold mb-4">Unlock Your Potential</h2>
+            <p className="text-blue-100 text-lg font-medium">With AI-Powered Learning</p>
           </div>
+          {/* Background decorative elements */}
+          <div className="absolute top-10 left-10 w-20 h-20 bg-white/5 rounded-full"></div>
+          <div className="absolute bottom-20 right-10 w-16 h-16 bg-white/5 rounded-full"></div>
+          <div className="absolute top-1/2 right-20 w-12 h-12 bg-white/5 rounded-full"></div>
         </div>
 
         {/* Right Side - Login Form */}
-        <div className="w-full md:w-1/2 p-8 lg:p-12">
+        <div className="w-full md:w-1/2 p-8 lg:p-12 bg-gray-50">
           <div className="max-w-md mx-auto">
             <div className="text-center mb-8">
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <div className="w-8 h-8  rounded flex items-center justify-center">
-                  {/* <span className="text-white font-bold">V</span> */}
-                  <img src="/assets/logo.png" alt="Logo" className="w-6 h-6 object-contain" />
+              <div className="flex items-center justify-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <img src="/assets/logo.png" alt="Logo" className="w-6 h-6 object-contain filter brightness-0 invert" />
                 </div>
                 <span className="text-2xl font-bold text-gray-800">VIGYS AI</span>
               </div>
-              <h1 className="text-2xl font-bold text-blue-600 mb-2">
+              <h1 className="text-2xl font-bold text-gray-800 mb-2">
                 {showForgotPassword ? 'Reset Password' : ''}
               </h1>
               <p className="text-gray-600">
@@ -304,8 +306,8 @@ const Login: React.FC = () => {
                         setLoginErrors(prev => ({ ...prev, username: '' }));
                       }}
                       onBlur={(e) => validateLoginField('username', e.target.value)}
-                      placeholder="Enter your username"
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                      placeholder="chandu@admin"
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-gray-700"
                       title="Username must contain only letters and numbers"
                       minLength={3}
                     />
@@ -327,9 +329,8 @@ const Login: React.FC = () => {
                         setLoginErrors(prev => ({ ...prev, password: '' }));
                       }}
                       onBlur={(e) => validateLoginField('password', e.target.value)}
-                      placeholder="Enter your password"
-                      className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-
+                      placeholder="••••••••"
+                      className="w-full pl-10 pr-12 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-gray-700"
                     />
                     <button
                       type="button"
@@ -346,7 +347,7 @@ const Login: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setShowForgotPassword(true)}
-                    className="text-sm text-blue-600 hover:text-blue-700"
+                    className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                   >
                     Forgot your password?
                   </button>
@@ -355,7 +356,7 @@ const Login: React.FC = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium"
                 >
                   <LogIn className="w-5 h-5" />
                   {loading ? 'Logging in...' : 'Log In'}
@@ -381,13 +382,12 @@ const Login: React.FC = () => {
                         value={forgotUsername}
                         onChange={(e) => setForgotUsername(e.target.value)}
                         placeholder="Enter your username"
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                        className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                         title="Username must contain only letters and numbers"
                         minLength={3}
                         required
                       />
                     </div>
-                    {/* <p className="text-xs text-gray-500 mt-1">Minimum 3 characters, letters and numbers only</p> */}
                   </div>
                 ) : forgotStep === 2 ? (
                   <>
@@ -416,11 +416,10 @@ const Login: React.FC = () => {
                           value={validationCode}
                           onChange={(e) => setValidationCode(e.target.value)}
                           placeholder="Enter validation code"
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                          className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                           required
                         />
                       </div>
-                      {/* <p className="text-xs text-gray-500 mt-1">Enter 123 to proceed</p> */}
                     </div>
                   </>
                 ) : (
@@ -436,7 +435,7 @@ const Login: React.FC = () => {
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
                           placeholder="Enter new password"
-                          className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                          className="w-full pl-10 pr-12 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                           required
                         />
                         <button
@@ -460,7 +459,7 @@ const Login: React.FC = () => {
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
                           placeholder="Confirm new password"
-                          className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                          className="w-full pl-10 pr-12 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                           required
                         />
                         <button
@@ -479,7 +478,7 @@ const Login: React.FC = () => {
                   <button
                     type="submit"
                     disabled={forgotLoading}
-                    className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium"
                   >
                     {forgotLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                     {forgotLoading
@@ -500,26 +499,13 @@ const Login: React.FC = () => {
                       setError('');
                       setForgotLoading(false);
                     }}
-                    className="flex-1 bg-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 bg-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                   >
                     Cancel
                   </button>
                 </div>
               </form>
             )}
-
-            {/* Demo Credentials */}
-            {/* {!showForgotPassword && (
-              <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Demo Credentials:</h3>
-                <div className="text-xs text-gray-600 space-y-1">
-                  <div><strong>Super Admin:</strong> superadmin / superadmin</div>
-                  <div><strong>Admin:</strong> admin1 / admin123</div>
-                  <div><strong>Teacher:</strong> teacher1 / teacher123</div>
-                  <div><strong>Student:</strong> student1 / student123</div>
-                </div>
-              </div>
-            )} */}
           </div>
         </div>
       </div>
