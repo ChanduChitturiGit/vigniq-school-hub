@@ -12,6 +12,8 @@ from student.models import StudentClassAssignment
 from teacher.models import Teacher
 
 from core.common_modules.common_functions import CommonFunctions
+from school.models import SchoolSyllabusEbooks
+from teacher.models import TeacherSubjectAssignment
 
 logger = logging.getLogger(__name__)
 
@@ -35,10 +37,12 @@ class DashboardService:
         if request.user.role_id == 1:
             total_schools = School.objects.filter(is_active=True).count()
             total_active_users = User.objects.filter(is_active=True).count()
+            total_ebooks = SchoolSyllabusEbooks.objects.count()
             return Response({
                 "data":{
                     "total_schools": total_schools,
-                    "total_active_users": total_active_users
+                    "total_active_users": total_active_users,
+                    "total_ebooks":total_ebooks ,
                 }
             }, status=200)
         elif request.user.role_id == 2:
@@ -62,6 +66,26 @@ class DashboardService:
                     "total_classes": total_classes,
                     "total_students": total_students,
                     "total_teachers": total_teachers
+                }
+            }, status=200)
+        
+        elif request.user.role_id == 3:
+            academic_year_id = request.data.get('academic_year_id',1)
+            school_db_name = CommonFunctions.get_school_db_name(request.user.school_id)
+            total_classes = TeacherSubjectAssignment.objects.using(school_db_name).filter(
+                teacher_id=request.user.id,
+                academic_year_id=academic_year_id
+            ).values_list('school_class_id',flat=True).distinct()
+            total_students = StudentClassAssignment.objects.using(school_db_name).filter(
+                student__is_active=True,
+                academic_year_id=academic_year_id,
+                class_instance_id__in=total_classes
+            ).count()
+
+            return Response({
+                "data":{
+                    "total_classes": total_classes.count(),
+                    "total_students": total_students
                 }
             }, status=200)
 

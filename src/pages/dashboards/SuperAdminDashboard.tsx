@@ -22,9 +22,9 @@ const SuperAdminDashboard: React.FC = () => {
   // Mock data for demonstration
   const { showSnackbar } = useSnackbar();
   const [stats,setStats] = useState({
-    total_schools: 25,
-    total_active_users: 2450,
-    total_ebooks: 4,
+    total_schools: 0,
+    total_active_users: 0,
+    total_ebooks: 0,
     totalAdmins: 35,
     activeSchools: 23,
     pendingRequests: 8,
@@ -171,7 +171,7 @@ const SuperAdminDashboard: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">E-Books</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{stats.total_ebooks  || 'N/A'}</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{stats.total_ebooks}</p>
               </div>
               <div className="p-3 bg-yellow-100 rounded-lg group-hover:bg-yellow-200 transition-colors duration-200">
                 <BookOpen className="w-6 h-6 text-yellow-600" />
