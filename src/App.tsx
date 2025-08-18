@@ -31,8 +31,6 @@ import AdminRequests from './pages/AdminRequests';
 import Responses from './pages/Responses';
 import UploadEbooks from './pages/UploadEbooks';
 import ViewEbooks from './pages/ViewEbooks';
-import AttendanceCenter from './pages/AttendanceCenter';
-import AttendanceReports from './pages/AttendanceReports';
 import NotFound from './pages/NotFound';
 import AIChatLessonPlan from './pages/AIChatLessonPlan';
 import CreateLessonPlan from './pages/CreateLessonPlan';
@@ -205,8 +203,6 @@ function App() {
           <Route path="/grades/lesson-plan/day/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}><DayLessonPlan /></ProtectedRoute>} />
           <Route path="/grades/lesson-plan/whiteboard/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}><WhiteboardTeaching /></ProtectedRoute>} />
           <Route path="/grades/lesson-plan/ai-chat/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}><AIChatLessonPlan /></ProtectedRoute>} />
-          <Route path="/attendance-center" element={<ProtectedRoute allowedRoles={['teacher']}><AttendanceCenter /></ProtectedRoute>} />
-          <Route path="/attendance-reports" element={<ProtectedRoute allowedRoles={['teacher']}><AttendanceReports /></ProtectedRoute>} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>
