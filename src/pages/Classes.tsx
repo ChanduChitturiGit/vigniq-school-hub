@@ -16,6 +16,7 @@ const Classes: React.FC = () => {
   const [loader, setLoader] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
+  const schoolId = JSON.parse(localStorage.getItem("current_school_id"));
 
   const filteredClasses = classes.filter(classItem =>
     (classItem.class_number && classItem.class_number.toString().toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -35,7 +36,7 @@ const Classes: React.FC = () => {
 
   const getClasses = async () => {
     setLoader(true);
-    const classesData = await getClassesBySchoolId(userData.school_id);
+    const classesData = await getClassesBySchoolId(userData.school_id ? userData.school_id : schoolId);
     if (classesData && classesData.classes) {
       setLoader(false);
       setClasses(classesData.classes);
