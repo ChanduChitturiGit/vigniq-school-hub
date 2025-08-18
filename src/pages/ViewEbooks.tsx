@@ -22,6 +22,7 @@ import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import sampleData from '../services/ebooksData.json'
 
 
+
 interface Ebook {
   id: string;
   title: string;
@@ -70,6 +71,8 @@ const ViewEbooks: React.FC = () => {
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 10 }, (_, i) => (currentYear - i).toString());
+  const [viewId, setViewId] = useState(null);
+  const [downloadId, setDownloadId] = useState(null);
 
   // Sample data
   const sampleEbooks: any = sampleData;
@@ -201,8 +204,9 @@ const ViewEbooks: React.FC = () => {
     }
   };
 
-  const handleView = async (ebook: any) => {
+  const handleView = async (ebook: any,index:any) => {
     setViewLoader(true);
+    setViewId(index);
     // setSelectedEbook(ebook);
     const fileUrl = ebook.file_path;
     // window.open(fileUrl, "_blank");
@@ -214,8 +218,9 @@ const ViewEbooks: React.FC = () => {
 
   };
 
-  const handleDownload = async (ebook: any) => {
+  const handleDownload = async (ebook: any,index : any) => {
     // Simulate download
+    setDownloadId(index);
     setDownloadLoader(true);
     try {
       const fileUrl = ebook.file_path;
@@ -370,7 +375,7 @@ const ViewEbooks: React.FC = () => {
 
         {/* E-books Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {Array.isArray(filteredEbooks) && filteredEbooks.map((ebook) => (
+          {Array.isArray(filteredEbooks) && filteredEbooks.map((ebook,index) => (
             <Card key={ebook.id} className="hover:shadow-lg transition-shadow">
               <CardContent className="p-6">
                 <div className="flex flex-col items-center text-center">
@@ -393,18 +398,18 @@ const ViewEbooks: React.FC = () => {
                       variant="outline"
                       size="sm"
                       className="flex-1 text-blue-600 hover:bg-green-50"
-                      onClick={() => handleView(ebook)}
+                      onClick={() => handleView(ebook,index)}
                     >
-                      {viewLoader ? (<Loader2 className="w-10 h-10 mx-auto text-blue animate-spin" />) : (<Eye className="w-4 h-4 mr-1" />)}
+                      {viewLoader && viewId == index ? (<Loader2 className="w-10 h-10 mx-auto text-blue animate-spin" />) : (<Eye className="w-4 h-4 mr-1" />)}
                     </Button>
 
                     <Button
                       variant="outline"
                       size="sm"
                       className="flex-1 text-green-600 hover:bg-green-50"
-                      onClick={() => handleDownload(ebook)}
+                      onClick={() => handleDownload(ebook,index)}
                     >
-                      {downloadLoader ? (<Loader2 className="w-10 h-10 mx-auto text-blue animate-spin" />) : (<Download className="w-4 h-4 mr-1" />)}
+                      {downloadLoader && downloadId == index ? (<Loader2 className="w-10 h-10 mx-auto text-blue animate-spin" />) : (<Download className="w-4 h-4 mr-1" />)}
                     </Button>
 
                     {user?.role === 'superadmin' && (
