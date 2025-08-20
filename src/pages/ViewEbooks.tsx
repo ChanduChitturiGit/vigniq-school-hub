@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 //   DialogTrigger,
 // } from '../components/ui/dialog';
 import { getBoardsList } from '../services/school'
-import { getEbookList } from '../services/ebooks'
+import { getEbookList,deleteEbookById } from '../services/ebooks'
 import { getClassesList } from '../services/class'
 import { getSubjectsList } from '../services/subject'
 import { SpinnerOverlay } from '../pages/SpinnerOverlay';
@@ -131,6 +131,33 @@ const ViewEbooks: React.FC = () => {
       }
     }
     setLoader(false);
+  }
+
+  const deleteEbook = async (ebookId: string) => {
+    try {
+      const response = await deleteEbookById({ ebook_id: ebookId });
+      if (response && response.message) {
+        setEbooks(prev => prev.filter(ebook => ebook.id !== ebookId));
+        setFilteredEbooks(prev => prev.filter(ebook => ebook.id !== ebookId));
+        showSnackbar({
+          title: "Success",
+          description: "E-book deleted successfully",
+          status: "success"
+        });
+      } else {
+        showSnackbar({
+          title: "⛔ Error",
+          description: response.message || "Failed to delete e-book",
+          status: "error"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
   }
 
   useEffect(() => {
@@ -271,11 +298,20 @@ const ViewEbooks: React.FC = () => {
 
 
   const handleDelete = (ebookId: string) => {
+    // if (user?.role === 'superadmin') {
+    //   setEbooks(prev => prev.filter(ebook => ebook.id !== ebookId));
+    //   toast.success('E-book deleted successfully');
+    // } else {
+    //   toast.error('Only super admin can delete e-books');
+    // }
     if (user?.role === 'superadmin') {
-      setEbooks(prev => prev.filter(ebook => ebook.id !== ebookId));
-      toast.success('E-book deleted successfully');
+      deleteEbook(ebookId);
     } else {
-      toast.error('Only super admin can delete e-books');
+      showSnackbar({
+        title: "⛔ Error",
+        description: "Only super admin can delete e-books",
+        status: "error"
+      });
     }
   };
 

@@ -501,7 +501,7 @@ const Syllabus: React.FC = () => {
                   <div className="flex items-center gap-6">
                     <div className="flex items-center gap-4">
                       <span className="text-xl font-medium text-gray-900">
-                        Chapter {chapter.chapter_id}: {chapter.chapter_name}
+                        Chapter {chapter.chapter_number}: {chapter.chapter_name}
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
