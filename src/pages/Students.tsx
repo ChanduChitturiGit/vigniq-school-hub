@@ -5,10 +5,12 @@ import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Edit, Search, Plus, GraduationCap, LoaderCircle, Grid, List, Eye, Trash2 } from 'lucide-react';
-import { getStudentsBySchoolId } from '../services/student';
+import { getStudentsBySchoolId, deleteStudentById } from '../services/student';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
 
 const Students: React.FC = () => {
+  const { showSnackbar } = useSnackbar();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [loader, setLoader] = useState(true);
@@ -45,15 +47,39 @@ const Students: React.FC = () => {
   const getStudents = async () => {
     setLoader(true);
     const response = await getStudentsBySchoolId(userData.school_id);
-    if(response && response.students){
+    if (response && response.students) {
       setLoader(false);
       setStudents(response.students);
     }
   }
 
-  useEffect(()=>{
+  const deleteStudent = async (studentId: string) => {
+    setLoader(true);
+    try {
+      const response = await deleteStudentById({ student_id: studentId, school_id: userData.school_id });
+      if (response && response.message) {
+        // setStudents(students.filter(student => student.student_id !== studentId));
+        showSnackbar({
+          title: "✅ Success",
+          description: "Student deleted successfully",
+          status: "success"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    } finally {
+      setLoader(false);
+      getStudents();
+    }
+  }
+
+  useEffect(() => {
     getStudents();
-  },[])
+  }, [])
 
   const getAddStudentPath = () => {
     return '/add-student';
@@ -61,7 +87,8 @@ const Students: React.FC = () => {
 
   const handleDelete = (studentId: string) => {
     // Delete functionality - you can implement this based on your API
-    console.log('Delete student:', studentId);
+    deleteStudent(studentId);
+    // console.log('Delete student:', studentId);
   };
 
   const renderGridView = () => (
@@ -85,7 +112,7 @@ const Students: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Roll Number:</span>
@@ -100,11 +127,23 @@ const Students: React.FC = () => {
               <span className="font-medium text-gray-800">{student.parent_phone}</span>
             </div>
           </div>
-          
-          <div className="mt-4 pt-4 border-t border-gray-100">
+
+          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
             <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
               {student.status || 'active'}
             </span>
+            {( user?.role !== 'student') && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleDelete(student.student_id);
+                }}
+                className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                title="Delete Student"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </Link>
       ))}
@@ -157,7 +196,7 @@ const Students: React.FC = () => {
                     >
                       <Eye className="w-4 h-4" />
                     </Link>
-                    {(user?.role === 'admin' || user?.role === 'teacher') && (
+                    {( user?.role !== 'student') && (
                       <button
                         onClick={(e) => {
                           e.preventDefault();
@@ -183,7 +222,7 @@ const Students: React.FC = () => {
     <MainLayout pageTitle="Students">
       <div className="space-y-6">
         <Breadcrumb items={getBreadcrumbItems()} />
-        
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-purple-100 rounded-lg">
@@ -195,22 +234,20 @@ const Students: React.FC = () => {
             <div className="flex items-center bg-gray-100 rounded-lg p-1">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-md transition-colors ${
-                  viewMode === 'grid' 
-                    ? 'bg-white text-blue-600 shadow-sm' 
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
+                className={`p-2 rounded-md transition-colors ${viewMode === 'grid'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-800'
+                  }`}
                 title="Grid View"
               >
                 <Grid className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('table')}
-                className={`p-2 rounded-md transition-colors ${
-                  viewMode === 'table' 
-                    ? 'bg-white text-blue-600 shadow-sm' 
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
+                className={`p-2 rounded-md transition-colors ${viewMode === 'table'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-800'
+                  }`}
                 title="Table View"
               >
                 <List className="w-4 h-4" />
@@ -244,13 +281,13 @@ const Students: React.FC = () => {
 
         {viewMode === 'grid' ? renderGridView() : renderTableView()}
 
-        {filteredStudents.length === 0 && !loader &&(
+        {filteredStudents.length === 0 && !loader && (
           <div className="text-center py-12">
             <GraduationCap className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No students found</h3>
             <p className="text-gray-500">
-              {searchTerm 
-                ? 'Try adjusting your search terms' 
+              {searchTerm
+                ? 'Try adjusting your search terms'
                 : 'No students have been added yet.'}
             </p>
           </div>
