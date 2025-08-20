@@ -78,8 +78,11 @@ const Schools: React.FC = () => {
                 className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-800">{school.school_name}</h3>
-                  <button
+                  <div className='flex gap-2'>
+                    <School className='text-blue-400'/>
+                    <h3 className="text-lg font-semibold text-gray-800">{school.school_name}</h3>
+                  </div>
+                  {/* <button
                     onClick={(e) => {
                       e.preventDefault();
                       // Handle edit action
@@ -87,7 +90,7 @@ const Schools: React.FC = () => {
                     className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
                   >
                     <Edit className="w-4 h-4" />
-                  </button>
+                  </button> */}
                 </div>
 
                 <div className="space-y-3">
