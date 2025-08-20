@@ -29,10 +29,17 @@ const WhiteboardTeaching: React.FC = () => {
   const { chapterId, day } = useParams();
   const [searchParams] = useSearchParams();
   
-  const subject = searchParams.get('subject') || '';
+   const subject = searchParams.get('subject') || '';
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
-  const chapterName = decodeURIComponent(searchParams.get('chapterName') || '');
+  const classId = searchParams.get('classId') || '';
+  const subjectId = searchParams.get('subjectId') || '';
+  const schoolId = searchParams.get('schoolId') || '';
+  const boardId = searchParams.get('boardId') || '';
+  const chapterName = searchParams.get('chapterName') || '';
+  const pathData = `class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
+
+
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -167,7 +174,7 @@ const WhiteboardTeaching: React.FC = () => {
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <Link
-                to={`/grades/lesson-plan/day/${chapterId}/${day}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`}
+                to={`/grades/lesson-plan/day/${chapterId}/${day}?${pathData}&chapterName=${encodeURIComponent(chapterName)}`}
                 className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
               >
                 <ArrowLeft className="w-4 h-4" />

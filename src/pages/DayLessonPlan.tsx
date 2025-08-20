@@ -5,9 +5,9 @@ import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { 
-  ArrowLeft, 
-  Download, 
+import {
+  ArrowLeft,
+  Download,
   Printer,
   Play,
   Calculator,
@@ -41,7 +41,7 @@ const DayLessonPlan: React.FC = () => {
   const { chapterId, day } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  
+
   const subject = searchParams.get('subject') || '';
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
@@ -51,10 +51,10 @@ const DayLessonPlan: React.FC = () => {
   const boardId = searchParams.get('boardId') || '';
   const chapterName = searchParams.get('chapterName') || '';
   const pathData = `${subjectId}?class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
-  
+
 
   const [lessonData, setLessonData] = useState<LessonPlanDay | null>(null);
-  const [overallProgress] = useState(75);
+  const [overallProgress] = useState(0);
 
   const breadcrumbItems = [
     { label: 'Grades', path: '/grades' },
@@ -129,7 +129,7 @@ const DayLessonPlan: React.FC = () => {
   }, []);
 
   const handleStartTeaching = () => {
-    navigate(`/grades/lesson-plan/whiteboard/${chapterId}/${day}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`);
+    navigate(`/grades/lesson-plan/whiteboard/${chapterId}/${day}?subject=${subject}&subjectId=${pathData}&chapterName=${encodeURIComponent(chapterName)}`);
   };
 
   const getTotalTime = () => {
@@ -148,11 +148,11 @@ const DayLessonPlan: React.FC = () => {
   }
 
   return (
-    <MainLayout pageTitle={`Chapter ${chapterId}: ${chapterName} - Day ${day}`}>
+    <MainLayout pageTitle={`Chapter ${chapterId}: ${chapterName} - Day ${lessonData.day}`}>
       <div className="space-y-8">
         <Breadcrumb items={breadcrumbItems} />
 
-        <div className="flex items-center justify-between">
+        {/* <div className="flex items-center justify-between">subject
           <div className="flex items-center gap-4">
             <Link
               //to={`/grades/lesson-plan/view/${chapterId}/1?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`}
@@ -163,15 +163,15 @@ const DayLessonPlan: React.FC = () => {
               <span className="font-medium">Back</span>
             </Link>
           </div>
-        </div>
+        </div> */}
 
-        <div className="flex items-center gap-4 mb-6">
+        {/* <div className="flex items-center gap-4 mb-6">
           <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center border border-blue-200">
             <Calculator className="w-8 h-8 text-blue-600" />
           </div>
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900">Chapter {chapterId}: {chapterName}</h1>
-            <p className="text-xl text-blue-600 font-medium">Day {lessonData.day}</p>
+            <h1 className="text-2xl font-bold text-gray-900">Chapter {chapterId}: {chapterName}</h1>
+            <p className="text-lg text-blue-600 font-medium">Day {lessonData.day}</p>
             <div className="flex items-center gap-4 mt-2">
               <div className="flex items-center gap-2">
                 <div className="w-32 h-3 bg-gray-200 rounded-full overflow-hidden">
@@ -180,7 +180,7 @@ const DayLessonPlan: React.FC = () => {
                     style={{ width: `${overallProgress}%` }}
                   />
                 </div>
-                <span className="text-lg font-bold text-gray-900">{overallProgress}%</span>
+                <span className="text-m font-bold text-gray-900">{overallProgress}%</span>
               </div>
               <div className="flex items-center gap-2 text-gray-600">
                 <Clock className="w-4 h-4" />
@@ -188,23 +188,41 @@ const DayLessonPlan: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Topics Section */}
         <Card className="shadow-lg border-0">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span className="text-2xl font-bold text-gray-900">Lesson Plan Activities</span>
+              <div>
+                <span className="text-2xl font-bold text-gray-900">Lesson Plan Activities</span>
+                <div className="flex items-center gap-4 mt-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-32 h-3 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-blue-500 transition-all duration-500"
+                        style={{ width: `${overallProgress}%` }}
+                      />
+                    </div>
+                    <span className="text-sm font-bold text-gray-900">{overallProgress}%</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Clock className="w-4 h-4" />
+                    <span className="text-sm font-medium">Total: {getTotalTime()} minutes</span>
+                  </div>
+                </div>
+              </div>
               <div className="flex items-center gap-3">
-                <Button variant="outline" size="sm" className="text-blue-600 hover:text-blue-800 border-blue-300">
+                {/* <Button variant="outline" size="sm" className="text-blue-600 hover:text-blue-800 border-blue-300">
                   <Printer className="w-4 h-4 mr-2" />
                   Print
                 </Button>
                 <Button variant="outline" size="sm" className="text-green-600 hover:text-green-800 border-green-300">
                   <Download className="w-4 h-4 mr-2" />
                   Download
-                </Button>
-                <Button onClick={handleStartTeaching} className="bg-blue-600 hover:bg-blue-700">
+                </Button> */}
+                {/* onClick={handleStartTeaching} */}
+                <Button className="bg-blue-600 hover:bg-blue-700">
                   <Play className="w-4 h-4 mr-2" />
                   Start
                 </Button>
