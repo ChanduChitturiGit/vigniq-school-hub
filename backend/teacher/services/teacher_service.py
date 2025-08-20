@@ -427,8 +427,8 @@ class TeacherService:
         This method expects the request to contain a 'teacher_id' parameter.
         """
         try:
-            teacher_id = request.data.get('teacher_id', None)
-            school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
+            teacher_id = request.GET.get("teacher_id") or getattr(request.user, 'teacher_id', None) or request.data.get('teacher_id', None)
+            school_id = request.GET.get("school_id") or request.data.get("school_id") or getattr(request.user, 'school_id', None)
 
             if not teacher_id:
                 logger.error("Teacher ID is required to delete a teacher.")

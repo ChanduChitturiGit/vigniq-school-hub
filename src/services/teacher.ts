@@ -30,3 +30,8 @@ export const editTeacher = async (data : any) => {
   return response.data;
 }
 
+//deleteTeacherById
+export const deleteTeacherById = async (data) => {
+  const response = await api.delete(baseurl+suburl+'/deleteTeacherById',{params : data});
+  return response.data;
+}

@@ -28,3 +28,10 @@ export const editStudent = async (data : any): Promise<any> => {
   const response = await api.put<any>(baseurl+suburl+'/updateStudentById', data);
   return response.data;
 };
+
+
+//deleteStudentById
+export const deleteStudentById = async (data) => {
+  const response = await api.delete(baseurl+suburl+'/deleteStudentById',{params : data});
+  return response.data;
+}
