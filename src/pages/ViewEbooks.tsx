@@ -73,6 +73,7 @@ const ViewEbooks: React.FC = () => {
   const years = Array.from({ length: 10 }, (_, i) => (currentYear - i).toString());
   const [viewId, setViewId] = useState(null);
   const [downloadId, setDownloadId] = useState(null);
+  const [isScrolling, setIsScrolling] = useState(true);
 
   // Sample data
   const sampleEbooks: any = sampleData;
@@ -106,10 +107,18 @@ const ViewEbooks: React.FC = () => {
     try {
       setLoader(true);
       const response = await getEbookList(data);
-      if (response && response.data) {
-        setEbooks((prev) => [...prev, ...response.data]);
-        setFilteredEbooks((prev)=> [...prev,...response.data]);
-      }
+      if (response && response.data && !response.message) {
+        if(payload.page === 1) {
+          setEbooks(response.data);
+          setFilteredEbooks(response.data);
+        }
+        else {
+          setEbooks(prev => [...prev, ...response.data]);
+          setFilteredEbooks(prev => [...prev, ...response.data]);
+        }
+      }else if (response && response.message) {
+        setIsScrolling(false);
+      } 
     } catch (error) {
       if (error?.response?.data?.error == 'No eBooks found for the given criteria.') {
         setFilteredEbooks([]);
@@ -140,9 +149,9 @@ const ViewEbooks: React.FC = () => {
     const isBottom =
       container.scrollHeight - container.scrollTop <= container.clientHeight + 50;
 
-    if (isBottom) {
+    if (isBottom && isScrolling) {
       //console.log('End reached');
-      ebookData(payload);
+      ebookData(payload); 
     }
   };
 
