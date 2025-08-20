@@ -65,10 +65,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
   const subject = searchParams.get('subject') || '';
-  const classId = searchParams.get('class_id') || '';
-  const subjectId = location.pathname.split('/').pop()?.split('?')[0] || searchParams.get('subject_id') || '';
-  const schoolId = searchParams.get('school_id') || '';
-  const boardId = searchParams.get('school_board_id') || '';
+  const classId = searchParams.get('class_id') || searchParams.get('classId') || '';
+  const subjectId = searchParams.get('subject_id') || searchParams.get('subjectId') || location.pathname.split('/').pop()?.split('?')[0]  || '';
+  const schoolId = searchParams.get('school_id') || searchParams.get('schoolId') || '';
+  const boardId = searchParams.get('school_board_id') || searchParams.get('boardId') || '';
   const chapterName = searchParams.get('chapterName') || '';
   const pathData = `${subjectId}?class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}&chapterName=${encodeURIComponent(chapterName)}`;
 
