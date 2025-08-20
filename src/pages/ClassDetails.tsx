@@ -68,11 +68,11 @@ const ClassDetails: React.FC = () => {
   // Mock class data
   const sampleClassData = {
     id: id,
-    class_name: 'Class 10',
-    class_number: 0,
-    section: 'A',
-    academicYear: '2024-25',
-    teacher_name: 'John Smith',
+    class_name: '',
+    class_number: null,
+    section: '',
+    academicYear: '',
+    teacher_name: '',
     studends_list: allStudents
   };
   const [classData, setClassData] = useState(sampleClassData);
@@ -89,9 +89,14 @@ const ClassDetails: React.FC = () => {
         { label: 'My School', path: `/school-details/${schoolId}` },
         { label: `Class Details : ${'Class ' + classData.class_number}-${classData.section}` }
       ])
-    } else {
+    } else if(userData == 'admin'){
       setBreadCrumbItems([
         { label: 'My School', path: '/admin-school' },
+        { label: `Class Details : ${'Class ' + classData.class_number}-${classData.section}` }
+      ]);
+    }else{
+      setBreadCrumbItems([
+        { label: 'Home', path: '/dashboard' },
         { label: `Class Details : ${'Class ' + classData.class_number}-${classData.section}` }
       ]);
     }
@@ -125,6 +130,10 @@ const ClassDetails: React.FC = () => {
   useEffect(() => {
     getClass();
   }, [])
+
+  useEffect(() => {
+    setBreadCrumb();
+  }, [classData])
 
   const handleTeacherChange = (value: string) => {
     setFormData((prev) => ({

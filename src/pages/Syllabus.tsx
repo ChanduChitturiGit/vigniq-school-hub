@@ -474,7 +474,7 @@ const Syllabus: React.FC = () => {
       <div className="space-y-8">
         <Breadcrumb items={breadcrumbItems} />
 
-        <div className="flex items-center justify-between">
+        {/* <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-semibold text-gray-900">{subject}</h1>
             <p className="text-lg font-medium text-gray-700 mt-1">{className} {section}</p>
@@ -487,7 +487,7 @@ const Syllabus: React.FC = () => {
             <TrendingUp className="w-5 h-5" />
             View Progress
           </Link>
-        </div>
+        </div> */}
 
         {/* Chapters */}
         <div className="space-y-6">
@@ -522,8 +522,8 @@ const Syllabus: React.FC = () => {
 
                 <CollapsibleContent>
                   <div className="border-t border-gray-200 p-6">
-                    <Tabs defaultValue="topics" className="w-full">
-                      <TabsList className="grid w-full grid-cols-3 mb-6 bg-gray-50 p-1 rounded-lg">
+                    <Tabs defaultValue="topics" className="w-full h-full">
+                      <TabsList className="grid w-full h-full grid-cols-3 mb-6 bg-gray-50 p-1 rounded-lg">
                         <TabsTrigger
                           value="topics"
                           className="text-base py-3 px-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md transition-all"
