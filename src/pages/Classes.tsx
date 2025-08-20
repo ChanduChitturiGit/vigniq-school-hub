@@ -130,7 +130,7 @@ const Classes: React.FC = () => {
                     >
                       <Eye className="w-4 h-4" />
                     </Link>
-                    {user?.role === 'admin' && (
+                    {/* {user?.role === 'admin' && (
                       <button
                         onClick={(e) => {
                           e.preventDefault();
@@ -141,7 +141,7 @@ const Classes: React.FC = () => {
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
-                    )}
+                    )} */}
                   </div>
                 </TableCell>
               </TableRow>
