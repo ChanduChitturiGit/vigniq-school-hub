@@ -49,6 +49,7 @@
   justify-content: center;
   align-items: center;
   z-index: 999;
+  margin: 0;
 }
 
 .spinner-icon {
