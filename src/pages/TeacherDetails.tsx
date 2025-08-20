@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Mail, Phone, Calendar, GraduationCap, BookOpen, Plus, X } from 'lucide-react';
+import { Edit, Mail, Phone, Calendar, GraduationCap, BookOpen, Plus, X,User,Home } from 'lucide-react';
 import { getTeachersById, editTeacher } from '../services/teacher';
 import ClassSectionSubjectInput, { ClassSectionSubjectData } from '../components/ui/class-section-subject-input';
 import { getSubjectsBySchoolId } from '../services/subject';
 import { getClassesBySchoolId } from '@/services/class';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 
 const TeacherDetails: React.FC = () => {
   const { showSnackbar } = useSnackbar();
@@ -29,7 +30,8 @@ const TeacherDetails: React.FC = () => {
     address: '',
     emergencyContact: '',
     subject_assignments: [],
-    school_id : null
+    school_id: null,
+    class: ''
   });
   const [errors, setErrors] = useState({
     teacher_first_name: '',
@@ -42,25 +44,26 @@ const TeacherDetails: React.FC = () => {
   });
   const [breadcrumbItems, setBreadCrumbItems] = useState([
     { label: 'My School', path: '/admin-school' },
-    { label: `Teacher Details - ${formData.teacher_first_name + ' ' + formData.teacher_last_name}` }
+    { label: `Teacher Details` }
   ]);
   const [teachingAssignments, setTeachingAssignments] = useState<ClassSectionSubjectData[]>([{
     class: '', subject: '',
     assignment: undefined
   }]);
-  const [teacherAssignments,seTeacherAssignments] = useState([]);
+  const [teacherAssignments, seTeacherAssignments] = useState([]);
 
   const setBreadCrumb = () => {
+    const teacherName = (formData.teacher_first_name + ' ' + formData.teacher_last_name).toString();
     if (userData.role == 'superadmin') {
       setBreadCrumbItems([
         { label: 'Schools', path: '/schools' },
         { label: 'My School', path: `/school-details/${schoolId}` },
-        { label: `Teacher Details - ${formData.teacher_first_name + ' ' + formData.teacher_last_name}` }
+        { label: `Teacher Details - ${teacherName}` }
       ])
     } else {
       setBreadCrumbItems([
         { label: 'My School', path: '/admin-school' },
-        { label: `Teacher Details - ${formData.teacher_first_name + ' ' + formData.teacher_last_name}` }
+        { label: `Teacher Details - ${teacherName}` }
       ]);
     }
   }
@@ -196,8 +199,14 @@ const TeacherDetails: React.FC = () => {
     getTeacher();
   }, [])
 
-   useEffect(() => {
-    if(!isEditing){
+  useEffect(() => {
+    if (!isEditing) {
+      setBreadCrumb();
+    }
+  }, [formData])
+
+  useEffect(() => {
+    if (!isEditing) {
       getTeacher();
     }
   }, [isEditing])
@@ -250,6 +259,17 @@ const TeacherDetails: React.FC = () => {
     return subjectId;
   }
 
+
+
+  const handleClassChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      class: value,
+      class_id: getClassId(value)
+    }));
+    setErrors(prev => ({ ...prev, class: '' }));
+  };
+
   const handleSave = () => {
     // Simulate API call
     editTeacherData();
@@ -259,7 +279,7 @@ const TeacherDetails: React.FC = () => {
   };
 
   return (
-    <MainLayout pageTitle={`Teacher Details - ${formData.teacher_first_name + ' ' + formData.teacher_last_name}`}>
+    <MainLayout pageTitle={`Teacher Details`}>
       <div className="space-y-6">
         <Breadcrumb items={breadcrumbItems} />
 
@@ -273,7 +293,7 @@ const TeacherDetails: React.FC = () => {
               <div>
                 <h1 className="text-2xl font-bold text-gray-800">{formData.teacher_first_name + ' ' + formData.teacher_last_name}</h1>
                 <p className="text-gray-600">{formData.subject} Teacher</p>
-                <p className="text-sm text-gray-500">Employee ID: T{id?.padStart(4, '0')}</p>
+                {/* <p className="text-sm text-gray-500">Employee ID: T{id?.padStart(4, '0')}</p> */}
               </div>
             </div>
             <button
@@ -304,7 +324,10 @@ const TeacherDetails: React.FC = () => {
                     {errors.teacher_first_name && <p className="text-red-500 text-xs mt-1">{errors.teacher_first_name}</p>}
                   </>
                 ) : (
-                  <p className="text-gray-900">{formData.teacher_first_name}</p>
+                   <div className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-gray-400" />
+                    <p className="text-gray-900">{formData.teacher_first_name}</p>
+                  </div>
                 )}
               </div>
 
@@ -323,7 +346,10 @@ const TeacherDetails: React.FC = () => {
                     {errors.teacher_last_name && <p className="text-red-500 text-xs mt-1">{errors.teacher_last_name}</p>}
                   </>
                 ) : (
-                  <p className="text-gray-900">{formData.teacher_last_name}</p>
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-gray-400" />
+                    <p className="text-gray-900">{formData.teacher_last_name}</p>
+                  </div>
                 )}
               </div>
 
@@ -386,13 +412,43 @@ const TeacherDetails: React.FC = () => {
                     {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
                   </>
                 ) : (
-                  <p className="text-gray-900">{formData.address}</p>
+                  <div className="flex items-center gap-2">
+                    <Home className="w-4 h-4 text-gray-400" />
+                    <p className="text-gray-900">{formData.address}</p>
+                  </div>
                 )}
               </div>
             </div>
 
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Professional Information</h3>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Class Teacher
+                </label>
+                {isEditing ? (
+                  <Select value={formData.class} onValueChange={handleClassChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a Class" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {classes.map((classItem, index) => (
+                        <SelectItem key={index} value={'Class ' + classItem.class_number + ' - ' + classItem.section}>
+                          {'Class ' + classItem.class_number + ' - ' + classItem.section}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-gray-400" />
+                    <p className="text-gray-900">{formData.class}</p>
+                  </div>
+                )
+                }
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Qualification</label>
                 {isEditing ? (
@@ -469,14 +525,14 @@ const TeacherDetails: React.FC = () => {
 
               <div className="space-y-4">
                 {teacherAssignments.map((assignment, index) => (
-                  <div key={index*10} className="flex items-center justify-between gap-2 bg-gray-100 p-2 rounded my-1">
-                    <span>Class :  {'Class '+assignment.class_number+' - '+assignment.section}</span>
+                  <div key={index * 10} className="flex items-center justify-between gap-2 bg-gray-100 p-2 rounded my-1">
+                    <span>Class :  {'Class ' + assignment.class_number + ' - ' + assignment.section}</span>
                     <span>Subject : {assignment.subject_name}</span>
                     <button
                       onClick={() => handleRemoveAssignment(index)}
                       className="text-red-500 hover:text-red-700"
                     >
-                       <X className="w-4 h-4" />
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
                 ))}
@@ -510,26 +566,31 @@ const TeacherDetails: React.FC = () => {
               </button>
             </div>
           )}
+          {/* Assigned Classes */}
+          {
+            !isEditing && (
+              <div className='mt-10'>
+                <h4 className="text-medium font-semibold text-gray-800 mb-4">Assigned Classes</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {formData.subject_assignments.map((classItem) => (
+                    <Link
+                      key={classItem.class_id}
+                      to={`/class-details/${classItem.class_id}`}
+                      className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                    >
+                      <h3 className="font-semibold text-gray-800">
+                        {'Class ' + classItem.class_number + ' - ' + classItem.section}
+                      </h3>
+                      <p className="text-sm text-gray-600">Subject : {classItem.subject_name}</p>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )
+          }
         </div>
 
-        {/* Assigned Classes */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Assigned Classes</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {formData.subject_assignments.map((classItem) => (
-              <Link
-                key={classItem.class_id}
-                to={`/class-details/${classItem.class_id}`}
-                className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
-              >
-                <h3 className="font-semibold text-gray-800">
-                  {'Class ' + classItem.class_number + ' - ' + classItem.section}
-                </h3>
-                <p className="text-sm text-gray-600">Subject : {classItem.subject_name}</p>
-              </Link>
-            ))}
-          </div>
-        </div>
+
       </div>
     </MainLayout>
   );

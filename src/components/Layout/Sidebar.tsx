@@ -251,7 +251,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
           </div>
           {(!isCollapsed || window.innerWidth < 768) && (
             <div className="transition-opacity duration-500 ease-in-out">
-              <span className="text-xl font-bold">VIGNIQ</span>
+              <span className="text-xl font-bold">VIGYS AI</span>
               {isInSubjectContext && subject && (
                 <div className="text-xs text-blue-100 mt-1">
                   {subject} - {className} {section}
