@@ -415,8 +415,8 @@ class StudentService:
     def delete_student_by_id(self, request):
         """Delete a student by their ID."""
         try:
-            school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
-            student_id = request.data.get('student_id')
+            school_id = request.GET.get("school_id") or request.data.get("school_id") or getattr(request.user, 'school_id', None)
+            student_id = request.GET.get("student_id") or request.data.get('student_id')
 
             if not school_id:
                 return JsonResponse({"error": "School ID is required."},
