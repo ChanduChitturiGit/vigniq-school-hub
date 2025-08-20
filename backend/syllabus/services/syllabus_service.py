@@ -52,7 +52,7 @@ class SyllabusService:
                 school_board_id=school_board_id,
                 academic_year_id=academic_year_id,
                 class_number_id=class_number_id
-            )
+            ).order_by('chapter_number')
             chapters_list = []
 
             if chapters.exists():
@@ -220,7 +220,7 @@ class SyllabusService:
                             class_section=school_class
                         )
                     )
-                )
+                ).order_by('chapter_number')
             )
 
             data = []

@@ -56,3 +56,30 @@ export const saveLessonData = async (data: any): Promise<any> => {
   const response = await api.post<any>(baseurl+suburl+'/saveLessonPlan', data);
   return response.data;
 };
+
+
+//save sub topic per lesson
+export const saveTopicByLesson = async (data: any): Promise<any> => {
+  const response = await api.post<any>(baseurl+suburl+'/addSubTopic', data);
+  return response.data;
+};
+
+//edit the sub topic by id
+export const editTopicByLesson = async (data: any): Promise<any> => {
+  const response = await api.put<any>(baseurl+suburl+'/editSubTopicById', data);
+  return response.data;
+};
+
+
+
+// add prerequisite
+export const savePrerequisite = async (data: any): Promise<any> => {
+  const response = await api.post<any>(baseurl+suburl+'/addPrerequisite', data);
+  return response.data;
+}
+
+//edit Prerequisite
+export const editPrerequisiteByLesson = async (data: any): Promise<any> => {
+  const response = await api.put<any>(baseurl+suburl+'/editPrerequisiteById', data);
+  return response.data;
+};

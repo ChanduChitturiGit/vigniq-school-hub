@@ -34,8 +34,8 @@ const UploadEbooks: React.FC = () => {
     subject: '',
     uploadType: '',
     chapter: '',
-    yearString : '',
-    year : null,
+    yearString: '',
+    year: null,
     inputKey: Date.now()
   });
   const [contentPdf, setContentPdf] = useState<File | null>(null);
@@ -57,7 +57,7 @@ const UploadEbooks: React.FC = () => {
   const sampleSubjects = ['Mathematics', 'English', 'Science', 'Physics', 'Chemistry', 'Biology', 'History', 'Geography', 'Hindi', 'Computer Science'];
   const uploadTypes = ['Chapter Wise PDF', 'Single PDF'];
 
-  const [numberList, setNumberList] = useState(Array.from({ length: 20 }, (_, i) => i + 1));
+  const [numberList, setNumberList] = useState(Array.from({ length: 25 }, (_, i) => i + 1));
   const [chapterListData, setChapterListData] = useState([]);
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 10 }, (_, i) => (currentYear - i).toString());
@@ -177,9 +177,9 @@ const UploadEbooks: React.FC = () => {
     } else if (field == 'chapter') {
       setFormData(prev => ({
         ...prev,
-        'chaptchapter_numberer_id': value.split(' ')[1] || null
+        'chapter_number': value.split(' ')[1] || null
       }));
-    }else if (field == 'yearString') {
+    } else if (field == 'yearString') {
       setFormData(prev => ({
         ...prev,
         'year': Number(value)
@@ -311,8 +311,8 @@ const UploadEbooks: React.FC = () => {
             subject: '',
             uploadType: '',
             chapter: '',
-            yearString : '',
-            year : null,
+            yearString: '',
+            year: null,
             inputKey: Date.now()
           });
           setChapterStatus(false);
@@ -334,7 +334,7 @@ const UploadEbooks: React.FC = () => {
         description: error?.response?.data?.error || "Something went wrong",
         status: "error"
       });
-    }finally{
+    } finally {
       setIsUploading(false);
     }
   }
@@ -386,8 +386,8 @@ const UploadEbooks: React.FC = () => {
       subject: '',
       uploadType: '',
       chapter: '',
-      yearString : '',
-      year : null,
+      yearString: '',
+      year: null,
       inputKey: Date.now()
     });
     setContentPdf(null);
@@ -400,195 +400,196 @@ const UploadEbooks: React.FC = () => {
   };
 
   return (
-    <MainLayout ref={bottomRef} pageTitle="Upload E-books">
-      <div className="p-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Upload E-books</h1>
-          <p className="text-gray-600 mt-2">Upload educational materials for students</p>
-        </div>
+    <>
+      <MainLayout ref={bottomRef} pageTitle="Upload E-books">
+        <div className="p-6">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-900">Upload E-books</h1>
+            <p className="text-gray-600 mt-2">Upload educational materials for students</p>
+          </div>
 
-        <Card className="max-w-4xl mx-auto">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">E-book Upload Form</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Board and Class Selection */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Board Name</label>
-                  <Select required value={formData.board} onValueChange={(value) => handleInputChange('board', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Board" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {boards.map((board, index) => (
-                        <SelectItem key={board.id} value={board.name}>{board.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+          <Card className="max-w-4xl mx-auto">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">E-book Upload Form</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Board and Class Selection */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Board Name</label>
+                    <Select required value={formData.board} onValueChange={(value) => handleInputChange('board', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Board" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {boards.map((board, index) => (
+                          <SelectItem key={board.id} value={board.name}>{board.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Class</label>
+                    <Select required value={formData.class} onValueChange={(value) => handleInputChange('class', value)}
+                      disabled={
+                        !formData.board
+                      }
+                    >
+                      <SelectTrigger >
+                        <SelectValue placeholder="Select Class" />
+                      </SelectTrigger>
+                      <SelectContent className="h-64">
+                        {classes.map((cls) => (
+                          <SelectItem key={cls.class_id} value={'Class ' + cls.class_number}>{'Class ' + cls.class_number}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Class</label>
-                  <Select required value={formData.class} onValueChange={(value) => handleInputChange('class', value)}
-                    disabled={
-                      !formData.board
-                    }
-                  >
-                    <SelectTrigger >
-                      <SelectValue placeholder="Select Class" />
-                    </SelectTrigger>
-                    <SelectContent className="h-64">
-                      {classes.map((cls) => (
-                        <SelectItem key={cls.class_id} value={'Class ' + cls.class_number}>{'Class ' + cls.class_number}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Subject Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                    <Select required value={formData.subject} onValueChange={(value) => handleInputChange('subject', value)}
+                      disabled={
+                        !formData.board ||
+                        !formData.class
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Subject" />
+                      </SelectTrigger>
+                      <SelectContent className="h-64">
+                        {subjects.map((subject) => (
+                          <SelectItem key={subject.id} value={subject.name}>{subject.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Subject Selection */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
-                  <Select required value={formData.subject} onValueChange={(value) => handleInputChange('subject', value)}
-                    disabled={
-                      !formData.board ||
-                      !formData.class
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Subject" />
-                    </SelectTrigger>
-                    <SelectContent className="h-64">
-                      {subjects.map((subject) => (
-                        <SelectItem key={subject.id} value={subject.name}>{subject.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                  {/* year */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Year
+                    </label>
+                    <Select value={formData.yearString} onValueChange={(value) => handleInputChange('yearString', value)}
+                      disabled={
+                        !formData.board ||
+                        !formData.class ||
+                        !formData.subject
+                      }>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a year" />
+                      </SelectTrigger>
+                      <SelectContent className='h-64'>
+                        {years.map((val, index) => (
+                          <SelectItem key={index} value={val}>
+                            {val}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                {/* year */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Year
-                  </label>
-                  <Select value={formData.yearString} onValueChange={(value) => handleInputChange('yearString', value)}
-                     disabled={
-                      !formData.board ||
-                      !formData.class || 
-                      !formData.subject
-                    }>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a year" />
-                    </SelectTrigger>
-                    <SelectContent className='h-64'>
-                      {years.map((val, index) => (
-                        <SelectItem key={index} value={val}>
-                          {val}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </div>
 
-              </div>
 
-
-              {/* Upload Type Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Ebook Upload Type</label>
-                <Select required value={formData.uploadType} onValueChange={(value) => handleInputChange('uploadType', value)}
-                  disabled={
-                    !formData.board ||
-                    !formData.class ||
-                    !formData.yearString ||
-                    !formData.subject 
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Upload Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {uploadTypes.map((type) => (
-                      <SelectItem key={type} value={type}>{type}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {formData.uploadType === 'Chapter Wise PDF' && (
+                {/* Upload Type Selection */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Chapter Number</label>
-                  <Select required
-                    value={formData.chapter} // Ensure it's a string
-                    onValueChange={(value) => handleInputChange('chapter', value)} // Convert back to number
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Ebook Upload Type</label>
+                  <Select required value={formData.uploadType} onValueChange={(value) => handleInputChange('uploadType', value)}
                     disabled={
                       !formData.board ||
                       !formData.class ||
                       !formData.yearString ||
-                      !formData.subject ||
-                      !formData.uploadType
+                      !formData.subject
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select chapter number" />
+                      <SelectValue placeholder="Select Upload Type" />
                     </SelectTrigger>
-                    <SelectContent className='h-64'>
-                      {numberList.map((num) => (
-                        <SelectItem key={'chapter ' + num} value={'chapter ' + num}>
-                          {'chapter ' + num}
-                        </SelectItem>
+                    <SelectContent>
+                      {uploadTypes.map((type) => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-              )}
 
-              {/* Conditional File Upload Sections */}
-              {formData.uploadType === 'Single PDF' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Content PDF</label>
-                  <div className="relative">
-                    <Input
-                      type="file"
-                      accept=".pdf"
-                      key={formData.inputKey.toString()}
-                      onChange={handleContentPdfChange}
-                      className="pl-10"
-                      //disabled={isContentPdfUploading}
+                {formData.uploadType === 'Chapter Wise PDF' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Chapter Number</label>
+                    <Select required
+                      value={formData.chapter} // Ensure it's a string
+                      onValueChange={(value) => handleInputChange('chapter', value)} // Convert back to number
                       disabled={
-                        (
-                          !formData.board ||
-                          !formData.class ||
-                          !formData.yearString ||
-                          !formData.subject ||
-                          !formData.uploadType) &&
-                        (isContentPdfUploading)
+                        !formData.board ||
+                        !formData.class ||
+                        !formData.yearString ||
+                        !formData.subject ||
+                        !formData.uploadType
                       }
-                    />
-                    <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select chapter number" />
+                      </SelectTrigger>
+                      <SelectContent className='h-64'>
+                        {numberList.map((num) => (
+                          <SelectItem key={'chapter ' + num} value={'chapter ' + num}>
+                            {'chapter ' + num}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  {contentPdf && (
-                    <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center space-x-2">
-                          <FileText className="h-4 w-4 text-gray-500" />
-                          <span className="text-sm font-medium text-gray-700">{contentPdf.name}</span>
-                          {/* <span className="text-xs text-gray-500">({formatFileSize(contentPdf.size)})</span> */}
+                )}
+
+                {/* Conditional File Upload Sections */}
+                {formData.uploadType === 'Single PDF' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Content PDF</label>
+                    <div className="relative">
+                      <Input
+                        type="file"
+                        accept=".pdf"
+                        key={formData.inputKey.toString()}
+                        onChange={handleContentPdfChange}
+                        className="pl-10"
+                        //disabled={isContentPdfUploading}
+                        disabled={
+                          (
+                            !formData.board ||
+                            !formData.class ||
+                            !formData.yearString ||
+                            !formData.subject ||
+                            !formData.uploadType) &&
+                          (isContentPdfUploading)
+                        }
+                      />
+                      <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    </div>
+                    {contentPdf && (
+                      <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-2">
+                            <FileText className="h-4 w-4 text-gray-500" />
+                            <span className="text-sm font-medium text-gray-700">{contentPdf.name}</span>
+                            {/* <span className="text-xs text-gray-500">({formatFileSize(contentPdf.size)})</span> */}
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={removeContentPdf}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
                         </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={removeContentPdf}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      {/* {(isContentPdfUploading || contentPdfProgress > 0) && (
+                        {/* {(isContentPdfUploading || contentPdfProgress > 0) && (
                         <div className="space-y-1">
                           <Progress value={contentPdfProgress} className="h-2" />
                           <p className="text-xs text-gray-500">
@@ -596,90 +597,90 @@ const UploadEbooks: React.FC = () => {
                           </p>
                         </div>
                       )} */}
-                    </div>
-                  )}
-                </div>
-              )}
+                      </div>
+                    )}
+                  </div>
+                )}
 
-              {formData.uploadType === 'Chapter Wise PDF' && (
-                <>
-                  <div className="space-y-4">
-                    {savedFiles && savedFiles.length > 0 && savedFiles.map((val) => (
-                      <div key={val.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                        <div className="flex items-center justify-between mb-3">
-                          <h4 className="text-sm font-medium text-gray-700">{val.chapter}</h4>
-                        </div>
-                        {val.file && (
-                          <div className="mt-3 p-3 bg-white rounded-lg border">
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center space-x-2">
-                                <FileText className="h-4 w-4 text-gray-500" />
-                                <span className="text-sm font-medium text-gray-700">{val.chapter}</span>
-                                {/* <span className="text-xs text-gray-500">({formatFileSize(chapter.file.size)})</span> */}
+                {formData.uploadType === 'Chapter Wise PDF' && (
+                  <>
+                    <div className="space-y-4">
+                      {savedFiles && savedFiles.length > 0 && savedFiles.map((val) => (
+                        <div key={val.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-sm font-medium text-gray-700">{val.chapter}</h4>
+                          </div>
+                          {val.file && (
+                            <div className="mt-3 p-3 bg-white rounded-lg border">
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center space-x-2">
+                                  <FileText className="h-4 w-4 text-gray-500" />
+                                  <span className="text-sm font-medium text-gray-700">{val.chapter}</span>
+                                  {/* <span className="text-xs text-gray-500">({formatFileSize(chapter.file.size)})</span> */}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="space-y-4">
-                    {chapterFiles && chapterFiles.length > 0 && chapterFiles.map((chapter) => (
-                      <div key={chapter.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                        <div className="flex items-center justify-between mb-3">
-                          <h4 className="text-sm font-medium text-gray-700">{formData.chapter}</h4>
-                          {chapterFiles.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeChapter(chapter.id)}
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
                           )}
                         </div>
-                        <div className="relative">
-                          <Input required
-                            type="file"
-                            accept=".pdf"
-                            key={chapter.inputKey.toString()}
-                            onChange={(e) => handleChapterFileChange(chapter.id, e.target.files?.[0] || null)}
-                            className="pl-10"
-                            disabled={
-                              (
-                                !formData.board ||
-                                !formData.class ||
-                                !formData.yearString ||
-                                !formData.subject ||
-                                !formData.uploadType ||
-                                !formData.chapter
-                              )
-                            }
-                          />
-                          <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        </div>
-                        {chapter.file && (
-                          <div className="mt-3 p-3 bg-white rounded-lg border">
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center space-x-2">
-                                <FileText className="h-4 w-4 text-gray-500" />
-                                <span className="text-sm font-medium text-gray-700">{formData.chapter}</span>
-                                <span className="text-xs text-gray-500">({formatFileSize(chapter.file.size)})</span>
-                              </div>
+                      ))}
+                    </div>
+
+                    <div className="space-y-4">
+                      {chapterFiles && chapterFiles.length > 0 && chapterFiles.map((chapter) => (
+                        <div key={chapter.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-sm font-medium text-gray-700">{formData.chapter}</h4>
+                            {chapterFiles.length > 1 && (
                               <Button
                                 type="button"
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => removeChapterFile(chapter.id)}
+                                onClick={() => removeChapter(chapter.id)}
                                 className="text-red-500 hover:text-red-700"
                               >
                                 <X className="w-4 h-4" />
                               </Button>
-                            </div>
-                            {/* {(chapter.isUploading || chapter.uploadProgress > 0) && (
+                            )}
+                          </div>
+                          <div className="relative">
+                            <Input required
+                              type="file"
+                              accept=".pdf"
+                              key={chapter.inputKey.toString()}
+                              onChange={(e) => handleChapterFileChange(chapter.id, e.target.files?.[0] || null)}
+                              className="pl-10"
+                              disabled={
+                                (
+                                  !formData.board ||
+                                  !formData.class ||
+                                  !formData.yearString ||
+                                  !formData.subject ||
+                                  !formData.uploadType ||
+                                  !formData.chapter
+                                )
+                              }
+                            />
+                            <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                          </div>
+                          {chapter.file && (
+                            <div className="mt-3 p-3 bg-white rounded-lg border">
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center space-x-2">
+                                  <FileText className="h-4 w-4 text-gray-500" />
+                                  <span className="text-sm font-medium text-gray-700">{formData.chapter}</span>
+                                  <span className="text-xs text-gray-500">({formatFileSize(chapter.file.size)})</span>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeChapterFile(chapter.id)}
+                                  className="text-red-500 hover:text-red-700"
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </div>
+                              {/* {(chapter.isUploading || chapter.uploadProgress > 0) && (
                             <div className="space-y-1">
                               <Progress value={chapter.uploadProgress} className="h-2" />
                               <p className="text-xs text-gray-500">
@@ -687,64 +688,70 @@ const UploadEbooks: React.FC = () => {
                               </p>
                             </div>
                           )} */}
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
 
-                    {chapterFiles && chapterFiles.length == 0 &&
-                      chapterStatus && formData.uploadType == 'Chapter Wise PDF' &&
-                      (
-                        <>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={addNewChapter}
-                            className="w-full border-dashed border-blue-300 text-blue-600 hover:bg-blue-50"
-                          >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Add New Chapter
-                          </Button>
-                        </>
-                      )
-                    }
-                  </div>
-                </>
-              )}
+                      {chapterFiles && chapterFiles.length == 0 &&
+                        chapterStatus && formData.uploadType == 'Chapter Wise PDF' &&
+                        (
+                          <>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={addNewChapter}
+                              className="w-full border-dashed border-blue-300 text-blue-600 hover:bg-blue-50"
+                            >
+                              <Plus className="w-4 h-4 mr-2" />
+                              Add New Chapter
+                            </Button>
+                          </>
+                        )
+                      }
+                    </div>
+                  </>
+                )}
 
-              {/* Action Buttons */}
-              <div className="flex justify-end space-x-4 pt-6">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleCancel}
-                  disabled={isUploading}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isUploading}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  {isUploading ? (
-                    <>
-                      <Loader2 className="w-10 h-10 mx-auto text-blue animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4 mr-2" />
-                      Upload Ebook
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    </MainLayout>
+                {/* Action Buttons */}
+                <div className="flex justify-end space-x-4 pt-6">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCancel}
+                    disabled={isUploading}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isUploading}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="w-10 h-10 mx-auto text-blue animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload Ebook
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </MainLayout>
+      {
+        isUploading && (
+          <SpinnerOverlay />
+        )
+      }
+    </>
   );
 };
 

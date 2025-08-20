@@ -77,7 +77,7 @@ const GradesProgress: React.FC = () => {
       payload.class_number_id = payload?.class_id;
       const response = await getProgressBySubject(payload);
       if (response && response.data) {
-        console.log("topics", response);
+        //console.log("topics", response);
         setChaptersProgress(response.data);
       }
     } catch (error) {
@@ -119,34 +119,34 @@ const GradesProgress: React.FC = () => {
       <div className="space-y-8">
         <Breadcrumb items={breadcrumbItems} />
 
-        <div className="flex items-center justify-between">
+        {/* <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link
               to={`/grades/syllabus/${pathData}`}
-              className="flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+              className="flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-m transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
               <span className="font-medium">Back to Syllabus</span>
             </Link>
           </div>
-        </div>
+        </div> */}
 
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-white rounded-xl shadow-md flex items-center justify-center border border-gray-200">
+        {/* <div className="flex items-center gap-4">
+          <div className="w-16 h-16 bg-white rounded-m shadow-md flex items-center justify-center border border-gray-200">
             <SubjectIcon className="w-8 h-8 text-blue-600" />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-gray-900">{subject}</h1>
-            <p className="text-xl text-gray-600">{className} {section}</p>
-            <p className="text-lg text-gray-500">Chapter-wise progress tracking</p>
+            <p className="text-l text-gray-600">{className} {section}</p>
+            <p className="text-m text-gray-500">Chapter-wise progress tracking</p>
           </div>
-        </div>
+        </div> */}
 
         {/* Overall Progress Card */}
         <Card className="shadow-lg border-0 bg-gradient-to-r from-blue-50 to-indigo-50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-3 text-2xl">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+            <CardTitle className="flex items-center gap-3 text-l">
+              <div className="w-8 h-8 bg-blue-100 rounded-m flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-blue-600" />
               </div>
               Overall Progress
@@ -161,7 +161,7 @@ const GradesProgress: React.FC = () => {
                     style={{ width: `${overallProgress}%` }}
                   />
                 </div>
-                <p className="text-lg text-gray-600">
+                <p className="text-m text-gray-600">
                   Average completion across all chapters
                 </p>
               </div>
@@ -175,8 +175,8 @@ const GradesProgress: React.FC = () => {
 
         {/* Chapter Progress */}
         <div className="space-y-6">
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+          <h2 className="text-l font-bold text-gray-900 flex items-center gap-3">
+            <div className="w-10 h-10 bg-green-100 rounded-m flex items-center justify-center">
               <BookOpen className="w-6 h-6 text-green-600" />
             </div>
             Chapter-wise Progress
@@ -188,15 +188,15 @@ const GradesProgress: React.FC = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex-1">
-                      <h3 className="text-xl font-semibold text-gray-900 mb-1">
+                      <h3 className="text-l font-semibold text-gray-900 mb-1">
                         Chapter {''+chapter.chapter_number}
                       </h3>
-                      <p className="text-lg text-gray-600">
+                      <p className="text-m text-gray-600">
                         {chapter.chapter_name}
                       </p>
                     </div>
                     <div className="text-right">
-                      <span className="text-2xl font-bold text-gray-900">
+                      <span className="text-l font-bold text-gray-900">
                         {chapter.progress}%
                       </span>
                     </div>
@@ -226,10 +226,10 @@ const GradesProgress: React.FC = () => {
         </div>
 
         {/* Class Performance Overview */}
-        <Card className="shadow-lg border-0 bg-gradient-to-r from-purple-50 to-pink-50">
+        {/* <Card className="shadow-lg border-0 bg-gradient-to-r from-purple-50 to-pink-50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-3 text-2xl">
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+            <CardTitle className="flex items-center gap-3 text-l">
+              <div className="w-8 h-8 bg-purple-100 rounded-m flex items-center justify-center">
                 <Users className="w-6 h-6 text-purple-600" />
               </div>
               Class Students Overall Performance
@@ -238,7 +238,7 @@ const GradesProgress: React.FC = () => {
           <CardContent>
             <div className="grid grid-cols-3 gap-6">
               {studentPerformance.map((performance, index) => (
-                <div key={index} className="text-center bg-white rounded-xl p-6 shadow-md">
+                <div key={index} className="text-center bg-white rounded-m p-6 shadow-md">
                   <div className={`inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4 ${performance.range === '<60%' ? 'bg-blue-100' :
                       performance.range === '60-80%' ? 'bg-blue-100' : 'bg-blue-100'
                     }`}>
@@ -248,7 +248,7 @@ const GradesProgress: React.FC = () => {
                       {performance.count}
                     </span>
                   </div>
-                  <p className={`text-lg font-bold mb-2 ${performance.range === '<60%' ? 'text-blue-500' :
+                  <p className={`text-m font-bold mb-2 ${performance.range === '<60%' ? 'text-blue-500' :
                       performance.range === '60-80%' ? 'text-blue-600' : 'text-blue-700'
                     }`}>
                     {performance.range}
@@ -260,12 +260,12 @@ const GradesProgress: React.FC = () => {
               ))}
             </div>
             <div className="mt-6 text-center">
-              <p className="text-lg text-gray-600">
+              <p className="text-m text-gray-600">
                 Performance distribution based on overall chapter completion
               </p>
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
     </MainLayout>
   );

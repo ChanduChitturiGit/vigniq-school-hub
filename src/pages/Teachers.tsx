@@ -5,51 +5,95 @@ import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Edit, Plus, Mail, Phone, Search, Users as UsersIcon, LoaderCircle, Grid, List, Eye, Trash2 } from 'lucide-react';
-import { getTeachersBySchoolId } from '../services/teacher';
+import { getTeachersBySchoolId, deleteTeacherById } from '../services/teacher';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
+import { SpinnerOverlay } from '../pages/SpinnerOverlay';
 
 const Teachers: React.FC = () => {
+  const { showSnackbar } = useSnackbar();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [teachers, setTeachers] = useState([]);
   const [loader, setLoader] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
-  
+  const schoolId = JSON.parse(localStorage.getItem("current_school_id"));
+
+
   const getTeachersList = async () => {
     setLoader(true);
-    const response = await getTeachersBySchoolId(userData.school_id);
-    if(response && response.teachers){
+    try {
+      const response = await getTeachersBySchoolId(userData.school_id ? userData.school_id : schoolId);
+      if (response && response.teachers) {
+        setLoader(false);
+        setTeachers(response.teachers);
+      }
+    }catch(error) {
       setLoader(false);
-      setTeachers(response.teachers);
-      console.log("teachers", teachers);
+      console.error('Error fetching teachers:', error);
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
     }
   }
 
   useEffect(() => {
-      getTeachersList();
-    }, []);
+    getTeachersList();
+  }, []);
 
-  let filteredTeachers = searchTerm.length>0 ? teachers.filter(teacher =>
+  let filteredTeachers = searchTerm.length > 0 ? teachers.filter(teacher =>
     (teacher.teacher_first_name && teacher.teacher_first_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    ( teacher.teacher_last_name && teacher.teacher_last_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    ( teacher.subject && teacher.subject.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (  teacher.email && teacher.email.toLowerCase().includes(searchTerm.toLowerCase()) )
+    (teacher.teacher_last_name && teacher.teacher_last_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (teacher.subject && teacher.subject.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (teacher.email && teacher.email.toLowerCase().includes(searchTerm.toLowerCase()))
   ) : teachers;
 
-  const breadcrumbItems = user?.role === 'admin' 
+  const breadcrumbItems = user?.role === 'admin'
     ? [
-        { label: 'School Management', path: '/admin-school' },
-        { label: 'Teachers' }
-      ]
+      { label: 'School Management', path: '/admin-school' },
+      { label: 'Teachers' }
+    ]
     : [
-        { label: 'User Management', path: '/user-management' },
-        { label: 'Teachers' }
-      ];
+     { label: userData.role == 'teacher' ? 'Home' : 'My School', path: (userData.role == 'superadmin' ? `/school-details/${schoolId}` : userData.role == 'admin' ? '/admin-school' : '/dashboard') },
+      { label: 'Teachers' }
+    ];
+
+  // Handle delete action
+  const handleTeacherDelete = async (teacherId: number) => {
+    setLoader(true);
+    try {
+      const response = await deleteTeacherById({ teacher_id: teacherId, school_id: userData.school_id ? userData.school_id : schoolId });
+      if (response && response.message) {
+        showSnackbar({
+          title: "Success",
+          description: "Teacher deleted successfully ✅",
+          status: "success"
+        });
+      } else {
+        showSnackbar({
+          title: "⛔ Error",
+          description: "Something went wrong",
+          status: "error"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }finally {
+      setLoader(false);
+      getTeachersList();
+    }
+  }
 
   const handleDelete = (teacherId: string) => {
     // Delete functionality - you can implement this based on your API
-    console.log('Delete teacher:', teacherId);
+    handleTeacherDelete(Number(teacherId));
   };
 
   const renderGridView = () => (
@@ -68,24 +112,24 @@ const Teachers: React.FC = () => {
                 </span>
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-800">{teacher.teacher_first_name + " "+teacher.teacher_last_name }</h3>
+                <h3 className="text-lg font-semibold text-gray-800">{teacher.teacher_first_name + " " + teacher.teacher_last_name}</h3>
                 <p className="text-sm text-gray-500">{teacher.subject}</p>
               </div>
             </div>
           </div>
-          
+
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Mail className="w-4 h-4 text-gray-400" />
               <p className="text-sm text-gray-600">{teacher.email}</p>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <Phone className="w-4 h-4 text-gray-400" />
               <p className="text-sm text-gray-600">{teacher.phone_number}</p>
             </div>
-            
-            <div>
+
+            {/* <div>
               <p className="text-sm text-gray-500 mb-1">Classes:</p>
               <div className="flex flex-wrap gap-1">
                 {teacher.classes && teacher.classes.map((className, index) => (
@@ -97,13 +141,26 @@ const Teachers: React.FC = () => {
                   </span>
                 ))}
               </div>
-            </div>
+            </div> */}
+
           </div>
-          
-          <div className="mt-4 pt-4 border-t border-gray-100">
+
+          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
             <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
               {teacher.status || 'Active'}
             </span>
+            {(user?.role === 'admin' || user?.role === 'superadmin') && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleDelete(teacher.teacher_id);
+                }}
+                className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                title="Delete Teacher"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </Link>
       ))}
@@ -180,7 +237,7 @@ const Teachers: React.FC = () => {
     <MainLayout pageTitle="teachers">
       <div className="space-y-6">
         <Breadcrumb items={breadcrumbItems} />
-        
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-100 rounded-lg">
@@ -192,22 +249,20 @@ const Teachers: React.FC = () => {
             <div className="flex items-center bg-gray-100 rounded-lg p-1">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-md transition-colors ${
-                  viewMode === 'grid' 
-                    ? 'bg-white text-blue-600 shadow-sm' 
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
+                className={`p-2 rounded-md transition-colors ${viewMode === 'grid'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-800'
+                  }`}
                 title="Grid View"
               >
                 <Grid className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('table')}
-                className={`p-2 rounded-md transition-colors ${
-                  viewMode === 'table' 
-                    ? 'bg-white text-blue-600 shadow-sm' 
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
+                className={`p-2 rounded-md transition-colors ${viewMode === 'table'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-800'
+                  }`}
                 title="Table View"
               >
                 <List className="w-4 h-4" />
@@ -215,7 +270,7 @@ const Teachers: React.FC = () => {
             </div>
             {(user?.role === 'admin' || user?.role === 'superadmin') && (
               <Link
-                to={user?.role === 'admin' ? "/admin-add-teacher" : "/add-teacher"}
+                to={"/admin-add-teacher"}
                 className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
@@ -240,13 +295,13 @@ const Teachers: React.FC = () => {
 
         {viewMode === 'grid' ? renderGridView() : renderTableView()}
 
-        {filteredTeachers.length === 0 && !loader &&(
+        {filteredTeachers.length === 0 && !loader && (
           <div className="text-center py-12">
             <UsersIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Teachers found</h3>
             <p className="text-gray-500">
-              {searchTerm 
-                ? 'Try adjusting your search terms' 
+              {searchTerm
+                ? 'Try adjusting your search terms'
                 : 'No teachers have been added yet.'}
             </p>
           </div>

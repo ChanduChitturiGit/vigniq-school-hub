@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { 
-  Home, 
-  User, 
-  Calendar, 
-  BarChart3, 
-  Settings, 
-  Users, 
+import {
+  Home,
+  User,
+  Calendar,
+  BarChart3,
+  Settings,
+  Users,
   BookOpen,
   GraduationCap,
   School,
@@ -58,11 +58,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
   const [expandedMenus, setExpandedMenus] = useState<{ [key: string]: boolean }>({});
 
   // Check if we're in a subject-specific context
-  const isInSubjectContext = location.pathname.includes('/grades/syllabus/') || location.pathname.includes('/grades/progress/');
-  const subject = searchParams.get('subject') || '';
+  const isInSubjectContext = location.pathname.includes('/grades/syllabus') || location.pathname.includes('/grades/progress/')  || location.pathname.includes('/grades/lesson-plan');
+
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
-  const subjectId = location.pathname.split('/').pop()?.split('?')[0] || '';
+  const subject = searchParams.get('subject') || '';
+  const classId = searchParams.get('class_id') || '';
+  const subjectId = location.pathname.split('/').pop()?.split('?')[0] || searchParams.get('subject_id') || '';
+  const schoolId = searchParams.get('school_id') || '';
+  const boardId = searchParams.get('school_board_id') || '';
+  const chapterName = searchParams.get('chapterName') || '';
+  const pathData = `${subjectId}?class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}&chapterName=${encodeURIComponent(chapterName)}`;
+
 
   const toggleMenu = (menuKey: string) => {
     setExpandedMenus(prev => ({
@@ -72,15 +79,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
   };
 
   const getSubjectSpecificMenuItems = (): MenuItem[] => {
-    const baseSubjectPath = `/grades/syllabus/${subjectId}?class=${className}&section=${section}&subject=${subject}`;
-    const progressPath = `/grades/progress/${subjectId}?class=${className}&section=${section}&subject=${subject}`;
-    
+    const baseSubjectPath = `/grades/syllabus/${pathData}`;
+    const progressPath = `/grades/progress/${pathData}`;
+
     return [
       { path: '/grades', icon: Award, label: 'Grades', roles: ['teacher'] },
       { path: baseSubjectPath, icon: BookOpen, label: 'Syllabus', roles: ['teacher'] },
-      { path: progressPath, icon: TrendingUp, label: 'Progress', roles: ['teacher'] },
-      { path: '#', icon: Plus, label: 'Create', roles: ['teacher'] },
-      { path: '#', icon: UserCheck, label: 'Engage', roles: ['teacher'] }
+      { path: progressPath, icon: TrendingUp, label: 'Progress', roles: ['teacher'] }
+      // { path: '#', icon: Plus, label: 'Create', roles: ['teacher'] },
+      // { path: '#', icon: UserCheck, label: 'Engage', roles: ['teacher'] }
     ];
   };
 
@@ -163,11 +170,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
       helpSubItems.push({ path: '/responses', label: 'Responses', icon: MessageSquare });
     } else {
       helpSubItems.push({ path: '/support', label: 'Support', icon: HelpCircle });
-      
+
       if (user?.role !== 'student') {
         helpSubItems.push({ path: '/admin-requests', label: 'Requests', icon: FileText });
       }
-      
+
       helpSubItems.push({ path: '/responses', label: 'Responses', icon: MessageSquare });
     }
 
@@ -187,15 +194,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
 
   const isActive = (path: string) => {
     if (path === '#') return false;
-    
+
     // For subject-specific paths, match the full path including query params
     if (path.includes('?')) {
-      return location.pathname + location.search === path;
+      return path.includes(location.pathname);
     }
-    
+
     return location.pathname === path;
   };
-  
+
   const isDropdownActive = (subItems: { path: string; label: string }[]) => {
     return subItems.some(subItem => isActive(subItem.path));
   };
@@ -240,23 +247,23 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
   };
 
   return (
-    <div className={`bg-gradient-to-b from-blue-400 to-blue-500 text-white h-screen transition-all duration-500 ease-in-out ${
-      isCollapsed && window.innerWidth >= 768 ? 'w-16' : 'w-64'
-    } flex flex-col`}>
+    <div className={`bg-gradient-to-b from-blue-400 to-blue-500 text-white h-screen transition-all duration-500 ease-in-out ${isCollapsed && window.innerWidth >= 768 ? 'w-16' : 'w-64'
+      } flex flex-col`}>
       {/* Logo Section */}
       <div className="p-4 border-b border-blue-300">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
-            <span className="text-blue-500 font-bold">V</span>
+            {/* <span className="text-blue-500 font-bold">V</span> */}
+            <img src="/assets/logo.png" alt="Logo" className="w-6 h-6 object-contain" />
           </div>
           {(!isCollapsed || window.innerWidth < 768) && (
             <div className="transition-opacity duration-500 ease-in-out">
-              <span className="text-xl font-bold">VIGNIQ</span>
-              {isInSubjectContext && subject && (
+              <span className="text-xl font-bold">VIGYS AI</span>
+              {/* {isInSubjectContext && subject && (
                 <div className="text-xs text-blue-100 mt-1">
                   {subject} - {className} {section}
                 </div>
-              )}
+              )} */}
             </div>
           )}
         </div>
@@ -268,11 +275,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
           {getMenuItems().map((item) => {
             if (item.roles && item.roles.includes(user?.role || '')) {
               const Icon = item.icon;
-              
+
               if ('isDropdown' in item && item.isDropdown) {
                 const isExpanded = expandedMenus[item.key];
                 const isDropdownHighlighted = isDropdownActive(item.subItems);
-                
+
                 return (
                   <li key={item.key}>
                     <button
@@ -283,43 +290,41 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                           toggleMenu(item.key);
                         }
                       }}
-                      className={`w-full flex items-center justify-between gap-3 px-4 py-3 mx-2 rounded-lg transition-all duration-300 ease-in-out ${
-                        isDropdownHighlighted 
-                          ? 'bg-white/20 text-white' 
-                          : 'text-white/80 hover:bg-white/10 hover:text-white'
-                      }`}
+                      className={`w-full flex items-center justify-between gap-3 px-4 py-3 mx-2 rounded-lg transition-all duration-300 ease-in-out ${isDropdownHighlighted
+                        ? 'bg-white/20 text-white'
+                        : 'text-white/80 hover:bg-white/10 hover:text-white'
+                        }`}
                     >
-                       <div className="flex items-center gap-3">
-                         <Icon className="w-5 h-5 flex-shrink-0" />
-                         {(!isCollapsed || window.innerWidth < 768) && (
-                           <span className="truncate transition-opacity duration-500 ease-in-out">{item.label}</span>
-                         )}
-                       </div>
-                       {(!isCollapsed || window.innerWidth < 768) && (
-                         <div className="transition-transform duration-300 ease-in-out">
-                           {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                         </div>
-                       )}
+                      <div className="flex items-center gap-3">
+                        <Icon className="w-5 h-5 flex-shrink-0" />
+                        {(!isCollapsed || window.innerWidth < 768) && (
+                          <span className="truncate transition-opacity duration-500 ease-in-out">{item.label}</span>
+                        )}
+                      </div>
+                      {(!isCollapsed || window.innerWidth < 768) && (
+                        <div className="transition-transform duration-300 ease-in-out">
+                          {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                        </div>
+                      )}
                     </button>
                     {isExpanded && (!isCollapsed || window.innerWidth < 768) && item.subItems && (
                       <ul className="ml-8 mt-1 space-y-1 transition-all duration-300 ease-in-out">
                         {item.subItems.map((subItem) => {
                           const SubIcon = subItem.icon;
                           return (
-                             <li key={subItem.path}>
-                               <Link
-                                 to={subItem.path}
-                                 onClick={handleLinkClick}
-                                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ease-in-out ${
-                                   isActive(subItem.path) 
-                                     ? 'bg-white/20 text-white font-medium' 
-                                     : 'text-white/70 hover:bg-white/10 hover:text-white'
-                                 }`}
-                               >
-                                 {SubIcon && <SubIcon className="w-4 h-4" />}
-                                 {subItem.label}
-                               </Link>
-                             </li>
+                            <li key={subItem.path}>
+                              <Link
+                                to={subItem.path}
+                                onClick={handleLinkClick}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ease-in-out ${isActive(subItem.path)
+                                  ? 'bg-white/20 text-white font-medium'
+                                  : 'text-white/70 hover:bg-white/10 hover:text-white'
+                                  }`}
+                              >
+                                {SubIcon && <SubIcon className="w-4 h-4" />}
+                                {subItem.label}
+                              </Link>
+                            </li>
                           );
                         })}
                       </ul>
@@ -329,29 +334,28 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
               } else {
                 const regularItem = item as RegularMenuItem;
                 return (
-                   <li key={regularItem.path}>
-                     <Link
-                       to={regularItem.path}
-                       onClick={(e) => {
-                         if (isCollapsed && window.innerWidth >= 768) {
-                           e.preventDefault();
-                           handleIconClick(regularItem.path);
-                         } else {
-                           handleLinkClick();
-                         }
-                       }}
-                       className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-all duration-300 ease-in-out ${
-                         isActive(regularItem.path) 
-                           ? 'bg-white/20 text-white font-medium' 
-                           : 'text-white/80 hover:bg-white/10 hover:text-white'
-                       }`}
-                     >
-                       <Icon className="w-5 h-5 flex-shrink-0" />
-                       {(!isCollapsed || window.innerWidth < 768) && (
-                         <span className="truncate transition-opacity duration-500 ease-in-out">{regularItem.label}</span>
-                       )}
-                     </Link>
-                   </li>
+                  <li key={regularItem.path}>
+                    <Link
+                      to={regularItem.path}
+                      onClick={(e) => {
+                        if (isCollapsed && window.innerWidth >= 768) {
+                          e.preventDefault();
+                          handleIconClick(regularItem.path);
+                        } else {
+                          handleLinkClick();
+                        }
+                      }}
+                      className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-all duration-300 ease-in-out ${isActive(regularItem.path)
+                        ? 'bg-white/20 text-white font-medium'
+                        : 'text-white/80 hover:bg-white/10 hover:text-white'
+                        }`}
+                    >
+                      <Icon className="w-5 h-5 flex-shrink-0" />
+                      {(!isCollapsed || window.innerWidth < 768) && (
+                        <span className="truncate transition-opacity duration-500 ease-in-out">{regularItem.label}</span>
+                      )}
+                    </Link>
+                  </li>
                 );
               }
             }

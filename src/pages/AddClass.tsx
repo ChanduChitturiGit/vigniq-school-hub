@@ -369,7 +369,7 @@ const AddClass: React.FC = () => {
             </div>
 
             {/* Class Teacher Field */}
-            <div>
+            <div className='hidden'>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Class Teacher
               </label>

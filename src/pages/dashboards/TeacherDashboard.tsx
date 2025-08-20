@@ -1,42 +1,15 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { BookOpen, Users, Clock, CheckCircle, ArrowRight, ExternalLink } from 'lucide-react';
+import { useSnackbar } from "@/components/snackbar/SnackbarContext";
+import { getHomePageData } from '@/services/home';
+
 
 const TeacherDashboard: React.FC = () => {
-  const stats = [
-    {
-      title: 'My Classes',
-      value: '3',
-      subValue: '85 total students',
-      icon: BookOpen,
-      color: 'bg-blue-500',
-      link: '/classes'
-    },
-    {
-      title: 'Total Students',
-      value: '85',
-      subValue: 'across all classes',
-      icon: Users,
-      color: 'bg-green-500',
-      link: '/students'
-    },
-    {
-      title: 'Pending Requests',
-      value: '7',
-      subValue: 'from students',
-      icon: Clock,
-      color: 'bg-yellow-500',
-      link: '/requests'
-    },
-    {
-      title: 'Completed Today',
-      value: '12',
-      subValue: 'tasks completed',
-      icon: CheckCircle,
-      color: 'bg-purple-500',
-      link: '/requests'
-    }
-  ];
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
+  const { showSnackbar } = useSnackbar();
+  const navigate = useNavigate();
+  const [stats, setStats] = useState([]);
 
   // Mock recent requests from students
   const recentRequests = [
@@ -91,6 +64,65 @@ const TeacherDashboard: React.FC = () => {
     }
   ];
 
+  const [schoolData, setSchoolData] = useState({
+    school_name: '',
+    school_email: '',
+    school_contact_number: '',
+    school_address: ''
+  });
+
+
+  const fetchDashboardData = async () => {
+    try {
+      const response = await getHomePageData();
+      // Process and set the data as needed
+      console.log(response);
+      if (response && response.data) {
+        console.log(response.data);
+        setStats(
+          [
+            {
+              title: 'My Classes',
+              value: response.data.total_classes || 0,
+              subValue: response.data.total_students+' total students',
+              icon: BookOpen,
+              color: 'bg-blue-500',
+              link: '/classes'
+            },
+            {
+              title: 'Total Students',
+              value: response.data.total_students || 0,
+              subValue: 'across all classes',
+              icon: Users,
+              color: 'bg-green-500',
+              link: '/students'
+            }
+          ]
+        )
+      } else {
+        showSnackbar({
+          title: "⛔ Error fetching dashboard data",
+          description: "Please try again later.",
+          status: "error"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error fetching dashboard data",
+        description: "Please try again later.",
+        status: "error"
+      });
+    }
+  }
+
+
+
+
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high': return 'bg-red-100 text-red-800';
@@ -137,10 +169,10 @@ const TeacherDashboard: React.FC = () => {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Requests */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        {/* <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="p-6 border-b border-gray-200 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-800">Recent Requests</h2>
-            <Link 
+            <Link
               to="/requests"
               className="text-blue-600 hover:text-blue-700 p-2 hover:bg-blue-50 rounded-lg transition-colors"
               title="View all requests"
@@ -169,7 +201,7 @@ const TeacherDashboard: React.FC = () => {
                   <ArrowRight className="w-4 h-4 text-gray-400" />
                 </Link>
               ))}
-              
+
               {recentRequests.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -178,13 +210,13 @@ const TeacherDashboard: React.FC = () => {
               )}
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* My Classes */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        {/* <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="p-6 border-b border-gray-200 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-800">My Classes</h2>
-            <Link 
+            <Link
               to="/classes"
               className="text-blue-600 hover:text-blue-700 p-2 hover:bg-blue-50 rounded-lg transition-colors"
               title="View all classes"
@@ -213,7 +245,7 @@ const TeacherDashboard: React.FC = () => {
                   <ArrowRight className="w-4 h-4 text-gray-400" />
                 </Link>
               ))}
-              
+
               {myClasses.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   <BookOpen className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -222,10 +254,12 @@ const TeacherDashboard: React.FC = () => {
               )}
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
 };
+
+
 
 export default TeacherDashboard;

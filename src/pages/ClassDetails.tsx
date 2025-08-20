@@ -68,11 +68,11 @@ const ClassDetails: React.FC = () => {
   // Mock class data
   const sampleClassData = {
     id: id,
-    class_name: 'Class 10',
-    class_number: 0,
-    section: 'A',
-    academicYear: '2024-25',
-    teacher_name: 'John Smith',
+    class_name: '',
+    class_number: null,
+    section: '',
+    academicYear: '',
+    teacher_name: '',
     studends_list: allStudents
   };
   const [classData, setClassData] = useState(sampleClassData);
@@ -89,9 +89,14 @@ const ClassDetails: React.FC = () => {
         { label: 'My School', path: `/school-details/${schoolId}` },
         { label: `Class Details : ${'Class ' + classData.class_number}-${classData.section}` }
       ])
-    } else {
+    } else if (userData == 'admin') {
       setBreadCrumbItems([
         { label: 'My School', path: '/admin-school' },
+        { label: `Class Details : ${'Class ' + classData.class_number}-${classData.section}` }
+      ]);
+    } else {
+      setBreadCrumbItems([
+        { label: 'Home', path: '/dashboard' },
         { label: `Class Details : ${'Class ' + classData.class_number}-${classData.section}` }
       ]);
     }
@@ -118,7 +123,9 @@ const ClassDetails: React.FC = () => {
       setLoader(false);
       setBreadCrumb();
     }
-    getTeachers();
+    if (userData.role != 'teacher') {
+      getTeachers();
+    }
     setBreadCrumb();
   }
 
@@ -126,11 +133,15 @@ const ClassDetails: React.FC = () => {
     getClass();
   }, [])
 
+  useEffect(() => {
+    setBreadCrumb();
+  }, [classData])
+
   const handleTeacherChange = (value: string) => {
     setFormData((prev) => ({
       ...prev,
       teacher_name: value,
-      teacher_id : getClassId(value)
+      teacher_id: getClassId(value)
     }));
   };
 
@@ -230,13 +241,17 @@ const ClassDetails: React.FC = () => {
                   </button>
                 )}
               </>
-              <button
-                onClick={() => setIsEditing(!isEditing)}
-                className="flex items-center gap-2 px-4 py-2 mx-4 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              >
-                <Edit className="w-4 h-4" />
-                {isEditing ? 'Cancel' : 'Edit'}
-              </button>
+              {
+                userData.role != 'teacher' && (
+                  <button
+                    onClick={() => setIsEditing(!isEditing)}
+                    className="flex items-center gap-2 px-4 py-2 mx-4 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  >
+                    <Edit className="w-4 h-4" />
+                    {isEditing ? 'Cancel' : 'Edit'}
+                  </button>
+                )
+              }
             </div>
           </div>
 

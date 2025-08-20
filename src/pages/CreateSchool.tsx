@@ -10,6 +10,7 @@ import { createSchool as createSchoolApi, getBoardsList } from '../services/scho
 import { SpinnerOverlay } from '../pages/SpinnerOverlay';
 import Select, { ActionMeta, MultiValue } from 'react-select';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
+import path from 'path';
 
 type OptionType = {
   label: string;
@@ -63,7 +64,7 @@ const CreateSchool: React.FC = () => {
     { boardId: 5, boardName: 'IB' }
   ];
   const breadcrumbItems = [
-    { label: 'School Management' },
+    { label: 'Home', path: '/dashboard' },
     { label: 'Create School' }
   ];
   const currentYear = new Date().getFullYear();
@@ -279,241 +280,242 @@ const CreateSchool: React.FC = () => {
   };
 
   return (
-    <MainLayout pageTitle="Create School">
-      <div className="max-w-2xl mx-auto">
-        <Breadcrumb items={breadcrumbItems} />
+    <>
+      <MainLayout pageTitle="Create School">
+        <div className="max-w-2xl mx-auto">
+          <Breadcrumb items={breadcrumbItems} />
 
-        <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200">
-          <h1 className="text-2xl font-bold text-gray-800 mb-6">Create New School</h1>
+          <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200">
+            <h1 className="text-2xl font-bold text-gray-800 mb-6">Create New School</h1>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* School Information */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-gray-700 border-b pb-2">School Information</h2>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">School Name</label>
-                <input
-                  type="text"
-                  name="schoolName"
-                  value={formData.schoolName}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                {errors.schoolName && <p className="text-red-500 text-sm mt-1">{errors.schoolName}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Board</label>
-                <div className="space-y-2">
-                  <Select<OptionType, true>
-                    isMulti
-                    options={boards}
-                    onChange={handleBoardChange}
-                    className="basic-multi-select"
-                    classNamePrefix="select"
-                    placeholder="Select Boards"
-                    value={formData.selectedBoards}
-                  />
-                </div>
-                {errors.selectedBoards && <p className="text-red-500 text-sm mt-1">{errors.selectedBoards}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Academic Start Year
-                </label>
-                <UISelect value={formData.academic_start_year} onValueChange={handleStartYearChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a teacher" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {years.map((val, index) => (
-                      <SelectItem key={index} value={val}>
-                        {val}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </UISelect>
-                {errors.academic_start_year && <p className="text-red-500 text-sm mt-1">{errors.academic_start_year}</p>}
-              </div>
-
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Academic End Year
-                </label>
-                <UISelect value={formData.academic_end_year} onValueChange={handleEndYearChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a teacher" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {endYears.map((val, index) => (
-                      <SelectItem key={index} value={val}>
-                        {val}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </UISelect>
-                {errors.academic_end_year && <p className="text-red-500 text-sm mt-1">{errors.academic_end_year}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
-                <textarea
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
-                </div>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* School Information */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-gray-700 border-b pb-2">School Information</h2>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-                </div>
-              </div>
-            </div>
-
-            {/* Admin Information */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-gray-700 border-b pb-2">Admin Information</h2>
-
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Admin First Name</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">School Name</label>
                   <input
                     type="text"
-                    name="adminFirstName"
-                    value={formData.adminFirstName}
+                    name="schoolName"
+                    value={formData.schoolName}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  {errors.adminFirstName && <p className="text-red-500 text-sm mt-1">{errors.adminFirstName}</p>}
+                  {errors.schoolName && <p className="text-red-500 text-sm mt-1">{errors.schoolName}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Admin Last Name</label>
-                  <input
-                    type="text"
-                    name="adminLastName"
-                    value={formData.adminLastName}
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Board</label>
+                  <div className="space-y-2">
+                    <Select<OptionType, true>
+                      isMulti
+                      options={boards}
+                      onChange={handleBoardChange}
+                      className="basic-multi-select"
+                      classNamePrefix="select"
+                      placeholder="Select Boards"
+                      value={formData.selectedBoards}
+                    />
+                  </div>
+                  {errors.selectedBoards && <p className="text-red-500 text-sm mt-1">{errors.selectedBoards}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Academic Start Year
+                  </label>
+                  <UISelect value={formData.academic_start_year} onValueChange={handleStartYearChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a teacher" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {years.map((val, index) => (
+                        <SelectItem key={index} value={val}>
+                          {val}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </UISelect>
+                  {errors.academic_start_year && <p className="text-red-500 text-sm mt-1">{errors.academic_start_year}</p>}
+                </div>
+
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Academic End Year
+                  </label>
+                  <UISelect value={formData.academic_end_year} onValueChange={handleEndYearChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a teacher" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {endYears.map((val, index) => (
+                        <SelectItem key={index} value={val}>
+                          {val}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </UISelect>
+                  {errors.academic_end_year && <p className="text-red-500 text-sm mt-1">{errors.academic_end_year}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                  <textarea
+                    name="address"
+                    value={formData.address}
                     onChange={handleChange}
                     onBlur={handleBlur}
+                    rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  {errors.adminLastName && <p className="text-red-500 text-sm mt-1">{errors.adminLastName}</p>}
+                  {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+                  </div>
                 </div>
               </div>
 
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Admin Email</label>
-                  <input
-                    type="email"
-                    name="adminEmail"
-                    value={formData.adminEmail}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  {errors.adminEmail && <p className="text-red-500 text-sm mt-1">{errors.adminEmail}</p>}
+              {/* Admin Information */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-gray-700 border-b pb-2">Admin Information</h2>
+
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Admin First Name</label>
+                    <input
+                      type="text"
+                      name="adminFirstName"
+                      value={formData.adminFirstName}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {errors.adminFirstName && <p className="text-red-500 text-sm mt-1">{errors.adminFirstName}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Admin Last Name</label>
+                    <input
+                      type="text"
+                      name="adminLastName"
+                      value={formData.adminLastName}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {errors.adminLastName && <p className="text-red-500 text-sm mt-1">{errors.adminLastName}</p>}
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Admin Phone</label>
-                  <input
-                    type="tel"
-                    name="adminPhone"
-                    value={formData.adminPhone}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  {errors.adminPhone && <p className="text-red-500 text-sm mt-1">{errors.adminPhone}</p>}
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Admin Email</label>
+                    <input
+                      type="email"
+                      name="adminEmail"
+                      value={formData.adminEmail}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {errors.adminEmail && <p className="text-red-500 text-sm mt-1">{errors.adminEmail}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Admin Phone</label>
+                    <input
+                      type="tel"
+                      name="adminPhone"
+                      value={formData.adminPhone}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {errors.adminPhone && <p className="text-red-500 text-sm mt-1">{errors.adminPhone}</p>}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Admin User Name</label>
+                    <input
+                      type="text"
+                      name="adminUserName"
+                      value={formData.adminUserName}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {errors.adminUserName && <p className="text-red-500 text-sm mt-1">{errors.adminUserName}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Admin Password</label>
+                    <PasswordInput
+                      value={formData.adminPassword}
+                      onChange={handlePasswordChange}
+                      placeholder="Enter admin password"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {errors.adminPassword && <p className="text-red-500 text-sm mt-1">{errors.adminPassword}</p>}
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Admin User Name</label>
-                  <input
-                    type="text"
-                    name="adminUserName"
-                    value={formData.adminUserName}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  {errors.adminUserName && <p className="text-red-500 text-sm mt-1">{errors.adminUserName}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Admin Password</label>
-                  <PasswordInput
-                    value={formData.adminPassword}
-                    onChange={handlePasswordChange}
-                    placeholder="Enter admin password"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  {errors.adminPassword && <p className="text-red-500 text-sm mt-1">{errors.adminPassword}</p>}
-                </div>
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="submit"
+                  className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  Create School
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate('/dashboard')}
+                  className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors"
+                >
+                  Cancel
+                </button>
               </div>
-            </div>
-
-            <div className="flex gap-4 pt-4">
-              <button
-                type="submit"
-                className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-              >
-                Create School
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate('/schools')}
-                className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
-      </div>
-
+      </MainLayout>
       {
         loader && (
           <SpinnerOverlay />
         )
       }
-    </MainLayout>
+    </>
   );
 };
 

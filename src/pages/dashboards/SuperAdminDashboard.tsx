@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect,useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   School, 
@@ -11,20 +11,26 @@ import {
   Clock,
   UserCheck,
   Settings,
-  BarChart3
+  BarChart3,
+  BookOpen
 } from 'lucide-react';
+import { useSnackbar } from "@/components/snackbar/SnackbarContext";
+import {getHomePageData} from '@/services/home';
+
 
 const SuperAdminDashboard: React.FC = () => {
   // Mock data for demonstration
-  const stats = {
-    totalSchools: 25,
-    totalUsers: 2450,
+  const { showSnackbar } = useSnackbar();
+  const [stats,setStats] = useState({
+    total_schools: 0,
+    total_active_users: 0,
+    total_ebooks: 0,
     totalAdmins: 35,
     activeSchools: 23,
     pendingRequests: 8,
     completedRequests: 156,
     inProgressRequests: 12
-  };
+  });
 
   const recentActivities = [
     {
@@ -61,6 +67,34 @@ const SuperAdminDashboard: React.FC = () => {
     }
   ];
 
+
+  const fetchDashboardData = async () => {
+    try {
+      const response = await getHomePageData();
+      // Process and set the data as needed
+      console.log(response);
+      if (response && response.data) {
+        setStats(response.data);
+      } else {
+        showSnackbar({
+          title: "⛔ Error fetching dashboard data",
+          description: "Please try again later.",
+          status: "error"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error fetching dashboard data",
+        description: "Please try again later.",
+        status: "error"
+      });
+    }
+  }
+
+  useEffect(() => {   
+    fetchDashboardData();
+  }, []);
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -87,14 +121,14 @@ const SuperAdminDashboard: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Schools</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{stats.totalSchools}</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{stats.total_schools}</p>
               </div>
               <div className="p-3 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors duration-200">
                 <School className="w-6 h-6 text-blue-600" />
               </div>
             </div>
             <div className="flex items-center mt-4 text-sm">
-              <span className="text-green-600 font-medium">{stats.activeSchools} active</span>
+              <span className="text-green-600 font-medium">{stats.activeSchools ?? stats.total_schools} active</span>
               <span className="text-gray-500 ml-2">schools running</span>
             </div>
           </div>
@@ -104,16 +138,16 @@ const SuperAdminDashboard: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Users</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{stats.totalUsers.toLocaleString()}</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">{stats.total_active_users.toLocaleString()}</p>
             </div>
             <div className="p-3 bg-green-100 rounded-lg">
               <Users className="w-6 h-6 text-green-600" />
             </div>
           </div>
           <div className="flex items-center mt-4 text-sm">
-            <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-            <span className="text-green-600 font-medium">+12%</span>
-            <span className="text-gray-500 ml-2">vs last month</span>
+            {/* <TrendingUp className="w-4 h-4 text-green-500 mr-1" /> */}
+            <span className="text-green-600 font-medium">{stats.total_active_users}</span>
+            <span className="text-gray-500 ml-2">active users</span>
           </div>
         </div>
 
@@ -132,26 +166,26 @@ const SuperAdminDashboard: React.FC = () => {
           </div>
         </div> */}
 
-        <Link to="/admin-requests" className="group">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+        <Link to="/view-ebooks" className="group">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 min-h-[9.35rem]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Pending Requests</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{stats.pendingRequests}</p>
+                <p className="text-sm font-medium text-gray-600">E-Books</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{stats.total_ebooks}</p>
               </div>
               <div className="p-3 bg-yellow-100 rounded-lg group-hover:bg-yellow-200 transition-colors duration-200">
-                <Clock className="w-6 h-6 text-yellow-600" />
+                <BookOpen className="w-6 h-6 text-yellow-600" />
               </div>
             </div>
-            <div className="flex items-center mt-4 text-sm">
+            {/* <div className="flex items-center mt-4 text-sm">
               <span className="text-yellow-600 font-medium">Needs attention</span>
-            </div>
+            </div> */}
           </div>
         </Link>
       </div>
 
       {/* Request Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Link to="/admin-requests" className="group">
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
             <div className="flex items-center gap-4">
@@ -192,7 +226,7 @@ const SuperAdminDashboard: React.FC = () => {
       </div>
 
       {/* Recent Activities */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+      <div className="hidden bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">Recent System Activities</h2>
         </div>
@@ -240,11 +274,11 @@ const SuperAdminDashboard: React.FC = () => {
             </Link>
             
             <Link
-              to="/admin-requests"
+              to="/view-ebooks"
               className="flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-yellow-300 hover:bg-yellow-50 transition-all duration-200 group"
             >
-              <AlertCircle className="w-5 h-5 text-gray-600 group-hover:text-yellow-600" />
-              <span className="font-medium text-gray-700 group-hover:text-yellow-700">View Requests</span>
+              <BookOpen className="w-5 h-5 text-gray-600 group-hover:text-yellow-600" />
+              <span className="font-medium text-gray-700 group-hover:text-yellow-700">View E-Books</span>
             </Link>
             
             <Link

@@ -8,14 +8,17 @@ import { getClasses } from '../data/classes';
 import { Users, Plus, Search, BookOpen, LoaderCircle, Grid, List, Eye, Trash2 } from 'lucide-react';
 import { getClassesBySchoolId } from '@/services/class';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
 
 const Classes: React.FC = () => {
+  const { showSnackbar } = useSnackbar();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [classes, setClasses] = useState([]);
   const [loader, setLoader] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
+  const schoolId = JSON.parse(localStorage.getItem("current_school_id"));
 
   const filteredClasses = classes.filter(classItem =>
     (classItem.class_number && classItem.class_number.toString().toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -29,13 +32,13 @@ const Classes: React.FC = () => {
       { label: 'Classes' }
     ]
     : [
-      { label: 'School Management' },
+       { label: userData.role == 'teacher' ? 'Home' : 'My School', path: (userData.role == 'superadmin' ? `/school-details/${schoolId}` : userData.role == 'admin' ? '/admin-school' : '/dashboard') },
       { label: 'Classes' }
     ];
 
   const getClasses = async () => {
     setLoader(true);
-    const classesData = await getClassesBySchoolId(userData.school_id);
+    const classesData = await getClassesBySchoolId(userData.school_id ? userData.school_id : schoolId);
     if (classesData && classesData.classes) {
       setLoader(false);
       setClasses(classesData.classes);
