@@ -25,14 +25,13 @@ class CoreConfig(AppConfig):
                 print(f"[REDIS] New DB creation detected: {db_key}")
                 try:
                     loader = DbLoader()
-                    school_db_metadata = SchoolDbMetadata.objects.get(db_name=db_key)
-                    loader.load_dynamic_databases(school_db_metadata.db_name,
+                    loader.load_dynamic_databases(db_key,
                                                   engine=settings.DB_CONFIG['ENGINE'],
-                                                  name=school_db_metadata.db_name,
-                                                  user=school_db_metadata.db_user,
-                                                  password=school_db_metadata.db_password,
-                                                  host=school_db_metadata.db_host,
-                                                  port=school_db_metadata.db_port)
+                                                  name=db_key,
+                                                  user=settings.DB_CONFIG['USER'],
+                                                  password=settings.DB_CONFIG['PASSWORD'],
+                                                  host=settings.DB_CONFIG['HOST'],
+                                                  port=settings.DB_CONFIG['PORT'])
                     print(f"[REDIS] Databases reloaded successfully.")
                 except Exception as e:
                     print(f"[REDIS ERROR] Could not reload databases: {e}")

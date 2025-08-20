@@ -44,6 +44,7 @@ class TeacherService:
             school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
             gender = request.data.get('gender',None)
             address = request.data.get('address')
+            permanent_address = request.data.get('permanent_address')
             subject_assignments = request.data.get('subject_assignments', [])
             qualification = request.data.get('qualification', None)
             experience = request.data.get('experience', None)
@@ -377,7 +378,7 @@ class TeacherService:
             #     logger.error(f"Academic Year with ID {academic_year_id} does not exist.")
             #     return JsonResponse({"error": "Academic Year not found."}, status=404)
 
-            teachers = Teacher.objects.using(school_db_name).all()
+            teachers = Teacher.objects.using(school_db_name).filter(is_active=True)
             teacher_list = []
 
             for teacher in teachers:

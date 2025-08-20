@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 //   DialogTrigger,
 // } from '../components/ui/dialog';
 import { getBoardsList } from '../services/school'
-import { getEbookList } from '../services/ebooks'
+import { getEbookList,deleteEbookById } from '../services/ebooks'
 import { getClassesList } from '../services/class'
 import { getSubjectsList } from '../services/subject'
 import { SpinnerOverlay } from '../pages/SpinnerOverlay';
@@ -73,6 +73,7 @@ const ViewEbooks: React.FC = () => {
   const years = Array.from({ length: 10 }, (_, i) => (currentYear - i).toString());
   const [viewId, setViewId] = useState(null);
   const [downloadId, setDownloadId] = useState(null);
+  const [isScrolling, setIsScrolling] = useState(true);
 
   // Sample data
   const sampleEbooks: any = sampleData;
@@ -106,10 +107,18 @@ const ViewEbooks: React.FC = () => {
     try {
       setLoader(true);
       const response = await getEbookList(data);
-      if (response && response.data) {
-        setEbooks(response.data);
-        setFilteredEbooks(response.data);
-      }
+      if (response && response.data && !response.message) {
+        if(payload.page === 1) {
+          setEbooks(response.data);
+          setFilteredEbooks(response.data);
+        }
+        else {
+          setEbooks(prev => [...prev, ...response.data]);
+          setFilteredEbooks(prev => [...prev, ...response.data]);
+        }
+      }else if (response && response.message) {
+        setIsScrolling(false);
+      } 
     } catch (error) {
       if (error?.response?.data?.error == 'No eBooks found for the given criteria.') {
         setFilteredEbooks([]);
@@ -124,28 +133,57 @@ const ViewEbooks: React.FC = () => {
     setLoader(false);
   }
 
+  const deleteEbook = async (ebookId: string) => {
+    try {
+      const response = await deleteEbookById({ ebook_id: ebookId });
+      if (response && response.message) {
+        setEbooks(prev => prev.filter(ebook => ebook.id !== ebookId));
+        setFilteredEbooks(prev => prev.filter(ebook => ebook.id !== ebookId));
+        showSnackbar({
+          title: "Success",
+          description: "E-book deleted successfully",
+          status: "success"
+        });
+      } else {
+        showSnackbar({
+          title: "⛔ Error",
+          description: response.message || "Failed to delete e-book",
+          status: "error"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
   useEffect(() => {
     boardsList();
     classList();
     subjectsList();
-    setEbooks(sampleEbooks);
+    //setEbooks(sampleEbooks);
     // setFilteredEbooks(sampleEbooks);
-    ebookData(payload);
+    ebookData({...payload, page: payload.page+1 });
   }, []);
 
+  const handleScroll = () => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const isBottom =
+      container.scrollHeight - container.scrollTop <= container.clientHeight + 50;
+
+    if (isBottom && isScrolling) {
+      //console.log('End reached');
+      ebookData(payload); 
+    }
+  };
+
   useEffect(() => {
-    const handleScroll = () => {
-      const container = scrollContainerRef.current;
-      if (!container) return;
-
-      const isBottom =
-        container.scrollHeight - container.scrollTop <= container.clientHeight + 50;
-
-      if (isBottom) {
-        console.log('End reached');
-      }
-    };
-
+    
     const container = scrollContainerRef.current;
     container?.addEventListener('scroll', handleScroll);
 
@@ -204,7 +242,7 @@ const ViewEbooks: React.FC = () => {
     }
   };
 
-  const handleView = async (ebook: any,index:any) => {
+  const handleView = async (ebook: any, index: any) => {
     setViewLoader(true);
     setViewId(index);
     // setSelectedEbook(ebook);
@@ -218,7 +256,7 @@ const ViewEbooks: React.FC = () => {
 
   };
 
-  const handleDownload = async (ebook: any,index : any) => {
+  const handleDownload = async (ebook: any, index: any) => {
     // Simulate download
     setDownloadId(index);
     setDownloadLoader(true);
@@ -260,11 +298,20 @@ const ViewEbooks: React.FC = () => {
 
 
   const handleDelete = (ebookId: string) => {
+    // if (user?.role === 'superadmin') {
+    //   setEbooks(prev => prev.filter(ebook => ebook.id !== ebookId));
+    //   toast.success('E-book deleted successfully');
+    // } else {
+    //   toast.error('Only super admin can delete e-books');
+    // }
     if (user?.role === 'superadmin') {
-      setEbooks(prev => prev.filter(ebook => ebook.id !== ebookId));
-      toast.success('E-book deleted successfully');
+      deleteEbook(ebookId);
     } else {
-      toast.error('Only super admin can delete e-books');
+      showSnackbar({
+        title: "⛔ Error",
+        description: "Only super admin can delete e-books",
+        status: "error"
+      });
     }
   };
 
@@ -375,7 +422,7 @@ const ViewEbooks: React.FC = () => {
 
         {/* E-books Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {Array.isArray(filteredEbooks) && filteredEbooks.map((ebook,index) => (
+          {Array.isArray(filteredEbooks) && filteredEbooks.map((ebook, index) => (
             <Card key={ebook.id} className="hover:shadow-lg transition-shadow">
               <CardContent className="p-6">
                 <div className="flex flex-col items-center text-center">
@@ -398,7 +445,7 @@ const ViewEbooks: React.FC = () => {
                       variant="outline"
                       size="sm"
                       className="flex-1 text-blue-600 hover:bg-green-50"
-                      onClick={() => handleView(ebook,index)}
+                      onClick={() => handleView(ebook, index)}
                     >
                       {viewLoader && viewId == index ? (<Loader2 className="w-10 h-10 mx-auto text-blue animate-spin" />) : (<Eye className="w-4 h-4 mr-1" />)}
                     </Button>
@@ -407,7 +454,7 @@ const ViewEbooks: React.FC = () => {
                       variant="outline"
                       size="sm"
                       className="flex-1 text-green-600 hover:bg-green-50"
-                      onClick={() => handleDownload(ebook,index)}
+                      onClick={() => handleDownload(ebook, index)}
                     >
                       {downloadLoader && downloadId == index ? (<Loader2 className="w-10 h-10 mx-auto text-blue animate-spin" />) : (<Download className="w-4 h-4 mr-1" />)}
                     </Button>

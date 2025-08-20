@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Search, Plus, X, GraduationCap, LoaderCircle, Save } from 'lucide-react';
+import { Edit, Search, Plus, X, GraduationCap, LoaderCircle, Save, Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { getClassesById, editClass } from '../services/class'
 import { getTeachersBySchoolId } from '../services/teacher'
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
+import { deleteStudentById } from '@/services/student';
 
 const ClassDetails: React.FC = () => {
   const { showSnackbar } = useSnackbar();
@@ -89,12 +90,12 @@ const ClassDetails: React.FC = () => {
         { label: 'My School', path: `/school-details/${schoolId}` },
         { label: `Class Details : ${'Class ' + classData.class_number}-${classData.section}` }
       ])
-    } else if(userData == 'admin'){
+    } else if (userData == 'admin') {
       setBreadCrumbItems([
         { label: 'My School', path: '/admin-school' },
         { label: `Class Details : ${'Class ' + classData.class_number}-${classData.section}` }
       ]);
-    }else{
+    } else {
       setBreadCrumbItems([
         { label: 'Home', path: '/dashboard' },
         { label: `Class Details : ${'Class ' + classData.class_number}-${classData.section}` }
@@ -123,7 +124,9 @@ const ClassDetails: React.FC = () => {
       setLoader(false);
       setBreadCrumb();
     }
-    getTeachers();
+    if (userData.role != 'teacher') {
+      getTeachers();
+    }
     setBreadCrumb();
   }
 
@@ -139,7 +142,7 @@ const ClassDetails: React.FC = () => {
     setFormData((prev) => ({
       ...prev,
       teacher_name: value,
-      teacher_id : getClassId(value)
+      teacher_id: getClassId(value)
     }));
   };
 
@@ -182,6 +185,30 @@ const ClassDetails: React.FC = () => {
     student.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     student.roll_number.includes(searchTerm)
   );
+
+  const deleteStudent = async (studentId: string) => {
+    setLoader(true);
+    try {
+      const response = await deleteStudentById({ student_id: studentId, school_id: userData.school_id });
+      if (response && response.message) {
+        // setStudents(students.filter(student => student.student_id !== studentId));
+        showSnackbar({
+          title: "✅ Success",
+          description: "Student deleted successfully",
+          status: "success"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    } finally {
+      setLoader(false);
+      getClass();
+    }
+  }
 
 
 
@@ -239,13 +266,17 @@ const ClassDetails: React.FC = () => {
                   </button>
                 )}
               </>
-              <button
-                onClick={() => setIsEditing(!isEditing)}
-                className="flex items-center gap-2 px-4 py-2 mx-4 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              >
-                <Edit className="w-4 h-4" />
-                {isEditing ? 'Cancel' : 'Edit'}
-              </button>
+              {
+                userData.role != 'teacher' && (
+                  <button
+                    onClick={() => setIsEditing(!isEditing)}
+                    className="flex items-center gap-2 px-4 py-2 mx-4 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  >
+                    <Edit className="w-4 h-4" />
+                    {isEditing ? 'Cancel' : 'Edit'}
+                  </button>
+                )
+              }
             </div>
           </div>
 
@@ -318,7 +349,7 @@ const ClassDetails: React.FC = () => {
                   }}
                   className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
                 >
-                  <Edit className="w-4 h-4" />
+                  {/* <Edit className="w-4 h-4" /> */}
                 </button>
               </div>
 
@@ -337,10 +368,22 @@ const ClassDetails: React.FC = () => {
                 </div>
               </div>
 
-              <div className="mt-4 pt-4 border-t border-gray-100">
+              <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between ">
                 <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                   {student.status || 'active'}
                 </span>
+                {(
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      deleteStudent(student.student_id);
+                    }}
+                    className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Delete Class"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </Link>
           ))}
