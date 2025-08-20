@@ -191,7 +191,7 @@ const AIChatLessonPlan: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link
-              to={ `/grades/syllabus/${pathData}`}
+              to={`/grades/syllabus/${pathData}`}
               className="flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -200,7 +200,7 @@ const AIChatLessonPlan: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 mb-6">
+        {/* <div className="flex items-center gap-4 mb-6">
           <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center border border-blue-200">
             <Calculator className="w-8 h-8 text-blue-600" />
           </div>
@@ -209,7 +209,7 @@ const AIChatLessonPlan: React.FC = () => {
             <p className="text-xl text-blue-600 font-medium">Chapter {chapterId}: {chapterName} - Day {dayCount}</p>
             <p className="text-lg text-gray-500">{className} {section}</p>
           </div>
-        </div>
+        </div>  */}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Chat Section */}
@@ -297,12 +297,12 @@ const AIChatLessonPlan: React.FC = () => {
               <CardContent className="flex-1 p-0 min-h-0">
                 <ScrollArea className="h-full">
                   <div className="p-6 space-y-4">
-                    {activities.map((activity,index) => (
+                    {activities.map((activity, index) => (
                       <div key={activity.serialNumber} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                         <div className="flex items-start gap-3">
                           <div className="flex-shrink-0">
                             <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm">
-                              {index+1}
+                              {index + 1}
                             </div>
                           </div>
                           <div className="flex-1 min-w-0">

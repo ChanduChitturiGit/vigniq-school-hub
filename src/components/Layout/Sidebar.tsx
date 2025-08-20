@@ -58,11 +58,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
   const [expandedMenus, setExpandedMenus] = useState<{ [key: string]: boolean }>({});
 
   // Check if we're in a subject-specific context
-  const isInSubjectContext = location.pathname.includes('/grades/syllabus/') || location.pathname.includes('/grades/progress/');
-  const subject = searchParams.get('subject') || '';
+  const isInSubjectContext = location.pathname.includes('/grades/syllabus') || location.pathname.includes('/grades/progress/')  || location.pathname.includes('/grades/lesson-plan');
+
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
-  const subjectId = location.pathname.split('/').pop()?.split('?')[0] || '';
+  const subject = searchParams.get('subject') || '';
+  const classId = searchParams.get('class_id') || '';
+  const subjectId = location.pathname.split('/').pop()?.split('?')[0] || searchParams.get('subject_id') || '';
+  const schoolId = searchParams.get('school_id') || '';
+  const boardId = searchParams.get('school_board_id') || '';
+  const chapterName = searchParams.get('chapterName') || '';
+  const pathData = `${subjectId}?class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}&chapterName=${encodeURIComponent(chapterName)}`;
+
 
   const toggleMenu = (menuKey: string) => {
     setExpandedMenus(prev => ({
@@ -72,8 +79,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
   };
 
   const getSubjectSpecificMenuItems = (): MenuItem[] => {
-    const baseSubjectPath = `/grades/syllabus/${subjectId}?class=${className}&section=${section}&subject=${subject}`;
-    const progressPath = `/grades/progress/${subjectId}?class=${className}&section=${section}&subject=${subject}`;
+    const baseSubjectPath = `/grades/syllabus/${pathData}`;
+    const progressPath = `/grades/progress/${pathData}`;
 
     return [
       { path: '/grades', icon: Award, label: 'Grades', roles: ['teacher'] },
@@ -190,7 +197,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
 
     // For subject-specific paths, match the full path including query params
     if (path.includes('?')) {
-      return location.pathname + location.search === path;
+      return path.includes(location.pathname);
     }
 
     return location.pathname === path;
@@ -252,11 +259,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
           {(!isCollapsed || window.innerWidth < 768) && (
             <div className="transition-opacity duration-500 ease-in-out">
               <span className="text-xl font-bold">VIGYS AI</span>
-              {isInSubjectContext && subject && (
+              {/* {isInSubjectContext && subject && (
                 <div className="text-xs text-blue-100 mt-1">
                   {subject} - {className} {section}
                 </div>
-              )}
+              )} */}
             </div>
           )}
         </div>
@@ -284,8 +291,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                         }
                       }}
                       className={`w-full flex items-center justify-between gap-3 px-4 py-3 mx-2 rounded-lg transition-all duration-300 ease-in-out ${isDropdownHighlighted
-                          ? 'bg-white/20 text-white'
-                          : 'text-white/80 hover:bg-white/10 hover:text-white'
+                        ? 'bg-white/20 text-white'
+                        : 'text-white/80 hover:bg-white/10 hover:text-white'
                         }`}
                     >
                       <div className="flex items-center gap-3">
@@ -310,8 +317,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                                 to={subItem.path}
                                 onClick={handleLinkClick}
                                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ease-in-out ${isActive(subItem.path)
-                                    ? 'bg-white/20 text-white font-medium'
-                                    : 'text-white/70 hover:bg-white/10 hover:text-white'
+                                  ? 'bg-white/20 text-white font-medium'
+                                  : 'text-white/70 hover:bg-white/10 hover:text-white'
                                   }`}
                               >
                                 {SubIcon && <SubIcon className="w-4 h-4" />}
@@ -339,8 +346,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                         }
                       }}
                       className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-all duration-300 ease-in-out ${isActive(regularItem.path)
-                          ? 'bg-white/20 text-white font-medium'
-                          : 'text-white/80 hover:bg-white/10 hover:text-white'
+                        ? 'bg-white/20 text-white font-medium'
+                        : 'text-white/80 hover:bg-white/10 hover:text-white'
                         }`}
                     >
                       <Icon className="w-5 h-5 flex-shrink-0" />
