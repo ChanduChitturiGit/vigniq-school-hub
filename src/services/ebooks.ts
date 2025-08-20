@@ -20,3 +20,9 @@ export const getEbookList = async (data : any) => {
   const response = await api.get(baseurl+suburl+'/getEbooks',{params : {...data}});
   return response.data;
 }
+
+//deleteEbookById
+export const deleteEbookById = async (data : any) => {
+  const response = await api.delete(baseurl+suburl+'/deleteEbookById',{params : {...data}});
+  return response.data;
+}
