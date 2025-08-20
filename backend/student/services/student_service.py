@@ -285,7 +285,7 @@ class StudentService:
                 return JsonResponse({"error": "School not found or school is inactive."},
                                     status=status.HTTP_404_NOT_FOUND)
 
-            students = Student.objects.using(self.school_db_name).all()
+            students = Student.objects.using(self.school_db_name).filter(is_active=True)
 
             students_data = self.get_students_data(students,academic_year_id)
 
@@ -392,6 +392,7 @@ class StudentService:
 
             students = Student.objects.using(self.school_db_name).filter(
                 student_id__in=students_instants_ids,
+                is_active=True
             )
 
             formated_students_data = self.get_students_data(students,academic_year_id)
