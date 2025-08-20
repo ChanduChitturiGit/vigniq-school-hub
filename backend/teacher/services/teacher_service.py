@@ -378,7 +378,7 @@ class TeacherService:
             #     logger.error(f"Academic Year with ID {academic_year_id} does not exist.")
             #     return JsonResponse({"error": "Academic Year not found."}, status=404)
 
-            teachers = Teacher.objects.using(school_db_name).all()
+            teachers = Teacher.objects.using(school_db_name).filter(is_active=True)
             teacher_list = []
 
             for teacher in teachers:

@@ -182,6 +182,7 @@ class ClassesService:
 
             students = Student.objects.using(school_db_name).filter(
                 student_id__in=student_ids,
+                is_active=True
             )
             students_data = StudentService(school_db_name).get_students_data(
                 students,

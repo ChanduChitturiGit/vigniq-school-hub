@@ -3,6 +3,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 from django.utils.timezone import now
 from django.contrib.auth import authenticate
+from school.models import School
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     username_field = 'user_name'
@@ -26,13 +27,17 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             raise AuthenticationFailed("Your account is inactive. Contact admin.")
 
         data = super().validate(attrs)
+        school_name = School.objects.get(id=user.school_id).name if user.school_id else None
         data['user'] = {
             'email': user.email,
             'user_name': user.user_name,
             'role': user.role.name,
             'last_login': user.last_login,
             'school_id' : user.school_id,
-            'user_id': user.id
+            'user_id': user.id,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'school_name': school_name
         }
         self.user.last_login = now()
         self.user.save(update_fields=['last_login'])
