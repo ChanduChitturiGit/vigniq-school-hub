@@ -178,7 +178,7 @@ class ClassesService:
             student_ids = StudentClassAssignment.objects.using(school_db_name).filter(
                 class_instance = class_obj,
                 academic_year = academic_year
-            )
+            ).values_list('student_id', flat=True)
 
             students = Student.objects.using(school_db_name).filter(
                 student_id__in=student_ids,
