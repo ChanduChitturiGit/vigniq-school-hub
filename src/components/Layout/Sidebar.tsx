@@ -56,6 +56,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [expandedMenus, setExpandedMenus] = useState<{ [key: string]: boolean }>({});
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
+  const schoolName = userData?.school_name ?? '';
 
   // Check if we're in a subject-specific context
   const isInSubjectContext = location.pathname.includes('/grades/syllabus') || location.pathname.includes('/grades/progress/')  || location.pathname.includes('/grades/lesson-plan');
@@ -257,13 +259,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
             <img src="/assets/logo.png" alt="Logo" className="w-6 h-6 object-contain" />
           </div>
           {(!isCollapsed || window.innerWidth < 768) && (
-            <div className="transition-opacity duration-500 ease-in-out">
+            <div className="transition-opacity duration-500 ease-in-out w-[70%]">
               <span className="text-xl font-bold">VIGYS AI</span>
               {/* {isInSubjectContext && subject && (
                 <div className="text-xs text-blue-100 mt-1">
                   {subject} - {className} {section}
                 </div>
               )} */}
+               <div className={`text-xs text-blue-100 mt-1 truncate `} title={schoolName}>
+                  {schoolName+schoolName}
+                </div>
             </div>
           )}
         </div>
