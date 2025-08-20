@@ -44,6 +44,7 @@ class TeacherService:
             school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
             gender = request.data.get('gender',None)
             address = request.data.get('address')
+            permanent_address = request.data.get('permanent_address')
             subject_assignments = request.data.get('subject_assignments', [])
             qualification = request.data.get('qualification', None)
             experience = request.data.get('experience', None)
