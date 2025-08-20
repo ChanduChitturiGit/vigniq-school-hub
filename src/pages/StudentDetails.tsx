@@ -7,6 +7,7 @@ import { getStudentsById, editStudent } from '../services/student';
 import { getClassesBySchoolId } from '@/services/class';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
+import { Mail, Home, Phone, User, Calendar,Book,BookOpen,GraduationCap } from 'lucide-react';
 
 const StudentDetails: React.FC = () => {
   const { showSnackbar } = useSnackbar();
@@ -53,11 +54,13 @@ const StudentDetails: React.FC = () => {
     parent_phone: ''
   });
 
-  const breadcrumbItems = [
-    { label: 'My School', path: (userData.role == 'superadmin' ? `/school-details/${schoolId}` : '/admin-school') },
+  const [breadcrumbItems, setBreadCrumbItems] = useState([
+    { label: userData.role == 'teacher' ? 'Home' : 'My School', path: (userData.role == 'superadmin' ? `/school-details/${schoolId}` : userData.role == 'admin' ? '/admin-school' : '/dashboard') },
     { label: 'Class Details', path: `/class-details/${studentData.class_id}` },
     { label: studentData.student_first_name }
-  ];
+  ]);
+
+
 
   const getClasses = async () => {
     const classesData = await getClassesBySchoolId(userData.school_id);
@@ -257,7 +260,10 @@ const StudentDetails: React.FC = () => {
                   {errors.student_first_name && <p className="text-red-500 text-xs mt-1">{errors.student_first_name}</p>}
                 </>
               ) : (
-                <p className="text-gray-900">{studentData.student_first_name}</p>
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-gray-400" />
+                  <p className="text-gray-900">{studentData.student_first_name}</p>
+                </div>
               )}
             </div>
 
@@ -271,7 +277,10 @@ const StudentDetails: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
-                <p className="text-gray-900">{studentData.student_last_name}</p>
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-gray-400" />
+                  <p className="text-gray-900">{studentData.student_last_name}</p>
+                </div>
               )}
             </div>
 
@@ -285,7 +294,10 @@ const StudentDetails: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
-                <p className="text-gray-900">{studentData.roll_number}</p>
+                <div className="flex items-center gap-2">
+                  <GraduationCap className="w-4 h-4 text-gray-400" />
+                  <p className="text-gray-900">{studentData.roll_number}</p>
+                </div>
               )}
             </div>
 
@@ -299,10 +311,12 @@ const StudentDetails: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
-                <p className="text-gray-900">{studentData.email}</p>
+                <div className="flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-gray-400" />
+                  <p className="text-gray-900">{studentData.email}</p>
+                </div>
               )}
             </div>
-
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -322,12 +336,13 @@ const StudentDetails: React.FC = () => {
                   </SelectContent>
                 </Select>
               ) : (
-                <p className="text-gray-900">{'Class ' + studentData.class_number + ' - ' + studentData.section}</p>
+                <div className="flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-gray-400" />
+                  <p className="text-gray-900">{'Class ' + studentData.class_number + ' - ' + studentData.section}</p>
+                </div>
               )
-            }
+              }
             </div>
-
-
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
@@ -339,7 +354,10 @@ const StudentDetails: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
-                <p className="text-gray-900">{studentData.date_of_birth}</p>
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-gray-400" />
+                  <p className="text-gray-900">{studentData.date_of_birth}</p>
+                </div>
               )}
             </div>
 
@@ -364,24 +382,12 @@ const StudentDetails: React.FC = () => {
                 </>
               ) :
                 (
-                  <p className="text-gray-900">{studentData.gender}</p>
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-gray-400" />
+                    <p className="text-gray-900">{studentData.gender}</p>
+                  </div>
                 )
               }
-            </div>
-
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Blood Group</label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={studentData.blood_group}
-                  onChange={(e) => handleInputChange('blood_group', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              ) : (
-                <p className="text-gray-900">{studentData.blood_group}</p>
-              )}
             </div>
 
             <div>
@@ -394,7 +400,10 @@ const StudentDetails: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
-                <p className="text-gray-900">{studentData.admission_date}</p>
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-gray-400" />
+                  <p className="text-gray-900">{studentData.admission_date}</p>
+                </div>
               )}
             </div>
 
@@ -408,7 +417,10 @@ const StudentDetails: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
-                <p className="text-gray-900">{studentData.address}</p>
+                <div className="flex items-center gap-2">
+                  <Home className="w-4 h-4 text-gray-400" />
+                  <p className="text-gray-900">{studentData.address}</p>
+                </div>
               )}
             </div>
           </div>
@@ -429,7 +441,10 @@ const StudentDetails: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
-                <p className="text-gray-900">{studentData.parent_name}</p>
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-gray-400" />
+                  <p className="text-gray-900">{studentData.parent_name}</p>
+                </div>
               )}
             </div>
 
@@ -443,7 +458,10 @@ const StudentDetails: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
-                <p className="text-gray-900">{studentData.parent_phone}</p>
+                <div className="flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-gray-400" />
+                  <p className="text-gray-900">{studentData.parent_phone}</p>
+                </div>
               )}
             </div>
 
@@ -457,7 +475,10 @@ const StudentDetails: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
-                <p className="text-gray-900">{studentData.emergency_contact}</p>
+                <div className="flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-gray-400" />
+                  <p className="text-gray-900">{studentData.emergency_contact}</p>
+                </div>
               )}
             </div>
 
@@ -471,7 +492,10 @@ const StudentDetails: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
-                <p className="text-gray-900">{studentData.parent_email}</p>
+                <div className="flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-gray-400" />
+                  <p className="text-gray-900">{studentData.parent_email}</p>
+                </div>
               )}
             </div>
           </div>
