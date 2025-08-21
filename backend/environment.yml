@@ -34,11 +34,13 @@ dependencies:
   - pip:
       - annotated-types==0.7.0
       - anyio==4.9.0
-      - asgiref==3.8.1
+      - asgiref==3.9.1
       - boto3==1.39.13
       - botocore==1.39.13
       - cachetools==5.5.2
       - certifi==2025.7.14
+      - channels==4.3.1
+      - channels-redis==4.3.0
       - charset-normalizer==3.4.2
       - click==8.2.1
       - django==5.2.3
@@ -65,6 +67,7 @@ dependencies:
       - langchain-google-genai==2.1.8
       - langchain-text-splitters==0.3.8
       - langsmith==0.4.8
+      - msgpack==1.1.1
       - orjson==3.11.0
       - packaging==25.0
       - proto-plus==1.26.1

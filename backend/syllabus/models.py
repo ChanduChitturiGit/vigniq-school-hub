@@ -103,6 +103,47 @@ class Topic(models.Model):
     def __str__(self):
         return self.title
 
+class ChatSession(models.Model):
+    chat_id = models.AutoField(primary_key=True)
+    user_id = models.IntegerField()
+    lesson_plan_day = models.ForeignKey(
+        SchoolLessonPlanDay,
+        related_name='chat_sessions',
+        on_delete=models.CASCADE
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    summary = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'chat_session'
+        indexes = [
+            models.Index(fields=['lesson_plan_day']),
+            models.Index(fields=['user_id']),
+        ]
+
+class ChatMessage(models.Model):
+    ROLE_CHOICES = [
+        ("user", "User"),
+        ("assistant", "Assistant"),
+    ]
+
+    session = models.ForeignKey(ChatSession, on_delete=models.CASCADE, related_name="messages")
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'chat_message'
+        indexes = [
+            models.Index(fields=['session']),
+            models.Index(fields=['role']),
+        ]
+
+    def __str__(self):
+        return f"{self.role}: {self.content[:50]}"
+
 class WhiteboardSession(models.Model):
     session_id = models.CharField(max_length=100, unique=True,primary_key=True)
     topic = models.ForeignKey(
