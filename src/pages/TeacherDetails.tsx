@@ -6,7 +6,7 @@ import { Edit, Mail, Phone, Calendar, GraduationCap, BookOpen, Plus, X,User,Home
 import { getTeachersById, editTeacher } from '../services/teacher';
 import ClassSectionSubjectInput, { ClassSectionSubjectData } from '../components/ui/class-section-subject-input';
 import { getSubjectsBySchoolId } from '../services/subject';
-import { getClassesBySchoolId } from '@/services/class';
+import { getClassesBySchoolId,getClassesWithoutClassTeacher } from '@/services/class';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 
@@ -17,6 +17,7 @@ const TeacherDetails: React.FC = () => {
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const schoolId = localStorage.getItem('current_school_id');
   const [classes, setClasses] = useState([]);
+  const [teacherClasses, setTeacherClasses] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [formData, setFormData] = useState({
     teacher_first_name: '',
@@ -32,7 +33,11 @@ const TeacherDetails: React.FC = () => {
     emergencyContact: '',
     subject_assignments: [],
     school_id: null,
-    class: ''
+    class: '',
+    class_assignment : {
+      class_number: '',
+      section: ''
+    },
   });
   const [errors, setErrors] = useState({
     teacher_first_name: '',
@@ -193,9 +198,18 @@ const TeacherDetails: React.FC = () => {
     }
   }
 
+  //classes list api
+  const getTeacherClasses = async () => {
+    const classesData = await getClassesWithoutClassTeacher(userData.role == 'superadmin' ? schoolId : userData.school_id);
+    if (classesData && classesData.classes) {
+      setTeacherClasses(classesData.classes);
+    }
+  }
+
 
   useEffect(() => {
     getTeacher();
+    getTeacherClasses();
   }, [])
 
   useEffect(() => {
@@ -264,7 +278,7 @@ const TeacherDetails: React.FC = () => {
     setFormData(prev => ({
       ...prev,
       class: value,
-      class_id: getClassId(value)
+      class_section_id: getClassId(value)
     }));
     setErrors(prev => ({ ...prev, class: '' }));
   };
@@ -442,12 +456,12 @@ const TeacherDetails: React.FC = () => {
                   Class Teacher
                 </label>
                 {isEditing ? (
-                  <Select value={formData.class} onValueChange={handleClassChange}>
+                  <Select value={formData.class} onValueChange={handleClassChange} disabled={teacherClasses.length === 0}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a Class" />
+                      <SelectValue placeholder={`${teacherClasses.length>0 ? 'Select a Class' : 'All Classes got assigned with teachers'}`} />
                     </SelectTrigger>
                     <SelectContent>
-                      {classes.map((classItem, index) => (
+                      {teacherClasses.map((classItem, index) => (
                         <SelectItem key={index} value={'Class ' + classItem.class_number + ' - ' + classItem.section}>
                           {'Class ' + classItem.class_number + ' - ' + classItem.section}
                         </SelectItem>
@@ -457,7 +471,7 @@ const TeacherDetails: React.FC = () => {
                 ) : (
                   <div className="flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-gray-400" />
-                    <p className="text-gray-900">{formData.class}</p>
+                    <p className="text-gray-900">{'Class '+formData?.class_assignment?.class_number + ' '+ formData?.class_assignment?.section}</p>
                   </div>
                 )
                 }

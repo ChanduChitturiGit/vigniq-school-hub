@@ -7,7 +7,7 @@ import ClassSectionSubjectInput, { ClassSectionSubjectData } from '../components
 import { Loader2, Plus } from 'lucide-react';
 import { addTeacher } from '../services/teacher';
 import { getSubjectsBySchoolId } from '../services/subject';
-import { getClassesBySchoolId } from '@/services/class';
+import { getClassesBySchoolId, getClassesWithoutClassTeacher } from '@/services/class';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from '../components/ui/sonner';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
@@ -16,6 +16,7 @@ const AdminAddTeacher: React.FC = () => {
   const { showSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
+  const [teacherClasses, setTeacherClasses] = useState([]);
   const [loader, setLoader] = useState(false);
   const [teachingAssignments, setTeachingAssignments] = useState<ClassSectionSubjectData[]>([{
     class: '', subject: '',
@@ -32,7 +33,7 @@ const AdminAddTeacher: React.FC = () => {
     qualification: '',
     experience: '',
     current_address: '',
-    permanent_address : '',
+    permanent_address: '',
     joining_date: '',
     date_of_birth: '',
     gender: '',
@@ -49,7 +50,7 @@ const AdminAddTeacher: React.FC = () => {
     qualification: '',
     experience: '',
     current_address: '',
-    permanent_address : '',
+    permanent_address: '',
     joining_date: '',
     date_of_birth: '',
     gender: '',
@@ -80,6 +81,15 @@ const AdminAddTeacher: React.FC = () => {
     }
   }
 
+
+  //classes list api
+  const getTeacherClasses = async () => {
+    const classesData = await getClassesWithoutClassTeacher(userData.role == 'superadmin' ? schoolId : userData.school_id);
+    if (classesData && classesData.classes) {
+      setTeacherClasses(classesData.classes);
+    }
+  }
+
   const subjectsList = async () => {
     const response = await getSubjectsBySchoolId(userData.role == 'superadmin' ? schoolId : userData.school_id);
     if (response && response) {
@@ -98,13 +108,14 @@ const AdminAddTeacher: React.FC = () => {
     setFormData(prev => ({
       ...prev,
       class: value,
-      class_id: getClassId(value)
+      class_section_id: getClassId(value)
     }));
     setErrors(prev => ({ ...prev, class: '' }));
   };
 
   useEffect(() => {
     getClasses();
+    getTeacherClasses();
     subjectsList();
     setBreadCrumb();
   }, [])
@@ -193,7 +204,7 @@ const AdminAddTeacher: React.FC = () => {
 
   const handleAssignmentChange = (index: number, data: ClassSectionSubjectData) => {
     const updatedAssignments = [...teachingAssignments];
-    data[`class_id`] = (data.class != '' ) ? getClassId(data.class) : data['class_id'] ? data['class_id'] : null;
+    data[`class_id`] = (data.class != '') ? getClassId(data.class) : data['class_id'] ? data['class_id'] : null;
     data[`subject_id`] = (data.subject != '') ? getSubjectId(data.subject) : null;
     updatedAssignments[index] = data;
     setTeachingAssignments(updatedAssignments);
@@ -457,12 +468,12 @@ const AdminAddTeacher: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Class Teacher Assignments
               </label>
-              <Select value={formData.class} onValueChange={handleClassChange}>
+              <Select value={formData.class} onValueChange={handleClassChange} disabled={teacherClasses.length === 0}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a Class" />
+                  <SelectValue placeholder={`${teacherClasses.length>0 ? 'Select a Class' : 'All Classes got assigned with teachers'}`} />
                 </SelectTrigger>
                 <SelectContent>
-                  {classes.map((classItem, index) => (
+                  {teacherClasses.map((classItem, index) => (
                     <SelectItem key={index} value={'Class ' + classItem.class_number + ' - ' + classItem.section}>
                       {'Class ' + classItem.class_number + ' - ' + classItem.section}
                     </SelectItem>
