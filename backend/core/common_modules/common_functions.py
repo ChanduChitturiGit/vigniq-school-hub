@@ -44,3 +44,15 @@ class CommonFunctions:
             return [CommonFunctions.normalize_keys(item) for item in obj]
         else:
             return obj
+
+    def get_login_uri(self, request):
+        """Get the login URI for the application."""
+        uri = request.build_absolute_uri('/#/login')
+        logger.info(f"Login URI: {uri}")
+        return uri
+
+    def get_absolute_uri(self, request):
+        """Get the absolute URI for a given path."""
+        uri = request.build_absolute_uri('/')
+        logger.info(f"Absolute URI: {uri}")
+        return uri

@@ -27,6 +27,8 @@ class ClassesManagingView(APIView):
             return ClassesService().get_classes_by_school_id(request)
         elif action == 'getClassById':
             return ClassesService().get_class_by_id(request)
+        elif action == 'getClassesWithoutClassTeacher':
+            return ClassesService().get_classes_without_class_teacher(request)
         else:
             return Response({"error": "Invalid GET action"}, status=status.HTTP_400_BAD_REQUEST)
     
