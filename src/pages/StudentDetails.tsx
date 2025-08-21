@@ -20,26 +20,26 @@ const StudentDetails: React.FC = () => {
 
   const [studentData, setStudentData] = useState({
     student_id: id,
-    student_first_name: 'Alice Johnson',
-    student_last_name: 'A',
-    roll_number: '001',
-    email: 'alice.johnson@school.edu',
-    phone: '+91 98765 43210',
-    parent_name: 'Robert Johnson',
-    parent_phone: '+91 98765 43210',
-    date_of_birth: '15/05/2008',
-    parent_email: 'parent@gmail.com',
-    address: '123 Main St, City',
-    class: 'Class 10-A',
-    class_id: 1,
-    class_name: 'Class 10',
+    student_first_name: '',
+    student_last_name: '',
+    roll_number: '',
+    email: '',
+    phone: '',
+    parent_name: '',
+    parent_phone: '',
+    date_of_birth: '',
+    parent_email: '',
+    address: '',
+    class: '',
+    class_id: 0,
+    class_name: '',
     class_number: 0,
-    section: "A",
-    status: 'Active',
-    gender: 'Male',
-    admission_date: '01/04/2024',
-    blood_group: 'A+',
-    emergency_contact: 'Jane Johnson (+91 98765 43213)'
+    section: '',
+    status: '',
+    gender: '',
+    admission_date: '',
+    blood_group: '',
+    emergency_contact: ''
   });
 
   const [errors, setErrors] = useState({
@@ -198,7 +198,7 @@ const StudentDetails: React.FC = () => {
 
         {/* Student Header */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex-col md:flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center">
                 <span className="text-white text-xl font-semibold">
@@ -210,7 +210,7 @@ const StudentDetails: React.FC = () => {
                 <p className="text-gray-600">{'Class ' + studentData.class_number} • Roll: {studentData.roll_number}</p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 mt-4 md:mt-0">
               {isEditing ? (
                 <>
                   <button
