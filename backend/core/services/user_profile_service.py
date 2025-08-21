@@ -40,7 +40,8 @@ class UserProfileService:
                 "phone_number": user.phone_number,
                 "user_name": user.user_name,
                 "gender": user.gender,
-                "address": user.address,
+                "current_address": user.current_address,
+                "permanent_address": user.permanent_address,
                 "date_of_birth": user.date_of_birth,
             }
             if school_id:
@@ -125,7 +126,8 @@ class UserProfileService:
             email = request.data.get('email')
             phone_number = request.data.get('phone_number')
             gender = request.data.get('gender')
-            address = request.data.get('address')
+            current_address = request.data.get('current_address')
+            permanent_address = request.data.get('permanent_address')
             date_of_birth = request.data.get('date_of_birth')
             school_id = request.user.school_id
 
@@ -152,8 +154,10 @@ class UserProfileService:
                 user.phone_number = phone_number
             if gender:
                 user.gender = gender
-            if address:
-                user.address = address
+            if current_address:
+                user.current_address = current_address
+            if permanent_address:
+                user.permanent_address = permanent_address
             if date_of_birth:
                 user.date_of_birth = date_of_birth
 

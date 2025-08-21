@@ -16,6 +16,9 @@ from classes.models import SchoolClass, SchoolSection
 from core.models import Role, User
 from core.common_modules.password_validator import is_valid_password
 from core.common_modules.send_email import EmailService
+from core.common_modules.common_functions import CommonFunctions
+
+from classes.models import ClassAssignment
 
 from school.models import SchoolDbMetadata
 
@@ -43,7 +46,7 @@ class TeacherService:
             phone_number = request.data.get('phone_number')
             school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
             gender = request.data.get('gender',None)
-            address = request.data.get('address')
+            current_address = request.data.get('current_address')
             permanent_address = request.data.get('permanent_address')
             subject_assignments = request.data.get('subject_assignments', [])
             qualification = request.data.get('qualification', None)
@@ -51,6 +54,7 @@ class TeacherService:
             joining_date = request.data.get('joining_date', None)
             emergency_contact = request.data.get('emergency_contact', None)
             academic_year_id = request.data.get('academic_year_id', 1)
+            class_section_id = request.data.get('class_section_id', None)
 
             if not school_id:
                 logger.error("School ID is required for teacher creation.")
@@ -85,7 +89,8 @@ class TeacherService:
                         phone_number=phone_number,
                         first_name=first_name,
                         last_name=last_name,
-                        address=address,
+                        current_address=current_address,
+                        permanent_address=permanent_address,
                         gender=gender
                     )
 
@@ -128,13 +133,25 @@ class TeacherService:
                                 academic_year = academic_year
                             )
 
+                    if class_section_id:
+                        class_assignment = ClassAssignment.objects.using(school_db_name).get(
+                            class_instance_id=class_section_id,
+                            academic_year_id=academic_year_id
+                        )
+                        if not class_assignment:
+                            return JsonResponse({"error": "Class assignment not found."},
+                                                status=404)
+                        class_assignment.class_teacher = teacher
+                        class_assignment.save(using=school_db_name)
+
                     send_email = EmailService()
                     send_email.send_email(
                         to_email=email,
                         email_type='welcome',
                         user_name=user_name,
                         name=f"{first_name} {last_name}",
-                        password=password
+                        password=password,
+                        login_url=CommonFunctions().get_login_uri(request)
                     )
                     logger.info(f"Teacher {first_name} {last_name} created successfully with ID {teacher.teacher_id}.")
                     return JsonResponse({"message": "Teacher created successfully."}, status=201)
@@ -162,13 +179,15 @@ class TeacherService:
             email = request.data.get('email')
             phone_number = request.data.get('phone_number')
             gender = request.data.get('gender')
-            address = request.data.get('address')
+            current_address = request.data.get('current_address')
+            permanent_address = request.data.get('permanent_address')
             subject_assignments = request.data.get('subject_assignments', [])
             qualification = request.data.get('qualification', None)
             experience = request.data.get('experience', None)
             joining_date = request.data.get('joining_date', None)
             emergency_contact = request.data.get('emergency_contact', None)
             academic_year_id = request.data.get('academic_year_id', 1)
+            class_section_id = request.data.get('class_section_id', None)
 
             school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
             if not school_id:
@@ -208,8 +227,10 @@ class TeacherService:
                         user.phone_number = phone_number
                     if gender:
                         user.gender = gender
-                    if address:
-                        user.address = address
+                    if current_address:
+                        user.current_address = current_address
+                    if permanent_address:
+                        user.permanent_address = permanent_address
                     user.save()
 
                     # Update Teacher (if any additional fields)
@@ -259,6 +280,31 @@ class TeacherService:
                                 school_class = school_class,
                                 academic_year = acadamic_year
                             )
+                    
+                    if class_section_id:
+                        class_assignment = ClassAssignment.objects.using(school_db_name).filter(
+                            academic_year_id=academic_year_id,
+                            class_teacher_id=teacher_id
+                        )
+                        if class_assignment.exists():
+                            class_assignment.update(class_teacher=None)
+
+                        class_assignment = ClassAssignment.objects.using(school_db_name).get(
+                            class_instance_id=class_section_id,
+                            academic_year_id=academic_year_id
+                        )
+                        if not class_assignment:
+                            return JsonResponse({"error": "Class assignment not found."},
+                                                status=404)
+                        if class_assignment.class_teacher and class_assignment.class_teacher_id != teacher_id:
+                            logger.error("Class already has a different class teacher assigned.")
+                            return JsonResponse(
+                                {"error": "Class already has a different class teacher assigned."},
+                                status=400
+                            )
+
+                        class_assignment.class_teacher = teacher
+                        class_assignment.save(using=school_db_name)
 
                     logger.info(f"Teacher {teacher_id} updated successfully.")
                     return JsonResponse({"message": "Teacher updated successfully."}, status=200)
@@ -328,19 +374,36 @@ class TeacherService:
                 for item in subject_assignments
             ]
 
+            class_assignments = ClassAssignment.objects.using(school_db_name).filter(
+                class_teacher=teacher,
+                academic_year_id=academic_year_id
+            ).values(
+                'class_instance_id', 'class_instance__class_instance__class_number', 'class_instance__section'
+            )
+            class_section = None
+            class_assignment = class_assignments.first()
+            if class_assignment:
+                class_section = {
+                    'class_section_id': class_assignment['class_instance_id'],
+                    'class_number': class_assignment['class_instance__class_instance__class_number'],
+                    'section': class_assignment['class_instance__section']
+                }
+
             teacher_details = {
                 "teacher_id": teacher.teacher_id,
                 "teacher_first_name": user.first_name,
                 "teacher_last_name": user.last_name,
                 "email": user.email,
                 "phone_number": user.phone_number,
-                "address": user.address,
+                "current_address": user.current_address,
+                "permanent_address": user.permanent_address,
                 "gender": user.gender,
                 "qualification": teacher.qualification,
                 "experience": teacher.experience,
                 "joining_date": teacher.joining_date,
                 "emergency_contact": teacher.emergency_contact,
-                "subject_assignments": renamed_assignments
+                "subject_assignments": renamed_assignments,
+                "class_assignment": class_section
             }
             return JsonResponse({"data": teacher_details}, status=200)
         except User.DoesNotExist:
