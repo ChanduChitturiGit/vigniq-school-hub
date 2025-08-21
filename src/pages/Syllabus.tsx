@@ -5,6 +5,7 @@ import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../components/ui/collapsible';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../components/ui/accordion';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Progress } from '../components/ui/progress';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
@@ -28,7 +29,7 @@ import {
   MessageSquare,
   RotateCcw
 } from 'lucide-react';
-import { getGradeByChapter, saveTopicByLesson, editTopicByLesson,savePrerequisite,editPrerequisiteByLesson } from '../services/grades'
+import { getGradeByChapter, saveTopicByLesson, editTopicByLesson, savePrerequisite, editPrerequisiteByLesson } from '../services/grades'
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 
 interface DayPlan {
@@ -44,6 +45,7 @@ interface Chapter {
   sub_topics: any[];
   lesson_plan_days: any[];
   prerequisites: any[];
+  tabValue?: string; // <-- Add this
 }
 
 const Syllabus: React.FC = () => {
@@ -68,6 +70,7 @@ const Syllabus: React.FC = () => {
   const [newPrerequisiteExplanation, setNewPrerequisiteExplanation] = useState('');
   const [addingTopic, setAddingTopic] = useState<string | null>(null);
   const [addingPrerequisite, setAddingPrerequisite] = useState<string | null>(null);
+  const [taskBar, setTaskBar] = useState('topics');
   //const [chaptersData, setChaptersData] = useState<any[]>([]);
 
   const breadcrumbItems = [
@@ -232,6 +235,7 @@ const Syllabus: React.FC = () => {
     }
   ];
 
+
   const getGradesData = async () => {
     try {
       const data = {
@@ -243,8 +247,12 @@ const Syllabus: React.FC = () => {
       localStorage.setItem('gradesData', JSON.stringify(data));
       const response = await getGradeByChapter(data);
       if (response && response.data) {
-        console.log("topics", response);
-        setChapters(response.data);
+        // Initialize tabValue for each chapter
+        const chaptersWithTab = response.data.map((ch: Chapter) => ({
+          ...ch,
+          tabValue: "topics"
+        }));
+        setChapters(chaptersWithTab);
       }
     } catch (error) {
       showSnackbar({
@@ -457,7 +465,7 @@ const Syllabus: React.FC = () => {
       //   return chapter;
       // }));
       savePrerequisteData({ chapter_id: chapterId, topic: newTitle.trim(), explanation: newExplanation.trim() }); // Save the new prerequisite
-    }else{
+    } else {
       showSnackbar({
         title: "⛔ Error",
         description: "Title and explanation cannot be empty",
@@ -468,6 +476,15 @@ const Syllabus: React.FC = () => {
     setNewPrerequisiteTitle('');
     setNewPrerequisiteExplanation('');
   };
+
+  const handleTaskChange = (value: any, id: any) => {
+    setTaskBar(value);
+    setChapters(chapters.map(ch =>
+      ch.chapter_id == id
+        ? { ...ch, tabValue: value }
+        : ch
+    ));
+  }
 
   return (
     <MainLayout pageTitle={`${subject} - ${className} ${section}`}>
@@ -498,52 +515,100 @@ const Syllabus: React.FC = () => {
                 onOpenChange={() => toggleChapter(chapter.chapter_id)}
               >
                 <CollapsibleTrigger className="w-full p-6 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-4">
-                      <span className="text-xl font-medium text-gray-900">
+                  <div className="flex items-center  gap-6">
+                    <div className="flex items-center gap-2">
+                      <span className="text-md md:text-xl font-medium text-gray-900">
                         Chapter {chapter.chapter_number}: {chapter.chapter_name}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className={`w-32 h-3 bg-gray-200 rounded-full overflow-hidden`}>
+                    <div className={`${window.innerWidth >= 768 ? 'flex ' : 'flex-col gap-1'}  items-center `}>
+                      <div className={`w-28 md:w-32 h-3 bg-gray-200 rounded-full overflow-hidden`}>
                         <div
                           className={`h-full ${getProgressColor(chapter.progress)} transition-all duration-500`}
-                          style={{ width: `${chapter.progress}%` }}
+                          style={{ width: `${chapter.progress ?? 0}%` }}
                         />
                       </div>
-                      <span className="text-base font-medium text-gray-600 min-w-[50px]">{chapter.progress}%</span>
+                      <span className="text-base font-small md:font-medium text-gray-600 min-w-[50px]">{chapter.progress ?? 0}%</span>
                     </div>
                   </div>
-                  {openChapters[chapter.chapter_id] ?
-                    <ChevronUp className="w-6 h-6 text-gray-500" /> :
-                    <ChevronDown className="w-6 h-6 text-gray-500" />
-                  }
+                  <div className='hidden md:block'>
+                    {openChapters[chapter.chapter_id] ?
+                      <ChevronUp className="w-6 h-6 text-gray-500" /> :
+                      <ChevronDown className="w-6 h-6 text-gray-500" />
+                    }
+                  </div>
                 </CollapsibleTrigger>
 
                 <CollapsibleContent>
                   <div className="border-t border-gray-200 p-6">
-                    <Tabs defaultValue="topics" className="w-full h-full">
-                      <TabsList className="grid w-full h-full grid-cols-3 mb-6 bg-gray-50 p-1 rounded-lg">
-                        <TabsTrigger
-                          value="topics"
-                          className="text-base py-3 px-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md transition-all"
-                        >
-                          Topics
-                        </TabsTrigger>
-                        <TabsTrigger
-                          value="lessonplan"
-                          className="text-base py-3 px-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md transition-all"
-                        >
-                          Lesson Plan
-                        </TabsTrigger>
-                        <TabsTrigger
-                          value="prerequisites"
-                          className="text-base py-3 px-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md transition-all"
-                        >
-                          Prerequisites
-                        </TabsTrigger>
-                      </TabsList>
+                    {/* Control Tabs with chapter.tabValue */}
+                    <Tabs value={chapter.tabValue || "topics"} className="w-full h-full">
+                      {/* Responsive tab selector */}
+                      <div className="mb-6 w-full">
+                        {/* Mobile: Dropdown */}
+                        <div className="block md:hidden">
 
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Class *
+                            </label>
+                            <Select value={taskBar} onValueChange={(e) => handleTaskChange(e.toLowerCase().trim().replace(/\s+/g, ""), chapter.chapter_id)}>
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select a Class" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {['Topics', 'Lesson Plan', 'Prerequisites'].map((item, index) => (
+                                  <SelectItem key={index} value={item.toLowerCase().trim().replace(/\s+/g, "")}>
+                                    {item}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        {/* Desktop: Tabs */}
+                        <TabsList className="hidden md:grid w-full h-full grid-cols-3 bg-gray-50 p-1 rounded-lg">
+                          <TabsTrigger
+                            value="topics"
+                            className="text-base py-3 px-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md transition-all"
+                            onClick={() => {
+                              setChapters(chapters.map(ch =>
+                                ch.chapter_id === chapter.chapter_id
+                                  ? { ...ch, tabValue: "topics" }
+                                  : ch
+                              ));
+                            }}
+                          >
+                            Topics
+                          </TabsTrigger>
+                          <TabsTrigger
+                            value="lessonplan"
+                            className="text-base py-3 px-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md transition-all"
+                            onClick={() => {
+                              setChapters(chapters.map(ch =>
+                                ch.chapter_id === chapter.chapter_id
+                                  ? { ...ch, tabValue: "lessonplan" }
+                                  : ch
+                              ));
+                            }}
+                          >
+                            Lesson Plan
+                          </TabsTrigger>
+                          <TabsTrigger
+                            value="prerequisites"
+                            className="text-base py-3 px-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md transition-all"
+                            onClick={() => {
+                              setChapters(chapters.map(ch =>
+                                ch.chapter_id === chapter.chapter_id
+                                  ? { ...ch, tabValue: "prerequisites" }
+                                  : ch
+                              ));
+                            }}
+                          >
+                            Prerequisites
+                          </TabsTrigger>
+                        </TabsList>
+                      </div>
                       <TabsContent value="topics" className="mt-6">
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
@@ -734,13 +799,13 @@ const Syllabus: React.FC = () => {
 
                       <TabsContent value="prerequisites" className="mt-6">
                         <div className="space-y-4">
-                          <div className="flex items-center justify-between">
+                          <div className="md:flex lex-col items-center justify-between">
                             <h3 className="text-lg font-medium text-gray-800">Prerequisites</h3>
                             <Button
                               onClick={() => setAddingPrerequisite(chapter.chapter_id)}
                               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
                             >
-                              <PlusCircle className="w-4 h-4" />
+                              <PlusCircle className="w-4 h-4 sm:mt-1" />
                               Add Prerequisite
                             </Button>
                           </div>

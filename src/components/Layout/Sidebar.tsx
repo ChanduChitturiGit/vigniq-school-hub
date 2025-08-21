@@ -295,7 +295,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                           toggleMenu(item.key);
                         }
                       }}
-                      className={`w-full flex items-center justify-between gap-3 px-4 py-3 mx-2 rounded-lg transition-all duration-300 ease-in-out ${isDropdownHighlighted
+                      className={`w-full flex items-center justify-between gap-3 px-4 py-3 me-2 rounded-lg transition-all duration-300 ease-in-out ${isDropdownHighlighted
                         ? 'bg-white/20 text-white'
                         : 'text-white/80 hover:bg-white/10 hover:text-white'
                         }`}
@@ -350,7 +350,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                           handleLinkClick();
                         }
                       }}
-                      className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-all duration-300 ease-in-out ${isActive(regularItem.path)
+                      className={`flex items-center gap-3 px-4 py-3 me-2 rounded-lg transition-all duration-300 ease-in-out ${isActive(regularItem.path)
                         ? 'bg-white/20 text-white font-medium'
                         : 'text-white/80 hover:bg-white/10 hover:text-white'
                         }`}
