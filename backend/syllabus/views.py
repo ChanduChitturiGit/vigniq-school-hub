@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from core.permissions import IsSuperAdmin,IsSuperAdminOrAdminOrTeacher
 from syllabus.services.ebook_service import EbookService
 from syllabus.services.syllabus_service import SyllabusService
+from syllabus.services.whiteboard_service import WhiteboardService
 
 class EbookView(APIView):
     """View for managing eBooks."""
@@ -49,8 +50,8 @@ class SyllabusView(APIView):
             return SyllabusService().get_syllabus_subject(request)
         elif action == 'getGradeByTeacherId':
             return SyllabusService().get_grade_by_teacher_id(request)
-        elif action == 'getChaptersTopicsBySubject':
-            return SyllabusService().get_chapters_and_topics_by_subject(request)
+        elif action == 'getSyllabusBySubject':
+            return SyllabusService().get_syllabus_subject(request)
         elif action == 'getPrerequisites':
             return SyllabusService().get_prerequisites(request)
         elif action == 'getLessionPlan':
@@ -87,4 +88,33 @@ class SyllabusView(APIView):
             return SyllabusService().delete_sub_topic_by_id(request)
         elif action == 'deletePrerequisiteById':
             return SyllabusService().delete_prerequisite_by_id(request)
+        return Response({"error": f"DELETE request not found for action: {action}"}, status=400)
+
+
+class WhiteboardView(APIView):
+    """View for managing whiteboard sessions."""
+
+    def get_permissions(self):
+        if self.kwargs.get('action') in ['getWhiteboardsByChapter']:
+            return [IsAuthenticated()]
+        return [IsAuthenticated(), IsSuperAdminOrAdminOrTeacher()]
+
+    def get(self, request, action=None):
+        """Handle GET requests for whiteboard actions."""
+        if action == 'getWhiteboardsByChapter':
+            return WhiteboardService().get_whiteboards_by_chapter(request)
+        elif action == 'getWhiteboardData':
+            return WhiteboardService().get_whiteboard_by_session_id(request)
+        return Response({"error": f"GET request not found for action: {action}"}, status=400)
+
+    def post(self, request, action=None):
+        """Handle POST requests for whiteboard actions."""
+        if action == 'createWhiteboardSession':
+            return WhiteboardService().create_whiteboard_session(request)
+        return Response({"error": f"POST request not found for action: {action}"}, status=400)
+
+    def delete(self, request, action=None):
+        """Handle DELETE requests for whiteboard actions."""
+        if action == 'deleteWhiteboardSession':
+            return WhiteboardService().delete_whiteboard_session(request)
         return Response({"error": f"DELETE request not found for action: {action}"}, status=400)

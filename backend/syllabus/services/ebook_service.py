@@ -23,7 +23,6 @@ from school.models import (
 from syllabus.models import SchoolChapter,SchoolSubTopic, SchoolPrerequisite
 from classes.models import SchoolClass
 from core import s3_client
-from core.common_modules.aws_s3_bucket import AwsS3Bucket
 from core.lang_chain.lang_chain import LangChainService
 
 logger = logging.getLogger(__name__)
