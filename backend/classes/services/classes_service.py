@@ -237,6 +237,7 @@ class ClassesService:
                                     status=400)
 
             school_db_name = CommonFunctions.get_school_db_name(school_id)
+
             classes = SchoolSection.objects.using(school_db_name).all()
 
             data = []
@@ -245,7 +246,7 @@ class ClassesService:
                     class_instance=class_obj,
                     academic_year_id=academic_year_id
                 ).first()
-                if not class_instance or not class_instance.class_teacher:
+                if not class_instance or not class_instance.class_teacher_id:
                     data.append({
                         'class_section_id': class_obj.id,
                         'class_number': class_obj.class_instance_id,
