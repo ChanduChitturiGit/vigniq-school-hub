@@ -16,7 +16,7 @@ const StudentDetails: React.FC = () => {
   const [classes, setClasses] = useState([]);
   const genderList = ["Male", "Female", "Others"];
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
-  const schoolId = localStorage.getItem('current_school_id');
+  const schoolId = localStorage.getItem('current_school_id') ?? userData.school_id;
 
   const [studentData, setStudentData] = useState({
     student_id: id,
@@ -40,7 +40,8 @@ const StudentDetails: React.FC = () => {
     gender: '',
     admission_date: '',
     blood_group: '',
-    emergency_contact: ''
+    emergency_contact: '',
+    school_id: Number(schoolId)
   });
 
   const [errors, setErrors] = useState({
@@ -188,11 +189,19 @@ const StudentDetails: React.FC = () => {
         status: "error"
       });
       return;
+    }else{
+      setStudentData((prev)=>({
+        ...prev,
+        "school_id": Number(schoolId)
+      }));
     }
+
+
+    console.log("Student Data to be saved:", studentData);
 
     // Prepare data for API call
     try {
-      const response = await editStudent(studentData);
+      const response = await editStudent({...studentData, school_id: Number(schoolId)}) ;
       if (response && response.message) {
         getStudentData();
         showSnackbar({

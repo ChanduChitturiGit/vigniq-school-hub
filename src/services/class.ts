@@ -36,3 +36,8 @@ export const getClassesList = async () => {
   return response.data;
 }
 
+//get classes list
+export const getClassesWithoutClassTeacher = async (schoolId : Number) => {
+  const response = await api.get(baseurl+suburl+'/getClassesWithoutClassTeacher',{params : {school_id : schoolId}});
+  return response.data;
+}
