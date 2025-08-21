@@ -57,9 +57,14 @@
   color: #4f4fc6;
 }
 
+.date-div{
+  height: 2.5rem !important;
+  border-radius: 0.6rem !important;
+
+}
+
 @keyframes spin {
   100% {
     transform: rotate(360deg);
   }
 }
-

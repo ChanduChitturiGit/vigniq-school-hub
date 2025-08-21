@@ -8,8 +8,14 @@ import { getClassesBySchoolId } from '@/services/class';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import { Mail, Home, Phone, User, Calendar, Book, BookOpen, GraduationCap } from 'lucide-react';
+import { Dayjs } from "dayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 const StudentDetails: React.FC = () => {
+  const [value, setValue] = React.useState<Dayjs | null>(null);
+  const [joinDate, setJoinDate] = React.useState<Dayjs | null>(null);
   const { showSnackbar } = useSnackbar();
   const { id } = useParams();
   const [isEditing, setIsEditing] = useState(false);
@@ -189,8 +195,8 @@ const StudentDetails: React.FC = () => {
         status: "error"
       });
       return;
-    }else{
-      setStudentData((prev)=>({
+    } else {
+      setStudentData((prev) => ({
         ...prev,
         "school_id": Number(schoolId)
       }));
@@ -201,7 +207,7 @@ const StudentDetails: React.FC = () => {
 
     // Prepare data for API call
     try {
-      const response = await editStudent({...studentData, school_id: Number(schoolId)}) ;
+      const response = await editStudent({ ...studentData, school_id: Number(schoolId) });
       if (response && response.message) {
         getStudentData();
         showSnackbar({
@@ -210,13 +216,13 @@ const StudentDetails: React.FC = () => {
           status: "success"
         });
       }
-    }catch (error) {
+    } catch (error) {
       showSnackbar({
         title: "⛔ Error",
         description: "Failed to update student data. Please try again.",
         status: "error"
       });
-    }finally {
+    } finally {
       setIsEditing(false);
       getStudentData();
     }
@@ -378,16 +384,28 @@ const StudentDetails: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
               {isEditing ? (
-                <input
-                  type="date"
-                  value={studentData.date_of_birth}
-                  onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                // <input
+                //   type="date"
+                //   value={studentData.date_of_birth}
+                //   onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
+                //   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                // />
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    className="date-div w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    label=""
+                    value={joinDate}
+                    onChange={(newValue) => {
+                      setJoinDate(newValue);
+                      studentData.date_of_birth = newValue ? newValue.format("YYYY-MM-DD") : null;
+                    }}
+                    format="DD/MM/YYYY"   // 👈 force display format
+                  />
+                </LocalizationProvider>
               ) : (
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-gray-400" />
-                  <p className="text-gray-900">{new Date(studentData.date_of_birth).toLocaleDateString('en-GB') }</p>
+                  <p className="text-gray-900">{new Date(studentData.date_of_birth).toLocaleDateString('en-GB')}</p>
                 </div>
               )}
             </div>
@@ -424,12 +442,24 @@ const StudentDetails: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Admission Date</label>
               {isEditing ? (
-                <input
-                 type="date"
-                  value={studentData.admission_date}
-                  onChange={(e) => handleInputChange('admission_date', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                // <input
+                //   type="date"
+                //   value={studentData.admission_date}
+                //   onChange={(e) => handleInputChange('admission_date', e.target.value)}
+                //   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                // />
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    className="date-div w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    label=""
+                    value={value}
+                    onChange={(newValue) => {
+                      setValue(newValue);
+                      studentData.admission_date = newValue ? newValue.format("YYYY-MM-DD") : null;
+                    }}
+                    format="DD/MM/YYYY"   // 👈 force display format
+                  />
+                </LocalizationProvider>
               ) : (
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-gray-400" />
