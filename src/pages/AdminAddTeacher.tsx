@@ -31,11 +31,14 @@ const AdminAddTeacher: React.FC = () => {
     phone_number: '',
     qualification: '',
     experience: '',
-    address: '',
+    current_address: '',
+    permanent_address : '',
     joining_date: '',
     date_of_birth: '',
     gender: '',
-    emergency_contact: ''
+    emergency_contact: '',
+    class: '',
+    class_id: null
   });
   const [errors, setErrors] = useState({
     first_name: '',
@@ -45,7 +48,8 @@ const AdminAddTeacher: React.FC = () => {
     phone_number: '',
     qualification: '',
     experience: '',
-    address: '',
+    current_address: '',
+    permanent_address : '',
     joining_date: '',
     date_of_birth: '',
     gender: '',
@@ -89,6 +93,15 @@ const AdminAddTeacher: React.FC = () => {
       setClasses(classesData.classes);
     }
   }
+
+  const handleClassChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      class: value,
+      class_id: getClassId(value)
+    }));
+    setErrors(prev => ({ ...prev, class: '' }));
+  };
 
   useEffect(() => {
     getClasses();
@@ -180,8 +193,8 @@ const AdminAddTeacher: React.FC = () => {
 
   const handleAssignmentChange = (index: number, data: ClassSectionSubjectData) => {
     const updatedAssignments = [...teachingAssignments];
-    data[`class_id`] = (data.class != '' && !data['class_id']) ? getClassId(data.class) : data['class_id'] ? data['class_id'] : null;
-    data[`subject_id`] = (data.subject != '' && !data['subject_id']) ? getSubjectId(data.subject) : null;
+    data[`class_id`] = (data.class != '' ) ? getClassId(data.class) : data['class_id'] ? data['class_id'] : null;
+    data[`subject_id`] = (data.subject != '') ? getSubjectId(data.subject) : null;
     updatedAssignments[index] = data;
     setTeachingAssignments(updatedAssignments);
   };
@@ -440,6 +453,25 @@ const AdminAddTeacher: React.FC = () => {
               </div>
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Class Teacher Assignments
+              </label>
+              <Select value={formData.class} onValueChange={handleClassChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a Class" />
+                </SelectTrigger>
+                <SelectContent>
+                  {classes.map((classItem, index) => (
+                    <SelectItem key={index} value={'Class ' + classItem.class_number + ' - ' + classItem.section}>
+                      {'Class ' + classItem.class_number + ' - ' + classItem.section}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.gender && <p className="text-red-500 text-xs mt-1">{errors.gender}</p>}
+            </div>
+
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <label className="block text-sm font-medium text-gray-700">Teaching Assignments (Optional)</label>
@@ -467,16 +499,29 @@ const AdminAddTeacher: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Current address</label>
               <textarea
-                name="address"
-                value={formData.address}
+                name="current_address"
+                value={formData.current_address}
                 onChange={handleInputChange}
                 onBlur={handleBlur}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              {/* Address is optional, so no error display */}
+              {/* current_address is optional, so no error display */}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Permanent address</label>
+              <textarea
+                name="permanent_address"
+                value={formData.permanent_address}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              {/* current_address is optional, so no error display */}
             </div>
 
             <div className="flex gap-4 pt-4">
