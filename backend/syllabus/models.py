@@ -102,3 +102,43 @@ class Topic(models.Model):
 
     def __str__(self):
         return self.title
+
+class WhiteboardSession(models.Model):
+    session_id = models.CharField(max_length=100, unique=True,primary_key=True)
+    topic = models.ForeignKey(
+        Topic, on_delete=models.CASCADE, related_name="whiteboard_sessions"
+    )
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    class Meta:
+        db_table = 'whiteboard_session'
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=['session_id']),
+            models.Index(fields=['topic']),
+        ]
+
+class WhiteboardDataChunk(models.Model):
+    session = models.ForeignKey(
+        WhiteboardSession,
+        on_delete=models.CASCADE,
+        related_name="data_chunks"
+    )
+    data = models.JSONField(default=list)  # list of strokes
+    chunk_index = models.PositiveIntegerField()  # order of chunks
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'whiteboard_data_chunk'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['session', 'chunk_index'],
+                name='unique_session_chunk_index'
+            ),
+        ]
+        ordering = ["chunk_index"]
+        indexes = [
+            models.Index(fields=['session', 'chunk_index']),
+        ]
