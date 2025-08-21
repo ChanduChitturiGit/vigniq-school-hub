@@ -132,7 +132,7 @@ const Students: React.FC = () => {
             <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
               {student.status || 'active'}
             </span>
-            {( user?.role !== 'student') && (
+            {(user?.role !== 'student') && (
               <button
                 onClick={(e) => {
                   e.preventDefault();
@@ -196,7 +196,7 @@ const Students: React.FC = () => {
                     >
                       <Eye className="w-4 h-4" />
                     </Link>
-                    {( user?.role !== 'student') && (
+                    {(user?.role !== 'student') && (
                       <button
                         onClick={(e) => {
                           e.preventDefault();
@@ -231,6 +231,7 @@ const Students: React.FC = () => {
             <h1 className="text-2xl font-bold text-gray-800">Students</h1>
           </div>
           <div className="flex items-center gap-2">
+            {/* window.innerWidth >= 768 */}
             <div className="flex items-center bg-gray-100 rounded-lg p-1">
               <button
                 onClick={() => setViewMode('grid')}
@@ -253,7 +254,7 @@ const Students: React.FC = () => {
                 <List className="w-4 h-4" />
               </button>
             </div>
-            {(user?.role === 'admin' || user?.role === 'teacher') && (
+            {(user?.role === 'admin' || user?.role === 'teacher') && (window.innerWidth >= 768) && (
               <Link
                 to={getAddStudentPath()}
                 className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
@@ -264,6 +265,15 @@ const Students: React.FC = () => {
             )}
           </div>
         </div>
+        {(user?.role === 'admin' || user?.role === 'teacher') && (window.innerWidth < 768) && (
+          <Link
+            to={getAddStudentPath()}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Student
+          </Link>
+        )}
 
         {/* Search Bar */}
         <div className="relative">

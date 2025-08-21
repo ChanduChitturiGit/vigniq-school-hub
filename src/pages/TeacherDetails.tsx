@@ -27,7 +27,8 @@ const TeacherDetails: React.FC = () => {
     experience: '',
     qualification: '',
     joining_date: '',
-    address: '',
+    current_address: '',      // <-- added
+    permanent_address: '',    // <-- added
     emergencyContact: '',
     subject_assignments: [],
     school_id: null,
@@ -39,8 +40,8 @@ const TeacherDetails: React.FC = () => {
     email: '',
     phone_number: '',
     qualification: '',
-    joining_date: '',
-    address: ''
+    joining_date: ''
+    // No errors for address fields since they're optional
   });
   const [breadcrumbItems, setBreadCrumbItems] = useState([
     { label: 'My School', path: '/admin-school' },
@@ -106,9 +107,7 @@ const TeacherDetails: React.FC = () => {
       case 'joining_date':
         if (!value) error = 'Joining Date is required';
         break;
-      case 'address':
-        if (!value) error = 'Address is required';
-        break;
+      // No address validation
       default:
         break;
     }
@@ -132,7 +131,7 @@ const TeacherDetails: React.FC = () => {
   const editTeacherData = async () => {
     // Validate all fields before API call
     const fieldsToValidate = [
-      'teacher_first_name', 'teacher_last_name', 'email', 'phone_number', 'qualification', 'joining_date', 'address'
+      'teacher_first_name', 'teacher_last_name', 'email', 'phone_number', 'qualification', 'joining_date'
     ];
     fieldsToValidate.forEach(field => {
       validateField(field, (formData as any)[field]);
@@ -398,23 +397,38 @@ const TeacherDetails: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Current Address </label>
                 {isEditing ? (
-                  <>
-                    <textarea
-                      name="address"
-                      value={formData.address}
-                      onChange={handleInputChange}
-                      onBlur={handleBlur}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
-                  </>
+                  <textarea
+                    name="current_address"
+                    value={formData.current_address}
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                 ) : (
                   <div className="flex items-center gap-2">
                     <Home className="w-4 h-4 text-gray-400" />
-                    <p className="text-gray-900">{formData.address}</p>
+                    <p className="text-gray-900">{formData.current_address}</p>
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Permanent Address </label>
+                {isEditing ? (
+                  <textarea
+                    name="permanent_address"
+                    value={formData.permanent_address}
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Home className="w-4 h-4 text-gray-400" />
+                    <p className="text-gray-900">{formData.permanent_address}</p>
                   </div>
                 )}
               </div>

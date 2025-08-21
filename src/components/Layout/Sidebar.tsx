@@ -56,6 +56,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [expandedMenus, setExpandedMenus] = useState<{ [key: string]: boolean }>({});
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
+  const schoolName = userData?.school_name ?? '';
 
   // Check if we're in a subject-specific context
   const isInSubjectContext = location.pathname.includes('/grades/syllabus') || location.pathname.includes('/grades/progress/')  || location.pathname.includes('/grades/lesson-plan');
@@ -63,10 +65,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
   const subject = searchParams.get('subject') || '';
-  const classId = searchParams.get('class_id') || '';
-  const subjectId = location.pathname.split('/').pop()?.split('?')[0] || searchParams.get('subject_id') || '';
-  const schoolId = searchParams.get('school_id') || '';
-  const boardId = searchParams.get('school_board_id') || '';
+  const classId = searchParams.get('class_id') || searchParams.get('classId') || '';
+  const subjectId = searchParams.get('subject_id') || searchParams.get('subjectId') || location.pathname.split('/').pop()?.split('?')[0]  || '';
+  const schoolId = searchParams.get('school_id') || searchParams.get('schoolId') || '';
+  const boardId = searchParams.get('school_board_id') || searchParams.get('boardId') || '';
   const chapterName = searchParams.get('chapterName') || '';
   const pathData = `${subjectId}?class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}&chapterName=${encodeURIComponent(chapterName)}`;
 
@@ -257,13 +259,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
             <img src="/assets/logo.png" alt="Logo" className="w-6 h-6 object-contain" />
           </div>
           {(!isCollapsed || window.innerWidth < 768) && (
-            <div className="transition-opacity duration-500 ease-in-out">
+            <div className="transition-opacity duration-500 ease-in-out w-[70%]">
               <span className="text-xl font-bold">VIGYS AI</span>
               {/* {isInSubjectContext && subject && (
                 <div className="text-xs text-blue-100 mt-1">
                   {subject} - {className} {section}
                 </div>
               )} */}
+               <div className={`text-xs text-blue-100 mt-1 truncate `} title={schoolName}>
+                  {schoolName+schoolName}
+                </div>
             </div>
           )}
         </div>
@@ -290,7 +295,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                           toggleMenu(item.key);
                         }
                       }}
-                      className={`w-full flex items-center justify-between gap-3 px-4 py-3 mx-2 rounded-lg transition-all duration-300 ease-in-out ${isDropdownHighlighted
+                      className={`w-full flex items-center justify-between gap-3 px-4 py-3 me-2 rounded-lg transition-all duration-300 ease-in-out ${isDropdownHighlighted
                         ? 'bg-white/20 text-white'
                         : 'text-white/80 hover:bg-white/10 hover:text-white'
                         }`}
@@ -345,7 +350,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                           handleLinkClick();
                         }
                       }}
-                      className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-all duration-300 ease-in-out ${isActive(regularItem.path)
+                      className={`flex items-center gap-3 px-4 py-3 me-2 rounded-lg transition-all duration-300 ease-in-out ${isActive(regularItem.path)
                         ? 'bg-white/20 text-white font-medium'
                         : 'text-white/80 hover:bg-white/10 hover:text-white'
                         }`}

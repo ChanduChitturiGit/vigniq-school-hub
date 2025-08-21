@@ -31,8 +31,8 @@ logger = logging.getLogger(__name__)
 class ClassesService:
     """Service class for managing classes and sections."""
 
-    @staticmethod
-    def get_classes(request):
+
+    def get_classes(self,request):
         """Retrieve all classes."""
         try:
             logger.info("Retrieving all classes.")
@@ -49,8 +49,8 @@ class ClassesService:
             logger.error(f"Error retrieving classes: {e}")
             return JsonResponse({"error": "An error occurred while retrieving classes."},
                                 status=500)
-    @staticmethod
-    def get_classes_by_school_id(request):
+
+    def get_classes_by_school_id(self, request):
         try:
             logger.info("Retrieving active classes.")
             school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
@@ -132,9 +132,9 @@ class ClassesService:
             logger.error(f"Error retrieving active classes: {e}")
             return JsonResponse({"error": "An error occurred while retrieving active classes."},
                                 status=500)
-    
-    @staticmethod
-    def get_class_by_id(request):
+
+
+    def get_class_by_id(self, request):
         """Retrieve a class by its ID."""
         try:
             logger.info("Retrieving class by ID.")
@@ -222,8 +222,45 @@ class ClassesService:
             return JsonResponse({"error": "An error occurred while retrieving the class."},
                                 status=500)
 
-    @staticmethod
-    def create_class(request):
+    def get_classes_without_class_teacher(self, request):
+        """Get classes without class teacher"""
+        try:
+            logger.info("Retrieving classes without class teacher.")
+            school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
+            academic_year_id = request.GET.get('academic_year_id',1)
+
+            if not school_id:
+                return JsonResponse({"error": "School ID is required."},
+                                    status=400)
+            if not academic_year_id:
+                return JsonResponse({"error": "Academic Year ID is required."},
+                                    status=400)
+
+            school_db_name = CommonFunctions.get_school_db_name(school_id)
+            classes = SchoolSection.objects.using(school_db_name).all()
+
+            data = []
+            for class_obj in classes:
+                class_instance = ClassAssignment.objects.using(school_db_name).filter(
+                    class_instance=class_obj,
+                    academic_year_id=academic_year_id
+                ).first()
+                if not class_instance or not class_instance.class_teacher:
+                    data.append({
+                        'class_section_id': class_obj.id,
+                        'class_number': class_obj.class_instance_id,
+                        'section': class_obj.section,
+                        'board_id': class_obj.board_id,
+                    })
+            return JsonResponse({"classes": data}, status=200)
+        except Exception as e:
+            logger.error("Unable to get classes without class teacher: %s", e)
+            return JsonResponse(
+                {"error": "An error occurred while retrieving classes without class teacher."},
+                status=500
+            )
+
+    def create_class(self, request):
         """Create a new class."""
         try:
             school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
@@ -347,9 +384,9 @@ class ClassesService:
             logger.error(f"Error creating class: {e}")
             return JsonResponse({"error": "An error occurred while creating the class."},
                                 status=500)
-    
-    @staticmethod
-    def update_class(request):
+
+
+    def update_class(self, request):
         """Update an existing class."""
         try:
             school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
@@ -377,7 +414,7 @@ class ClassesService:
             class_section_instance = SchoolSection.objects.using(school_db_name).get(
                 id=id
             )
-            
+
             class_assignment = ClassAssignment.objects.using(school_db_name).get(
                 class_instance = class_section_instance,
                 academic_year_id = academic_year_id

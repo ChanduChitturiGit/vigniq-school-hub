@@ -5,6 +5,7 @@ import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../components/ui/collapsible';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../components/ui/accordion';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Progress } from '../components/ui/progress';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
@@ -28,7 +29,7 @@ import {
   MessageSquare,
   RotateCcw
 } from 'lucide-react';
-import { getGradeByChapter, saveTopicByLesson, editTopicByLesson,savePrerequisite,editPrerequisiteByLesson } from '../services/grades'
+import { getGradeByChapter, saveTopicByLesson, editTopicByLesson, savePrerequisite, editPrerequisiteByLesson } from '../services/grades'
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 
 interface DayPlan {
@@ -44,6 +45,7 @@ interface Chapter {
   sub_topics: any[];
   lesson_plan_days: any[];
   prerequisites: any[];
+  tabValue?: string; // <-- Add this
 }
 
 const Syllabus: React.FC = () => {
@@ -68,6 +70,7 @@ const Syllabus: React.FC = () => {
   const [newPrerequisiteExplanation, setNewPrerequisiteExplanation] = useState('');
   const [addingTopic, setAddingTopic] = useState<string | null>(null);
   const [addingPrerequisite, setAddingPrerequisite] = useState<string | null>(null);
+  const [taskBar, setTaskBar] = useState('topics');
   //const [chaptersData, setChaptersData] = useState<any[]>([]);
 
   const breadcrumbItems = [
@@ -232,6 +235,7 @@ const Syllabus: React.FC = () => {
     }
   ];
 
+
   const getGradesData = async () => {
     try {
       const data = {
@@ -243,8 +247,12 @@ const Syllabus: React.FC = () => {
       localStorage.setItem('gradesData', JSON.stringify(data));
       const response = await getGradeByChapter(data);
       if (response && response.data) {
-        console.log("topics", response);
-        setChapters(response.data);
+        // Initialize tabValue for each chapter
+        const chaptersWithTab = response.data.map((ch: Chapter) => ({
+          ...ch,
+          tabValue: "topics"
+        }));
+        setChapters(chaptersWithTab);
       }
     } catch (error) {
       showSnackbar({
@@ -389,6 +397,7 @@ const Syllabus: React.FC = () => {
       ...prev,
       [chapterId]: !prev[chapterId]
     }));
+    setTaskBar('topics')
   };
 
   const getProgressColor = (progress: number) => {
@@ -457,7 +466,7 @@ const Syllabus: React.FC = () => {
       //   return chapter;
       // }));
       savePrerequisteData({ chapter_id: chapterId, topic: newTitle.trim(), explanation: newExplanation.trim() }); // Save the new prerequisite
-    }else{
+    } else {
       showSnackbar({
         title: "⛔ Error",
         description: "Title and explanation cannot be empty",
@@ -468,6 +477,15 @@ const Syllabus: React.FC = () => {
     setNewPrerequisiteTitle('');
     setNewPrerequisiteExplanation('');
   };
+
+  const handleTaskChange = (value: any, id: any) => {
+    setTaskBar(value);
+    setChapters(chapters.map(ch =>
+      ch.chapter_id == id
+        ? { ...ch, tabValue: value }
+        : ch
+    ));
+  }
 
   return (
     <MainLayout pageTitle={`${subject} - ${className} ${section}`}>
@@ -498,52 +516,100 @@ const Syllabus: React.FC = () => {
                 onOpenChange={() => toggleChapter(chapter.chapter_id)}
               >
                 <CollapsibleTrigger className="w-full p-6 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-4">
-                      <span className="text-xl font-medium text-gray-900">
+                  <div className="flex items-center  gap-6">
+                    <div className="flex items-center gap-2">
+                      <span className="text-md md:text-xl font-medium text-gray-900">
                         Chapter {chapter.chapter_number}: {chapter.chapter_name}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className={`w-32 h-3 bg-gray-200 rounded-full overflow-hidden`}>
+                    <div className={`${window.innerWidth >= 768 ? 'flex ' : 'flex-col gap-1'}  items-center `}>
+                      <div className={`w-28 md:w-32 h-3 bg-gray-200 rounded-full overflow-hidden`}>
                         <div
                           className={`h-full ${getProgressColor(chapter.progress)} transition-all duration-500`}
-                          style={{ width: `${chapter.progress}%` }}
+                          style={{ width: `${chapter.progress ?? 0}%` }}
                         />
                       </div>
-                      <span className="text-base font-medium text-gray-600 min-w-[50px]">{chapter.progress}%</span>
+                      <span className="text-base font-small md:font-medium text-gray-600 min-w-[50px]">{chapter.progress ?? 0}%</span>
                     </div>
                   </div>
-                  {openChapters[chapter.chapter_id] ?
-                    <ChevronUp className="w-6 h-6 text-gray-500" /> :
-                    <ChevronDown className="w-6 h-6 text-gray-500" />
-                  }
+                  <div className='hidden md:block'>
+                    {openChapters[chapter.chapter_id] ?
+                      <ChevronUp className="w-6 h-6 text-gray-500" /> :
+                      <ChevronDown className="w-6 h-6 text-gray-500" />
+                    }
+                  </div>
                 </CollapsibleTrigger>
 
                 <CollapsibleContent>
                   <div className="border-t border-gray-200 p-6">
-                    <Tabs defaultValue="topics" className="w-full h-full">
-                      <TabsList className="grid w-full h-full grid-cols-3 mb-6 bg-gray-50 p-1 rounded-lg">
-                        <TabsTrigger
-                          value="topics"
-                          className="text-base py-3 px-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md transition-all"
-                        >
-                          Topics
-                        </TabsTrigger>
-                        <TabsTrigger
-                          value="lessonplan"
-                          className="text-base py-3 px-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md transition-all"
-                        >
-                          Lesson Plan
-                        </TabsTrigger>
-                        <TabsTrigger
-                          value="prerequisites"
-                          className="text-base py-3 px-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md transition-all"
-                        >
-                          Prerequisites
-                        </TabsTrigger>
-                      </TabsList>
+                    {/* Control Tabs with chapter.tabValue */}
+                    <Tabs value={chapter.tabValue || "topics"} className="w-full h-full">
+                      {/* Responsive tab selector */}
+                      <div className="mb-6 w-full">
+                        {/* Mobile: Dropdown */}
+                        <div className="block md:hidden">
 
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Tabs
+                            </label>
+                            <Select value={taskBar} onValueChange={(e) => handleTaskChange(e.toLowerCase().trim().replace(/\s+/g, ""), chapter.chapter_id)}>
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select a Class" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {['Topics', 'Lesson Plan', 'Prerequisites'].map((item, index) => (
+                                  <SelectItem key={index} value={item.toLowerCase().trim().replace(/\s+/g, "")}>
+                                    {item}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        {/* Desktop: Tabs */}
+                        <TabsList className="hidden md:grid w-full h-full grid-cols-3 bg-gray-50 p-1 rounded-lg">
+                          <TabsTrigger
+                            value="topics"
+                            className="text-base py-3 px-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md transition-all"
+                            onClick={() => {
+                              setChapters(chapters.map(ch =>
+                                ch.chapter_id === chapter.chapter_id
+                                  ? { ...ch, tabValue: "topics" }
+                                  : ch
+                              ));
+                            }}
+                          >
+                            Topics
+                          </TabsTrigger>
+                          <TabsTrigger
+                            value="lessonplan"
+                            className="text-base py-3 px-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md transition-all"
+                            onClick={() => {
+                              setChapters(chapters.map(ch =>
+                                ch.chapter_id === chapter.chapter_id
+                                  ? { ...ch, tabValue: "lessonplan" }
+                                  : ch
+                              ));
+                            }}
+                          >
+                            Lesson Plan
+                          </TabsTrigger>
+                          <TabsTrigger
+                            value="prerequisites"
+                            className="text-base py-3 px-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md transition-all"
+                            onClick={() => {
+                              setChapters(chapters.map(ch =>
+                                ch.chapter_id === chapter.chapter_id
+                                  ? { ...ch, tabValue: "prerequisites" }
+                                  : ch
+                              ));
+                            }}
+                          >
+                            Prerequisites
+                          </TabsTrigger>
+                        </TabsList>
+                      </div>
                       <TabsContent value="topics" className="mt-6">
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
@@ -558,13 +624,13 @@ const Syllabus: React.FC = () => {
                           </div>
 
                           {chapter.sub_topics.map((topic, index) => (
-                            <div key={index} className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors">
+                            <div key={index} className="flex flex-col md:flex-row items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors">
                               <div className="flex items-center gap-4 flex-1">
                                 <span className="text-sm font-medium text-blue-600 bg-blue-200 rounded-full w-7 h-7 flex items-center justify-center">
                                   {index + 1}
                                 </span>
                                 {editingTopic?.chapterId === chapter.chapter_id && editingTopic?.topicIndex === index ? (
-                                  <div className="flex items-center gap-3 flex-1">
+                                  <div className={`flex flex-col md:flex-row items-center gap-3 flex-1`}>
                                     <Input
                                       value={newTopicText}
                                       onChange={(e) => setNewTopicText(e.target.value)}
@@ -580,24 +646,26 @@ const Syllabus: React.FC = () => {
                                       }}
                                       autoFocus
                                     />
-                                    <Button
-                                      onClick={() => handleTopicEdit(chapter.chapter_id, topic.sub_topic_id, newTopicText)}
-                                      size="sm"
-                                      className="bg-green-600 hover:bg-green-700 px-3 py-1"
-                                    >
-                                      <Save className="w-4 h-4" />
-                                    </Button>
-                                    <Button
-                                      onClick={() => {
-                                        setEditingTopic(null);
-                                        setNewTopicText('');
-                                      }}
-                                      size="sm"
-                                      variant="outline"
-                                      className="px-3 py-1"
-                                    >
-                                      <X className="w-4 h-4" />
-                                    </Button>
+                                    <div className='flex gap-4 mt-2 md:mt-0'>
+                                      <Button
+                                        onClick={() => handleTopicEdit(chapter.chapter_id, topic.sub_topic_id, newTopicText)}
+                                        size="sm"
+                                        className="bg-green-600 hover:bg-green-700 px-3 py-1"
+                                      >
+                                        <Save className="w-4 h-4" />
+                                      </Button>
+                                      <Button
+                                        onClick={() => {
+                                          setEditingTopic(null);
+                                          setNewTopicText('');
+                                        }}
+                                        size="sm"
+                                        variant="outline"
+                                        className="px-3 py-1"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </Button>
+                                    </div>
                                   </div>
                                 ) : (
                                   <span className="text-base text-gray-700">{topic.sub_topic}</span>
@@ -621,44 +689,48 @@ const Syllabus: React.FC = () => {
                           ))}
 
                           {addingTopic === chapter.chapter_id && (
-                            <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
-                              <span className="text-sm font-medium text-blue-600 bg-blue-200 rounded-full w-7 h-7 flex items-center justify-center">
-                                {chapter.sub_topics.length + 1}
-                              </span>
-                              <Input
-                                value={newTopicText}
-                                onChange={(e) => setNewTopicText(e.target.value)}
-                                placeholder="Enter new topic..."
-                                className="flex-1 text-base py-2 border-2 border-blue-300 focus:border-blue-500"
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    addTopic(chapter.chapter_id, newTopicText);
-                                  }
-                                  if (e.key === 'Escape') {
+                            <div className="flex flex-col md:flex-row items-center gap-3 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+                              <div className='flex items-center gap-4 flex-1'>
+                                <span className="text-sm font-medium text-blue-600 bg-blue-200 rounded-full w-7 h-7 flex items-center justify-center">
+                                  {chapter.sub_topics.length + 1}
+                                </span>
+                                <Input
+                                  value={newTopicText}
+                                  onChange={(e) => setNewTopicText(e.target.value)}
+                                  placeholder="Enter new topic..."
+                                  className="flex-1 text-base py-2 border-2 border-blue-300 focus:border-blue-500"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      addTopic(chapter.chapter_id, newTopicText);
+                                    }
+                                    if (e.key === 'Escape') {
+                                      setAddingTopic(null);
+                                      setNewTopicText('');
+                                    }
+                                  }}
+                                  autoFocus
+                                />
+                              </div>
+                              <div className='flex gap-4 mt-2 md:mt-0'>
+                                <Button
+                                  onClick={() => addTopic(chapter.chapter_id, newTopicText)}
+                                  className="bg-green-600 hover:bg-green-700 px-3 py-2"
+                                >
+                                  <Save className="w-4 h-4 mr-1" />
+                                  Save
+                                </Button>
+                                <Button
+                                  onClick={() => {
                                     setAddingTopic(null);
                                     setNewTopicText('');
-                                  }
-                                }}
-                                autoFocus
-                              />
-                              <Button
-                                onClick={() => addTopic(chapter.chapter_id, newTopicText)}
-                                className="bg-green-600 hover:bg-green-700 px-3 py-2"
-                              >
-                                <Save className="w-4 h-4 mr-1" />
-                                Save
-                              </Button>
-                              <Button
-                                onClick={() => {
-                                  setAddingTopic(null);
-                                  setNewTopicText('');
-                                }}
-                                variant="outline"
-                                className="px-3 py-2"
-                              >
-                                <X className="w-4 h-4 mr-1" />
-                                Cancel
-                              </Button>
+                                  }}
+                                  variant="outline"
+                                  className="px-3 py-2"
+                                >
+                                  <X className="w-4 h-4 mr-1" />
+                                  Cancel
+                                </Button>
+                              </div>
                             </div>
                           )}
                         </div>
@@ -734,13 +806,13 @@ const Syllabus: React.FC = () => {
 
                       <TabsContent value="prerequisites" className="mt-6">
                         <div className="space-y-4">
-                          <div className="flex items-center justify-between">
+                          <div className="md:flex lex-col items-center justify-between">
                             <h3 className="text-lg font-medium text-gray-800">Prerequisites</h3>
                             <Button
                               onClick={() => setAddingPrerequisite(chapter.chapter_id)}
                               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
                             >
-                              <PlusCircle className="w-4 h-4" />
+                              <PlusCircle className="w-4 h-4 sm:mt-1" />
                               Add Prerequisite
                             </Button>
                           </div>
@@ -772,10 +844,10 @@ const Syllabus: React.FC = () => {
                                   rows={4}
                                 />
                               </div>
-                              <div className="flex gap-3">
+                              <div className="flex gap-3 ">
                                 <Button
                                   onClick={() => addPrerequisite(chapter.chapter_id, newPrerequisiteTitle, newPrerequisiteExplanation)}
-                                  className="bg-green-600 hover:bg-green-700 px-4 py-2"
+                                  className="bg-green-600 hover:bg-green-700 px-2 md:px-4 py-2"
                                   disabled={!newPrerequisiteTitle.trim() || !newPrerequisiteExplanation.trim()}
                                 >
                                   <Save className="w-4 h-4 mr-2" />
@@ -788,7 +860,7 @@ const Syllabus: React.FC = () => {
                                     setNewPrerequisiteExplanation('');
                                   }}
                                   variant="outline"
-                                  className="px-4 py-2"
+                                  className="px-2 md:px-4 py-2"
                                 >
                                   <X className="w-4 h-4 mr-2" />
                                   Cancel
@@ -813,7 +885,7 @@ const Syllabus: React.FC = () => {
                                       </span>
                                     </div>
                                   </AccordionTrigger>
-                                  <AccordionContent className={`pb-4 ${!editingPrerequisite ? 'flex justify-between' : ''}`}>
+                                  <AccordionContent className={`pb-4 ${!editingPrerequisite ? 'flex flex-col md:flex-row justify-between' : ''}`}>
                                     {editingPrerequisite?.chapterId === chapter.chapter_id && editingPrerequisite?.prereqIndex === index ? (
                                       <div className="space-y-4 pt-2">
                                         <div className="space-y-2">

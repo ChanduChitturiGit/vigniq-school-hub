@@ -50,7 +50,7 @@ const CreateLessonPlan: React.FC = () => {
   const subjectId = Number(searchParams.get('subjectId')) || '';
   const boardId = Number(searchParams.get('school_board_id')) || '';
 
-  const pathData = `${subjectId}?class=${'Class ' + className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
+  const pathData = `${subjectId}?class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
   let payload = {
     school_id: schoolId,
     board_id: boardId,
@@ -296,28 +296,28 @@ const CreateLessonPlan: React.FC = () => {
           <Breadcrumb items={breadcrumbItems} />
 
           <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex flex-col md:flex-row items-center justify-between mb-8">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">AI Generated Lesson Plan Breakdown</h1>
+                {/* <h1 className="text-3xl font-bold text-gray-900 mb-2">AI Generated Lesson Plan Breakdown</h1> */}
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
-                  <p className="text-lg font-medium text-gray-700">Class: {subject} - {className}</p>
+                  <p className="text-md md:text-lg font-medium text-gray-700">Class: {subject} - {className}</p>
                   <p className="text-base text-gray-600">Subject: {subject}</p>
                   <p className="text-base text-gray-600">Chapter: Chapter {generatedPlan.chapter_number}: {generatedPlan.chapter_title}</p>
                   <p className="text-base text-gray-600">Total Days: {generatedPlan.total_days}</p>
                 </div>
               </div>
-              <div className="flex gap-3">
+              <div className="flex m-4 md:m-0 gap-3">
                 <Button
                   onClick={handleBackToForm}
                   variant="outline"
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-1 md:gap-2"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   Back to Form
                 </Button>
                 <Button
                   onClick={handleSaveLessonPlan}
-                  className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+                  className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-1 md:gap-2"
                 >
                   <Save className="w-4 h-4" />
                   Save Lesson Plan

@@ -204,7 +204,7 @@ const ViewEbooks: React.FC = () => {
 
   const getClassId = (data: string) => {
     const boardData = classes.find((val: any) => ('Class ' + val.class_number) == data);
-    const boardId = boardData.class_id ? boardData.class_id : null;
+    const boardId = boardData.id ? boardData.id : null;
     return boardId;
   }
 
