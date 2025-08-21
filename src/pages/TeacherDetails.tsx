@@ -471,7 +471,7 @@ const TeacherDetails: React.FC = () => {
                 ) : (
                   <div className="flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-gray-400" />
-                    <p className="text-gray-900">{'Class '+formData?.class_assignment?.class_number + ' '+ formData?.class_assignment?.section}</p>
+                    <p className="text-gray-900">{formData?.class_assignment && formData.class_assignment.class_number ?    'Class '+formData?.class_assignment?.class_number + ' '+ formData?.class_assignment?.section : 'N/A'}</p>
                   </div>
                 )
                 }
