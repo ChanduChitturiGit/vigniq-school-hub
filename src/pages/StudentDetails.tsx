@@ -379,7 +379,7 @@ const StudentDetails: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
               {isEditing ? (
                 <input
-                  type="text"
+                  type="date"
                   value={studentData.date_of_birth}
                   onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -387,7 +387,7 @@ const StudentDetails: React.FC = () => {
               ) : (
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-gray-400" />
-                  <p className="text-gray-900">{studentData.date_of_birth}</p>
+                  <p className="text-gray-900">{new Date(studentData.date_of_birth).toLocaleDateString('en-GB') }</p>
                 </div>
               )}
             </div>
@@ -425,7 +425,7 @@ const StudentDetails: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">Admission Date</label>
               {isEditing ? (
                 <input
-                  type="text"
+                 type="date"
                   value={studentData.admission_date}
                   onChange={(e) => handleInputChange('admission_date', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -433,7 +433,7 @@ const StudentDetails: React.FC = () => {
               ) : (
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-gray-400" />
-                  <p className="text-gray-900">{studentData.admission_date}</p>
+                  <p className="text-gray-900">{new Date(studentData.admission_date).toLocaleDateString('en-GB')}</p>
                 </div>
               )}
             </div>
