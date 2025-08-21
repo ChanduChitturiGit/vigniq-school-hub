@@ -15,7 +15,7 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ isCollapsed, toggleSidebar, pageT
   const navigate = useNavigate();
   const [showUserMenu, setShowUserMenu] = React.useState(false);
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
-  const userName = (userData?.first_name +' '+userData?.last_name) != ' ' ? (userData?.first_name +' '+userData?.last_name) :  userData?.user_name ?? 'name' ;
+  const userName = userData.role=='superadmin' && !userData?.first_name && !userData?.last_name ? userData?.user_name : (userData?.first_name +' '+userData?.last_name) ; // 'name' ;
   const userMenuRef = React.useRef<HTMLDivElement>(null);
 
   const handleLogout = () => {

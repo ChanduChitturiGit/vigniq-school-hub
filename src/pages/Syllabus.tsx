@@ -397,6 +397,7 @@ const Syllabus: React.FC = () => {
       ...prev,
       [chapterId]: !prev[chapterId]
     }));
+    setTaskBar('topics')
   };
 
   const getProgressColor = (progress: number) => {
@@ -550,7 +551,7 @@ const Syllabus: React.FC = () => {
 
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Class *
+                              Tabs
                             </label>
                             <Select value={taskBar} onValueChange={(e) => handleTaskChange(e.toLowerCase().trim().replace(/\s+/g, ""), chapter.chapter_id)}>
                               <SelectTrigger className="w-full">
@@ -623,13 +624,13 @@ const Syllabus: React.FC = () => {
                           </div>
 
                           {chapter.sub_topics.map((topic, index) => (
-                            <div key={index} className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors">
+                            <div key={index} className="flex flex-col md:flex-row items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors">
                               <div className="flex items-center gap-4 flex-1">
                                 <span className="text-sm font-medium text-blue-600 bg-blue-200 rounded-full w-7 h-7 flex items-center justify-center">
                                   {index + 1}
                                 </span>
                                 {editingTopic?.chapterId === chapter.chapter_id && editingTopic?.topicIndex === index ? (
-                                  <div className="flex items-center gap-3 flex-1">
+                                  <div className={`flex flex-col md:flex-row items-center gap-3 flex-1`}>
                                     <Input
                                       value={newTopicText}
                                       onChange={(e) => setNewTopicText(e.target.value)}
@@ -645,24 +646,26 @@ const Syllabus: React.FC = () => {
                                       }}
                                       autoFocus
                                     />
-                                    <Button
-                                      onClick={() => handleTopicEdit(chapter.chapter_id, topic.sub_topic_id, newTopicText)}
-                                      size="sm"
-                                      className="bg-green-600 hover:bg-green-700 px-3 py-1"
-                                    >
-                                      <Save className="w-4 h-4" />
-                                    </Button>
-                                    <Button
-                                      onClick={() => {
-                                        setEditingTopic(null);
-                                        setNewTopicText('');
-                                      }}
-                                      size="sm"
-                                      variant="outline"
-                                      className="px-3 py-1"
-                                    >
-                                      <X className="w-4 h-4" />
-                                    </Button>
+                                    <div className='flex gap-4 mt-2 md:mt-0'>
+                                      <Button
+                                        onClick={() => handleTopicEdit(chapter.chapter_id, topic.sub_topic_id, newTopicText)}
+                                        size="sm"
+                                        className="bg-green-600 hover:bg-green-700 px-3 py-1"
+                                      >
+                                        <Save className="w-4 h-4" />
+                                      </Button>
+                                      <Button
+                                        onClick={() => {
+                                          setEditingTopic(null);
+                                          setNewTopicText('');
+                                        }}
+                                        size="sm"
+                                        variant="outline"
+                                        className="px-3 py-1"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </Button>
+                                    </div>
                                   </div>
                                 ) : (
                                   <span className="text-base text-gray-700">{topic.sub_topic}</span>
@@ -686,44 +689,48 @@ const Syllabus: React.FC = () => {
                           ))}
 
                           {addingTopic === chapter.chapter_id && (
-                            <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
-                              <span className="text-sm font-medium text-blue-600 bg-blue-200 rounded-full w-7 h-7 flex items-center justify-center">
-                                {chapter.sub_topics.length + 1}
-                              </span>
-                              <Input
-                                value={newTopicText}
-                                onChange={(e) => setNewTopicText(e.target.value)}
-                                placeholder="Enter new topic..."
-                                className="flex-1 text-base py-2 border-2 border-blue-300 focus:border-blue-500"
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    addTopic(chapter.chapter_id, newTopicText);
-                                  }
-                                  if (e.key === 'Escape') {
+                            <div className="flex flex-col md:flex-row items-center gap-3 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+                              <div className='flex items-center gap-4 flex-1'>
+                                <span className="text-sm font-medium text-blue-600 bg-blue-200 rounded-full w-7 h-7 flex items-center justify-center">
+                                  {chapter.sub_topics.length + 1}
+                                </span>
+                                <Input
+                                  value={newTopicText}
+                                  onChange={(e) => setNewTopicText(e.target.value)}
+                                  placeholder="Enter new topic..."
+                                  className="flex-1 text-base py-2 border-2 border-blue-300 focus:border-blue-500"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      addTopic(chapter.chapter_id, newTopicText);
+                                    }
+                                    if (e.key === 'Escape') {
+                                      setAddingTopic(null);
+                                      setNewTopicText('');
+                                    }
+                                  }}
+                                  autoFocus
+                                />
+                              </div>
+                              <div className='flex gap-4 mt-2 md:mt-0'>
+                                <Button
+                                  onClick={() => addTopic(chapter.chapter_id, newTopicText)}
+                                  className="bg-green-600 hover:bg-green-700 px-3 py-2"
+                                >
+                                  <Save className="w-4 h-4 mr-1" />
+                                  Save
+                                </Button>
+                                <Button
+                                  onClick={() => {
                                     setAddingTopic(null);
                                     setNewTopicText('');
-                                  }
-                                }}
-                                autoFocus
-                              />
-                              <Button
-                                onClick={() => addTopic(chapter.chapter_id, newTopicText)}
-                                className="bg-green-600 hover:bg-green-700 px-3 py-2"
-                              >
-                                <Save className="w-4 h-4 mr-1" />
-                                Save
-                              </Button>
-                              <Button
-                                onClick={() => {
-                                  setAddingTopic(null);
-                                  setNewTopicText('');
-                                }}
-                                variant="outline"
-                                className="px-3 py-2"
-                              >
-                                <X className="w-4 h-4 mr-1" />
-                                Cancel
-                              </Button>
+                                  }}
+                                  variant="outline"
+                                  className="px-3 py-2"
+                                >
+                                  <X className="w-4 h-4 mr-1" />
+                                  Cancel
+                                </Button>
+                              </div>
                             </div>
                           )}
                         </div>
@@ -837,10 +844,10 @@ const Syllabus: React.FC = () => {
                                   rows={4}
                                 />
                               </div>
-                              <div className="flex gap-3">
+                              <div className="flex gap-3 ">
                                 <Button
                                   onClick={() => addPrerequisite(chapter.chapter_id, newPrerequisiteTitle, newPrerequisiteExplanation)}
-                                  className="bg-green-600 hover:bg-green-700 px-4 py-2"
+                                  className="bg-green-600 hover:bg-green-700 px-2 md:px-4 py-2"
                                   disabled={!newPrerequisiteTitle.trim() || !newPrerequisiteExplanation.trim()}
                                 >
                                   <Save className="w-4 h-4 mr-2" />
@@ -853,7 +860,7 @@ const Syllabus: React.FC = () => {
                                     setNewPrerequisiteExplanation('');
                                   }}
                                   variant="outline"
-                                  className="px-4 py-2"
+                                  className="px-2 md:px-4 py-2"
                                 >
                                   <X className="w-4 h-4 mr-2" />
                                   Cancel
@@ -878,7 +885,7 @@ const Syllabus: React.FC = () => {
                                       </span>
                                     </div>
                                   </AccordionTrigger>
-                                  <AccordionContent className={`pb-4 ${!editingPrerequisite ? 'flex justify-between' : ''}`}>
+                                  <AccordionContent className={`pb-4 ${!editingPrerequisite ? 'flex flex-col md:flex-row justify-between' : ''}`}>
                                     {editingPrerequisite?.chapterId === chapter.chapter_id && editingPrerequisite?.prereqIndex === index ? (
                                       <div className="space-y-4 pt-2">
                                         <div className="space-y-2">

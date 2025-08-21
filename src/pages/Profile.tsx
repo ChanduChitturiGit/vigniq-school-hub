@@ -29,7 +29,8 @@ const Profile: React.FC = () => {
     user_name: '',
     email: user?.email || '',
     phone_number: '',
-    address: '',
+    current_address: '',
+    permanent_address: '',
     date_of_birth: '',
     qualification: '',
     joining_date: ''
@@ -38,7 +39,8 @@ const Profile: React.FC = () => {
     first_name: '',
     last_name: '',
     phone_number: '',
-    address: '',
+    current_address: '',
+    permanent_address: '',
     qualification: ''
   });
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
@@ -82,9 +84,6 @@ const Profile: React.FC = () => {
         if (!value) error = 'Phone is required';
         else if (!/^\d{10,15}$/.test(value)) error = 'Phone must be 10-15 digits';
         break;
-      case 'address':
-        if (!value) error = 'Address is required';
-        break;
       case 'qualification':
         if (!value && user?.role == 'teacher') error = 'Qualification is required';
         break;
@@ -101,7 +100,7 @@ const Profile: React.FC = () => {
 
   const editData = async (data: any) => {
     // Validate all fields before API call
-    const fieldsToValidate = ['first_name', 'last_name', 'phone_number', 'address'];
+    const fieldsToValidate = ['first_name', 'last_name', 'phone_number'];
     if (user?.role == 'teacher') fieldsToValidate.push('qualification');
     fieldsToValidate.forEach(field => {
       validateField(field, (formData as any)[field]);
@@ -136,6 +135,8 @@ const Profile: React.FC = () => {
         description: error?.response?.data?.error || "Something went wrong",
         status: "error"
       });
+    } finally {
+      getUserDetails();
     }
   }
 
@@ -338,24 +339,47 @@ const Profile: React.FC = () => {
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                   <MapPin className="w-4 h-4" />
-                  Address
+                  Current Address
                 </label>
                 {isEditing ? (
                   <>
                     <textarea
-                      name="address"
-                      value={formData.address}
+                      name="current_address"
+                      value={formData.current_address}
                       onChange={handleInputChange}
                       onBlur={handleBlur}
                       rows={3}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
+                    {errors.current_address && <p className="text-red-500 text-xs mt-1">{errors.current_address}</p>}
                   </>
                 ) : (
-                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.address}</p>
+                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.current_address}</p>
                 )}
               </div>
+              
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                  <MapPin className="w-4 h-4" />
+                  Permanent Address
+                </label>
+                {isEditing ? (
+                  <>
+                    <textarea
+                      name="permanent_address"
+                      value={formData.permanent_address}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {errors.permanent_address && <p className="text-red-500 text-xs mt-1">{errors.permanent_address}</p>}
+                  </>
+                ) : (
+                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.permanent_address}</p>
+                )}
+              </div>
+
 
               {userData.role != 'superadmin' && userData.role != 'admin' && (
                 <div>
