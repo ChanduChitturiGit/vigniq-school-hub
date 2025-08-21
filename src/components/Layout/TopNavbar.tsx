@@ -61,7 +61,7 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ isCollapsed, toggleSidebar, pageT
         >
           <Menu className="w-5 h-5 text-gray-600" />
         </button>
-        <h1 className="text-xl font-semibold text-gray-800">{pageTitle}</h1>
+        <h1 className="text-lg md:text-xl font-semibold text-gray-800">{pageTitle}</h1>
       </div>
 
       {/* Right Section */}

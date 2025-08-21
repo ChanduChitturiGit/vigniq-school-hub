@@ -193,9 +193,9 @@ const DayLessonPlan: React.FC = () => {
         {/* Topics Section */}
         <Card className="shadow-lg border-0">
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+            <CardTitle className={`${window.innerWidth >= 768 ? 'flex ' : 'flex-col '} items-center justify-between`}>
               <div>
-                <span className="text-2xl font-bold text-gray-900">Lesson Plan Activities</span>
+                <span className="text-lg md:text-2xl font-bold text-gray-900">Lesson Plan Activities</span>
                 <div className="flex items-center gap-4 mt-2">
                   <div className="flex items-center gap-2">
                     <div className="w-32 h-3 bg-gray-200 rounded-full overflow-hidden">
@@ -208,7 +208,7 @@ const DayLessonPlan: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2 text-gray-600">
                     <Clock className="w-4 h-4" />
-                    <span className="text-sm font-medium">Total: {getTotalTime()} minutes</span>
+                    <span className="teDayLessonPlanxt-sm text-sm md:text-lg">Total: {getTotalTime()} minutes</span>
                   </div>
                 </div>
               </div>
@@ -233,15 +233,18 @@ const DayLessonPlan: React.FC = () => {
             <div className="space-y-6">
               {lessonData.topics.map((topic, index) => (
                 <div key={topic.topic_id} className="flex gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="flex-shrink-0">
-                    <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-lg">
+                  <div className="hidden md:block flex-shrink-0">
+                    <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm md:text-lg">
                       {index + 1}
                     </div>
                   </div>
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">
+                      <h3 className="hidden md:block text-sm md:text-lg font-semibold text-gray-900">
                         {topic.title}
+                      </h3>
+                      <h3 className="md:hidden text-sm md:text-lg font-semibold text-gray-900">
+                        {(index + 1)+') '+topic.title}
                       </h3>
                       <div className="flex items-center gap-1 text-sm text-gray-600 bg-white px-3 py-1 rounded-full border ml-4">
                         <Clock className="w-3 h-3" />

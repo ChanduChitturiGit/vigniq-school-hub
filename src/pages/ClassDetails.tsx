@@ -30,41 +30,41 @@ const ClassDetails: React.FC = () => {
   });
 
   // Mock students data for this class
-  const sampleAllStudents = [
-    {
-      student_id: '1',
-      studentname: 'Alice Johnson',
-      roll_number: '001',
-      email: 'alice.johnson@school.edu',
-      parent_name: 'Robert Johnson',
-      parent_phone: '+91 98765 43210',
-      status: 'Active',
-      date_of_birth: '15/05/2008',
-      address: '123 Main St, City'
-    },
-    {
-      student_id: '2',
-      name: 'Bob Wilson',
-      roll_number: '002',
-      email: 'bob.wilson@school.edu',
-      parent_name: 'Sarah Wilson',
-      parent_phone: '+91 98765 43211',
-      status: 'Active',
-      date_of_birth: '22/03/2008',
-      address: '456 Oak Ave, City'
-    },
-    {
-      student_id: '3',
-      name: 'Charlie Brown',
-      roll_number: '003',
-      email: 'charlie.brown@school.edu',
-      parent_name: 'David Brown',
-      parent_phone: '+91 98765 43212',
-      status: 'Active',
-      date_of_birth: '10/07/2008',
-      address: '789 Pine St, City'
-    }
-  ];
+  // const sampleAllStudents = [
+  //   {
+  //     student_id: '1',
+  //     studentname: 'Alice Johnson',
+  //     roll_number: '001',
+  //     email: 'alice.johnson@school.edu',
+  //     parent_name: 'Robert Johnson',
+  //     parent_phone: '+91 98765 43210',
+  //     status: 'Active',
+  //     date_of_birth: '15/05/2008',
+  //     address: '123 Main St, City'
+  //   },
+  //   {
+  //     student_id: '2',
+  //     name: 'Bob Wilson',
+  //     roll_number: '002',
+  //     email: 'bob.wilson@school.edu',
+  //     parent_name: 'Sarah Wilson',
+  //     parent_phone: '+91 98765 43211',
+  //     status: 'Active',
+  //     date_of_birth: '22/03/2008',
+  //     address: '456 Oak Ave, City'
+  //   },
+  //   {
+  //     student_id: '3',
+  //     name: 'Charlie Brown',
+  //     roll_number: '003',
+  //     email: 'charlie.brown@school.edu',
+  //     parent_name: 'David Brown',
+  //     parent_phone: '+91 98765 43212',
+  //     status: 'Active',
+  //     date_of_birth: '10/07/2008',
+  //     address: '789 Pine St, City'
+  //   }
+  // ];
 
   // Mock class data
   const sampleClassData = {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
@@ -16,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useSnackbar } from '../components/snackbar/SnackbarContext';
 import { getLessonPlanDataByDay } from '../services/grades';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '../components/ui/accordion';
 
 interface LessonActivity {
   serialNumber: number;
@@ -212,118 +212,162 @@ const AIChatLessonPlan: React.FC = () => {
         </div>  */}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Chat Section */}
-          <div className="lg:col-span-2">
-            <Card className="shadow-lg border-0 h-[600px] flex flex-col">
-              <CardHeader className="flex-shrink-0 border-b">
-                <CardTitle className="flex items-center gap-3 text-2xl">
-                  <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                    <MessageSquare className="w-6 h-6 text-purple-600" />
-                  </div>
-                  Chat with AI Assistant
-                </CardTitle>
-              </CardHeader>
 
-              <CardContent className="flex-1 flex flex-col p-0 min-h-0">
-                {/* Messages Area */}
-                <div className="flex-1 overflow-hidden">
+          {/* Fixed Lesson Plan Panel for mobile*/}
+          <Accordion type="single" collapsible className="lg:hidden lg:col-span-1">
+            <AccordionItem value="lesson-plan">
+              <Card className='shadow-md border-0 w-[100%] flex flex-col'>
+              <AccordionTrigger className="px-3">
+                <CardHeader className="flex-shrink-0">
+                  <CardTitle className="text-xl text-gray-900">Today's Lesson Plan</CardTitle>
+                </CardHeader>
+              </AccordionTrigger>
+            </Card>
+            <AccordionContent>
+              <Card className="shadow-lg border-0 h-[420px] flex flex-col">
+                <CardContent className="flex-1 p-0 min-h-0">
                   <ScrollArea className="h-full">
                     <div className="p-6 space-y-4">
-                      {messages.map((message) => (
-                        <div
-                          key={message.id}
-                          className={`flex items-start gap-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'
-                            }`}
-                        >
-                          {message.type === 'ai' && (
-                            <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                              <Bot className="w-4 h-4 text-purple-600" />
+                      {activities.map((activity, index) => (
+                        <div key={activity.serialNumber} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                          <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0">
+                              <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm">
+                                {index + 1}
+                              </div>
                             </div>
-                          )}
-                          <div
-                            className={`max-w-[80%] p-4 rounded-lg ${message.type === 'user'
-                              ? 'bg-blue-600 text-white rounded-br-sm'
-                              : 'bg-gray-100 text-gray-900 rounded-bl-sm'
-                              }`}
-                          >
-                            <p className="text-sm leading-relaxed">{message.content}</p>
-                            <span className="text-xs opacity-70 mt-2 block">
-                              {message.timestamp.toLocaleTimeString()}
-                            </span>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-sm font-semibold text-gray-900 mb-2">
+                                {activity.title}
+                              </h3>
+                              <p className="text-xs text-gray-600 leading-relaxed">
+                                {activity.summary || activity.description}
+                              </p>
+                            </div>
                           </div>
-                          {message.type === 'user' && (
-                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                              <User className="w-4 h-4 text-blue-600" />
-                            </div>
-                          )}
                         </div>
                       ))}
-                      <div ref={messagesEndRef} />
                     </div>
                   </ScrollArea>
+                </CardContent>
+              </Card>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+
+        {/* Chat Section */}
+        <div className="lg:col-span-2">
+          <Card className="shadow-lg border-0 h-[600px] flex flex-col">
+            <CardHeader className="flex-shrink-0 border-b">
+              <CardTitle className="flex items-center gap-3 text-2xl">
+                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                  <MessageSquare className="w-6 h-6 text-purple-600" />
                 </div>
+                Chat with AI Assistant
+              </CardTitle>
+            </CardHeader>
 
-                {/* Input Area */}
-                <div className="flex-shrink-0 border-t p-6">
-                  <div className="flex gap-3">
-                    <textarea
-                      value={inputMessage}
-                      onChange={(e) => setInputMessage(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      placeholder="Ask me about teaching strategies, lesson modifications, or curriculum guidance..."
-                      className="flex-1 resize-none rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[60px] max-h-[120px]"
-                      rows={2}
-                    />
-                    <Button
-                      onClick={handleSendMessage}
-                      className="bg-blue-600 hover:bg-blue-700 px-6 self-end"
-                      disabled={!inputMessage.trim()}
-                    >
-                      <Send className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
 
-          {/* Fixed Lesson Plan Panel */}
-          <div className="lg:col-span-1">
-            <Card className="shadow-lg border-0 h-[600px] flex flex-col">
-              <CardHeader className="flex-shrink-0 bg-gray-50 border-b">
-                <CardTitle className="text-xl text-gray-900">Today's Lesson Plan</CardTitle>
-              </CardHeader>
-
-              <CardContent className="flex-1 p-0 min-h-0">
+            <CardContent className="flex-1 flex flex-col p-0 min-h-0">
+              {/* Messages Area */}
+              <div className="flex-1 overflow-hidden">
                 <ScrollArea className="h-full">
                   <div className="p-6 space-y-4">
-                    {activities.map((activity, index) => (
-                      <div key={activity.serialNumber} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                        <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0">
-                            <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm">
-                              {index + 1}
-                            </div>
+                    {messages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={`flex items-start gap-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'
+                          }`}
+                      >
+                        {message.type === 'ai' && (
+                          <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                            <Bot className="w-4 h-4 text-purple-600" />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-sm font-semibold text-gray-900 mb-2">
-                              {activity.title}
-                            </h3>
-                            <p className="text-xs text-gray-600 leading-relaxed">
-                              {activity.summary || activity.description}
-                            </p>
-                          </div>
+                        )}
+                        <div
+                          className={`max-w-[80%] p-4 rounded-lg ${message.type === 'user'
+                            ? 'bg-blue-600 text-white rounded-br-sm'
+                            : 'bg-gray-100 text-gray-900 rounded-bl-sm'
+                            }`}
+                        >
+                          <p className="text-sm leading-relaxed">{message.content}</p>
+                          <span className="text-xs opacity-70 mt-2 block">
+                            {message.timestamp.toLocaleTimeString()}
+                          </span>
                         </div>
+                        {message.type === 'user' && (
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                            <User className="w-4 h-4 text-blue-600" />
+                          </div>
+                        )}
                       </div>
                     ))}
+                    <div ref={messagesEndRef} />
                   </div>
                 </ScrollArea>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+
+              {/* Input Area */}
+              <div className="flex-shrink-0 border-t p-6">
+                <div className="flex gap-3">
+                  <textarea
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Ask me about teaching strategies, lesson modifications, or curriculum guidance..."
+                    className="flex-1 resize-none rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[60px] max-h-[120px]"
+                    rows={2}
+                  />
+                  <Button
+                    onClick={handleSendMessage}
+                    className="bg-blue-600 hover:bg-blue-700 px-6 self-end"
+                    disabled={!inputMessage.trim()}
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Fixed Lesson Plan Panel */}
+        <div className="hidden lg:block lg:col-span-1">
+          <Card className="shadow-lg border-0 h-[600px] flex flex-col">
+            <CardHeader className="flex-shrink-0 bg-gray-50 border-b">
+              <CardTitle className="text-xl text-gray-900">Today's Lesson Plan</CardTitle>
+            </CardHeader>
+
+            <CardContent className="flex-1 p-0 min-h-0">
+              <ScrollArea className="h-full">
+                <div className="p-6 space-y-4">
+                  {activities.map((activity, index) => (
+                    <div key={activity.serialNumber} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0">
+                          <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm">
+                            {index + 1}
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-semibold text-gray-900 mb-2">
+                            {activity.title}
+                          </h3>
+                          <p className="text-xs text-gray-600 leading-relaxed">
+                            {activity.summary || activity.description}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
         </div>
       </div>
-    </MainLayout>
+    </div>
+    </MainLayout >
   );
 };
 
