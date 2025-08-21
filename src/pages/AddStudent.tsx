@@ -29,7 +29,8 @@ const AddStudent: React.FC = () => {
     roll_number: '',
     date_of_birth: '',
     gender: '',
-    address: '',
+    current_address: '',
+    permanent_address: '',
     parent_name: '',
     parent_phone: '',
     parent_email: '',
@@ -59,6 +60,11 @@ const AddStudent: React.FC = () => {
     if (userData.role == 'teacher') {
       setBreadCrumbItems([
         { label: 'Students', path: '/students' },
+        { label: 'Add Student' }
+      ])
+    }else if (userData.role == 'superadmin') {
+      setBreadCrumbItems([
+        { label: 'My School', path: `/school-details/${schoolId}` },
         { label: 'Add Student' }
       ])
     }
@@ -426,10 +432,21 @@ const AddStudent: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Current Address</label>
               <textarea
-                name="address"
-                value={formData.address}
+                name="current_address"
+                value={formData.current_address}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Permanent Address</label>
+              <textarea
+                name="permanent_address"
+                value={formData.permanent_address}
                 onChange={handleInputChange}
                 onBlur={handleBlur}
                 rows={3}

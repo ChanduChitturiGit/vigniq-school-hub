@@ -7,7 +7,7 @@ import { getStudentsById, editStudent } from '../services/student';
 import { getClassesBySchoolId } from '@/services/class';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
-import { Mail, Home, Phone, User, Calendar,Book,BookOpen,GraduationCap } from 'lucide-react';
+import { Mail, Home, Phone, User, Calendar, Book, BookOpen, GraduationCap } from 'lucide-react';
 
 const StudentDetails: React.FC = () => {
   const { showSnackbar } = useSnackbar();
@@ -16,7 +16,7 @@ const StudentDetails: React.FC = () => {
   const [classes, setClasses] = useState([]);
   const genderList = ["Male", "Female", "Others"];
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
-  const schoolId = localStorage.getItem('current_school_id');
+  const schoolId = localStorage.getItem('current_school_id') ?? userData.school_id;
 
   const [studentData, setStudentData] = useState({
     student_id: id,
@@ -29,7 +29,8 @@ const StudentDetails: React.FC = () => {
     parent_phone: '',
     date_of_birth: '',
     parent_email: '',
-    address: '',
+    current_address: '',      // <-- added
+    permanent_address: '',    // <-- added
     class: '',
     class_id: 0,
     class_name: '',
@@ -39,7 +40,8 @@ const StudentDetails: React.FC = () => {
     gender: '',
     admission_date: '',
     blood_group: '',
-    emergency_contact: ''
+    emergency_contact: '',
+    school_id: Number(schoolId)
   });
 
   const [errors, setErrors] = useState({
@@ -76,6 +78,16 @@ const StudentDetails: React.FC = () => {
     const response = await getStudentsById(Number(id), userData.school_id);
     if (response && response.student) {
       setStudentData(response.student);
+      setStudentData((prev) => ({
+        ...prev,
+        class: 'Class ' + response.student.class_number + ' - ' + response.student.section,
+        class_id: response.student.class_id,
+      }));
+      setBreadCrumbItems([
+        { label: userData.role == 'teacher' ? 'Home' : 'My School', path: (userData.role == 'superadmin' ? `/school-details/${schoolId}` : userData.role == 'admin' ? '/admin-school' : '/dashboard') },
+        { label: 'Class Details', path: `/class-details/${response.student.class_id}` },
+        { label: response.student.student_first_name + ' ' + response.student.student_last_name }
+      ]);
     }
   }
 
@@ -177,17 +189,36 @@ const StudentDetails: React.FC = () => {
         status: "error"
       });
       return;
+    }else{
+      setStudentData((prev)=>({
+        ...prev,
+        "school_id": Number(schoolId)
+      }));
     }
 
-    setIsEditing(false);
-    const response = await editStudent(studentData);
-    if (response && response.message) {
-      getStudentData();
+
+    console.log("Student Data to be saved:", studentData);
+
+    // Prepare data for API call
+    try {
+      const response = await editStudent({...studentData, school_id: Number(schoolId)}) ;
+      if (response && response.message) {
+        getStudentData();
+        showSnackbar({
+          title: "Success",
+          description: "Student data updated successfully ✅",
+          status: "success"
+        });
+      }
+    }catch (error) {
       showSnackbar({
-        title: "Success",
-        description: "Student data updated successfully ✅",
-        status: "success"
+        title: "⛔ Error",
+        description: "Failed to update student data. Please try again.",
+        status: "error"
       });
+    }finally {
+      setIsEditing(false);
+      getStudentData();
     }
   };
 
@@ -198,7 +229,7 @@ const StudentDetails: React.FC = () => {
 
         {/* Student Header */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex-col md:flex items-center justify-between mb-6">
+          <div className="flex flex-col md:flex-row items-center justify-between mb-6">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center">
                 <span className="text-white text-xl font-semibold">
@@ -408,18 +439,34 @@ const StudentDetails: React.FC = () => {
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Current Address </label>
               {isEditing ? (
                 <textarea
-                  value={studentData.address}
-                  onChange={(e) => handleInputChange('address', e.target.value)}
+                  value={studentData.current_address}
+                  onChange={(e) => handleInputChange('current_address', e.target.value)}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
                 <div className="flex items-center gap-2">
                   <Home className="w-4 h-4 text-gray-400" />
-                  <p className="text-gray-900">{studentData.address}</p>
+                  <p className="text-gray-900">{studentData.current_address}</p>
+                </div>
+              )}
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Permanent Address </label>
+              {isEditing ? (
+                <textarea
+                  value={studentData.permanent_address}
+                  onChange={(e) => handleInputChange('permanent_address', e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Home className="w-4 h-4 text-gray-400" />
+                  <p className="text-gray-900">{studentData.permanent_address}</p>
                 </div>
               )}
             </div>

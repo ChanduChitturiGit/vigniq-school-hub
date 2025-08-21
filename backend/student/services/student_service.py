@@ -40,7 +40,8 @@ class StudentService:
             roll_number = request.data.get('roll_number')
             date_of_birth = request.data.get('date_of_birth')
             gender = request.data.get('gender')
-            address = request.data.get('address')
+            current_address = request.data.get('current_address', None)
+            permanent_address = request.data.get('permanent_address', None)
             addmission_date = request.data.get('admission_date')
             parent_name = request.data.get('parent_name')
             parent_phone = request.data.get('parent_phone')
@@ -56,7 +57,8 @@ class StudentService:
                 return JsonResponse({"error": "First name and last name are required."},
                                     status=status.HTTP_400_BAD_REQUEST)
             if (not username or not class_id or not password or not roll_number or not date_of_birth
-                or not gender or not address or not addmission_date or not parent_name or not 
+                or not gender or not permanent_address or not addmission_date
+                or not parent_name or not 
                 parent_phone or not acadamic_year_id):
                 return JsonResponse({"error": "All manditory fields are required."},
                                     status=status.HTTP_400_BAD_REQUEST)
@@ -78,8 +80,9 @@ class StudentService:
                     phone_number=phone,
                     school_id=school_id,
                     gender=gender,
-                    address=address,
-                    role = role,
+                    current_address=current_address,
+                    permanent_address=permanent_address,
+                    role=role,
                     date_of_birth=date_of_birth,
                 )
                 class_section_instance = SchoolSection.objects.using(school_db_name).get(
@@ -154,7 +157,8 @@ class StudentService:
             roll_number = request.data.get('roll_number')
             date_of_birth = request.data.get('date_of_birth')
             gender = request.data.get('gender')
-            address = request.data.get('address')
+            current_address = request.data.get('current_address')
+            permanent_address = request.data.get('permanent_address')
             addmission_date = request.data.get('admission_date')
             parent_name = request.data.get('parent_name')
             parent_phone = request.data.get('parent_phone')
@@ -181,8 +185,10 @@ class StudentService:
                 user.phone_number = phone
             if gender:
                 user.gender = gender
-            if address:
-                user.address = address
+            if current_address:
+                user.current_address = current_address
+            if permanent_address:
+                user.permanent_address = permanent_address
             if date_of_birth:
                 user.date_of_birth = date_of_birth
 
@@ -349,7 +355,8 @@ class StudentService:
                 "class_id": class_instance.id,
                 "section": class_instance.section,
                 "email": user.email,
-                "address": user.address,
+                "current_address": user.current_address,
+                "permanent_address": user.permanent_address,
                 "date_of_birth": user.date_of_birth,
                 "gender": user.gender,
                 "admission_date": student.admission_date

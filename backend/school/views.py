@@ -4,6 +4,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from core.permissions import IsSuperAdminOrAdminOrTeacher
 
 from school.services.school_service import SchoolService
 
@@ -20,13 +21,9 @@ class SchoolActionView(APIView):
     
     - PUT /school/edit/ - Edit an existing school (super admin only)  
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsSuperAdminOrAdminOrTeacher]
 
     def get(self, request, action=None):
-        user = request.user
-        if user.role.id not in (1,2):
-            return Response({"error": "You do not have permission to view schools."},
-                            status=status.HTTP_403_FORBIDDEN)
 
         if action == "school_list":
             return SchoolService().get_schools(request)

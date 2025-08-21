@@ -15,7 +15,8 @@ class EmailService:
     def __init__(self):
         pass
 
-    def send_email(self, to_email, email_type, name=None, user_name=None, password=None,otp=None):
+    def send_email(self, to_email, email_type, name=None, user_name=None, password=None,otp=None,
+                   login_url=None):
         """
         Send an email with both plain text and HTML content.
         
@@ -41,6 +42,9 @@ class EmailService:
                 context['password'] = password
             elif email_type == 'password_reset':
                 context['otp']= otp
+
+            if login_url:
+                context['login_url'] = login_url
 
             html_content = render_to_string(html_path, context)
 

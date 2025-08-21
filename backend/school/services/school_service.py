@@ -16,6 +16,7 @@ from core.models import User,Role
 from core.common_modules.db_loader import DbLoader
 from core.common_modules.send_email import EmailService
 from core.common_modules.password_validator import is_valid_password
+from core.common_modules.common_functions import CommonFunctions
 
 from teacher.models import Teacher
 
@@ -118,6 +119,7 @@ class SchoolService:
                     name = school.name,
                     user_name=admin_user.user_name,
                     password=data.get('password'),
+                    login_url=CommonFunctions().get_login_uri(request)
                 )
                 r = redis.Redis(host='localhost', port=6379, db=0)
                 r.publish('new_db_created', school_db_metadata.db_name)

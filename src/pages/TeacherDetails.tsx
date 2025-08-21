@@ -6,7 +6,7 @@ import { Edit, Mail, Phone, Calendar, GraduationCap, BookOpen, Plus, X,User,Home
 import { getTeachersById, editTeacher } from '../services/teacher';
 import ClassSectionSubjectInput, { ClassSectionSubjectData } from '../components/ui/class-section-subject-input';
 import { getSubjectsBySchoolId } from '../services/subject';
-import { getClassesBySchoolId } from '@/services/class';
+import { getClassesBySchoolId,getClassesWithoutClassTeacher } from '@/services/class';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 
@@ -17,6 +17,7 @@ const TeacherDetails: React.FC = () => {
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const schoolId = localStorage.getItem('current_school_id');
   const [classes, setClasses] = useState([]);
+  const [teacherClasses, setTeacherClasses] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [formData, setFormData] = useState({
     teacher_first_name: '',
@@ -27,11 +28,16 @@ const TeacherDetails: React.FC = () => {
     experience: '',
     qualification: '',
     joining_date: '',
-    address: '',
+    current_address: '',      // <-- added
+    permanent_address: '',    // <-- added
     emergencyContact: '',
     subject_assignments: [],
     school_id: null,
-    class: ''
+    class: '',
+    class_assignment : {
+      class_number: '',
+      section: ''
+    },
   });
   const [errors, setErrors] = useState({
     teacher_first_name: '',
@@ -39,8 +45,8 @@ const TeacherDetails: React.FC = () => {
     email: '',
     phone_number: '',
     qualification: '',
-    joining_date: '',
-    address: ''
+    joining_date: ''
+    // No errors for address fields since they're optional
   });
   const [breadcrumbItems, setBreadCrumbItems] = useState([
     { label: 'My School', path: '/admin-school' },
@@ -106,9 +112,7 @@ const TeacherDetails: React.FC = () => {
       case 'joining_date':
         if (!value) error = 'Joining Date is required';
         break;
-      case 'address':
-        if (!value) error = 'Address is required';
-        break;
+      // No address validation
       default:
         break;
     }
@@ -132,7 +136,7 @@ const TeacherDetails: React.FC = () => {
   const editTeacherData = async () => {
     // Validate all fields before API call
     const fieldsToValidate = [
-      'teacher_first_name', 'teacher_last_name', 'email', 'phone_number', 'qualification', 'joining_date', 'address'
+      'teacher_first_name', 'teacher_last_name', 'email', 'phone_number', 'qualification', 'joining_date'
     ];
     fieldsToValidate.forEach(field => {
       validateField(field, (formData as any)[field]);
@@ -194,9 +198,18 @@ const TeacherDetails: React.FC = () => {
     }
   }
 
+  //classes list api
+  const getTeacherClasses = async () => {
+    const classesData = await getClassesWithoutClassTeacher(userData.role == 'superadmin' ? schoolId : userData.school_id);
+    if (classesData && classesData.classes) {
+      setTeacherClasses(classesData.classes);
+    }
+  }
+
 
   useEffect(() => {
     getTeacher();
+    getTeacherClasses();
   }, [])
 
   useEffect(() => {
@@ -265,7 +278,7 @@ const TeacherDetails: React.FC = () => {
     setFormData(prev => ({
       ...prev,
       class: value,
-      class_id: getClassId(value)
+      class_section_id: getClassId(value)
     }));
     setErrors(prev => ({ ...prev, class: '' }));
   };
@@ -398,23 +411,38 @@ const TeacherDetails: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Current Address </label>
                 {isEditing ? (
-                  <>
-                    <textarea
-                      name="address"
-                      value={formData.address}
-                      onChange={handleInputChange}
-                      onBlur={handleBlur}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
-                  </>
+                  <textarea
+                    name="current_address"
+                    value={formData.current_address}
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                 ) : (
                   <div className="flex items-center gap-2">
                     <Home className="w-4 h-4 text-gray-400" />
-                    <p className="text-gray-900">{formData.address}</p>
+                    <p className="text-gray-900">{formData.current_address}</p>
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Permanent Address </label>
+                {isEditing ? (
+                  <textarea
+                    name="permanent_address"
+                    value={formData.permanent_address}
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Home className="w-4 h-4 text-gray-400" />
+                    <p className="text-gray-900">{formData.permanent_address}</p>
                   </div>
                 )}
               </div>
@@ -428,12 +456,12 @@ const TeacherDetails: React.FC = () => {
                   Class Teacher
                 </label>
                 {isEditing ? (
-                  <Select value={formData.class} onValueChange={handleClassChange}>
+                  <Select value={formData.class} onValueChange={handleClassChange} disabled={teacherClasses.length === 0}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a Class" />
+                      <SelectValue placeholder={`${teacherClasses.length>0 ? 'Select a Class' : 'All Classes got assigned with teachers'}`} />
                     </SelectTrigger>
                     <SelectContent>
-                      {classes.map((classItem, index) => (
+                      {teacherClasses.map((classItem, index) => (
                         <SelectItem key={index} value={'Class ' + classItem.class_number + ' - ' + classItem.section}>
                           {'Class ' + classItem.class_number + ' - ' + classItem.section}
                         </SelectItem>
@@ -443,7 +471,7 @@ const TeacherDetails: React.FC = () => {
                 ) : (
                   <div className="flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-gray-400" />
-                    <p className="text-gray-900">{formData.class}</p>
+                    <p className="text-gray-900">{'Class '+formData?.class_assignment?.class_number + ' '+ formData?.class_assignment?.section}</p>
                   </div>
                 )
                 }
