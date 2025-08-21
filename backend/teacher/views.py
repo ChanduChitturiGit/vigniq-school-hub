@@ -7,6 +7,8 @@ from rest_framework import status
 from teacher.services.teacher_service import TeacherService
 from teacher.services.subject_service import SubjectService
 
+from core.permissions import IsSuperAdminOrAdmin
+
 
 class TeacherActionView(APIView):
     """
@@ -19,13 +21,12 @@ class TeacherActionView(APIView):
     - PUT /teacher/manage_teacher/edit/ - Update an existing teacher (admin only)
     """
 
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        if self.kwargs.get('action') in ['getTeacherById']:
+            return [IsAuthenticated()]
+        return [IsAuthenticated(), IsSuperAdminOrAdmin()]
 
     def get(self, request, action=None):
-        user = request.user
-        if user.role.id not in (1,2):
-            return Response({"error": "You do not have permission to view teachers."},
-                            status=status.HTTP_403_FORBIDDEN)
 
         if action == "getTeachersBySchoolId":
             return TeacherService().get_teacher_list_by_school_id(request)
@@ -34,30 +35,18 @@ class TeacherActionView(APIView):
         return Response({"error": "Invalid GET action"}, status=status.HTTP_400_BAD_REQUEST)
     
     def post(self, request, action=None):
-        user = request.user
-        if user.role.id not in (1,2):
-            return Response({"error": "You do not have permission to create a teacher."},
-                            status=status.HTTP_403_FORBIDDEN)
 
         if action == "addTeacher":
             return TeacherService().create_teacher(request)
         return Response({"error": "Invalid POST action"}, status=status.HTTP_400_BAD_REQUEST)
     
     def put(self, request, action=None):
-        user = request.user
-        if user.role.id not in (1,2):
-            return Response({"error": "You do not have permission to update a teacher."},
-                            status=status.HTTP_403_FORBIDDEN)
 
         if action == "updateTeacherById":
             return TeacherService().edit_teacher(request)
         return Response({"error": "Invalid PUT action"}, status=status.HTTP_400_BAD_REQUEST)
     
     def delete(self, request, action=None):
-        user = request.user
-        if user.role.id not in (1,2):
-            return Response({"error": "You do not have permission to delete a teacher."},
-                            status=status.HTTP_403_FORBIDDEN)
 
         if action == "deleteTeacherById":
             return TeacherService().delete_teacher(request)
@@ -71,34 +60,24 @@ class SubjectActionView(APIView):
     Paths Available:
     
     """
-
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        if self.kwargs.get('action') in ['getSubjects']:
+            return [IsAuthenticated()]
+        return [IsAuthenticated(), IsSuperAdminOrAdmin()]
 
     def get(self, request, action=None):
-        user = request.user
-        if user.role.id not in (1,2):
-            return Response({"error": "You do not have permission to view subjects."},
-                            status=status.HTTP_403_FORBIDDEN)
 
         if action == "getSubjects":
             return SubjectService().get_subjects_by_school_id(request)
         return Response({"error": "Invalid GET action"}, status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request, action=None):
-        user = request.user
-        if user.role.id not in (1,2):
-            return Response({"error": "You do not have permission to create a subject."},
-                            status=status.HTTP_403_FORBIDDEN)
 
         if action == "addSubject":
             return SubjectService().create_subject(request)
         return Response({"error": "Invalid POST action"}, status=status.HTTP_400_BAD_REQUEST)
     
     def put(self, request, action=None):
-        user = request.user
-        if user.role.id not in (1,2):
-            return Response({"error": "You do not have permission to update a subject."},
-                            status=status.HTTP_403_FORBIDDEN)
 
         if action == "updateSubjectById":
             return SubjectService().update_subject_by_id(request)
