@@ -246,6 +246,11 @@ class SyllabusService:
                     }
                     for day in lesson_plan_days
                 ]
+                
+                total_days = lesson_plan_days.count()
+                completed_days = lesson_plan_days.filter(status='completed').count()
+                progress = (completed_days / total_days) * 100 if total_days > 0 else 0
+
                 data.append({
                     "chapter_id": chapter.id,
                     "chapter_name": chapter.chapter_name,
@@ -253,6 +258,7 @@ class SyllabusService:
                     "sub_topics": renamed_sub_topics,
                     "prerequisites": renamed_prerequisites,
                     "lesson_plan_days": lesson_plan_days_data,
+                    "progress": round(progress, 2),
                 })
             logger.info("Syllabus by subject fetched successfully.")
             return Response({"data": data}, status=status.HTTP_200_OK)
