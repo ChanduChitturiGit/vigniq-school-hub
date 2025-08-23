@@ -43,15 +43,20 @@ class StudentAttendance(models.Model):
                                 related_name="attendances")
     date = models.DateField()
     session = models.CharField(max_length=1, choices=SESSION_CHOICES)
-    present = models.BooleanField(default=True)
+    is_present = models.BooleanField(default=True)
     academic_year = models.ForeignKey('academics.SchoolAcademicYear', on_delete=models.CASCADE,
                                       null=True, blank=True)
+    taken_by_user_id = models.IntegerField(null=True, blank=True)
+    updated_by_user_id = models.IntegerField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+    
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['student', 'date', 'session'],
-                name='unique_student_date_session'
+                fields=['student', 'date', 'session', 'academic_year'],
+                name='unique_student_date_session_academic_year'
             )
         ]
         indexes = [
