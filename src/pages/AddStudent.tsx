@@ -8,8 +8,14 @@ import { addStudent } from '../services/student';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
+import { Dayjs } from "dayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 const AddStudent: React.FC = () => {
+  const [value, setValue] = React.useState<Dayjs | null>(null);
+  const [joinDate, setJoinDate] = React.useState<Dayjs | null>(null);
   const { showSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
@@ -62,7 +68,7 @@ const AddStudent: React.FC = () => {
         { label: 'Students', path: '/students' },
         { label: 'Add Student' }
       ])
-    }else if (userData.role == 'superadmin') {
+    } else if (userData.role == 'superadmin') {
       setBreadCrumbItems([
         { label: 'My School', path: `/school-details/${schoolId}` },
         { label: 'Add Student' }
@@ -215,7 +221,7 @@ const AddStudent: React.FC = () => {
         });
         if (userData.role == 'superadmin') {
           navigate(`/school-details/${schoolId}`);
-        } else  if (userData.role == 'admin') {
+        } else if (userData.role == 'admin') {
           navigate(`/admin-school`);
         } else {
           navigate('/students');
@@ -349,14 +355,26 @@ const AddStudent: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth *</label>
-                <input
+                {/* <input
                   type="date"
                   name="date_of_birth"
                   value={formData.date_of_birth}
                   onChange={handleInputChange}
                   onBlur={handleBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                /> */}
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    className="date-div w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    label=""
+                    value={value}
+                    onChange={(newValue) => {
+                      setValue(newValue);
+                      formData.date_of_birth = newValue ? newValue.format("YYYY-MM-DD") : null;
+                    }}
+                    format="DD/MM/YYYY"   // 👈 force display format
+                  />
+                </LocalizationProvider>
                 {errors.date_of_birth && <p className="text-red-500 text-xs mt-1">{errors.date_of_birth}</p>}
               </div>
 
@@ -381,14 +399,26 @@ const AddStudent: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Admission Date *</label>
-                <input
+                {/* <input
                   type="date"
                   name="admission_date"
                   value={formData.admission_date}
                   onChange={handleInputChange}
                   onBlur={handleBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                /> */}
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    className="date-div w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    label=""
+                    value={joinDate}
+                    onChange={(newValue) => {
+                      setJoinDate(newValue);
+                      formData.admission_date = newValue ? newValue.format("YYYY-MM-DD") : null;
+                    }}
+                    format="DD/MM/YYYY"   // 👈 force display format
+                  />
+                </LocalizationProvider>
                 {errors.admission_date && <p className="text-red-500 text-xs mt-1">{errors.admission_date}</p>}
               </div>
 

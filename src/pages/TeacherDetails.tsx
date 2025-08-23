@@ -2,15 +2,21 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Mail, Phone, Calendar, GraduationCap, BookOpen, Plus, X,User,Home } from 'lucide-react';
+import { Edit, Mail, Phone, Calendar, GraduationCap, BookOpen, Plus, X, User, Home } from 'lucide-react';
 import { getTeachersById, editTeacher } from '../services/teacher';
 import ClassSectionSubjectInput, { ClassSectionSubjectData } from '../components/ui/class-section-subject-input';
 import { getSubjectsBySchoolId } from '../services/subject';
-import { getClassesBySchoolId,getClassesWithoutClassTeacher } from '@/services/class';
+import { getClassesBySchoolId, getClassesWithoutClassTeacher } from '@/services/class';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Dayjs } from "dayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 const TeacherDetails: React.FC = () => {
+  const [value, setValue] = React.useState<Dayjs | null>(null);
+  const [joinDate, setJoinDate] = React.useState<Dayjs | null>(null);
   const { showSnackbar } = useSnackbar();
   const { id } = useParams();
   const [isEditing, setIsEditing] = useState(false);
@@ -34,7 +40,7 @@ const TeacherDetails: React.FC = () => {
     subject_assignments: [],
     school_id: null,
     class: '',
-    class_assignment : {
+    class_assignment: {
       class_number: '',
       section: ''
     },
@@ -337,7 +343,7 @@ const TeacherDetails: React.FC = () => {
                     {errors.teacher_first_name && <p className="text-red-500 text-xs mt-1">{errors.teacher_first_name}</p>}
                   </>
                 ) : (
-                   <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <User className="w-4 h-4 text-gray-400" />
                     <p className="text-gray-900">{formData.teacher_first_name}</p>
                   </div>
@@ -458,7 +464,7 @@ const TeacherDetails: React.FC = () => {
                 {isEditing ? (
                   <Select value={formData.class} onValueChange={handleClassChange} disabled={teacherClasses.length === 0}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder={`${teacherClasses.length>0 ? 'Select a Class' : 'All Classes got assigned with teachers'}`} />
+                      <SelectValue placeholder={`${teacherClasses.length > 0 ? 'Select a Class' : 'All Classes got assigned with teachers'}`} />
                     </SelectTrigger>
                     <SelectContent>
                       {teacherClasses.map((classItem, index) => (
@@ -471,7 +477,7 @@ const TeacherDetails: React.FC = () => {
                 ) : (
                   <div className="flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-gray-400" />
-                    <p className="text-gray-900">{'Class '+formData?.class_assignment?.class_number + ' '+ formData?.class_assignment?.section}</p>
+                    <p className="text-gray-900">{formData?.class_assignment && formData.class_assignment.class_number ? 'Class ' + formData?.class_assignment?.class_number + ' ' + formData?.class_assignment?.section : 'N/A'}</p>
                   </div>
                 )
                 }
@@ -502,14 +508,26 @@ const TeacherDetails: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Joining Date</label>
                 {isEditing ? (
                   <>
-                    <input
+                    {/* <input
                       type="date"
                       name="joining_date"
                       value={formData.joining_date}
                       onChange={handleInputChange}
                       onBlur={handleBlur}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    /> */}
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <DatePicker
+                        className="date-div w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        label=""
+                        value={joinDate}
+                        onChange={(newValue) => {
+                          setJoinDate(newValue);
+                          formData.joining_date = newValue ? newValue.format("YYYY-MM-DD") : null;
+                        }}
+                        format="DD/MM/YYYY"   // 👈 force display format
+                      />
+                    </LocalizationProvider>
                     {errors.joining_date && <p className="text-red-500 text-xs mt-1">{errors.joining_date}</p>}
                   </>
                 ) : (

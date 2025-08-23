@@ -11,8 +11,14 @@ import { getClassesBySchoolId, getClassesWithoutClassTeacher } from '@/services/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from '../components/ui/sonner';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
+import { Dayjs } from "dayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 const AdminAddTeacher: React.FC = () => {
+  const [value, setValue] = React.useState<Dayjs | null>(null);
+  const [joinDate, setJoinDate] = React.useState<Dayjs | null>(null);
   const { showSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
@@ -34,8 +40,8 @@ const AdminAddTeacher: React.FC = () => {
     experience: '',
     current_address: '',
     permanent_address: '',
-    joining_date: '',
-    date_of_birth: '',
+    joining_date: null,
+    date_of_birth: null,
     gender: '',
     emergency_contact: '',
     class: '',
@@ -407,27 +413,51 @@ const AdminAddTeacher: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Joining Date *</label>
-                <input
+                {/* <input
                   type="date"
                   name="joining_date"
                   value={formData.joining_date}
                   onChange={handleInputChange}
                   onBlur={handleBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                /> */}
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    className="date-div w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    label=""
+                    value={joinDate}
+                    onChange={(newValue) => {
+                      setJoinDate(newValue);
+                      formData.joining_date = newValue ? newValue.format("YYYY-MM-DD") : null;
+                    }}
+                    format="DD/MM/YYYY"   // 👈 force display format
+                  />
+                </LocalizationProvider>
                 {errors.joining_date && <p className="text-red-500 text-xs mt-1">{errors.joining_date}</p>}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth *</label>
-                <input
+                {/* <input
                   type="date"
                   name="date_of_birth"
                   value={formData.date_of_birth}
                   onChange={handleInputChange}
                   onBlur={handleBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                /> */}
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    className="date-div w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    label=""
+                    value={value}
+                    onChange={(newValue) => {
+                      setValue(newValue);
+                      formData.date_of_birth = newValue ? newValue.format("YYYY-MM-DD") : null;
+                    }}
+                    format="DD/MM/YYYY"   // 👈 force display format
+                  />
+                </LocalizationProvider>
                 {errors.date_of_birth && <p className="text-red-500 text-xs mt-1">{errors.date_of_birth}</p>}
               </div>
 
@@ -470,7 +500,7 @@ const AdminAddTeacher: React.FC = () => {
               </label>
               <Select value={formData.class} onValueChange={handleClassChange} disabled={teacherClasses.length === 0}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder={`${teacherClasses.length>0 ? 'Select a Class' : 'All Classes got assigned with teachers'}`} />
+                  <SelectValue placeholder={`${teacherClasses.length > 0 ? 'Select a Class' : 'All Classes got assigned with teachers'}`} />
                 </SelectTrigger>
                 <SelectContent>
                   {teacherClasses.map((classItem, index) => (
