@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { SnackbarProvider } from './components/snackbar/SnackbarContext';
 import { Toaster } from "@/components/ui/sonner";
@@ -45,6 +45,15 @@ import Index from './pages/Index';
 import Attendance from './pages/Attendance';
 import AttendanceReports from './pages/AttendanceReports';
 
+// Layout wrapper component
+const LayoutWrapper = () => {
+  return (
+    <MainLayout pageTitle="Dashboard">
+      <Outlet />
+    </MainLayout>
+  );
+};
+
 function App() {
   return (
     <AuthProvider>
@@ -56,7 +65,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               
-              <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+              <Route element={<ProtectedRoute><LayoutWrapper /></ProtectedRoute>}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 
                 {/* Super Admin Routes */}
