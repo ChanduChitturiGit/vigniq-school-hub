@@ -6,6 +6,7 @@ from core.permissions import IsSuperAdmin,IsSuperAdminOrAdminOrTeacher
 from syllabus.services.ebook_service import EbookService
 from syllabus.services.syllabus_service import SyllabusService
 from syllabus.services.whiteboard_service import WhiteboardService
+from syllabus.services.ai_assistant_service import AiAssistantService
 
 class EbookView(APIView):
     """View for managing eBooks."""
@@ -50,8 +51,6 @@ class SyllabusView(APIView):
             return SyllabusService().get_syllabus_subject(request)
         elif action == 'getGradeByTeacherId':
             return SyllabusService().get_grade_by_teacher_id(request)
-        elif action == 'getSyllabusBySubject':
-            return SyllabusService().get_syllabus_subject(request)
         elif action == 'getPrerequisites':
             return SyllabusService().get_prerequisites(request)
         elif action == 'getLessionPlan':
@@ -90,6 +89,23 @@ class SyllabusView(APIView):
             return SyllabusService().delete_prerequisite_by_id(request)
         return Response({"error": f"DELETE request not found for action: {action}"}, status=400)
 
+class AIChatView(APIView):
+    """View for AI chat assistant."""
+
+    def get_permissions(self):
+        return [IsAuthenticated()]
+
+    def get(self, request, action=None):
+        """Handle GET requests for AI chat actions."""
+        if action == 'getChatById':
+            return AiAssistantService().get_chat_by_id(request)
+        return Response({"error": f"GET request not found for action: {action}"}, status=400)
+
+    def post(self, request, action=None):
+        """Handle POST requests for AI chat actions."""
+        if action == 'chatWithAssistant':
+            return AiAssistantService(request).chat_with_assistant()
+        return Response({"error": f"POST request not found for action: {action}"}, status=400)
 
 class WhiteboardView(APIView):
     """View for managing whiteboard sessions."""
