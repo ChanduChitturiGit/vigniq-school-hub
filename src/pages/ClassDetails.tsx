@@ -111,7 +111,6 @@ const ClassDetails: React.FC = () => {
   }
 
 
-
   const getClass = async () => {
     if (userData && userData.role && userData.role == 'superadmin') {
       userData.school_id = localStorage.getItem('current_school_id');

@@ -11,12 +11,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Users, Clock, CheckCircle, XCircle, AlertCircle, FileText, Edit, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
-import { format, isSameDay, isAfter, startOfDay } from 'date-fns';
+import { format, isSameDay, isAfter, startOfDay, set } from 'date-fns';
 import MainLayout from '@/components/Layout/MainLayout';
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
+import { getAttendenceData, submitAttendence,getPastAttendenceData } from '../services/attendence';
+import { getClassesBySchoolId } from '@/services/class';
 
 interface Student {
-  id: string;
-  name: string;
+  student_id: string;
+  student_name: string;
   rollNumber: string;
   morningPresent: boolean;
   afternoonPresent: boolean;
@@ -42,26 +45,32 @@ interface AttendanceRecord {
 }
 
 const Attendance: React.FC = () => {
+  const { showSnackbar } = useSnackbar();
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [selectedClass, setSelectedClass] = useState<string>('class-06');
+  const [selectedClass, setSelectedClass] = useState<string>();
+  const [classId, setClassId] = useState(null);
   const [activeSession, setActiveSession] = useState<'morning' | 'afternoon'>('morning');
   const [attendanceData, setAttendanceData] = useState<AttendanceData>({});
   const [viewMode, setViewMode] = useState<'attendance' | 'reports'>('attendance');
   const [editingSession, setEditingSession] = useState<'morning' | 'afternoon' | null>(null);
+  const [isMorningSessionSubmitted, setIsMorningSessionSubmitted] = useState(false);
+  const [isAfternoonSessionSubmitted, setIsAfternoonSessionSubmitted] = useState(false);
+  const [isEditing, setIsEditing] = useState(''); // 'morning' | 'afternoon' | ''
 
   // Sample data - in real app this would come from API
   const sampleStudents: Student[] = [
-    { id: '1', name: 'Aarav Sharma', rollNumber: '001', morningPresent: false, afternoonPresent: false },
-    { id: '2', name: 'Priya Patel', rollNumber: '002', morningPresent: false, afternoonPresent: false },
-    { id: '3', name: 'Rohit Kumar', rollNumber: '003', morningPresent: false, afternoonPresent: false },
-    { id: '4', name: 'Sneha Reddy', rollNumber: '004', morningPresent: false, afternoonPresent: false },
-    { id: '5', name: 'Arjun Singh', rollNumber: '005', morningPresent: false, afternoonPresent: false },
-    { id: '6', name: 'Kavya Iyer', rollNumber: '006', morningPresent: false, afternoonPresent: false },
-    { id: '7', name: 'Vikram Joshi', rollNumber: '007', morningPresent: false, afternoonPresent: false },
-    { id: '8', name: 'Ananya Gupta', rollNumber: '008', morningPresent: false, afternoonPresent: false },
+    { student_id: '1', student_name: 'Aarav Sharma', rollNumber: '001', morningPresent: false, afternoonPresent: false },
+    { student_id: '2', student_name: 'Priya Patel', rollNumber: '002', morningPresent: false, afternoonPresent: false },
+    { student_id: '3', student_name: 'Rohit Kumar', rollNumber: '003', morningPresent: false, afternoonPresent: false },
+    { student_id: '4', student_name: 'Sneha Reddy', rollNumber: '004', morningPresent: false, afternoonPresent: false },
+    { student_id: '5', student_name: 'Arjun Singh', rollNumber: '005', morningPresent: false, afternoonPresent: false },
+    { student_id: '6', student_name: 'Kavya Iyer', rollNumber: '006', morningPresent: false, afternoonPresent: false },
+    { student_id: '7', student_name: 'Vikram Joshi', rollNumber: '007', morningPresent: false, afternoonPresent: false },
+    { student_id: '8', student_name: 'Ananya Gupta', rollNumber: '008', morningPresent: false, afternoonPresent: false },
   ];
 
   // Sample attendance records for past dates
@@ -76,20 +85,192 @@ const Attendance: React.FC = () => {
     { rollNumber: '008', studentName: 'Ananya Gupta', morningSession: 'Present', afternoonSession: 'Present', overallStatus: 'Full Day Present' },
   ];
 
-  const classes = [
-    { id: 'class-06', name: 'Class 06' },
-    { id: 'class-07', name: 'Class 07' },
-    { id: 'class-08', name: 'Class 08' },
-  ];
+  const [classes, setClasses] = useState([]);
 
-  const [students, setStudents] = useState<Student[]>(sampleStudents);
+  //classes list api
+  const getClasses = async () => {
+    try {
+      const classesData = await getClassesBySchoolId(userData.school_id);
+      if (classesData && classesData.classes) {
+        setClasses(classesData.classes);
+        // if (!classId) {
+        //   setSelectedClass(classes[0] ? ('Class ' + classes[0].class_number + ' - ' + classes[0].section) : '');
+        // }
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong with classes list",
+        status: "error"
+      });
+    }
+  }
+
+  const [students, setStudents] = useState<any>([]);
 
   const isToday = isSameDay(selectedDate, new Date());
   const isPastDate = !isToday && !isAfter(selectedDate, startOfDay(new Date()));
-  const isFutureDate = isAfter(selectedDate, startOfDay(new Date()));
+  const isFutureDate = isAfter(startOfDay(selectedDate), startOfDay(new Date()));
+
+  const getClassId = (className: string) => {
+    const classdata = classes.find((val: any) => ('Class ' + val.class_number + ' - ' + val.section) == className);
+    const classId = classdata.class_id ? classdata.class_id : 0;
+    return classId;
+  }
+
+  const handleClassChange = (value: string) => {
+    setSelectedClass(value);
+    setClassId(getClassId(value));
+  };
+
+
+  const getAttendenceList = async () => {
+    try {
+      const currentClassId = classId || (classes[0] ? getClassId('Class ' + classes[0].class_id + ' - ' + classes[0].section) : '');
+      const session = activeSession === 'morning' ? 'M' : 'A';
+      const date = format(selectedDate, 'yyyy-MM-dd');
+
+      const requestData = {
+        class_section_id: currentClassId,
+        session: session,
+        date: date,
+        school_id: userData?.school_id
+      };
+      if (currentClassId) {
+        const response = await getAttendenceData(requestData);
+        console.log('Fetched Attendance Data:', response);
+        if (response && response.data && response.data.attendance_data) {
+          // Transform API data to match Student interface if necessary
+          const fetchedStudents = response.data.attendance_data.map((student: any) => ({
+            ...student,
+            morningPresent: response.data?.session == 'M' || session == 'M' ? student.is_present : student?.morning_present || false,
+            afternoonPresent: response.data?.session == 'A' || session == 'A' ? student.is_present : student?.afternoon_present || false
+          }));
+          // setStudents(fetchedStudents);
+          setStudents(fetchedStudents);
+          if (response.data?.session == 'M' || session == 'M') {
+            setIsMorningSessionSubmitted(response.data?.attendance_taken || false);
+          } else {
+            setIsAfternoonSessionSubmitted(response.data?.attendance_taken || false);
+          }
+        } else {
+          //setStudents(sampleStudents);
+          showSnackbar({
+            title: "⛔ Error",
+            description: "Something went wrong",
+            status: "error"
+          });
+        }
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
+  const getPastAttendenceDataList = async () => {
+    try {
+      const currentClassId = classId || (classes[0] ? getClassId('Class ' + classes[0].class_id + ' - ' + classes[0].section) : '');
+      const date = format(selectedDate, 'yyyy-MM-dd');
+
+      const requestData = {
+        class_section_id: currentClassId,
+        date: date,
+        school_id: userData?.school_id
+      };
+      if (currentClassId) {
+        const response = await getPastAttendenceData(requestData);
+        console.log('Fetched Past Attendance Data:', response);
+        if (response && response.data && response.data.attendance_data) {
+          // Transform API data to match Student interface if necessary
+          // const fetchedStudents = response.data.attendance_data.map((student: any) => ({
+          //   ...student,
+          //   morningPresent: student?.morning_present || false,
+          //   afternoonPresent: student?.afternoon_present || false
+          // }));
+          // setStudents(fetchedStudents);
+         // setStudents(fetchedStudents);
+          // setIsMorningSessionSubmitted(response.data?.morning_attendance_taken || false);
+          // setIsAfternoonSessionSubmitted(response.data?.afternoon_attendance_taken || false);
+        } else {
+          //setStudents(sampleStudents);
+          showSnackbar({
+            title: "⛔ Error",
+            description: "Something went wrong",
+            status: "error"
+          });
+        }
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
+  const submitAttendanceData = async () => {
+    try {
+      const currentClassId = classId || (classes[0] ? getClassId('Class ' + classes[0].class_id + ' - ' + classes[0].section) : '');
+      const session = activeSession === 'morning' ? 'M' : 'A';
+      const date = format(selectedDate, 'yyyy-MM-dd');
+
+      const attendancePayload = students.map(student => ({
+        student_id: student.student_id,
+        student_name: student.student_name,
+        is_present: activeSession === 'morning' ? (student.morningPresent ?? false) : (student.afternoonPresent) ?? false
+      }));
+
+      const requestData = {
+        class_section_id: currentClassId,
+        session: session,
+        date: date,
+        school_id: userData?.school_id,
+        attendance_data: attendancePayload
+      };
+
+      const response = await submitAttendence(requestData);
+      console.log('Submit Attendance Response:', response);
+      if (response && response.message) {
+        showSnackbar({
+          title: "Success",
+          description: `${response.message}`,
+          status: "success"
+        });
+        setEditingSession(null);
+      } else {
+        showSnackbar({
+          title: "⛔ Error",
+          description: "Something went wrong while submitting attendance",
+          status: "error"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    } finally {
+      getAttendenceList();
+    }
+  }
+
+  useEffect(() => {
+    getClasses();
+  }, []);
 
   useEffect(() => {
     // Determine view mode based on selected date
+    if(isSameDay(selectedDate, new Date())){
+      getAttendenceList();
+    }else{
+      getPastAttendenceDataList();
+    }
     if (isPastDate && !editingSession) {
       setViewMode('reports');
     } else {
@@ -97,23 +278,23 @@ const Attendance: React.FC = () => {
     }
 
     // Load existing attendance data for selected date and class
-    const dateKey = format(selectedDate, 'yyyy-MM-dd');
-    const savedData = attendanceData[dateKey]?.[selectedClass];
+    // const dateKey = format(selectedDate, 'yyyy-MM-dd');
+    // const savedData = attendanceData[dateKey]?.[selectedClass];
 
-    if (savedData) {
-      setStudents(activeSession === 'morning' ? savedData.morning : savedData.afternoon);
-    } else {
-      setStudents(sampleStudents.map(student => ({
-        ...student,
-        morningPresent: false,
-        afternoonPresent: false
-      })));
-    }
+    // if (savedData) {
+    //   setStudents(activeSession === 'morning' ? savedData.morning : savedData.afternoon);
+    // } else {
+    //   setStudents(sampleStudents.map(student => ({
+    //     ...student,
+    //     morningPresent: false,
+    //     afternoonPresent: false
+    //   })));
+    // }
   }, [selectedDate, selectedClass, activeSession, attendanceData, editingSession]);
 
   const getAttendanceStats = () => {
-    const totalStudents = students.length;
-    const presentStudents = students.filter(s =>
+    const totalStudents = students?.length;
+    const presentStudents = students?.filter(s =>
       activeSession === 'morning' ? s.morningPresent : s.afternoonPresent
     ).length;
     const absentStudents = totalStudents - presentStudents;
@@ -131,7 +312,7 @@ const Attendance: React.FC = () => {
 
   const toggleAttendance = (studentId: string, isPresent: boolean) => {
     setStudents(prev => prev.map(student => {
-      if (student.id === studentId) {
+      if (student.student_id === studentId) {
         return {
           ...student,
           [activeSession === 'morning' ? 'morningPresent' : 'afternoonPresent']: isPresent
@@ -156,8 +337,10 @@ const Attendance: React.FC = () => {
       }
     }));
 
+    submitAttendanceData();
+
     setEditingSession(null);
-    toast.success(`${activeSession === 'morning' ? 'Morning' : 'After Lunch'} attendance submitted successfully!`);
+    //toast.success(`${activeSession === 'morning' ? 'Morning' : 'After Lunch'} attendance submitted successfully!`);
   };
 
   const handleEditAttendance = (session: 'morning' | 'afternoon') => {
@@ -168,20 +351,25 @@ const Attendance: React.FC = () => {
 
   const handleDateSelect = (date: Date | undefined) => {
     if (!date) return;
-    
+
     // Prevent selection of future dates
     if (isAfter(date, startOfDay(new Date()))) {
       toast.error("Cannot select future dates");
       return;
     }
-    
+
     setSelectedDate(date);
     setEditingSession(null);
   };
 
   const isSessionSubmitted = (session: 'morning' | 'afternoon') => {
-    const dateKey = format(selectedDate, 'yyyy-MM-dd');
-    return attendanceData[dateKey]?.[selectedClass]?.[`${session}Submitted`] || false;
+    // const dateKey = format(selectedDate, 'yyyy-MM-dd');
+    // return attendanceData[dateKey]?.[selectedClass]?.[`${session}Submitted`] || false;
+    if (session === 'morning') {
+      return isMorningSessionSubmitted;
+    } else {
+      return isAfternoonSessionSubmitted;
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -208,7 +396,7 @@ const Attendance: React.FC = () => {
   return (
     <MainLayout pageTitle={`Attendance Center`}>
       <div className="container mx-auto p-6 space-y-6">
-        <div className="flex justify-between items-center">
+        {/* <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Attendance Center</h1>
             <p className="text-gray-600">Mark and manage student attendance</p>
@@ -226,7 +414,7 @@ const Attendance: React.FC = () => {
               Back to {isPastDate ? 'Reports' : 'Attendance'}
             </Button>
           )}
-        </div>
+        </div> */}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Panel - Calendar and Class Selection */}
@@ -254,14 +442,14 @@ const Attendance: React.FC = () => {
                 <CardTitle>Select Class</CardTitle>
               </CardHeader>
               <CardContent>
-                <Select value={selectedClass} onValueChange={setSelectedClass}>
+                <Select value={selectedClass} onValueChange={handleClassChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a class" />
                   </SelectTrigger>
                   <SelectContent>
                     {classes.map((cls) => (
-                      <SelectItem key={cls.id} value={cls.id}>
-                        {cls.name}
+                      <SelectItem key={cls.class_id} value={'Class ' + cls.class_number + ' - ' + cls.section}>
+                        {'Class ' + cls.class_number + ' - ' + cls.section}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -272,7 +460,8 @@ const Attendance: React.FC = () => {
 
           {/* Right Panel - Dynamic Content */}
           <div className="lg:col-span-2 space-y-6">
-            {viewMode === 'reports' && !editingSession ? (
+            {viewMode === 'reports' && selectedClass &&
+              !editingSession ? (
               // Reports View for Past Dates
               <>
                 {/* Session Summary Cards */}
@@ -306,7 +495,7 @@ const Attendance: React.FC = () => {
 
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                      <CardTitle className="text-lg">After Lunch Session</CardTitle>
+                      <CardTitle className="text-lg">Afternoon Session</CardTitle>
                       <Button
                         size="sm"
                         variant="outline"
@@ -371,7 +560,7 @@ const Attendance: React.FC = () => {
               // Attendance Taking View
               <>
                 {/* Stats Cards */}
-                {!isFutureDate && (
+                {!isFutureDate && selectedClass && (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <Card>
                       <CardContent className="p-4">
@@ -424,19 +613,56 @@ const Attendance: React.FC = () => {
                 )}
 
                 {/* Student Attendance List */}
-                {!isFutureDate && (
+                {!isFutureDate && selectedClass && (
                   <Card>
                     <CardHeader>
                       <div className="flex justify-between items-center">
                         <CardTitle>
-                          Student Attendance - {activeSession === 'morning' ? 'Morning Session' : 'After Lunch Session'}
+                          Student Attendance - {activeSession === 'morning' ? 'Morning Session' : 'Afternoon Session'}
                         </CardTitle>
-                        <Button 
-                          onClick={submitAttendance} 
-                          className="bg-blue-600 hover:bg-blue-700"
-                        >
-                          {isSessionSubmitted(activeSession) ? 'Update Attendance' : 'Submit Attendance'}
-                        </Button>
+                        {
+                          !isSessionSubmitted(activeSession) && (
+                            <Button
+                              onClick={submitAttendance}
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              {'Submit Attendance'}
+                            </Button>
+                          )
+                        }
+                        {
+                          isSessionSubmitted(activeSession) && isEditing != activeSession && (
+                            <Button
+                              onClick={() => setIsEditing(activeSession)}
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              {'Edit Attendance'}
+                            </Button>
+                          )
+                          // : (
+                          //   <Button
+                          //     onClick={() => setIsEditing(activeSession)}
+                          //     className="bg-blue-600 hover:bg-blue-700"
+                          //   >
+                          //     {'Edit Attendance'}
+                          //   </Button>
+                          // )
+                        }
+                        {
+                          isSessionSubmitted(activeSession) && isEditing == activeSession && (
+                            <div>
+                              <Button
+                                onClick={() => {
+                                  setIsEditing('');
+                                  submitAttendance();
+                                }}
+                                className="bg-blue-600 hover:bg-blue-700"
+                              >
+                                {'Save Attendance'}
+                              </Button>
+                            </div>
+                          )
+                        }
                       </div>
                     </CardHeader>
                     <CardContent>
@@ -449,43 +675,54 @@ const Attendance: React.FC = () => {
                             )}
                           </TabsTrigger>
                           <TabsTrigger value="afternoon" className="relative">
-                            After Lunch Session
+                            Afternoon Session
                             {isSessionSubmitted('afternoon') && (
                               <CheckCircle className="w-4 h-4 ml-2 text-green-600" />
                             )}
                           </TabsTrigger>
                         </TabsList>
 
+
                         <TabsContent value="morning" className="mt-6">
                           <div className="space-y-4">
-                            {students.map((student) => (
-                              <div key={student.id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
+                            {students && students?.map((student) => (
+                              <div key={student.student_id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
                                 <div className="flex items-center gap-4">
                                   <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-semibold">
-                                    {student.name.split(' ').map(n => n[0]).join('')}
+                                    {student.student_name.split(' ').map(n => n[0]).join('')}
                                   </div>
                                   <div>
-                                    <p className="font-medium">{student.name}</p>
+                                    <p className="font-medium">{student.student_name}</p>
                                     <p className="text-sm text-gray-600">Roll No. {student.rollNumber}</p>
                                   </div>
                                 </div>
-                                <div className="flex gap-2">
-                                  <Button
-                                    size="sm"
-                                    variant={student.morningPresent ? "default" : "outline"}
-                                    onClick={() => toggleAttendance(student.id, true)}
-                                    className={student.morningPresent ? "bg-green-600 hover:bg-green-700" : ""}
-                                  >
-                                    Present
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant={!student.morningPresent ? "destructive" : "outline"}
-                                    onClick={() => toggleAttendance(student.id, false)}
-                                  >
-                                    Absent
-                                  </Button>
-                                </div>
+                                {
+                                  (!isSessionSubmitted(activeSession) || isEditing == activeSession) ? (
+                                    <div className="flex gap-2">
+                                      <Button
+                                        size="sm"
+                                        variant={student.morningPresent ? "default" : "outline"}
+                                        onClick={() => toggleAttendance(student.student_id, true)}
+                                        className={student.morningPresent ? "bg-green-600 hover:bg-green-700" : ""}
+                                      >
+                                        Present
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant={!student.morningPresent ? "destructive" : "outline"}
+                                        onClick={() => toggleAttendance(student.student_id, false)}
+                                      >
+                                        Absent
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <>
+                                      {
+                                        getStatusBadge(student.morningPresent ? 'Present' : 'Absent')
+                                      }
+                                    </>
+                                  )
+                                }
                               </div>
                             ))}
                           </div>
@@ -493,33 +730,45 @@ const Attendance: React.FC = () => {
 
                         <TabsContent value="afternoon" className="mt-6">
                           <div className="space-y-4">
-                            {students.map((student) => (
-                              <div key={student.id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
+                            {students && students?.map((student) => (
+                              <div key={student.student_id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
                                 <div className="flex items-center gap-4">
                                   <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-semibold">
-                                    {student.name.split(' ').map(n => n[0]).join('')}
+                                    {student.student_name.split(' ').map(n => n[0]).join('')}
                                   </div>
                                   <div>
-                                    <p className="font-medium">{student.name}</p>
+                                    <p className="font-medium">{student.student_name}</p>
                                     <p className="text-sm text-gray-600">Roll No. {student.rollNumber}</p>
                                   </div>
                                 </div>
                                 <div className="flex gap-2">
-                                  <Button
-                                    size="sm"
-                                    variant={student.afternoonPresent ? "default" : "outline"}
-                                    onClick={() => toggleAttendance(student.id, true)}
-                                    className={student.afternoonPresent ? "bg-green-600 hover:bg-green-700" : ""}
-                                  >
-                                    Present
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant={!student.afternoonPresent ? "destructive" : "outline"}
-                                    onClick={() => toggleAttendance(student.id, false)}
-                                  >
-                                    Absent
-                                  </Button>
+                                  {
+                                  (!isSessionSubmitted(activeSession) || isEditing == activeSession) ? (
+                                    <div className="flex gap-2">
+                                      <Button
+                                        size="sm"
+                                        variant={student.morningPresent ? "default" : "outline"}
+                                        onClick={() => toggleAttendance(student.student_id, true)}
+                                        className={student.morningPresent ? "bg-green-600 hover:bg-green-700" : ""}
+                                      >
+                                        Present
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant={!student.morningPresent ? "destructive" : "outline"}
+                                        onClick={() => toggleAttendance(student.student_id, false)}
+                                      >
+                                        Absent
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <>
+                                      {
+                                        getStatusBadge(student.afternoonPresent ? 'Present' : 'Absent')
+                                      }
+                                    </>
+                                  )
+                                }
                                 </div>
                               </div>
                             ))}
@@ -530,14 +779,23 @@ const Attendance: React.FC = () => {
                   </Card>
                 )}
 
-                {isFutureDate && (
-                  <Card>
+                {isFutureDate || !selectedClass && (
+                  <Card className='py-[13rem]'>
                     <CardContent className="p-8 text-center">
                       <AlertCircle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Future Date Selected</h3>
-                      <p className="text-gray-600">
-                        Attendance cannot be marked for future dates. Please select today or a past date.
-                      </p>
+                      {
+                        isFutureDate ? (
+                          <>
+                            <h2 className="text-2xl font-bold mb-2">Future Date Selected</h2>
+                            <p className="text-gray-600">Attendance can only be marked for today or past dates.</p>
+                          </>
+                        ) : (
+                          <>
+                            <h2 className="text-2xl font-bold mb-2">No Class Selected</h2>
+                            <p className="text-gray-600">Select the class to view the attendance data.</p>
+                          </>
+                        )
+                      }
                     </CardContent>
                   </Card>
                 )}
