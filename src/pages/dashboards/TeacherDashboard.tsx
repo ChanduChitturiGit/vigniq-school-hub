@@ -76,9 +76,7 @@ const TeacherDashboard: React.FC = () => {
     try {
       const response = await getHomePageData();
       // Process and set the data as needed
-      console.log(response);
       if (response && response.data) {
-        console.log(response.data);
         setStats(
           [
             {

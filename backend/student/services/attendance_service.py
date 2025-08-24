@@ -40,6 +40,7 @@ class AttendanceService:
                                 status=status.HTTP_400_BAD_REQUEST)
 
             attendance_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            #attendence constraint
             if attendance_date != timezone.localdate():
                 logger.error("Attendance date must be today's date.")
                 return Response({"error": "Attendance can only be marked for today's date."},
@@ -179,10 +180,10 @@ class AttendanceService:
     
     def get_past_attendance(self, request):
         try:
-            date = request.data.get('date')
-            class_section_id = request.data.get('class_section_id')
-            academic_year_id = request.data.get('academic_year_id', 1)
-            school_id = request.data.get('school_id') or getattr(request.user, 'school_id', None)
+            date = request.GET.get('date')
+            class_section_id = request.GET.get('class_section_id')
+            academic_year_id = request.GET.get('academic_year_id', 1)
+            school_id = request.GET.get('school_id') or getattr(request.user, 'school_id', None)
 
             if not all([date, class_section_id, academic_year_id, school_id]):
                 logger.error("Missing required parameters.")
