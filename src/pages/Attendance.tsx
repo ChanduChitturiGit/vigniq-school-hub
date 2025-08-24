@@ -11,6 +11,7 @@ import { Users, Clock, CheckCircle, XCircle, AlertCircle, FileText } from 'lucid
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 import { format, isSameDay } from 'date-fns';
+import MainLayout from '@/components/Layout/MainLayout';
 
 interface Student {
   id: string;
@@ -62,7 +63,7 @@ const Attendance: React.FC = () => {
     // Load existing attendance data for selected date and class
     const dateKey = format(selectedDate, 'yyyy-MM-dd');
     const savedData = attendanceData[dateKey]?.[selectedClass];
-    
+
     if (savedData) {
       setStudents(activeSession === 'morning' ? savedData.morning : savedData.afternoon);
     } else {
@@ -76,7 +77,7 @@ const Attendance: React.FC = () => {
 
   const getAttendanceStats = () => {
     const totalStudents = students.length;
-    const presentStudents = students.filter(s => 
+    const presentStudents = students.filter(s =>
       activeSession === 'morning' ? s.morningPresent : s.afternoonPresent
     ).length;
     const absentStudents = totalStudents - presentStudents;
@@ -99,7 +100,7 @@ const Attendance: React.FC = () => {
 
   const submitAttendance = () => {
     const dateKey = format(selectedDate, 'yyyy-MM-dd');
-    
+
     setAttendanceData(prev => ({
       ...prev,
       [dateKey]: {
@@ -119,208 +120,210 @@ const Attendance: React.FC = () => {
   const stats = getAttendanceStats();
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Attendance Center</h1>
-          <p className="text-gray-600">Mark and manage student attendance</p>
-        </div>
-        <Button
-          variant="outline"
-          onClick={() => navigate('/attendance/reports')}
-          className="flex items-center gap-2"
-        >
-          <FileText className="w-4 h-4" />
-          View Reports
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Panel - Calendar and Class Selection */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="w-5 h-5" />
-                Select Date
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={(date) => date && setSelectedDate(date)}
-                className="rounded-md border"
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Select Class</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Select value={selectedClass} onValueChange={setSelectedClass}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a class" />
-                </SelectTrigger>
-                <SelectContent>
-                  {classes.map((cls) => (
-                    <SelectItem key={cls.id} value={cls.id}>
-                      {cls.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
+    <MainLayout pageTitle={`Attendance Center`}>
+      <div className="container mx-auto p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Attendance Center</h1>
+            <p className="text-gray-600">Mark and manage student attendance</p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/attendance/reports')}
+            className="flex items-center gap-2"
+          >
+            <FileText className="w-4 h-4" />
+            View Reports
+          </Button>
         </div>
 
-        {/* Right Panel - Attendance Marking */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Panel - Calendar and Class Selection */}
+          <div className="space-y-6">
             <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-blue-500" />
-                  <div>
-                    <p className="text-2xl font-bold text-blue-600">{stats.totalStudents}</p>
-                    <p className="text-sm text-gray-600">Total Students</p>
-                  </div>
-                </div>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="w-5 h-5" />
+                  Select Date
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => date && setSelectedDate(date)}
+                  className="rounded-md border"
+                />
               </CardContent>
             </Card>
 
             <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  <div>
-                    <p className="text-2xl font-bold text-green-600">{stats.presentStudents}</p>
-                    <p className="text-sm text-gray-600">Marked Present</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <XCircle className="w-5 h-5 text-red-500" />
-                  <div>
-                    <p className="text-2xl font-bold text-red-600">{stats.absentStudents}</p>
-                    <p className="text-sm text-gray-600">Marked Absent</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="w-5 h-5 text-orange-500" />
-                  <div>
-                    <p className="text-2xl font-bold text-orange-600">{stats.remainingStudents}</p>
-                    <p className="text-sm text-gray-600">Remaining</p>
-                  </div>
-                </div>
+              <CardHeader>
+                <CardTitle>Select Class</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Select value={selectedClass} onValueChange={setSelectedClass}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a class" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {classes.map((cls) => (
+                      <SelectItem key={cls.id} value={cls.id}>
+                        {cls.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </CardContent>
             </Card>
           </div>
 
-          {/* Session Tabs and Student List */}
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>Student Attendance - {activeSession === 'morning' ? 'Morning Session' : 'After Lunch Session'}</CardTitle>
-                <Button onClick={submitAttendance} className="bg-blue-600 hover:bg-blue-700">
-                  Submit Attendance
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Tabs value={activeSession} onValueChange={(value) => setActiveSession(value as 'morning' | 'afternoon')}>
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="morning">Morning Session</TabsTrigger>
-                  <TabsTrigger value="afternoon">After Lunch Session</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="morning" className="mt-6">
-                  <div className="space-y-4">
-                    {students.map((student) => (
-                      <div key={student.id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-semibold">
-                            {student.name.split(' ').map(n => n[0]).join('')}
-                          </div>
-                          <div>
-                            <p className="font-medium">{student.name}</p>
-                            <p className="text-sm text-gray-600">Roll No. {student.rollNumber}</p>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant={student.morningPresent ? "default" : "outline"}
-                            onClick={() => toggleAttendance(student.id, true)}
-                            className={student.morningPresent ? "bg-green-600 hover:bg-green-700" : ""}
-                          >
-                            Present
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant={!student.morningPresent ? "destructive" : "outline"}
-                            onClick={() => toggleAttendance(student.id, false)}
-                          >
-                            Absent
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+          {/* Right Panel - Attendance Marking */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-5 h-5 text-blue-500" />
+                    <div>
+                      <p className="text-2xl font-bold text-blue-600">{stats.totalStudents}</p>
+                      <p className="text-sm text-gray-600">Total Students</p>
+                    </div>
                   </div>
-                </TabsContent>
+                </CardContent>
+              </Card>
 
-                <TabsContent value="afternoon" className="mt-6">
-                  <div className="space-y-4">
-                    {students.map((student) => (
-                      <div key={student.id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-semibold">
-                            {student.name.split(' ').map(n => n[0]).join('')}
-                          </div>
-                          <div>
-                            <p className="font-medium">{student.name}</p>
-                            <p className="text-sm text-gray-600">Roll No. {student.rollNumber}</p>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant={student.afternoonPresent ? "default" : "outline"}
-                            onClick={() => toggleAttendance(student.id, true)}
-                            className={student.afternoonPresent ? "bg-green-600 hover:bg-green-700" : ""}
-                          >
-                            Present
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant={!student.afternoonPresent ? "destructive" : "outline"}
-                            onClick={() => toggleAttendance(student.id, false)}
-                          >
-                            Absent
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    <div>
+                      <p className="text-2xl font-bold text-green-600">{stats.presentStudents}</p>
+                      <p className="text-sm text-gray-600">Marked Present</p>
+                    </div>
                   </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2">
+                    <XCircle className="w-5 h-5 text-red-500" />
+                    <div>
+                      <p className="text-2xl font-bold text-red-600">{stats.absentStudents}</p>
+                      <p className="text-sm text-gray-600">Marked Absent</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5 text-orange-500" />
+                    <div>
+                      <p className="text-2xl font-bold text-orange-600">{stats.remainingStudents}</p>
+                      <p className="text-sm text-gray-600">Remaining</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Session Tabs and Student List */}
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Student Attendance - {activeSession === 'morning' ? 'Morning Session' : 'After Lunch Session'}</CardTitle>
+                  <Button onClick={submitAttendance} className="bg-blue-600 hover:bg-blue-700">
+                    Submit Attendance
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Tabs value={activeSession} onValueChange={(value) => setActiveSession(value as 'morning' | 'afternoon')}>
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="morning">Morning Session</TabsTrigger>
+                    <TabsTrigger value="afternoon">After Lunch Session</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="morning" className="mt-6">
+                    <div className="space-y-4">
+                      {students.map((student) => (
+                        <div key={student.id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-semibold">
+                              {student.name.split(' ').map(n => n[0]).join('')}
+                            </div>
+                            <div>
+                              <p className="font-medium">{student.name}</p>
+                              <p className="text-sm text-gray-600">Roll No. {student.rollNumber}</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant={student.morningPresent ? "default" : "outline"}
+                              onClick={() => toggleAttendance(student.id, true)}
+                              className={student.morningPresent ? "bg-green-600 hover:bg-green-700" : ""}
+                            >
+                              Present
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={!student.morningPresent ? "destructive" : "outline"}
+                              onClick={() => toggleAttendance(student.id, false)}
+                            >
+                              Absent
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="afternoon" className="mt-6">
+                    <div className="space-y-4">
+                      {students.map((student) => (
+                        <div key={student.id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-semibold">
+                              {student.name.split(' ').map(n => n[0]).join('')}
+                            </div>
+                            <div>
+                              <p className="font-medium">{student.name}</p>
+                              <p className="text-sm text-gray-600">Roll No. {student.rollNumber}</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant={student.afternoonPresent ? "default" : "outline"}
+                              onClick={() => toggleAttendance(student.id, true)}
+                              className={student.afternoonPresent ? "bg-green-600 hover:bg-green-700" : ""}
+                            >
+                              Present
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={!student.afternoonPresent ? "destructive" : "outline"}
+                              onClick={() => toggleAttendance(student.id, false)}
+                            >
+                              Absent
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
-    </div>
+    </MainLayout>
   );
 };
 
