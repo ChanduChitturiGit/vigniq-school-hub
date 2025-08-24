@@ -8,9 +8,10 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain.output_parsers import PydanticOutputParser
+from langchain.memory import ConversationSummaryBufferMemory
 
 from core.common_modules.common_functions import CommonFunctions
-
+from syllabus.models import ChatSession, ChatMessage
 
 from .states import ChapterInfo,LessonPlan
 from .queries import LangchainQueries
@@ -19,10 +20,10 @@ logger = logging.getLogger(__name__)
 
 class LangChainService:
     """Service for Langchain operations."""
-    def __init__(self):
+    def __init__(self,temperature=0):
         self.llm = ChatGoogleGenerativeAI(
             model=settings.AI_MODELS.get('GEMINI_MODEL', 'gemini-2.5-flash'),
-            temperature=0,
+            temperature=temperature,
             api_key=settings.API_KEYS.get('GEMINI_API_KEY')
         )
 
@@ -69,3 +70,53 @@ class LangChainService:
         parsed = lesson_plan_parser.parse(response)
 
         return parsed.model_dump()
+
+    def get_chain_with_memory(self, school_db_name, session: ChatSession):
+        """Load memory from DB messages + summary, return LLMChain + memory."""
+
+        prompt = PromptTemplate(
+            template=LangchainQueries.ASSISTANT_CHAT.value,
+            input_variables=["lesson_plan", "question", "chat_history"],
+        )
+        memory = ConversationSummaryBufferMemory(
+            llm=self.llm,
+            max_token_limit=1000,
+            memory_key="chat_history",
+            input_key="question",
+            return_messages=True
+        )
+
+        if session.summary:
+            memory.moving_summary_buffer = session.summary
+
+        chat_messages = ChatMessage.objects.using(school_db_name).filter(
+            session=session
+        ).order_by("created_at")
+
+        for msg in chat_messages:
+            if msg.role == "user":
+                memory.chat_memory.add_user_message(msg.content)
+            else:
+                memory.chat_memory.add_ai_message(msg.content)
+
+        chain = LLMChain(
+            llm=self.llm,
+            prompt=prompt,
+            memory=memory
+        )
+
+        return chain, memory
+
+
+    def process_user_question(self, session,
+                              school_db_name, lesson_plan: str, user_question: str):
+        """Handle user input, run LLM, store messages + updated summary."""
+
+        chain, memory = self.get_chain_with_memory(school_db_name, session)
+
+        response = chain.run({
+            "lesson_plan": lesson_plan,
+            "question": user_question
+        })
+
+        return response, memory.moving_summary_buffer
