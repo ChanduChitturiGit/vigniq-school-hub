@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft, Download, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import MainLayout from '@/components/Layout/MainLayout';
 
 interface AttendanceRecord {
   rollNumber: string;
@@ -69,145 +70,147 @@ const AttendanceReports: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/attendance')}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Attendance
+    <MainLayout pageTitle={`Attendance Center`}>
+      <div className="container mx-auto p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/attendance')}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Attendance
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Attendance Reports</h1>
+              <p className="text-gray-600">View and export attendance reports</p>
+            </div>
+          </div>
+          <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
+            <Download className="w-4 h-4" />
+            Export Report
           </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Attendance Reports</h1>
-            <p className="text-gray-600">View and export attendance reports</p>
-          </div>
-        </div>
-        <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
-          <Download className="w-4 h-4" />
-          Export Report
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Left Panel - Calendar and Class Selection */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Select Date</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={(date) => date && setSelectedDate(date)}
-                className="rounded-md border"
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Select Class</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Select value={selectedClass} onValueChange={setSelectedClass}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a class" />
-                </SelectTrigger>
-                <SelectContent>
-                  {classes.map((cls) => (
-                    <SelectItem key={cls.id} value={cls.id}>
-                      {cls.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
         </div>
 
-        {/* Right Panel - Reports */}
-        <div className="lg:col-span-3 space-y-6">
-          {/* Session Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Left Panel - Calendar and Class Selection */}
+          <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Morning Session Summary</CardTitle>
+                <CardTitle>Select Date</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex justify-between items-center mb-4">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-green-600">{morningStats.present}</div>
-                    <div className="text-sm text-gray-600">Present</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-red-600">{morningStats.absent}</div>
-                    <div className="text-sm text-gray-600">Absent</div>
-                  </div>
-                </div>
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => date && setSelectedDate(date)}
+                  className="rounded-md border"
+                />
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">After Lunch Session Summary</CardTitle>
+                <CardTitle>Select Class</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex justify-between items-center mb-4">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-green-600">{afternoonStats.present}</div>
-                    <div className="text-sm text-gray-600">Present</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-red-600">{afternoonStats.absent}</div>
-                    <div className="text-sm text-gray-600">Absent</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Detailed Attendance Report */}
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                Attendance Report for CLASS 06 - {format(selectedDate, 'E MMM dd yyyy')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Roll No.</TableHead>
-                      <TableHead>Student Name</TableHead>
-                      <TableHead>Morning Session</TableHead>
-                      <TableHead>After Lunch Session</TableHead>
-                      <TableHead>Overall Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {attendanceRecords.map((record) => (
-                      <TableRow key={record.rollNumber}>
-                        <TableCell className="font-medium">{record.rollNumber}</TableCell>
-                        <TableCell>{record.studentName}</TableCell>
-                        <TableCell>{getStatusBadge(record.morningSession)}</TableCell>
-                        <TableCell>{getStatusBadge(record.afternoonSession)}</TableCell>
-                        <TableCell>{getStatusBadge(record.overallStatus)}</TableCell>
-                      </TableRow>
+                <Select value={selectedClass} onValueChange={setSelectedClass}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a class" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {classes.map((cls) => (
+                      <SelectItem key={cls.id} value={cls.id}>
+                        {cls.name}
+                      </SelectItem>
                     ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+                  </SelectContent>
+                </Select>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Panel - Reports */}
+          <div className="lg:col-span-3 space-y-6">
+            {/* Session Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Morning Session Summary</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-green-600">{morningStats.present}</div>
+                      <div className="text-sm text-gray-600">Present</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-red-600">{morningStats.absent}</div>
+                      <div className="text-sm text-gray-600">Absent</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">After Lunch Session Summary</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-green-600">{afternoonStats.present}</div>
+                      <div className="text-sm text-gray-600">Present</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-red-600">{afternoonStats.absent}</div>
+                      <div className="text-sm text-gray-600">Absent</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Detailed Attendance Report */}
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  Attendance Report for CLASS 06 - {format(selectedDate, 'E MMM dd yyyy')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Roll No.</TableHead>
+                        <TableHead>Student Name</TableHead>
+                        <TableHead>Morning Session</TableHead>
+                        <TableHead>After Lunch Session</TableHead>
+                        <TableHead>Overall Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {attendanceRecords.map((record) => (
+                        <TableRow key={record.rollNumber}>
+                          <TableCell className="font-medium">{record.rollNumber}</TableCell>
+                          <TableCell>{record.studentName}</TableCell>
+                          <TableCell>{getStatusBadge(record.morningSession)}</TableCell>
+                          <TableCell>{getStatusBadge(record.afternoonSession)}</TableCell>
+                          <TableCell>{getStatusBadge(record.overallStatus)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
-    </div>
+    </MainLayout>
   );
 };
 
