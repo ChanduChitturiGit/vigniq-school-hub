@@ -22,7 +22,8 @@ import {
   Award,
   TrendingUp,
   Plus,
-  UserCheck
+  UserCheck,
+  ClipboardCheck
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -88,8 +89,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
       { path: '/grades', icon: Award, label: 'Grades', roles: ['teacher'] },
       { path: baseSubjectPath, icon: BookOpen, label: 'Syllabus', roles: ['teacher'] },
       { path: progressPath, icon: TrendingUp, label: 'Progress', roles: ['teacher'] }
-      // { path: '#', icon: Plus, label: 'Create', roles: ['teacher'] },
-      // { path: '#', icon: UserCheck, label: 'Engage', roles: ['teacher'] }
     ];
   };
 
@@ -157,6 +156,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
           ]
         },
         { path: '/grades', icon: Award, label: 'Grades', roles: ['teacher'] },
+        { path: '/attendance', icon: ClipboardCheck, label: 'Attendance', roles: ['teacher'] },
         { path: '/view-ebooks', icon: BookOpen, label: 'E-Books', roles: ['teacher'] }
       ],
       'student': [
@@ -255,17 +255,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
       <div className="p-4 border-b border-blue-300">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
-            {/* <span className="text-blue-500 font-bold">V</span> */}
             <img src="/assets/logo.png" alt="Logo" className="w-6 h-6 object-contain" />
           </div>
           {(!isCollapsed || window.innerWidth < 768) && (
             <div className="transition-opacity duration-500 ease-in-out w-[70%]">
               <span className="text-xl font-bold">VIGYS AI</span>
-              {/* {isInSubjectContext && subject && (
-                <div className="text-xs text-blue-100 mt-1">
-                  {subject} - {className} {section}
-                </div>
-              )} */}
                <div className={`text-xs text-blue-100 mt-1 truncate `} title={schoolName}>
                   {schoolName+schoolName}
                 </div>
