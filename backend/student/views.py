@@ -73,6 +73,8 @@ class AttendanceView(APIView):
         #     return AttendanceService().get_attendance(request)
         if action == "getAttendanceByClassSection":
             return AttendanceService().get_attendance_by_class_section(request)
+        elif action == "getPastAttendance":
+            return AttendanceService().get_past_attendance(request)
         return Response({"error": "Invalid GET action"}, status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request, action=None):
@@ -82,4 +84,6 @@ class AttendanceView(APIView):
 
         if action == "markAttendance":
             return AttendanceService().mark_attendance(request)
+        elif action == "markHoliday":
+            return AttendanceService().mark_holiday(request)
         return Response({"error": "Invalid POST action"}, status=status.HTTP_400_BAD_REQUEST)
