@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 //   DialogTrigger,
 // } from '../components/ui/dialog';
 import { getBoardsList } from '../services/school'
-import { getEbookList,deleteEbookById } from '../services/ebooks'
+import { getEbookList, deleteEbookById } from '../services/ebooks'
 import { getClassesList } from '../services/class'
 import { getSubjectsList } from '../services/subject'
 import { SpinnerOverlay } from '../pages/SpinnerOverlay';
@@ -60,6 +60,7 @@ const ViewEbooks: React.FC = () => {
     board_id: null,
     class_id: null,
     subject_id: null,
+    year: null,
     page: 1
   });
   const [ebooks, setEbooks] = useState([]);
@@ -74,6 +75,9 @@ const ViewEbooks: React.FC = () => {
   const [viewId, setViewId] = useState(null);
   const [downloadId, setDownloadId] = useState(null);
   const [isScrolling, setIsScrolling] = useState(true);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(1);
+  
 
   // Sample data
   const sampleEbooks: any = sampleData;
@@ -103,25 +107,29 @@ const ViewEbooks: React.FC = () => {
     }
   }
 
-  const ebookData = async (data) => {
+  const ebookData = async (data,condition = false) => {
+    if(!hasMore && !condition) return;
     try {
       setLoader(true);
       const response = await getEbookList(data);
-      if (response && response.data && !response.message) {
-        if(payload.page === 1) {
+      if (response && response.data && response.data.length>0) {
+        if (page == 1) {
           setEbooks(response.data);
-          setFilteredEbooks(response.data);
+          //setFilteredEbooks(response.data);
         }
         else {
           setEbooks(prev => [...prev, ...response.data]);
-          setFilteredEbooks(prev => [...prev, ...response.data]);
+          //setFilteredEbooks(prev => [...prev, ...response.data]);
         }
-      }else if (response && response.message) {
-        setIsScrolling(false);
       } 
+      if (response && (response.message || response.data.length<10)) {
+        setHasMore(false);
+      }
+      setLoader(false);
     } catch (error) {
       if (error?.response?.data?.error == 'No eBooks found for the given criteria.') {
-        setFilteredEbooks([]);
+      //  setFilteredEbooks([]);
+          setEbooks([]);
       } else {
         showSnackbar({
           title: "⛔ Error",
@@ -129,8 +137,9 @@ const ViewEbooks: React.FC = () => {
           status: "error"
         });
       }
+      setLoader(false);
     }
-    setLoader(false);
+
   }
 
   const deleteEbook = async (ebookId: string) => {
@@ -138,7 +147,7 @@ const ViewEbooks: React.FC = () => {
       const response = await deleteEbookById({ ebook_id: ebookId });
       if (response && response.message) {
         setEbooks(prev => prev.filter(ebook => ebook.id !== ebookId));
-        setFilteredEbooks(prev => prev.filter(ebook => ebook.id !== ebookId));
+       // setFilteredEbooks(prev => prev.filter(ebook => ebook.id !== ebookId));
         showSnackbar({
           title: "Success",
           description: "E-book deleted successfully",
@@ -164,37 +173,43 @@ const ViewEbooks: React.FC = () => {
     boardsList();
     classList();
     subjectsList();
-    //setEbooks(sampleEbooks);
-    // setFilteredEbooks(sampleEbooks);
-    ebookData({...payload, page: payload.page+1 });
+    ebookData(payload);
   }, []);
+
 
   const handleScroll = () => {
     const container = scrollContainerRef.current;
-    if (!container) return;
-
     const isBottom =
-      container.scrollHeight - container.scrollTop <= container.clientHeight + 50;
-
-    if (isBottom && isScrolling) {
-      //console.log('End reached');
-      ebookData(payload); 
-    }
+        (container.scrollHeight - container.scrollTop) <= (container.clientHeight + (loader ? (-200) : 10) ) ;
+    //console.log('scrollScheck',(!container || loader || !hasMore || !isBottom));
+    if (!container || loader || !hasMore || !isBottom){
+      return; // avoid multiple calls while loading
+    }else{
+      //console.log('scrolled');
+      if (isBottom && hasMore && !loader) {
+        setPage(prev => prev + 1); 
+      }
+    } 
   };
 
   useEffect(() => {
-    
     const container = scrollContainerRef.current;
-    container?.addEventListener('scroll', handleScroll);
+    container?.addEventListener("scroll", handleScroll);
+    return () => container?.removeEventListener("scroll", handleScroll);
+  }, []);
 
-    return () => {
-      container?.removeEventListener('scroll', handleScroll);
-    };
-  })
 
   useEffect(() => {
-    ebookData(payload);
-  }, [payload])
+    if(page>1){ 
+      ebookData({ ...payload, page });
+    }
+  }, [page]);
+
+  useEffect(() => {
+    setHasMore(true);
+    setPage(1);
+    ebookData({ ...payload, page },true);
+  }, [payload.board_id, payload.class_id, payload.subject_id, payload.year]);
 
   const getBoardId = (data: string) => {
     const boardData = boards.find((val: any) => (val.name) == data);
@@ -203,15 +218,15 @@ const ViewEbooks: React.FC = () => {
   }
 
   const getClassId = (data: string) => {
-    const boardData = classes.find((val: any) => ('Class ' + val.class_number) == data);
-    const boardId = boardData.id ? boardData.id : null;
-    return boardId;
+    const classData = classes.find((val: any) => ('Class ' + val.class_number) == data);
+    const classId = classData.id ? classData.id : null;
+    return classId;
   }
 
   const getSubjectId = (data: string) => {
-    const boardData = subjects.find((val: any) => (val.name) == data);
-    const boardId = boardData.id ? boardData.id : null;
-    return boardId;
+    const subjectData = subjects.find((val: any) => (val.name) == data);
+    const subjectId = subjectData.id ? subjectData.id : null;
+    return subjectId;
   }
 
   const handleFilterChange = (field: string, value: string) => {
@@ -331,9 +346,11 @@ const ViewEbooks: React.FC = () => {
       board_id: null,
       class_id: null,
       subject_id: null,
+      year: null,
       page: 1
     });
-    getEbookList(payload);
+    setPage(1);
+    //getEbookList(payload);
   };
 
   return (
@@ -422,7 +439,7 @@ const ViewEbooks: React.FC = () => {
 
         {/* E-books Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {Array.isArray(filteredEbooks) && filteredEbooks.map((ebook, index) => (
+          {Array.isArray(ebooks) && ebooks.map((ebook, index) => (
             <Card key={ebook.id} className="hover:shadow-lg transition-shadow">
               <CardContent className="p-6">
                 <div className="flex flex-col items-center text-center">
@@ -476,7 +493,7 @@ const ViewEbooks: React.FC = () => {
           ))}
         </div>
 
-        {Array.isArray(filteredEbooks) && filteredEbooks.length === 0 && !loader && (
+        {Array.isArray(ebooks) && ebooks.length === 0 && !loader && (
           <div className="text-center py-12">
             <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No E-books Found</h3>

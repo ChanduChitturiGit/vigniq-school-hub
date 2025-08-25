@@ -218,65 +218,78 @@ const ClassDetails: React.FC = () => {
 
         {/* Class Info Section */}
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">
+          <div className="flex flex-wrap items-center justify-between mb-4">
+            <div className='mb-4 md:mb-0'>
+              <h1 className="text-xl md:text-2xl font-bold text-gray-800">
                 {'Class ' + classData.class_number} - {classData.section}
               </h1>
               <p className="text-gray-600">{classData.academicYear}</p>
             </div>
-            <div className="text-right flex">
-              {!isEditing ? (
-                <>
-                  <div>
-                    <p className="text-sm text-gray-500">Class Teacher</p>
-                    <p className="font-semibold text-gray-800">{classData.teacher_name || 'N/A'}</p>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Class Teacher
-                    </label>
-                    <Select value={formData.teacher_name} onValueChange={handleTeacherChange}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a teacher" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {teachers.map((teacher, index) => (
-                          <SelectItem key={index} value={teacher.teacher_first_name + ' ' + teacher.teacher_last_name}>
-                            {teacher.teacher_first_name + ' ' + teacher.teacher_last_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </>
-              )}
-              <>
-                {isEditing && (
-                  <button
-                    onClick={saveTeacher}
-                    className="flex items-center gap-2 px-4 py-2 mx-4 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                  >
-                    <Save className="w-4 h-4" />
-                    {'Save'}
-                  </button>
-                )}
-              </>
-              {
-                userData.role != 'teacher' && (
-                  <button
-                    onClick={() => setIsEditing(!isEditing)}
-                    className="flex items-center gap-2 px-4 py-2 mx-4 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                  >
-                    <Edit className="w-4 h-4" />
-                    {isEditing ? 'Cancel' : 'Edit'}
-                  </button>
-                )
-              }
-            </div>
+                <div className="text-left md:text-right flex flex-wrap ">
+                  {!isEditing ? (
+                    <>
+                      <div>
+                        <p className="text-sm text-gray-500">Class Teacher</p>
+                        <p className="font-semibold text-gray-800">{classData.teacher_name || 'N/A'}</p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Class Teacher
+                        </label>
+                        <Select value={formData.teacher_name} onValueChange={handleTeacherChange}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select a teacher" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {teachers.map((teacher, index) => (
+                              <SelectItem key={index} value={teacher.teacher_first_name + ' ' + teacher.teacher_last_name}>
+                                {teacher.teacher_first_name + ' ' + teacher.teacher_last_name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
+                  )}
+                  <>
+                    { (userData.role == 'superadmin' || userData.role == 'admin') &&  (
+                      <div className='flex flex-wrap'>
+                        {
+                          isEditing && (
+                            <button
+                              onClick={saveTeacher}
+                              className="flex items-center gap-2 px-2 py-2 mx-4 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            >
+                              <Save className="w-4 h-4" />
+                              {'Save'}
+                            </button>
+                          )
+                        }
+                        <button
+                          onClick={() => setIsEditing(!isEditing)}
+                          className="flex items-center gap-2 px-2 py-2 mx-4 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        >
+                          <Edit className="w-4 h-4" />
+                          {isEditing ? 'Cancel' : 'Edit'}
+                        </button>
+                      </div>
+                    )}
+                  </>
+                  {/* {
+                    userData.role != 'teacher' && (
+                      <button
+                        onClick={() => setIsEditing(!isEditing)}
+                        className="flex items-center gap-2 px-4 py-2 mx-4 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      >
+                        <Edit className="w-4 h-4" />
+                        {isEditing ? 'Cancel' : 'Edit'}
+                      </button>
+                    )
+                  } */}
+                </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

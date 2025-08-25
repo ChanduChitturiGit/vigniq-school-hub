@@ -153,7 +153,7 @@ class EbookService:
                 return Response({"error": "Syllabus year is required."},
                                 status=status.HTTP_400_BAD_REQUEST)
 
-            page_size = 10
+            page_size = 12
             filter_conditions = {}
 
             if board_id:

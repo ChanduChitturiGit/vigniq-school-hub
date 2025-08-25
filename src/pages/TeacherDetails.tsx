@@ -504,7 +504,7 @@ const TeacherDetails: React.FC = () => {
                   </div>
                 )}
               </div>
-              <div>
+              <div >
                 <label className="block text-sm font-medium text-gray-700 mb-2">Joining Date</label>
                 {isEditing ? (
                   <>
@@ -556,7 +556,7 @@ const TeacherDetails: React.FC = () => {
           </div>
 
           {isEditing && (
-            <div className="space-y-4">
+            <div className="space-y-4 mt-6 md:mt-4">
               <div className="flex items-center justify-between">
                 <label className="block text-sm font-medium text-gray-700">Teaching Assignments (Optional)</label>
                 <button
