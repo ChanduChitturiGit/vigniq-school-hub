@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Search, Plus, BookOpen, Users, LoaderCircle, ExternalLink } from 'lucide-react';
+import { Edit, Search, Plus, BookOpen, Users, LoaderCircle, ExternalLink,Expand } from 'lucide-react';
 import { getSchoolById, editSchool } from '../services/school';
 import { getTeachersBySchoolId } from '../services/teacher';
 import { getClassesBySchoolId } from '../services/class';
@@ -190,12 +190,12 @@ const AdminSchool: React.FC = () => {
               <div className="p-2 bg-blue-100 rounded-lg">
                 <BookOpen className="w-6 h-6 text-blue-600" />
               </div>
-              <h2 className="text-xl font-semibold text-gray-800">School Information</h2>
+              <h2 className="text-lg md:text-xl font-semibold text-gray-800">School Information</h2>
             </div>
             {userData.role == 'superadmin' && (
               <button
                 onClick={() => setIsEditing(!isEditing)}
-                className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                className="flex items-center gap-2 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               >
                 <Edit className="w-4 h-4" />
                 {isEditing ? 'Cancel' : 'Edit'}
@@ -285,14 +285,14 @@ const AdminSchool: React.FC = () => {
 
         {/* Teachers Section */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-wrap items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-green-100 rounded-lg">
                 <Users className="w-6 h-6 text-green-600" />
               </div>
               <h2 className="text-xl font-semibold text-gray-800">Teachers</h2>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <Link
                 to="/admin-add-teacher"
                 className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
@@ -305,7 +305,7 @@ const AdminSchool: React.FC = () => {
                 className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
                 title="View all teachers"
               >
-                <ExternalLink className="w-4 h-4" />
+                <Expand className="w-4 h-4" />
               </Link>
             </div>
           </div>
@@ -352,7 +352,7 @@ const AdminSchool: React.FC = () => {
 
         {/* Classes Section */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-wrap items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-purple-100 rounded-lg">
                 <BookOpen className="w-6 h-6 text-purple-600" />
@@ -372,7 +372,7 @@ const AdminSchool: React.FC = () => {
                 className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
                 title="View all classes"
               >
-                <ExternalLink className="w-4 h-4" />
+                <Expand className="w-4 h-4" />
               </Link>
             </div>
           </div>
