@@ -670,17 +670,9 @@ const Attendance: React.FC = () => {
                               {'Edit Attendance'}
                             </Button>
                           )
-                          // : (
-                          //   <Button
-                          //     onClick={() => setIsEditing(activeSession)}
-                          //     className="bg-blue-600 hover:bg-blue-700"
-                          //   >
-                          //     {'Edit Attendance'}
-                          //   </Button>
-                          // )
                         }
                         {
-                          (isSessionSubmitted(activeSession) && isEditing == activeSession) || isPastDate && (
+                          ((isSessionSubmitted(activeSession) && isEditing == activeSession) || isPastDate) && (
                             <div>
                               <Button
                                 onClick={() => {
