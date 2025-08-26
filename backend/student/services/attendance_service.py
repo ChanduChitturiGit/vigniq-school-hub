@@ -41,10 +41,10 @@ class AttendanceService:
 
             attendance_date = datetime.strptime(date_str, "%Y-%m-%d").date()
             #attendence constraint
-            if attendance_date != timezone.localdate():
-                logger.error("Attendance date must be today's date.")
-                return Response({"error": "Attendance can only be marked for today's date."},
-                                status=status.HTTP_400_BAD_REQUEST)
+            # if attendance_date != timezone.localdate():
+            #     logger.error("Attendance date must be today's date.")
+            #     return Response({"error": "Attendance can only be marked for today's date."},
+            #                     status=status.HTTP_400_BAD_REQUEST)
 
             if session not in ['M', 'A']:
                 logger.error("Invalid session provided.")
@@ -63,6 +63,7 @@ class AttendanceService:
                     date=attendance_date,
                     session=session,
                     academic_year_id=academic_year_id,
+                    class_section_id=class_section_id,
                     defaults={
                         "updated_by_user_id": user_id
                     }
@@ -110,10 +111,12 @@ class AttendanceService:
             attendance_obj = StudentAttendance.objects.using(school_db_name).filter(
                 academic_year_id=academic_year_id,
                 date=date,
-                session=session
+                session=session,
+                class_section_id=class_section_id
             )
 
             attendance_taken = attendance_obj.exists()
+
             attendance_records = []
             attendance_list = []
             if attendance_taken:
@@ -129,17 +132,6 @@ class AttendanceService:
                 .values_list('student_id', 'roll_number')
             )
 
-            attendance_obj = StudentAttendance.objects.using(school_db_name).filter(
-                academic_year_id=academic_year_id,
-                date=date,
-                session=session,
-                class_section_id=class_section_id
-            ).first()
-
-            attendance_taken = attendance_obj is not None
-
-            attendance_list = []
-
             if not attendance_taken:
                 for student_id in student_ids:
                     attendance_list.append({
@@ -150,7 +142,6 @@ class AttendanceService:
             else:
                 if not getattr(attendance_obj, 'is_holiday', False):
                     attendance_records = StudentAttendanceData.objects.using(school_db_name).filter(
-                        student_id__in=student_ids,
                         attendance=attendance_obj
                     )
                     records_map = {r.student_id: r for r in attendance_records}
@@ -220,8 +211,7 @@ class AttendanceService:
                     continue
 
                 attendance_data = StudentAttendanceData.objects.using(school_db_name).filter(
-                    attendance=past_attendance,
-                    student_id__in=student_ids
+                    attendance=past_attendance
                 ).select_related('student')
 
                 for record in attendance_data:
