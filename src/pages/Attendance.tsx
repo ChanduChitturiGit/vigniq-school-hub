@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import { format, isSameDay, isAfter, startOfDay, set } from 'date-fns';
 import MainLayout from '@/components/Layout/MainLayout';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
-import { getAttendenceData, submitAttendence, getPastAttendenceData, markAsHoiday } from '../services/attendence';
+import { getAttendenceData, submitAttendence, getPastAttendenceData, markAsHoiday, unmarkAsHoiday } from '../services/attendence';
 import { getClassesBySchoolId } from '@/services/class';
 import {
   AlertDialog,
@@ -82,13 +82,15 @@ const Attendance: React.FC = () => {
   });
   const [isHoliday, setIsHoliday] = useState(false);
   const [formData, setFormData] = useState({
-    class : '',
-    class_section_id : '',
-    school_id : null,
-    date : null,
-    session : 'F',
-    sessionData : 'Full Day'
+    class: '',
+    class_section_id: '',
+    school_id: null,
+    date: null,
+    session: 'F',
+    sessionData: 'Full Day'
   });
+  const [isMorningHoliday, setIsMorningHoliday] = useState(false);
+  const [isAfternoonHoliday, setIsAfternoonHoliday] = useState(false);
 
 
   // Sample data - in real app this would come from API
@@ -165,6 +167,11 @@ const Attendance: React.FC = () => {
         const response = await getAttendenceData(requestData);
         //console.log('Fetched Attendance Data:', response);
         if (response && response.data && response.data.attendance_data) {
+          if (session == 'M') {
+            setIsMorningHoliday(response.data.is_holiday);
+          } else {
+            setIsAfternoonHoliday(response.data.is_holiday);
+          }
           // Transform API data to match Student interface if necessary
           const fetchedStudents = response.data.attendance_data.map((student: any) => ({
             ...student,
@@ -213,6 +220,10 @@ const Attendance: React.FC = () => {
         // console.log('Fetched Past Attendance Data:', response);
         if (response && response.data && response.data.attendance_data) {
           setSampleAttendanceRecords(response.data.attendance_data);
+          if (response.data.attendance_data.length == 0) {
+            setIsMorningHoliday(response.data.morning_holiday);
+            setIsAfternoonHoliday(response.data.afternoon_holiday);
+          }
         } else {
           showSnackbar({
             title: "⛔ Error",
@@ -279,7 +290,7 @@ const Attendance: React.FC = () => {
     }
   }
 
-  const markAttendenceAsHoiday = async () => {
+  const markAttendenceAsHoiday = async (check = '') => {
     try {
       const currentClassId = classId || (classes[0] ? getClassId('Class ' + classes[0].class_id + ' - ' + classes[0].section) : '');
       const date = format(selectedDate, 'yyyy-MM-dd');
@@ -288,10 +299,14 @@ const Attendance: React.FC = () => {
         class_section_id: currentClassId,
         date: date,
         school_id: userData?.school_id,
-        session : formData.session
+        session: formData.session
       };
-
-      const response = await markAsHoiday(requestData);
+      let response: any;
+      if (check == 'remove') {
+        response = await unmarkAsHoiday(requestData);
+      } else {
+        response = await markAsHoiday(requestData);
+      }
       console.log('Holday is marked Attendance Response:', response);
       if (response && response.message) {
         showSnackbar({
@@ -345,6 +360,8 @@ const Attendance: React.FC = () => {
   }, [selectedDate, selectedClass, activeSession, attendanceData, editingSession]);
 
   useEffect(() => {
+    setIsMorningHoliday(false);
+    setIsAfternoonHoliday(false);
     const date = new Date(selectedDate);
     if (date.getDay() === 0) {
       setIsHoliday(true);
@@ -473,8 +490,8 @@ const Attendance: React.FC = () => {
   const handleSessionChange = (value: string) => {
     setFormData((prev) => ({
       ...prev,
-      sessionData : value,
-      session : value == 'Full Day' ? 'F' : value == 'Morning Session' ? 'M' : 'A'
+      sessionData: value,
+      session: value == 'Full Day' ? 'F' : value == 'Morning Session' ? 'M' : 'A'
     }))
   }
 
@@ -517,7 +534,7 @@ const Attendance: React.FC = () => {
                   mode="single"
                   selected={selectedDate}
                   onSelect={handleDateSelect}
-                  className="rounded-md border"
+                  className="rounded-md border overflow-auto"
                   disabled={(date) => isAfter(date, startOfDay(new Date()))}
                 />
               </CardContent>
@@ -547,7 +564,7 @@ const Attendance: React.FC = () => {
           {/* Right Panel - Dynamic Content */}
           <div className="lg:col-span-2 space-y-6">
             {viewMode === 'reports' && selectedClass &&
-              !editingSession && sampleAttendanceRecords.length > 0 && !isHoliday ? (
+              !editingSession && (sampleAttendanceRecords.length > 0) && !isHoliday ? (
               // Reports View for Past Dates
               <>
                 {/* Session Summary Cards */}
@@ -610,7 +627,7 @@ const Attendance: React.FC = () => {
                 {/* Detailed Attendance Report */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>
+                    <CardTitle className='text-md md:text-lg'>
                       Attendance Report for {classes.find(c => c.id === selectedClass)?.name} - {format(selectedDate, 'E MMM dd yyyy')}
                     </CardTitle>
                   </CardHeader>
@@ -646,8 +663,8 @@ const Attendance: React.FC = () => {
               // Attendance Taking View
               <>
                 {/* Stats Cards */}
-                {!isFutureDate && selectedClass && (!isPastDate || allowTakeAttendence || editingSession) && !isHoliday && (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {!isFutureDate && selectedClass && (!isPastDate || allowTakeAttendence || editingSession || isMorningHoliday || isAfternoonHoliday) && !isHoliday && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Card>
                       <CardContent className="p-4">
                         <div className="flex items-center gap-2">
@@ -699,16 +716,16 @@ const Attendance: React.FC = () => {
                 )}
 
                 {/* Student Attendance List */}
-                {!isFutureDate && selectedClass && (!isPastDate || allowTakeAttendence || editingSession) && !isHoliday && (
+                {!isFutureDate && selectedClass && (!isPastDate || allowTakeAttendence || editingSession || isMorningHoliday || isAfternoonHoliday) && !isHoliday && (
                   <Card>
                     <CardHeader>
-                      <div className="flex justify-between items-center">
+                      <div className="flex flex-col md:flex-row  justify-between items-center gap-3">
                         {
-                          isPastDate && newAttendenceCheck.back && (
+                          isPastDate && newAttendenceCheck.back && !(isMorningHoliday && isAfternoonHoliday) && (
                             <>
                               <Button
                                 onClick={backToData}
-                                className="bg-blue-600 hover:bg-blue-700"
+                                className="bg-blue-600 hover:bg-blue-700 px-2"
                               >
                                 <MoveLeft />
                                 {'back'}
@@ -716,11 +733,12 @@ const Attendance: React.FC = () => {
                             </>
                           )
                         }
-                        <CardTitle>
+                        {/* - {activeSession === 'morning' ? 'Morning Session' : 'Afternoon Session'} */}
+                        <CardTitle className='text-md my-4 md:my-0 md:text-lg'>
                           Student Attendance - {activeSession === 'morning' ? 'Morning Session' : 'Afternoon Session'}
                         </CardTitle>
 
-                        <div className='flex gap-3'>
+                        <div className='flex flex-col lg:flex-row gap-3'>
                           {/* <Button
                             onClick={() => {
                               setIsEditing('');
@@ -732,14 +750,32 @@ const Attendance: React.FC = () => {
                           </Button> */}
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <button className="flex items-center gap-2 bg-orange-400 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">
+                              <button className="flex items-center gap-2 bg-orange-400 text-white px-2 py-2 rounded-lg hover:bg-orange-600 transition-colors">
                                 {/* <KeyRound className="w-4 h-4" /> */}
-                                Mark as Holiday
+                                {
+                                  (activeSession == 'morning' ? !isMorningHoliday : !isAfternoonHoliday) && (
+                                    'Mark As Holiday'
+                                  )
+                                }
+                                {
+                                  (activeSession == 'morning' ? isMorningHoliday : isAfternoonHoliday) && (
+                                    'Mark as Working Day'
+                                  )
+                                }
                               </button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Mark As Holiday</AlertDialogTitle>
+                                {
+                                  (activeSession == 'morning' ? !isMorningHoliday : !isAfternoonHoliday) && (
+                                    <AlertDialogTitle>Mark As Holiday</AlertDialogTitle>
+                                  )
+                                }
+                                {
+                                  (activeSession == 'morning' ? isMorningHoliday : isAfternoonHoliday) && (
+                                    <AlertDialogTitle>Mark as Working Day</AlertDialogTitle>
+                                  )
+                                }
                                 <AlertDialogDescription>
 
                                   <form className="space-y-6">
@@ -747,18 +783,18 @@ const Attendance: React.FC = () => {
                                     {/* Date Field */}
                                     <div>
                                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Date 
+                                        Date
                                       </label>
-                                      <input className='w-full py-2 px-2' type="text" value={format(selectedDate,'dd-MM-yyyy')} disabled/>
+                                      <input className='w-full py-2 px-2' type="text" value={format(selectedDate, 'dd-MM-yyyy')} disabled />
                                       {/* {errors.class && <p className="text-red-500 text-xs mt-1">{errors.class}</p>} */}
                                     </div>
 
                                     {/* Class Name Field */}
                                     <div>
                                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Class 
+                                        Class
                                       </label>
-                                      <input className='w-full py-2 px-2' type="text" value={selectedClass} disabled/>
+                                      <input className='w-full py-2 px-2' type="text" value={selectedClass} disabled />
                                       {/* {errors.class && <p className="text-red-500 text-xs mt-1">{errors.class}</p>} */}
                                     </div>
 
@@ -772,7 +808,7 @@ const Attendance: React.FC = () => {
                                           <SelectValue placeholder="Select a Session" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                          {['Full Day','Morning Session','Afternoon Session'].map((val, index) => (
+                                          {['Full Day', 'Morning Session', 'Afternoon Session'].map((val, index) => (
                                             <SelectItem key={index} value={val}>
                                               {val}
                                             </SelectItem>
@@ -788,9 +824,19 @@ const Attendance: React.FC = () => {
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction onClick={() => {
                                   setIsEditing('');
-                                  markAttendenceAsHoiday();
+                                  const check = (activeSession == 'morning' ? !isMorningHoliday : !isAfternoonHoliday) ? 'Mark' : 'remove';
+                                  markAttendenceAsHoiday(check);
                                 }}>
-                                  Mark as Holiday
+                                  {
+                                    (activeSession == 'morning' ? !isMorningHoliday : !isAfternoonHoliday) && (
+                                      'Mark As Holiday'
+                                    )
+                                  }
+                                  {
+                                    (activeSession == 'morning' ? isMorningHoliday : isAfternoonHoliday) && (
+                                      'Mark as Working Day'
+                                    )
+                                  }
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
@@ -837,13 +883,14 @@ const Attendance: React.FC = () => {
                       <Tabs value={activeSession} onValueChange={(value) => setActiveSession(value as 'morning' | 'afternoon')}>
                         <TabsList className="grid w-full grid-cols-2">
                           <TabsTrigger value="morning" className="relative">
-                            Morning Session
+                            {window.innerWidth >= 768 ? 'Morning Session' : 'Morning'}
                             {isSessionSubmitted('morning') && (
                               <CheckCircle className="w-4 h-4 ml-2 text-green-600" />
                             )}
                           </TabsTrigger>
                           <TabsTrigger value="afternoon" className="relative">
-                            Afternoon Session
+                            {window.innerWidth >= 768 ? 'Afternoon Session' : 'Afternoon'}
+
                             {isSessionSubmitted('afternoon') && (
                               <CheckCircle className="w-4 h-4 ml-2 text-green-600" />
                             )}
@@ -853,9 +900,9 @@ const Attendance: React.FC = () => {
 
                         <TabsContent value="morning" className="mt-6">
                           <div className="space-y-4">
-                            {students && students?.map((student) => (
-                              <div key={student.student_id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
-                                <div className="flex items-center gap-4">
+                            {!isMorningHoliday && students && students?.map((student) => (
+                              <div key={student.student_id} className="flex flex-col md:flex-row items-center justify-between p-4 border rounded-lg bg-gray-50">
+                                <div className="flex items-center gap-4 mb-4 md:mb-0">
                                   <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-semibold">
                                     {student.student_name.split(' ').map(n => n[0]).join('')}
                                   </div>
@@ -893,14 +940,28 @@ const Attendance: React.FC = () => {
                                 }
                               </div>
                             ))}
+
+                            {
+                              isMorningHoliday && (
+                                <div className="flex flex-col md:flex-row items-center justify-between p-4 border rounded-lg bg-gray-50">
+                                  <div className="flex items-center justify-center w-full gap-4 mb-4 md:mb-0">
+                                    Marked as Holiday.
+                                    {/* <div>
+                                    <p className="font-medium">{student.student_name}</p>
+                                    <p className="text-sm text-gray-600">Roll No. {student.roll_number}</p>
+                                  </div> */}
+                                  </div>
+                                </div>
+                              )
+                            }
                           </div>
                         </TabsContent>
 
                         <TabsContent value="afternoon" className="mt-6">
                           <div className="space-y-4">
-                            {students && students?.map((student) => (
-                              <div key={student.student_id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
-                                <div className="flex items-center gap-4">
+                            {!isAfternoonHoliday && students && students?.map((student) => (
+                              <div key={student.student_id} className="flex flex-col md:flex-row  items-center justify-between p-4 border rounded-lg bg-gray-50">
+                                <div className="flex items-center gap-4 mb-4 md:mb-0">
                                   <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-semibold">
                                     {student.student_name.split(' ').map(n => n[0]).join('')}
                                   </div>
@@ -940,6 +1001,20 @@ const Attendance: React.FC = () => {
                                 </div>
                               </div>
                             ))}
+
+                            {
+                              isAfternoonHoliday && (
+                                <div className="flex flex-col md:flex-row items-center justify-between p-4 border rounded-lg bg-gray-50">
+                                  <div className="flex items-center justify-center w-full gap-4 mb-4 md:mb-0">
+                                    Marked as Holiday.
+                                    {/* <div>
+                                    <p className="font-medium">{student.student_name}</p>
+                                    <p className="text-sm text-gray-600">Roll No. {student.roll_number}</p>
+                                  </div> */}
+                                  </div>
+                                </div>
+                              )
+                            }
                           </div>
                         </TabsContent>
                       </Tabs>
@@ -947,7 +1022,7 @@ const Attendance: React.FC = () => {
                   </Card>
                 )}
 
-                {(isFutureDate || !selectedClass || (sampleAttendanceRecords.length == 0 && isPastDate && !allowTakeAttendence) || isHoliday) && (
+                {(isFutureDate || !selectedClass || (sampleAttendanceRecords.length == 0 && isPastDate && !allowTakeAttendence && (!isMorningHoliday || !isAfternoonHoliday)) || isHoliday) && (
                   <Card className='py-[13rem]'>
                     <CardContent className="p-8 text-center">
                       <AlertCircle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
