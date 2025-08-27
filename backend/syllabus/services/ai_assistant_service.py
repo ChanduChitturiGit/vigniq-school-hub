@@ -1,9 +1,11 @@
 """Ai assistant service"""
 
 import logging
+import json
+from asgiref.sync import sync_to_async
 
-from django.http import JsonResponse
-from django.db.models import Prefetch,Count
+from django.http import JsonResponse, StreamingHttpResponse
+from django.db.models import Count
 from django.db import transaction
 from core.common_modules.common_functions import CommonFunctions
 
@@ -104,23 +106,27 @@ class AiAssistantService:
                     "taxonomy_alignment": lesson_plan_day.taxonomy_alignment,
                 }
                 with transaction.atomic(using=self.school_db_name):
-
                     session, created = ChatSession.objects.using(self.school_db_name).get_or_create(
-                        user_id=user.id, lesson_plan_day=lesson_plan_day
-                    )
+                                user_id=user.id, lesson_plan_day=lesson_plan_day
+                            )
 
-                    response, summary = LangChainService(temperature=0.1).process_user_question(
-                        session, self.school_db_name, lesson_plan, user_message)
+                    
+                    
+                    response = ""
+                    async def streaming_chat():
+                            nonlocal response
+                            streaming_response = LangChainService(temperature=0.1, streaming=True).process_user_question(
+                                    session, self.school_db_name, lesson_plan, user_message)
+                            async for event in streaming_response:
+                                if event["type"] == "token":
+                                    response += event["data"]
+                                    yield json.dumps({"data": event["data"], "status": "streaming"}) + "\n"
 
-                    ChatMessage.objects.using(self.school_db_name).create(session=session,
-                                                            role="user", content=user_message)
-                    ChatMessage.objects.using(self.school_db_name).create(session=session,
-                                                        role="assistant", content=response)
+                            await self.save_chat_messages(session, user_message, response)
 
-                    session.summary = summary
-                    session.save(using=self.school_db_name)
+                            yield json.dumps({"status": "success"}) + "\n"
 
-                    return JsonResponse({"data": {"response": response, "chat_id": session.chat_id}}, status=200)
+                return StreamingHttpResponse(streaming_chat(), content_type='text/event-stream')
             except Exception as e:
                 logger.error("Error processing user message: %s", e)
                 return JsonResponse({"error": "Unable to process your request at the moment"}, status=500)
@@ -133,3 +139,13 @@ class AiAssistantService:
         except Exception as e:
             logger.error("Error in chat_with_assistant: %s", e)
             return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+    @sync_to_async
+    def save_chat_messages(self, session, user_message, ai_response):
+        """Save chat response"""
+        ChatMessage.objects.using(self.school_db_name).create(session=session,
+                                                                role="user", content=user_message)
+        ChatMessage.objects.using(self.school_db_name).create(session=session,
+                                                                role="assistant", content=ai_response)
+
+        session.save(using=self.school_db_name)

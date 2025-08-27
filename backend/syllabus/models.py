@@ -113,7 +113,6 @@ class ChatSession(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    summary = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
 
     class Meta:
