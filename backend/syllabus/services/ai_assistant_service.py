@@ -61,7 +61,6 @@ class AiAssistantService:
         """Chat with the AI assistant"""
         try:
             user_message = self.request.data.get("message")
-            chat_id = self.request.data.get("chat_id")
             lesson_plan_day_id = self.request.data.get("lesson_plan_day_id")
             user = self.request.user
 
@@ -105,12 +104,10 @@ class AiAssistantService:
                     "taxonomy_alignment": lesson_plan_day.taxonomy_alignment,
                 }
                 with transaction.atomic(using=self.school_db_name):
-                    if not chat_id:
-                        session = ChatSession.objects.using(self.school_db_name).create(
-                            user_id=user.id, lesson_plan_day=lesson_plan_day
-                        )
-                    else:
-                        session = ChatSession.objects.using(self.school_db_name).get(chat_id=chat_id)
+
+                    session, created = ChatSession.objects.using(self.school_db_name).get_or_create(
+                        user_id=user.id, lesson_plan_day=lesson_plan_day
+                    )
 
                     response, summary = LangChainService(temperature=0.1).process_user_question(
                         session, self.school_db_name, lesson_plan, user_message)
