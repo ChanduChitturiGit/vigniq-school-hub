@@ -40,26 +40,18 @@ class AttendanceService:
                                 status=status.HTTP_400_BAD_REQUEST)
 
             attendance_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-            #attendence constraint
-            # if attendance_date != timezone.localdate():
-            #     logger.error("Attendance date must be today's date.")
-            #     return Response({"error": "Attendance can only be marked for today's date."},
-            #                     status=status.HTTP_400_BAD_REQUEST)
+
+            if attendance_date != timezone.localdate():
+                logger.error("Attendance date must be today's date.")
+                return Response({"error": "Attendance can only be marked for today's date."},
+                                status=status.HTTP_400_BAD_REQUEST)
 
             if session not in ['M', 'A']:
                 logger.error("Invalid session provided.")
                 return Response({"error": "Invalid session. Must be 'M' or 'A'."},
                                 status=status.HTTP_400_BAD_REQUEST)
 
-            for data in attendance_data:
-                student_id = data.get('student_id')
-                is_present = data.get('is_present')
-
-                if not student_id:
-                    logger.error("Missing student_id in attendance data.")
-                    continue
-
-                obj, created = StudentAttendance.objects.using(school_db_name).update_or_create(
+            obj, created = StudentAttendance.objects.using(school_db_name).update_or_create(
                     date=attendance_date,
                     session=session,
                     academic_year_id=academic_year_id,
@@ -69,9 +61,22 @@ class AttendanceService:
                     }
                 )
 
-                if created:
-                    obj.taken_by_user_id = user_id
-                obj.save(using=school_db_name)
+            if created:
+                obj.taken_by_user_id = user_id
+            obj.save(using=school_db_name)
+
+            if obj.is_holiday:
+                logger.error("Attendance cannot be marked on a holiday.")
+                return Response({"error": "Attendance cannot be marked on a holiday."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            for data in attendance_data:
+                student_id = data.get('student_id')
+                is_present = data.get('is_present')
+
+                if not student_id:
+                    logger.error("Missing student_id in attendance data.")
+                    continue
 
                 StudentAttendanceData.objects.using(school_db_name).update_or_create(
                     attendance=obj,
@@ -198,7 +203,10 @@ class AttendanceService:
             )
 
             output = {}
-
+            holidays = {
+                "M":False,
+                "A":False
+            }
             for session in ['M', 'A']:
                 past_attendance = StudentAttendance.objects.using(school_db_name).filter(
                     date=date,
@@ -209,7 +217,10 @@ class AttendanceService:
 
                 if not past_attendance:
                     continue
-
+                
+                if past_attendance.is_holiday:
+                    holidays[session] = True
+                    continue
                 attendance_data = StudentAttendanceData.objects.using(school_db_name).filter(
                     attendance=past_attendance
                 ).select_related('student')
@@ -234,7 +245,9 @@ class AttendanceService:
                 "date": date,
                 "class_section_id": class_section_id,
                 "academic_year_id": academic_year_id,
-                "attendance_data": output
+                "attendance_data": output,
+                "morning_holiday":holidays['M'],
+                "afternoon_holiday":holidays['A']
             }
 
             return Response({"data": final_output}, status=status.HTTP_200_OK)
@@ -252,38 +265,56 @@ class AttendanceService:
             class_section_id = request.data.get('class_section_id')
             academic_year_id = request.data.get('academic_year_id', 1)
             school_id = request.data.get('school_id') or getattr(request.user, 'school_id', None)
+            session = request.data.get('session', 'M')  # F, M, A
 
-            if not all([date, class_section_id, academic_year_id, school_id]):
+            if not all([date, class_section_id, academic_year_id, school_id, session]):
                 logger.error("Missing required parameters.")
                 return Response({"error": "Missing required parameters."},
                                 status=status.HTTP_400_BAD_REQUEST)
 
             school_db_name = CommonFunctions.get_school_db_name(school_id)
 
-            holiday_exists = StudentAttendance.objects.using(school_db_name).filter(
-                date=date,
-                class_instance_id=class_section_id,
-                academic_year_id=academic_year_id,
-                session=session,
-                is_holiday=True
-            ).exists()
+            if session == "F":
+                sessions_to_check = ["M", "A"]
+            else:
+                sessions_to_check = [session]
 
-            if holiday_exists:
-                logger.error("Holiday already exists.")
-                return Response({"error": "Holiday already exists."},
-                                status=status.HTTP_400_BAD_REQUEST)
+            already_marked = []
+            newly_marked = []
 
-            for session in ['M', 'A']:
-                StudentAttendance.objects.using(school_db_name).create(
+            for sess in sessions_to_check:
+                holiday_exists = StudentAttendance.objects.using(school_db_name).filter(
                     date=date,
-                    class_instance_id=class_section_id,
+                    class_section_id=class_section_id,
                     academic_year_id=academic_year_id,
-                    session=session,
+                    session=sess,
                     is_holiday=True
-                )
+                ).exists()
 
-            return Response({"message": "Holiday marked successfully."},
-                            status=status.HTTP_200_OK)
+                if holiday_exists:
+                    already_marked.append(sess)
+                else:
+                    StudentAttendance.objects.using(school_db_name).create(
+                        date=date,
+                        class_section_id=class_section_id,
+                        academic_year_id=academic_year_id,
+                        session=sess,
+                        is_holiday=True
+                    )
+                    newly_marked.append(sess)
+            session_mapping = {
+                "M": "Morning",
+                "A": "Afternoon"
+            }
+            if newly_marked and not already_marked:
+                return Response({"message": f"Holiday marked successfully for {', '.join([session_mapping.get(s, s) for s in newly_marked])}."},
+                                status=status.HTTP_200_OK)
+            elif newly_marked and already_marked:
+                return Response({"message": f"Holiday marked for {', '.join([session_mapping.get(s, s) for s in newly_marked])}. Already marked for {', '.join([session_mapping.get(s, s) for s in already_marked])}."},
+                                status=status.HTTP_200_OK)
+            else:
+                return Response({"error": f"Holiday already exists for {', '.join([session_mapping.get(s, s) for s in already_marked])}."},
+                                status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
             logger.error("Error marking holiday: %s", e)
