@@ -159,7 +159,7 @@ class AttendanceService:
                             "student_name": user_map.get(student_id, "Unknown"),
                             "is_present": record.is_present if record else None,
                         })
-
+            print(attendance_obj.is_holiday)
             output = {
                 "session": session,
                 "attendance_taken": attendance_taken,
@@ -294,13 +294,15 @@ class AttendanceService:
                 if holiday_exists:
                     already_marked.append(sess)
                 else:
-                    StudentAttendance.objects.using(school_db_name).create(
+                    attendance_obj, _ = StudentAttendance.objects.using(school_db_name).get_or_create(
                         date=date,
                         class_section_id=class_section_id,
                         academic_year_id=academic_year_id,
                         session=sess,
-                        is_holiday=True
                     )
+                    attendance_obj.is_holiday = True
+                    attendance_obj.updated_by_user_id = request.user.id
+                    attendance_obj.save(using=school_db_name)
                     newly_marked.append(sess)
             session_mapping = {
                 "M": "Morning",
