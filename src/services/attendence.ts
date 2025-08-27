@@ -18,9 +18,14 @@ export const getPastAttendenceData = async (data) => {
   return response.data;
 }
 
-
 //markAttendance
 export const submitAttendence = async (data: any): Promise<any> => {
   const response = await api.post<any>(baseurl+suburl+'/markAttendance', data);
+  return response.data;
+};
+
+//markHoliday
+export const markAsHoiday = async (data: any): Promise<any> => {
+  const response = await api.post<any>(baseurl+suburl+'/markHoliday', data);
   return response.data;
 };
