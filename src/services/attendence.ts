@@ -29,3 +29,10 @@ export const markAsHoiday = async (data: any): Promise<any> => {
   const response = await api.post<any>(baseurl+suburl+'/markHoliday', data);
   return response.data;
 };
+
+
+//unmarkHoliday
+export const unmarkAsHoiday = async (data: any): Promise<any> => {
+  const response = await api.post<any>(baseurl+suburl+'/unmarkHoliday', data);
+  return response.data;
+};
