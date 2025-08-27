@@ -113,7 +113,7 @@ class AiAssistantService:
                     response = ""
                     async def streaming_chat():
                             nonlocal response
-                            streaming_response = LangChainService(temperature=0.1, streaming=True).process_user_question(
+                            streaming_response = LangChainService(temperature=0.1).process_user_question(
                                     session, self.school_db_name, lesson_plan, user_message)
                             async for event in streaming_response:
                                 if event["type"] == "token":
