@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 class LangChainService:
     """Service for Langchain operations."""
-    def __init__(self,temperature=0,streaming=False):
+    def __init__(self,temperature=0):
         self.llm = ChatGoogleGenerativeAI(
             model=settings.AI_MODELS.get('GEMINI_MODEL', 'gemini-2.5-flash'),
             temperature=temperature,

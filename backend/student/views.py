@@ -86,4 +86,6 @@ class AttendanceView(APIView):
             return AttendanceService().mark_attendance(request)
         elif action == "markHoliday":
             return AttendanceService().mark_holiday(request)
+        elif action == "unmarkHoliday":
+            return AttendanceService().unmark_holiday(request)
         return Response({"error": "Invalid POST action"}, status=status.HTTP_400_BAD_REQUEST)
