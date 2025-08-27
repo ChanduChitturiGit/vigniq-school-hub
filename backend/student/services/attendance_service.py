@@ -110,7 +110,8 @@ class AttendanceService:
 
             students_list = StudentClassAssignment.objects.using(school_db_name).filter(
                 class_instance_id=class_section_id,
-                academic_year_id=academic_year_id
+                academic_year_id=academic_year_id,
+                student__is_active=True
             )
 
             attendance_obj = StudentAttendance.objects.using(school_db_name).filter(
@@ -159,7 +160,7 @@ class AttendanceService:
                             "student_name": user_map.get(student_id, "Unknown"),
                             "is_present": record.is_present if record else None,
                         })
-            print(attendance_obj.is_holiday)
+
             output = {
                 "session": session,
                 "attendance_taken": attendance_taken,
