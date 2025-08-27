@@ -8,14 +8,25 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Users, Clock, CheckCircle, XCircle, AlertCircle, FileText, Edit, ArrowLeft, MoveLeft } from 'lucide-react';
+import { Users, Clock, CheckCircle, XCircle, AlertCircle, FileText, Edit, ArrowLeft, MoveLeft, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 import { format, isSameDay, isAfter, startOfDay, set } from 'date-fns';
 import MainLayout from '@/components/Layout/MainLayout';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
-import { getAttendenceData, submitAttendence, getPastAttendenceData } from '../services/attendence';
+import { getAttendenceData, submitAttendence, getPastAttendenceData, markAsHoiday } from '../services/attendence';
 import { getClassesBySchoolId } from '@/services/class';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../components/ui/alert-dialog';
 
 interface Student {
   student_id: string;
@@ -62,6 +73,7 @@ const Attendance: React.FC = () => {
   const [isEditing, setIsEditing] = useState(''); // 'morning' | 'afternoon' | ''
   const [dateStat, setDateStat] = useState(false);
   const [allowTakeAttendence, setAllowTakeAttendence] = useState(false);
+  const [loader, setLoader] = useState(false);
   const [newAttendenceCheck, setNewAttendenceCheck] = useState({
     isActive: false,
     morning: false,
@@ -69,6 +81,15 @@ const Attendance: React.FC = () => {
     back: true
   });
   const [isHoliday, setIsHoliday] = useState(false);
+  const [formData, setFormData] = useState({
+    class : '',
+    class_section_id : '',
+    school_id : null,
+    date : null,
+    session : 'F',
+    sessionData : 'Full Day'
+  });
+
 
   // Sample data - in real app this would come from API
   const sampleStudents: Student[] = [
@@ -258,6 +279,47 @@ const Attendance: React.FC = () => {
     }
   }
 
+  const markAttendenceAsHoiday = async () => {
+    try {
+      const currentClassId = classId || (classes[0] ? getClassId('Class ' + classes[0].class_id + ' - ' + classes[0].section) : '');
+      const date = format(selectedDate, 'yyyy-MM-dd');
+
+      const requestData = {
+        class_section_id: currentClassId,
+        date: date,
+        school_id: userData?.school_id,
+        session : formData.session
+      };
+
+      const response = await markAsHoiday(requestData);
+      console.log('Holday is marked Attendance Response:', response);
+      if (response && response.message) {
+        showSnackbar({
+          title: "Success",
+          description: `${response.message}`,
+          status: "success"
+        });
+        setEditingSession(null);
+        getAttendenceList();
+        if (isPastDate) {
+          getPastAttendenceDataList();
+        }
+      } else {
+        showSnackbar({
+          title: "⛔ Error",
+          description: "Something went wrong while submitting attendance",
+          status: "error"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
   useEffect(() => {
     getClasses();
     setDateStat(isSameDay(selectedDate, startOfDay(new Date())));
@@ -338,9 +400,7 @@ const Attendance: React.FC = () => {
 
   const submitAttendance = () => {
     const dateKey = format(selectedDate, 'yyyy-MM-dd');
-
     submitAttendanceData();
-
     setEditingSession(null);
   };
 
@@ -408,6 +468,14 @@ const Attendance: React.FC = () => {
         isActive: true
       })
     )
+  }
+
+  const handleSessionChange = (value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      sessionData : value,
+      session : value == 'Full Day' ? 'F' : value == 'Morning Session' ? 'M' : 'A'
+    }))
   }
 
 
@@ -578,7 +646,7 @@ const Attendance: React.FC = () => {
               // Attendance Taking View
               <>
                 {/* Stats Cards */}
-                {!isFutureDate &&  selectedClass && (!isPastDate || allowTakeAttendence || editingSession) && !isHoliday &&  (
+                {!isFutureDate && selectedClass && (!isPastDate || allowTakeAttendence || editingSession) && !isHoliday && (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <Card>
                       <CardContent className="p-4">
@@ -651,29 +719,106 @@ const Attendance: React.FC = () => {
                         <CardTitle>
                           Student Attendance - {activeSession === 'morning' ? 'Morning Session' : 'Afternoon Session'}
                         </CardTitle>
-                        {
-                          !isSessionSubmitted(activeSession) && !isPastDate && (
-                            <Button
-                              onClick={submitAttendance}
-                              className="bg-blue-600 hover:bg-blue-700"
-                            >
-                              {'Submit Attendance'}
-                            </Button>
-                          )
-                        }
-                        {
-                          isSessionSubmitted(activeSession) && isEditing != activeSession && !isPastDate && (
-                            <Button
-                              onClick={() => setIsEditing(activeSession)}
-                              className="bg-blue-600 hover:bg-blue-700"
-                            >
-                              {'Edit Attendance'}
-                            </Button>
-                          )
-                        }
-                        {
-                          ((isSessionSubmitted(activeSession) && isEditing == activeSession) || isPastDate) && (
-                            <div>
+
+                        <div className='flex gap-3'>
+                          {/* <Button
+                            onClick={() => {
+                              setIsEditing('');
+                              markAttendenceAsHoiday();
+                            }}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            {'Mark as Holiday'}
+                          </Button> */}
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <button className="flex items-center gap-2 bg-orange-400 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">
+                                {/* <KeyRound className="w-4 h-4" /> */}
+                                Mark as Holiday
+                              </button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Mark As Holiday</AlertDialogTitle>
+                                <AlertDialogDescription>
+
+                                  <form className="space-y-6">
+
+                                    {/* Date Field */}
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Date 
+                                      </label>
+                                      <input className='w-full py-2 px-2' type="text" value={format(selectedDate,'dd-MM-yyyy')} disabled/>
+                                      {/* {errors.class && <p className="text-red-500 text-xs mt-1">{errors.class}</p>} */}
+                                    </div>
+
+                                    {/* Class Name Field */}
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Class 
+                                      </label>
+                                      <input className='w-full py-2 px-2' type="text" value={selectedClass} disabled/>
+                                      {/* {errors.class && <p className="text-red-500 text-xs mt-1">{errors.class}</p>} */}
+                                    </div>
+
+                                    {/* Session Field */}
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Session
+                                      </label>
+                                      <Select value={formData.sessionData} onValueChange={handleSessionChange}>
+                                        <SelectTrigger className="w-full">
+                                          <SelectValue placeholder="Select a Session" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {['Full Day','Morning Session','Afternoon Session'].map((val, index) => (
+                                            <SelectItem key={index} value={val}>
+                                              {val}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      {/* {errors.board && <p className="text-red-500 text-xs mt-1">{errors.board}</p>} */}
+                                    </div>
+                                  </form>
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter className='flex content-center'>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => {
+                                  setIsEditing('');
+                                  markAttendenceAsHoiday();
+                                }}>
+                                  Mark as Holiday
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                          {
+                            !isSessionSubmitted(activeSession) && !isPastDate && (
+                              <Button
+                                onClick={submitAttendance}
+                                className="bg-blue-600 hover:bg-blue-700"
+                              >
+                                {'Submit Attendance'}
+                              </Button>
+                            )
+                          }
+                          {
+                            isSessionSubmitted(activeSession) && isEditing != activeSession && !isPastDate && (
+
+                              <Button
+                                onClick={() => setIsEditing(activeSession)}
+                                className="bg-blue-600 hover:bg-blue-700"
+                              >
+                                {'Edit Attendance'}
+                              </Button>
+
+                            )
+                          }
+                          {
+                            ((isSessionSubmitted(activeSession) && isEditing == activeSession) || isPastDate) && (
                               <Button
                                 onClick={() => {
                                   setIsEditing('');
@@ -683,9 +828,9 @@ const Attendance: React.FC = () => {
                               >
                                 {'Save Attendance'}
                               </Button>
-                            </div>
-                          )
-                        }
+                            )
+                          }
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent>
