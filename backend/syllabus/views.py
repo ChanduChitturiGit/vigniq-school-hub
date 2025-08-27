@@ -97,8 +97,8 @@ class AIChatView(APIView):
 
     def get(self, request, action=None):
         """Handle GET requests for AI chat actions."""
-        if action == 'getChatById':
-            return AiAssistantService().get_chat_by_id(request)
+        if action == 'getAssistantChat':
+            return AiAssistantService(request).get_chat()
         return Response({"error": f"GET request not found for action: {action}"}, status=400)
 
     def post(self, request, action=None):

@@ -20,32 +20,43 @@ class AiAssistantService:
         self.school_id = request.data.get("school_id") or request.GET.get("school_id") or getattr(request.user, 'school_id', None)
         self.school_db_name = CommonFunctions.get_school_db_name(self.school_id)
 
-    def get_chat_history(self, request):
-        """Get chat history"""
-        try:
-            # Here you would typically retrieve the chat history from a database or cache
-            # For demonstration purposes, we return an empty list
-            logger.info("Chat history retrieved successfully")
-            return JsonResponse({"status": "success", "data": []})
-        except Exception as e:
-            logger.error(f"Error retrieving chat history: {e}")
-            return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
-    def get_chat_by_id(self, request):
-        """Get chat by ID"""
-        chat_id = request.GET.get("chat_id")
-        if not chat_id:
-            return JsonResponse({"status": "error", "message": "Chat ID is required"}, status=400)
+    def get_chat(self):
+        """Get Chat"""
+        lesson_plan_day_id = self.request.GET.get("lesson_plan_day_id")
+        user = self.request.user
+        if not lesson_plan_day_id:
+            return JsonResponse({"error": "Lesson Plan Day ID is required"}, status=400)
+        
+        if not user:
+            return JsonResponse({"error": "User is not authenticated"}, status=401)
 
         try:
-            # Here you would typically retrieve the chat by ID from a database or cache
-            # For demonstration purposes, we return a mock response
-            logger.info(f"Chat with ID {chat_id} retrieved successfully")
-            return JsonResponse({"status": "success", "data": {"id": chat_id, "messages": []}})
+            session = ChatSession.objects.using(self.school_db_name).filter(
+                            user_id=user.id, lesson_plan_day_id=lesson_plan_day_id
+                        )
+            
+            if session.exists():
+                session = session.first()
+            else:
+                session = None
+            print(session)
+            chat_history = ChatMessage.objects.using(self.school_db_name).filter(
+                session_id=session
+            ).order_by("created_at").values('role','content','created_at')
+
+            logger.info(f"Chat with Lesson Plan Day ID %s for user %s retrieved successfully",
+                        lesson_plan_day_id, user.id)
+            output = {
+                'chat_id':session.chat_id,
+                'chat_history': list(chat_history)
+            }
+            return JsonResponse({"data": output})
         except Exception as e:
-            logger.error(f"Error retrieving chat with ID {chat_id}: {e}")
-            return JsonResponse({"status": "error", "message": str(e)}, status=500)
-    
+            logger.error("Error retrieving chat with Lesson Plan Day ID %s: %s",
+                         lesson_plan_day_id, e)
+            return JsonResponse({"error": "Unable to retrieve chat"}, status=500)
+
     def chat_with_assistant(self):
         """Chat with the AI assistant"""
         try:
@@ -112,7 +123,7 @@ class AiAssistantService:
                     session.summary = summary
                     session.save(using=self.school_db_name)
 
-                    return JsonResponse({"data": response, "chat_id": session.chat_id}, status=200)
+                    return JsonResponse({"data": {"response": response, "chat_id": session.chat_id}}, status=200)
             except Exception as e:
                 logger.error("Error processing user message: %s", e)
                 return JsonResponse({"error": "Unable to process your request at the moment"}, status=500)
