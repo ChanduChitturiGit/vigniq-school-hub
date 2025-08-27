@@ -78,10 +78,5 @@ class LangchainQueries(Enum):
             
             ## lesson plan for today:
             {lesson_plan}
-            
-            ## Question from student or teacher:
-            {question}
-            
-            ## Chat History:
-            {chat_history}
+
             """

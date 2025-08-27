@@ -218,7 +218,7 @@ class SyllabusService:
                         'school_chapter_lesson_plan_days',
                         queryset=SchoolLessonPlanDay.objects.using(school_db_name).filter(
                             class_section=school_class
-                        )
+                        ).order_by('day')
                     )
                 ).order_by('chapter_number')
             )
