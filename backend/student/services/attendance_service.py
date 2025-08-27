@@ -320,3 +320,65 @@ class AttendanceService:
             logger.error("Error marking holiday: %s", e)
             return Response({"error": "Failed to mark holiday"},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+    def unmark_holiday(self, request):
+        """Unmark a specific date as a holiday."""
+        try:
+            date = request.data.get('date')
+            class_section_id = request.data.get('class_section_id')
+            academic_year_id = request.data.get('academic_year_id', 1)
+            school_id = request.data.get('school_id') or getattr(request.user, 'school_id', None)
+            session = request.data.get('session', 'M')  # F, M, A
+
+            if not all([date, class_section_id, academic_year_id, school_id, session]):
+                logger.error("Missing required parameters.")
+                return Response({"error": "Missing required parameters."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            school_db_name = CommonFunctions.get_school_db_name(school_id)
+
+            if session == "F":
+                sessions_to_check = ["M", "A"]
+            else:
+                sessions_to_check = [session]
+
+            already_unmarked = []
+            newly_unmarked = []
+
+            for sess in sessions_to_check:
+                holiday_qs = StudentAttendance.objects.using(school_db_name).filter(
+                    date=date,
+                    class_section_id=class_section_id,
+                    academic_year_id=academic_year_id,
+                    session=sess,
+                    is_holiday=True
+                )
+
+                if holiday_qs.exists():
+                    holiday_qs.update(is_holiday=False)
+                    newly_unmarked.append(sess)
+                else:
+                    already_unmarked.append(sess)
+
+            session_mapping = {
+                "M": "Morning",
+                "A": "Afternoon"
+            }
+
+            if newly_unmarked and not already_unmarked:
+                return Response({"message": f"Holiday unmarked successfully for {', '.join([session_mapping.get(s, s) for s in newly_unmarked])}."},
+                                status=status.HTTP_200_OK)
+            elif newly_unmarked and already_unmarked:
+                return Response({"message": f"Holiday unmarked for {', '.join([session_mapping.get(s, s) for s in newly_unmarked])}. No holiday existed for {', '.join([session_mapping.get(s, s) for s in already_unmarked])}."},
+                                status=status.HTTP_200_OK)
+            else:
+                return Response({"error": f"No holiday exists for {', '.join([session_mapping.get(s, s) for s in already_unmarked])}."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            logger.error("Error unmarking holiday: %s", e)
+            return Response({"error": "Failed to unmark holiday"},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+

@@ -109,8 +109,6 @@ class AiAssistantService:
                     session, created = ChatSession.objects.using(self.school_db_name).get_or_create(
                                 user_id=user.id, lesson_plan_day=lesson_plan_day
                             )
-
-                    
                     
                     response = ""
                     async def streaming_chat():
