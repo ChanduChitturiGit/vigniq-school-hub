@@ -63,6 +63,11 @@
 
 }
 
+.content-center{
+  display: flex;
+  justify-content: center !important;
+}
+
 @keyframes spin {
   100% {
     transform: rotate(360deg);
