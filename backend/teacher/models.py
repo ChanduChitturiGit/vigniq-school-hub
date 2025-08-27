@@ -42,3 +42,45 @@ class TeacherSubjectAssignment(models.Model):
         db_table = 'teacher_subject_assignment'
         unique_together = ('teacher', 'subject', 'school_class','academic_year')
 
+
+class ExamType(models.TextChoices):
+    OFFLINE = "offline", "Offline"
+    ONLINE = "online", "Online"
+
+class Exam(models.Model):
+    name = models.CharField(max_length=100)  # e.g., "Mid Term", "Finals"
+    exam_type = models.CharField(
+        max_length=10, choices=ExamType.choices, default=ExamType.OFFLINE
+    )
+    academic_year = models.ForeignKey(
+        'academics.SchoolAcademicYear', on_delete=models.CASCADE
+    )
+    class_section = models.ForeignKey(
+        'classes.SchoolSection', on_delete=models.CASCADE
+    )
+    start_date = models.DateField()
+    end_date = models.DateField()
+
+    def __str__(self):
+        return f"{self.name} ({self.exam_type})"
+
+
+class ExamSubject(models.Model):
+    exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name="subjects")
+    subject = models.ForeignKey('academics.Subject', on_delete=models.CASCADE)
+    max_marks = models.PositiveIntegerField()
+
+    def __str__(self):
+        return f"{self.exam.name} - {self.subject.name}"
+
+
+class ExamResult(models.Model):
+    exam_subject = models.ForeignKey(ExamSubject, on_delete=models.CASCADE)
+    student = models.ForeignKey('students.Student', on_delete=models.CASCADE)
+    marks_obtained = models.DecimalField(max_digits=6, decimal_places=2)
+
+    class Meta:
+        unique_together = ('exam_subject', 'student')
+
+    def __str__(self):
+        return f"{self.student} - {self.exam_subject}: {self.marks_obtained}"

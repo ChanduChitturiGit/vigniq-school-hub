@@ -114,7 +114,7 @@ const AIChatLessonPlan: React.FC = () => {
 
 
   const [activities, setActivities] = useState<LessonActivity[]>([]);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<any>([]);
   const [inputMessage, setInputMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [firstMessage, setFirstMessage] = useState({
@@ -202,37 +202,52 @@ const AIChatLessonPlan: React.FC = () => {
     }
   }
 
-  const sendMessageData = async (message: any) => {
+  const sendMessageData = async (message: string) => {
     try {
       setLoader(true);
+
       const data = {
         chapter_id: chapterId,
         lesson_plan_day_id: day,
         school_id: schoolId ? schoolId : userData.school_id,
         message: message
-        // board_id: boardId,
-        // subject_id: subjectId,
-        // class_id: classId
       };
-      const response = await sendMessageApi(data);
-      if (response && response.data) {
-        getChatApiData();
-        setLoader(false);
-      } else {
-        showSnackbar({
-          title: 'Error',
-          description: response.message || 'Failed to connect with AI.',
-          status: 'error'
-        });
-      }
-    } catch (error) {
+
+      setMessages((prev: any) => [...prev, { role: "user", content: message, created_at: new Date().toISOString()}]);
+
+      setMessages((prev: any) => [...prev, { role: "assistant", content: "", created_at: new Date().toISOString() }]);
+
+      await sendMessageApi(
+        data,
+        (chunk) => {
+          // streaming chunks → append to last AI message
+          setMessages((prev: any) => {
+            const updated = [...prev];
+            updated[updated.length - 1].content += chunk;
+            return updated;
+          });
+        },
+        () => {
+          setLoader(false); // stream end
+        },
+        (err) => {
+          showSnackbar({
+            title: "Error",
+            description: err.message || "Failed to connect with AI.",
+            status: "error",
+          });
+          setLoader(false);
+        }
+      );
+    } catch (error: any) {
       showSnackbar({
-        title: 'Error',
-        description: 'An unexpected error occurred while connecting to the AI.',
-        status: 'error'
+        title: "Error",
+        description: "An unexpected error occurred while connecting to the AI.",
+        status: "error",
       });
+      setLoader(false);
     }
-  }
+  };
 
   useEffect(() => {
     getLessonData();
