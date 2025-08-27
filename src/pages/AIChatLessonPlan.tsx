@@ -19,6 +19,8 @@ import { getLessonPlanDataByDay } from '../services/grades';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '../components/ui/accordion';
 import { sendMessage as sendMessageApi, getChat as getChatApi } from '../services/aiChat'
 import { format } from 'date-fns';
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface LessonActivity {
   serialNumber: number;
@@ -213,7 +215,7 @@ const AIChatLessonPlan: React.FC = () => {
         message: message
       };
 
-      setMessages((prev: any) => [...prev, { role: "user", content: message, created_at: new Date().toISOString()}]);
+      //setMessages((prev: any) => [...prev, { role: "user", content: message, created_at: new Date().toISOString()}]);
 
       setMessages((prev: any) => [...prev, { role: "assistant", content: "", created_at: new Date().toISOString() }]);
 
@@ -223,7 +225,11 @@ const AIChatLessonPlan: React.FC = () => {
           // streaming chunks → append to last AI message
           setMessages((prev: any) => {
             const updated = [...prev];
-            updated[updated.length - 1].content += chunk;
+            const res = chunk.trim()
+              .split("\n") // each line is a JSON
+              .filter(line => line.trim() !== "");
+            const parsed = res.map(line => JSON.parse(line));
+            updated[updated.length - 1].content += parsed[0].data ? parsed[0].data : '';
             return updated;
           });
         },
@@ -384,26 +390,31 @@ const AIChatLessonPlan: React.FC = () => {
                           className={`flex items-start gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'
                             }`}
                         >
-                          {message.role === 'assistant' && (
+                          {message.role === 'assistant' && message?.content.length > 0 && (
                             <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                               <Bot className="w-4 h-4 text-purple-600" />
                             </div>
                           )}
-                          <div
-                            className={`max-w-[80%] p-4 rounded-lg ${message.role === 'user'
-                              ? 'bg-blue-600 text-white rounded-br-sm'
-                              : 'bg-gray-100 text-gray-900 rounded-bl-sm'
-                              }`}
-                          >
-                            {/* <p className="text-sm leading-relaxed">{message.content}</p> */}
-                            <p
-                              className="text-sm leading-relaxed"
-                              dangerouslySetInnerHTML={{ __html: message.content }}
-                            />
-                            <span className="text-xs opacity-70 mt-2 block">
-                              {format(message.created_at, 'dd-MM-yyyy')}
-                            </span>
-                          </div>
+                          {message?.content.length > 0 && (
+                            <div
+                              className={`max-w-[80%] p-4 rounded-lg ${message.role === 'user'
+                                ? 'bg-blue-600 text-white rounded-br-sm'
+                                : 'bg-gray-100 text-gray-900 rounded-bl-sm'
+                                }`}
+                            >
+                              {/* <p className="text-sm leading-relaxed">{message.content}</p> */}
+                              <>
+                                <p className="text-sm leading-relaxed">
+                                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {message.content}
+                                  </ReactMarkdown>
+                                </p>
+                                <span className="text-xs opacity-70 mt-2 block">
+                                  {format(message.created_at, 'dd-MM-yyyy hh:mm aa')}
+                                </span>
+                              </>
+                            </div>
+                          )}
                           {message.role === 'user' && (
                             <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                               <User className="w-4 h-4 text-blue-600" />
