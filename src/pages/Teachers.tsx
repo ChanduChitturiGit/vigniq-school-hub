@@ -238,12 +238,12 @@ const Teachers: React.FC = () => {
       <div className="space-y-6">
         <Breadcrumb items={breadcrumbItems} />
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-between">
+          <div className="flex items-center gap-2">
             <div className="p-2 bg-green-100 rounded-lg">
               <UsersIcon className="w-6 h-6 text-green-600" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-800">Teachers</h1>
+            <h1 className="text-xl md:text-2xl font-bold text-gray-800">Teachers</h1>
           </div>
           <div className="flex items-center gap-2">
             <div className="flex items-center bg-gray-100 rounded-lg p-1">
@@ -255,7 +255,7 @@ const Teachers: React.FC = () => {
                   }`}
                 title="Grid View"
               >
-                <Grid className="w-4 h-4" />
+                <Grid className="w-3 h-3 md:w-4 md:h-4" />
               </button>
               <button
                 onClick={() => setViewMode('table')}
@@ -271,9 +271,9 @@ const Teachers: React.FC = () => {
             {(user?.role === 'admin' || user?.role === 'superadmin') && (
               <Link
                 to={"/admin-add-teacher"}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+                className="bg-blue-500 text-white px-2 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3 h-3 md:w-4 md:h-4" />
                 Add Teacher
               </Link>
             )}

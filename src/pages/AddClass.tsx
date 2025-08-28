@@ -326,7 +326,7 @@ const AddClass: React.FC = () => {
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select a class" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className='max-h-60 overflow-y-auto'>
                   {classNum.map((num, index) => (
                     <SelectItem key={index} value={'Class ' + num}>
                       {'Class ' + num}

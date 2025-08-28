@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
@@ -8,16 +8,30 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Users, Clock, CheckCircle, XCircle, AlertCircle, FileText, Edit, ArrowLeft } from 'lucide-react';
+import { Users, Clock, CheckCircle, XCircle, AlertCircle, FileText, Edit, ArrowLeft, MoveLeft, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
-import { format, isSameDay, isAfter, startOfDay } from 'date-fns';
+import { format, isSameDay, isAfter, startOfDay, set } from 'date-fns';
 import MainLayout from '@/components/Layout/MainLayout';
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
+import { getAttendenceData, submitAttendence, getPastAttendenceData, markAsHoiday, unmarkAsHoiday } from '../services/attendence';
+import { getClassesBySchoolId } from '@/services/class';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../components/ui/alert-dialog';
 
 interface Student {
-  id: string;
-  name: string;
-  rollNumber: string;
+  student_id: string;
+  student_name: string;
+  roll_number: string;
   morningPresent: boolean;
   afternoonPresent: boolean;
 }
@@ -34,86 +48,343 @@ interface AttendanceData {
 }
 
 interface AttendanceRecord {
-  rollNumber: string;
-  studentName: string;
+  roll_number: string;
+  student_name: string;
   morningSession: 'Present' | 'Absent';
   afternoonSession: 'Present' | 'Absent';
   overallStatus: 'Full Day Present' | 'Partial Attendance' | 'Full Day Absent';
 }
 
 const Attendance: React.FC = () => {
+  const { showSnackbar } = useSnackbar();
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [selectedClass, setSelectedClass] = useState<string>('class-06');
+  const [selectedClass, setSelectedClass] = useState<string>();
+  const [classId, setClassId] = useState(null);
   const [activeSession, setActiveSession] = useState<'morning' | 'afternoon'>('morning');
   const [attendanceData, setAttendanceData] = useState<AttendanceData>({});
   const [viewMode, setViewMode] = useState<'attendance' | 'reports'>('attendance');
   const [editingSession, setEditingSession] = useState<'morning' | 'afternoon' | null>(null);
+  const [isMorningSessionSubmitted, setIsMorningSessionSubmitted] = useState(false);
+  const [isAfternoonSessionSubmitted, setIsAfternoonSessionSubmitted] = useState(false);
+  const [isEditing, setIsEditing] = useState(''); // 'morning' | 'afternoon' | ''
+  const [dateStat, setDateStat] = useState(false);
+  const [allowTakeAttendence, setAllowTakeAttendence] = useState(false);
+  const [loader, setLoader] = useState(false);
+  const [newAttendenceCheck, setNewAttendenceCheck] = useState({
+    isActive: false,
+    morning: false,
+    afternoon: false,
+    back: true
+  });
+  const [isHoliday, setIsHoliday] = useState(false);
+  const [formData, setFormData] = useState({
+    class: '',
+    class_section_id: '',
+    school_id: null,
+    date: null,
+    session: 'F',
+    sessionData: 'Full Day'
+  });
+  const [isMorningHoliday, setIsMorningHoliday] = useState(false);
+  const [isAfternoonHoliday, setIsAfternoonHoliday] = useState(false);
+
 
   // Sample data - in real app this would come from API
   const sampleStudents: Student[] = [
-    { id: '1', name: 'Aarav Sharma', rollNumber: '001', morningPresent: false, afternoonPresent: false },
-    { id: '2', name: 'Priya Patel', rollNumber: '002', morningPresent: false, afternoonPresent: false },
-    { id: '3', name: 'Rohit Kumar', rollNumber: '003', morningPresent: false, afternoonPresent: false },
-    { id: '4', name: 'Sneha Reddy', rollNumber: '004', morningPresent: false, afternoonPresent: false },
-    { id: '5', name: 'Arjun Singh', rollNumber: '005', morningPresent: false, afternoonPresent: false },
-    { id: '6', name: 'Kavya Iyer', rollNumber: '006', morningPresent: false, afternoonPresent: false },
-    { id: '7', name: 'Vikram Joshi', rollNumber: '007', morningPresent: false, afternoonPresent: false },
-    { id: '8', name: 'Ananya Gupta', rollNumber: '008', morningPresent: false, afternoonPresent: false },
+    { student_id: '1', student_name: 'Aarav Sharma', roll_number: '001', morningPresent: false, afternoonPresent: false },
+    { student_id: '2', student_name: 'Priya Patel', roll_number: '002', morningPresent: false, afternoonPresent: false },
+    { student_id: '3', student_name: 'Rohit Kumar', roll_number: '003', morningPresent: false, afternoonPresent: false },
+    { student_id: '4', student_name: 'Sneha Reddy', roll_number: '004', morningPresent: false, afternoonPresent: false },
+    { student_id: '5', student_name: 'Arjun Singh', roll_number: '005', morningPresent: false, afternoonPresent: false },
+    { student_id: '6', student_name: 'Kavya Iyer', roll_number: '006', morningPresent: false, afternoonPresent: false },
+    { student_id: '7', student_name: 'Vikram Joshi', roll_number: '007', morningPresent: false, afternoonPresent: false },
+    { student_id: '8', student_name: 'Ananya Gupta', roll_number: '008', morningPresent: false, afternoonPresent: false },
   ];
 
   // Sample attendance records for past dates
-  const sampleAttendanceRecords: AttendanceRecord[] = [
-    { rollNumber: '001', studentName: 'Aarav Sharma', morningSession: 'Present', afternoonSession: 'Present', overallStatus: 'Full Day Present' },
-    { rollNumber: '002', studentName: 'Priya Patel', morningSession: 'Present', afternoonSession: 'Absent', overallStatus: 'Partial Attendance' },
-    { rollNumber: '003', studentName: 'Rohit Kumar', morningSession: 'Absent', afternoonSession: 'Absent', overallStatus: 'Full Day Absent' },
-    { rollNumber: '004', studentName: 'Sneha Reddy', morningSession: 'Present', afternoonSession: 'Present', overallStatus: 'Full Day Present' },
-    { rollNumber: '005', studentName: 'Arjun Singh', morningSession: 'Present', afternoonSession: 'Present', overallStatus: 'Full Day Present' },
-    { rollNumber: '006', studentName: 'Kavya Iyer', morningSession: 'Present', afternoonSession: 'Present', overallStatus: 'Full Day Present' },
-    { rollNumber: '007', studentName: 'Vikram Joshi', morningSession: 'Absent', afternoonSession: 'Present', overallStatus: 'Partial Attendance' },
-    { rollNumber: '008', studentName: 'Ananya Gupta', morningSession: 'Present', afternoonSession: 'Present', overallStatus: 'Full Day Present' },
-  ];
+  const [sampleAttendanceRecords, setSampleAttendanceRecords]: any = useState([]);
 
-  const classes = [
-    { id: 'class-06', name: 'Class 06' },
-    { id: 'class-07', name: 'Class 07' },
-    { id: 'class-08', name: 'Class 08' },
-  ];
+  const [classes, setClasses] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [morningStats, setMorningStats] = useState(null);
+  const [afternoonStats, setAfternoonStats] = useState(null);
 
-  const [students, setStudents] = useState<Student[]>(sampleStudents);
 
-  const isToday = isSameDay(selectedDate, new Date());
-  const isPastDate = !isToday && !isAfter(selectedDate, startOfDay(new Date()));
-  const isFutureDate = isAfter(selectedDate, startOfDay(new Date()));
+  //classes list api
+  const getClasses = async () => {
+    try {
+      const classesData = await getClassesBySchoolId(userData.school_id);
+      if (classesData && classesData.classes) {
+        setClasses(classesData.classes);
+        // if (!classId) {
+        //   setSelectedClass(classes[0] ? ('Class ' + classes[0].class_number + ' - ' + classes[0].section) : '');
+        // }
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong with classes list",
+        status: "error"
+      });
+    }
+  }
+
+  const [students, setStudents] = useState<any>([]);
+
+  const isToday = isSameDay(startOfDay(selectedDate), startOfDay(new Date()));
+  const isPastDate = !isToday && !isAfter(startOfDay(selectedDate), startOfDay(new Date()));
+  const isFutureDate = isAfter(startOfDay(selectedDate), startOfDay(new Date()));
+
+  const getClassId = (className: string) => {
+    const classdata = classes.find((val: any) => ('Class ' + val.class_number + ' - ' + val.section) == className);
+    const classId = classdata.class_id ? classdata.class_id : 0;
+    return classId;
+  }
+
+  const handleClassChange = (value: string) => {
+    setSelectedClass(value);
+    setClassId(getClassId(value));
+  };
+
+
+  const getAttendenceList = async (sessionData = '') => {
+    try {
+      const currentClassId = classId || (classes[0] ? getClassId('Class ' + classes[0].class_id + ' - ' + classes[0].section) : '');
+      const session = sessionData.length > 0 ? sessionData : activeSession === 'morning' ? 'M' : 'A';
+      const date = format(selectedDate, 'yyyy-MM-dd');
+
+      const requestData = {
+        class_section_id: currentClassId,
+        session: session,
+        date: date,
+        school_id: userData?.school_id
+      };
+      if (currentClassId) {
+        const response = await getAttendenceData(requestData);
+        //console.log('Fetched Attendance Data:', response);
+        if (response && response.data && response.data.attendance_data) {
+          if (session == 'M') {
+            setIsMorningHoliday(response.data.is_holiday);
+          } else {
+            setIsAfternoonHoliday(response.data.is_holiday);
+          }
+          // Transform API data to match Student interface if necessary
+          const fetchedStudents = response.data.attendance_data.map((student: any) => ({
+            ...student,
+            morningPresent: response.data?.session == 'M' || session == 'M' ? student.is_present : student?.morning_present || false,
+            afternoonPresent: response.data?.session == 'A' || session == 'A' ? student.is_present : student?.afternoon_present || false
+          }));
+          // setStudents(fetchedStudents);
+          setStudents(fetchedStudents);
+          if (sessionData == '') {
+            if (response.data?.session == 'M' || session == 'M') {
+              setIsMorningSessionSubmitted(response.data?.attendance_taken || false);
+            } else {
+              setIsAfternoonSessionSubmitted(response.data?.attendance_taken || false);
+            }
+          }
+        } else {
+          //setStudents(sampleStudents);
+          showSnackbar({
+            title: "⛔ Error",
+            description: "Something went wrong",
+            status: "error"
+          });
+        }
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
+  const getPastAttendenceDataList = async () => {
+    try {
+      const currentClassId = classId || (classes[0] ? getClassId('Class ' + classes[0].class_id + ' - ' + classes[0].section) : '');
+      const date = format(selectedDate, 'yyyy-MM-dd');
+
+      const requestData = {
+        class_section_id: currentClassId,
+        date: date,
+        school_id: userData?.school_id
+      };
+      if (currentClassId) {
+        const response = await getPastAttendenceData(requestData);
+        // console.log('Fetched Past Attendance Data:', response);
+        if (response && response.data && response.data.attendance_data) {
+          setSampleAttendanceRecords(response.data.attendance_data);
+          setIsMorningHoliday(response.data.morning_holiday);
+          setIsAfternoonHoliday(response.data.afternoon_holiday);
+        } else {
+          showSnackbar({
+            title: "⛔ Error",
+            description: "Something went wrong",
+            status: "error"
+          });
+        }
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
+  const submitAttendanceData = async () => {
+    try {
+      const currentClassId = classId || (classes[0] ? getClassId('Class ' + classes[0].class_id + ' - ' + classes[0].section) : '');
+      const session = activeSession === 'morning' ? 'M' : 'A';
+      const date = format(selectedDate, 'yyyy-MM-dd');
+
+      const attendancePayload = students.map(student => ({
+        student_id: student.student_id,
+        student_name: student.student_name,
+        is_present: activeSession === 'morning' ? (student.morningPresent ?? false) : (student.afternoonPresent) ?? false
+      }));
+
+      const requestData = {
+        class_section_id: currentClassId,
+        session: session,
+        date: date,
+        school_id: userData?.school_id,
+        attendance_data: attendancePayload
+      };
+
+      const response = await submitAttendence(requestData);
+      // console.log('Submit Attendance Response:', response);
+      if (response && response.message) {
+        showSnackbar({
+          title: "Success",
+          description: `${response.message}`,
+          status: "success"
+        });
+        setEditingSession(null);
+        getAttendenceList();
+        if (isPastDate) {
+          getPastAttendenceDataList();
+        }
+      } else {
+        showSnackbar({
+          title: "⛔ Error",
+          description: "Something went wrong while submitting attendance",
+          status: "error"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
+  const markAttendenceAsHoiday = async (check = '') => {
+    try {
+      const currentClassId = classId || (classes[0] ? getClassId('Class ' + classes[0].class_id + ' - ' + classes[0].section) : '');
+      const date = format(selectedDate, 'yyyy-MM-dd');
+
+      const requestData = {
+        class_section_id: currentClassId,
+        date: date,
+        school_id: userData?.school_id,
+        session: formData.session
+      };
+      let response: any;
+      if (check == 'remove') {
+        response = await unmarkAsHoiday(requestData);
+      } else {
+        response = await markAsHoiday(requestData);
+      }
+      console.log('Holday is marked Attendance Response:', response);
+      if (response && response.message) {
+        showSnackbar({
+          title: "Success",
+          description: `${response.message}`,
+          status: "success"
+        });
+        setEditingSession(null);
+        getAttendenceList();
+        if (isPastDate) {
+          getPastAttendenceDataList();
+        }
+      } else {
+        showSnackbar({
+          title: "⛔ Error",
+          description: "Something went wrong while submitting attendance",
+          status: "error"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
 
   useEffect(() => {
-    // Determine view mode based on selected date
+    getClasses();
+    setDateStat(isSameDay(selectedDate, startOfDay(new Date())));
+    setAllowTakeAttendence(true);
+  }, []);
+
+
+  useEffect(() => {
+    if (!isPastDate || editingSession) {
+      getAttendenceList();
+      setAllowTakeAttendence(true);
+    } else {
+      getPastAttendenceDataList();
+      setIsMorningSessionSubmitted(false);
+      setIsAfternoonSessionSubmitted(false);
+    }
+
     if (isPastDate && !editingSession) {
       setViewMode('reports');
     } else {
       setViewMode('attendance');
     }
-
-    // Load existing attendance data for selected date and class
-    const dateKey = format(selectedDate, 'yyyy-MM-dd');
-    const savedData = attendanceData[dateKey]?.[selectedClass];
-
-    if (savedData) {
-      setStudents(activeSession === 'morning' ? savedData.morning : savedData.afternoon);
-    } else {
-      setStudents(sampleStudents.map(student => ({
-        ...student,
-        morningPresent: false,
-        afternoonPresent: false
-      })));
-    }
   }, [selectedDate, selectedClass, activeSession, attendanceData, editingSession]);
 
+  useEffect(() => {
+    setIsMorningHoliday(false);
+    setIsAfternoonHoliday(false);
+    const date = new Date(selectedDate);
+    if (date.getDay() === 0) {
+      setIsHoliday(true);
+      return;
+    } else {
+      setIsHoliday(false);
+    }
+
+    if (isPastDate) {
+      setAllowTakeAttendence(false);
+    }
+  }, [selectedDate])
+
+  useEffect(() => {
+    setMorningStats(getReportStats('morning'));
+    setAfternoonStats(getReportStats('afternoon'));
+  }, [sampleAttendanceRecords])
+
+  useEffect(() => {
+    setStats(getAttendanceStats());
+  }, [students])
+
   const getAttendanceStats = () => {
-    const totalStudents = students.length;
-    const presentStudents = students.filter(s =>
+    const totalStudents = students?.length;
+    const presentStudents = students?.filter(s =>
       activeSession === 'morning' ? s.morningPresent : s.afternoonPresent
     ).length;
     const absentStudents = totalStudents - presentStudents;
@@ -124,17 +395,18 @@ const Attendance: React.FC = () => {
 
   const getReportStats = (session: 'morning' | 'afternoon') => {
     const sessionKey = session === 'morning' ? 'morningSession' : 'afternoonSession';
-    const present = sampleAttendanceRecords.filter(record => record[sessionKey] === 'Present').length;
-    const absent = sampleAttendanceRecords.filter(record => record[sessionKey] === 'Absent').length;
+    const data = [...sampleAttendanceRecords];
+    const present = data?.filter(record => record[session] == true).length;
+    const absent = data?.filter(record => record[session] == false).length;
     return { present, absent };
   };
 
   const toggleAttendance = (studentId: string, isPresent: boolean) => {
     setStudents(prev => prev.map(student => {
-      if (student.id === studentId) {
+      if (student.student_id === studentId) {
         return {
           ...student,
-          [activeSession === 'morning' ? 'morningPresent' : 'afternoonPresent']: isPresent
+          [activeSession == 'morning' ? 'morningPresent' : 'afternoonPresent']: isPresent
         };
       }
       return student;
@@ -143,45 +415,44 @@ const Attendance: React.FC = () => {
 
   const submitAttendance = () => {
     const dateKey = format(selectedDate, 'yyyy-MM-dd');
-
-    setAttendanceData(prev => ({
-      ...prev,
-      [dateKey]: {
-        ...prev[dateKey],
-        [selectedClass]: {
-          ...prev[dateKey]?.[selectedClass],
-          [activeSession]: students,
-          [`${activeSession}Submitted`]: true
-        }
-      }
-    }));
-
+    submitAttendanceData();
     setEditingSession(null);
-    toast.success(`${activeSession === 'morning' ? 'Morning' : 'After Lunch'} attendance submitted successfully!`);
   };
 
   const handleEditAttendance = (session: 'morning' | 'afternoon') => {
+    setNewAttendenceCheck((prev) => ({
+      ...prev,
+      back: true
+    }))
+    setIsMorningSessionSubmitted(false);
+    setIsAfternoonSessionSubmitted(false);
     setEditingSession(session);
     setActiveSession(session);
+    getAttendenceList(session == 'morning' ? 'M' : 'A');
     setViewMode('attendance');
   };
 
   const handleDateSelect = (date: Date | undefined) => {
     if (!date) return;
-    
+
     // Prevent selection of future dates
     if (isAfter(date, startOfDay(new Date()))) {
       toast.error("Cannot select future dates");
       return;
     }
-    
+
     setSelectedDate(date);
     setEditingSession(null);
   };
 
   const isSessionSubmitted = (session: 'morning' | 'afternoon') => {
-    const dateKey = format(selectedDate, 'yyyy-MM-dd');
-    return attendanceData[dateKey]?.[selectedClass]?.[`${session}Submitted`] || false;
+    // const dateKey = format(selectedDate, 'yyyy-MM-dd');
+    // return attendanceData[dateKey]?.[selectedClass]?.[`${session}Submitted`] || false;
+    if (session === 'morning') {
+      return isMorningSessionSubmitted;
+    } else {
+      return isAfternoonSessionSubmitted;
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -190,6 +461,8 @@ const Attendance: React.FC = () => {
         return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Present</Badge>;
       case 'Absent':
         return <Badge variant="destructive">Absent</Badge>;
+      // case 'Holiday':
+      //   return <Badge variant="destructive">Holiday</Badge>;
       case 'Full Day Present':
         return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Full Day Present</Badge>;
       case 'Partial Attendance':
@@ -197,18 +470,53 @@ const Attendance: React.FC = () => {
       case 'Full Day Absent':
         return <Badge variant="destructive">Full Day Absent</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">{status}</Badge>;
     }
   };
 
-  const stats = getAttendanceStats();
-  const morningStats = getReportStats('morning');
-  const afternoonStats = getReportStats('afternoon');
+  const getOverallStatus = (morning, afternoon) => {
+    // getStatusBadge((record.morning && record.afternoon) ? 'Full Day Present' : ((record.morning || record.afternoon)) ? 'Partial Attendance' : 'Full Day Absent')
+    const morningCheck = (morning || isMorningHoliday);
+    const afternoonCheck = (afternoon || isAfternoonHoliday);
+    if (morningCheck && afternoonCheck) {
+      return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Full Day Present</Badge>;
+    } else if (morningCheck || afternoonCheck) {
+      return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Partial Attendance</Badge>;
+    } else {
+      return <Badge variant="destructive">Full Day Absent</Badge>;
+    }
+  }
+
+  const backToData = async () => {
+    setEditingSession(null);
+    setViewMode('attendance');
+  }
+
+  const setNewAttendence = () => {
+    setAllowTakeAttendence(true);
+    getAttendenceList();
+    setNewAttendenceCheck(
+      (prev) => ({
+        ...prev,
+        back: false,
+        isActive: true
+      })
+    )
+  }
+
+  const handleSessionChange = (value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      sessionData: value,
+      session: value == 'Full Day' ? 'F' : value == 'Morning Session' ? 'M' : 'A'
+    }))
+  }
+
 
   return (
     <MainLayout pageTitle={`Attendance Center`}>
       <div className="container mx-auto p-6 space-y-6">
-        <div className="flex justify-between items-center">
+        {/* <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Attendance Center</h1>
             <p className="text-gray-600">Mark and manage student attendance</p>
@@ -226,7 +534,7 @@ const Attendance: React.FC = () => {
               Back to {isPastDate ? 'Reports' : 'Attendance'}
             </Button>
           )}
-        </div>
+        </div> */}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Panel - Calendar and Class Selection */}
@@ -234,16 +542,18 @@ const Attendance: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Clock className="w-5 h-5" />
-                  Select Date
+                  <Clock className="w-5 h-6 mt-2" />
+                  <p className="text-lg mt-2">
+                    Date : <span className='text-gray-600'>{selectedDate ? format(selectedDate, "EEEE, dd MMM yyyy") : "No date selected"}</span>
+                  </p>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className='w-full '>
                 <Calendar
                   mode="single"
                   selected={selectedDate}
                   onSelect={handleDateSelect}
-                  className="rounded-md border"
+                  className="w-full h-full rounded-md border overflow-auto flex items-center justify-center"
                   disabled={(date) => isAfter(date, startOfDay(new Date()))}
                 />
               </CardContent>
@@ -254,14 +564,14 @@ const Attendance: React.FC = () => {
                 <CardTitle>Select Class</CardTitle>
               </CardHeader>
               <CardContent>
-                <Select value={selectedClass} onValueChange={setSelectedClass}>
+                <Select value={selectedClass} onValueChange={handleClassChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a class" />
                   </SelectTrigger>
                   <SelectContent>
                     {classes.map((cls) => (
-                      <SelectItem key={cls.id} value={cls.id}>
-                        {cls.name}
+                      <SelectItem key={cls.class_id} value={'Class ' + cls.class_number + ' - ' + cls.section}>
+                        {'Class ' + cls.class_number + ' - ' + cls.section}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -272,7 +582,8 @@ const Attendance: React.FC = () => {
 
           {/* Right Panel - Dynamic Content */}
           <div className="lg:col-span-2 space-y-6">
-            {viewMode === 'reports' && !editingSession ? (
+            {viewMode === 'reports' && selectedClass &&
+              !editingSession && (sampleAttendanceRecords.length > 0) && !isHoliday ? (
               // Reports View for Past Dates
               <>
                 {/* Session Summary Cards */}
@@ -293,11 +604,11 @@ const Attendance: React.FC = () => {
                     <CardContent>
                       <div className="flex justify-between items-center">
                         <div className="text-center">
-                          <div className="text-3xl font-bold text-green-600">{morningStats.present}</div>
+                          <div className="text-3xl font-bold text-green-600">{morningStats?.present || 0}</div>
                           <div className="text-sm text-gray-600">Present</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-3xl font-bold text-red-600">{morningStats.absent}</div>
+                          <div className="text-3xl font-bold text-red-600">{morningStats?.absent || 0}</div>
                           <div className="text-sm text-gray-600">Absent</div>
                         </div>
                       </div>
@@ -306,11 +617,13 @@ const Attendance: React.FC = () => {
 
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                      <CardTitle className="text-lg">After Lunch Session</CardTitle>
+                      <CardTitle className="text-lg">Afternoon Session</CardTitle>
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleEditAttendance('afternoon')}
+                        onClick={() => {
+                          handleEditAttendance('afternoon');
+                        }}
                         className="flex items-center gap-1"
                       >
                         <Edit className="w-3 h-3" />
@@ -320,11 +633,11 @@ const Attendance: React.FC = () => {
                     <CardContent>
                       <div className="flex justify-between items-center">
                         <div className="text-center">
-                          <div className="text-3xl font-bold text-green-600">{afternoonStats.present}</div>
+                          <div className="text-3xl font-bold text-green-600">{afternoonStats?.present || 0}</div>
                           <div className="text-sm text-gray-600">Present</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-3xl font-bold text-red-600">{afternoonStats.absent}</div>
+                          <div className="text-3xl font-bold text-red-600">{afternoonStats?.absent || 0}</div>
                           <div className="text-sm text-gray-600">Absent</div>
                         </div>
                       </div>
@@ -335,7 +648,7 @@ const Attendance: React.FC = () => {
                 {/* Detailed Attendance Report */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>
+                    <CardTitle className='text-md md:text-lg'>
                       Attendance Report for {classes.find(c => c.id === selectedClass)?.name} - {format(selectedDate, 'E MMM dd yyyy')}
                     </CardTitle>
                   </CardHeader>
@@ -352,13 +665,13 @@ const Attendance: React.FC = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {sampleAttendanceRecords.map((record) => (
-                            <TableRow key={record.rollNumber}>
-                              <TableCell className="font-medium">{record.rollNumber}</TableCell>
-                              <TableCell>{record.studentName}</TableCell>
-                              <TableCell>{getStatusBadge(record.morningSession)}</TableCell>
-                              <TableCell>{getStatusBadge(record.afternoonSession)}</TableCell>
-                              <TableCell>{getStatusBadge(record.overallStatus)}</TableCell>
+                          {sampleAttendanceRecords && sampleAttendanceRecords?.map((record) => (
+                            <TableRow key={record.roll_number}>
+                              <TableCell className="font-medium">{record.roll_number}</TableCell>
+                              <TableCell>{record.student_name}</TableCell>
+                              <TableCell>{getStatusBadge(record.morning ? 'Present' : isMorningHoliday ? 'Holiday' : 'Absent')}</TableCell>
+                              <TableCell>{getStatusBadge(record.afternoon ? 'Present' : isAfternoonHoliday ? 'Holiday' : 'Absent')}</TableCell>
+                              <TableCell>{getOverallStatus(record.morning, record.afternoon)}</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
@@ -371,14 +684,14 @@ const Attendance: React.FC = () => {
               // Attendance Taking View
               <>
                 {/* Stats Cards */}
-                {!isFutureDate && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {!isFutureDate && selectedClass && (!isPastDate || allowTakeAttendence || editingSession || !(isMorningHoliday && isAfternoonHoliday) && !(sampleAttendanceRecords.length == 0 && selectedClass && isPastDate)) && !isHoliday && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Card>
                       <CardContent className="p-4">
                         <div className="flex items-center gap-2">
                           <Users className="w-5 h-5 text-blue-500" />
                           <div>
-                            <p className="text-2xl font-bold text-blue-600">{stats.totalStudents}</p>
+                            <p className="text-2xl font-bold text-blue-600">{stats?.totalStudents}</p>
                             <p className="text-sm text-gray-600">Total Students</p>
                           </div>
                         </div>
@@ -390,7 +703,7 @@ const Attendance: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <CheckCircle className="w-5 h-5 text-green-500" />
                           <div>
-                            <p className="text-2xl font-bold text-green-600">{stats.presentStudents}</p>
+                            <p className="text-2xl font-bold text-green-600">{stats?.presentStudents}</p>
                             <p className="text-sm text-gray-600">Marked Present</p>
                           </div>
                         </div>
@@ -402,14 +715,14 @@ const Attendance: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <XCircle className="w-5 h-5 text-red-500" />
                           <div>
-                            <p className="text-2xl font-bold text-red-600">{stats.absentStudents}</p>
+                            <p className="text-2xl font-bold text-red-600">{stats?.absentStudents}</p>
                             <p className="text-sm text-gray-600">Marked Absent</p>
                           </div>
                         </div>
                       </CardContent>
                     </Card>
 
-                    <Card>
+                    {/* <Card>
                       <CardContent className="p-4">
                         <div className="flex items-center gap-2">
                           <AlertCircle className="w-5 h-5 text-orange-500" />
@@ -419,110 +732,310 @@ const Attendance: React.FC = () => {
                           </div>
                         </div>
                       </CardContent>
-                    </Card>
+                    </Card> */}
                   </div>
                 )}
 
                 {/* Student Attendance List */}
-                {!isFutureDate && (
+                {!isFutureDate && selectedClass && (!isPastDate || allowTakeAttendence || editingSession || isMorningHoliday || isAfternoonHoliday) && !isHoliday && (
                   <Card>
                     <CardHeader>
-                      <div className="flex justify-between items-center">
-                        <CardTitle>
-                          Student Attendance - {activeSession === 'morning' ? 'Morning Session' : 'After Lunch Session'}
+                      <div className="flex flex-col md:flex-row  justify-between items-center gap-3">
+                        {
+                          isPastDate && newAttendenceCheck.back && !(isMorningHoliday && isAfternoonHoliday) && (
+                            <>
+                              <Button
+                                onClick={backToData}
+                                className="bg-blue-600 hover:bg-blue-700 px-2"
+                              >
+                                <MoveLeft />
+                                {'back'}
+                              </Button>
+                            </>
+                          )
+                        }
+                        {/* - {activeSession === 'morning' ? 'Morning Session' : 'Afternoon Session'} */}
+                        <CardTitle className='text-md my-4 md:my-0 md:text-lg'>
+                          Student Attendance - {activeSession === 'morning' ? 'Morning Session' : 'Afternoon Session'}
                         </CardTitle>
-                        <Button 
-                          onClick={submitAttendance} 
-                          className="bg-blue-600 hover:bg-blue-700"
-                        >
-                          {isSessionSubmitted(activeSession) ? 'Update Attendance' : 'Submit Attendance'}
-                        </Button>
+
+                        <div className='flex flex-col lg:flex-row gap-3'>
+                          {/* <Button
+                            onClick={() => {
+                              setIsEditing('');
+                              markAttendenceAsHoiday();
+                            }}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            {'Mark as Holiday'}
+                          </Button> */}
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <button className="flex items-center gap-2 bg-orange-400 text-white px-2 py-2 rounded-lg hover:bg-orange-600 transition-colors">
+                                {/* <KeyRound className="w-4 h-4" /> */}
+                                {
+                                  (activeSession == 'morning' ? !isMorningHoliday : !isAfternoonHoliday) && (
+                                    'Mark As Holiday'
+                                  )
+                                }
+                                {
+                                  (activeSession == 'morning' ? isMorningHoliday : isAfternoonHoliday) && (
+                                    'Mark as Working Day'
+                                  )
+                                }
+                              </button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                {
+                                  (activeSession == 'morning' ? !isMorningHoliday : !isAfternoonHoliday) && (
+                                    <AlertDialogTitle>Mark As Holiday</AlertDialogTitle>
+                                  )
+                                }
+                                {
+                                  (activeSession == 'morning' ? isMorningHoliday : isAfternoonHoliday) && (
+                                    <AlertDialogTitle>Mark as Working Day</AlertDialogTitle>
+                                  )
+                                }
+                                <AlertDialogDescription>
+
+                                  <form className="space-y-6">
+
+                                    {/* Date Field */}
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Date
+                                      </label>
+                                      <input className='w-full py-2 px-2' type="text" value={format(selectedDate, 'dd-MM-yyyy')} disabled />
+                                      {/* {errors.class && <p className="text-red-500 text-xs mt-1">{errors.class}</p>} */}
+                                    </div>
+
+                                    {/* Class Name Field */}
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Class
+                                      </label>
+                                      <input className='w-full py-2 px-2' type="text" value={selectedClass} disabled />
+                                      {/* {errors.class && <p className="text-red-500 text-xs mt-1">{errors.class}</p>} */}
+                                    </div>
+
+                                    {/* Session Field */}
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Session
+                                      </label>
+                                      <Select value={formData.sessionData} onValueChange={handleSessionChange}>
+                                        <SelectTrigger className="w-full">
+                                          <SelectValue placeholder="Select a Session" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {['Full Day', 'Morning Session', 'Afternoon Session'].map((val, index) => (
+                                            <SelectItem key={index} value={val}>
+                                              {val}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      {/* {errors.board && <p className="text-red-500 text-xs mt-1">{errors.board}</p>} */}
+                                    </div>
+                                  </form>
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter className='flex content-center'>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => {
+                                  setIsEditing('');
+                                  const check = (activeSession == 'morning' ? !isMorningHoliday : !isAfternoonHoliday) ? 'Mark' : 'remove';
+                                  markAttendenceAsHoiday(check);
+                                }}>
+                                  {
+                                    (activeSession == 'morning' ? !isMorningHoliday : !isAfternoonHoliday) && (
+                                      'Mark As Holiday'
+                                    )
+                                  }
+                                  {
+                                    (activeSession == 'morning' ? isMorningHoliday : isAfternoonHoliday) && (
+                                      'Mark as Working Day'
+                                    )
+                                  }
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                          {
+                            !isSessionSubmitted(activeSession) && !isPastDate && !(activeSession == 'morning' ? isMorningHoliday : isAfternoonHoliday) && (
+                              <Button
+                                onClick={submitAttendance}
+                                className="bg-blue-600 hover:bg-blue-700"
+                              >
+                                {'Submit Attendance'}
+                              </Button>
+                            )
+                          }
+                          {
+                            isSessionSubmitted(activeSession) && isEditing != activeSession && !isPastDate && !(activeSession == 'morning' ? isMorningHoliday : isAfternoonHoliday) && (
+
+                              <Button
+                                onClick={() => setIsEditing(activeSession)}
+                                className="bg-blue-600 hover:bg-blue-700"
+                              >
+                                {'Edit Attendance'}
+                              </Button>
+
+                            )
+                          }
+                          {
+                            ((isSessionSubmitted(activeSession) && isEditing == activeSession) || isPastDate) && !(activeSession == 'morning' ? isMorningHoliday : isAfternoonHoliday) && (
+                              <Button
+                                onClick={() => {
+                                  setIsEditing('');
+                                  submitAttendance();
+                                }}
+                                className="bg-blue-600 hover:bg-blue-700"
+                              >
+                                {'Save Attendance'}
+                              </Button>
+                            )
+                          }
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent>
                       <Tabs value={activeSession} onValueChange={(value) => setActiveSession(value as 'morning' | 'afternoon')}>
                         <TabsList className="grid w-full grid-cols-2">
                           <TabsTrigger value="morning" className="relative">
-                            Morning Session
+                            {window.innerWidth >= 768 ? 'Morning Session' : 'Morning'}
                             {isSessionSubmitted('morning') && (
                               <CheckCircle className="w-4 h-4 ml-2 text-green-600" />
                             )}
                           </TabsTrigger>
                           <TabsTrigger value="afternoon" className="relative">
-                            After Lunch Session
+                            {window.innerWidth >= 768 ? 'Afternoon Session' : 'Afternoon'}
+
                             {isSessionSubmitted('afternoon') && (
                               <CheckCircle className="w-4 h-4 ml-2 text-green-600" />
                             )}
                           </TabsTrigger>
                         </TabsList>
 
-                        <TabsContent value="morning" className="mt-6">
+
+                        <TabsContent value="morning" className="mt-6 max-h-[27rem] overflow-auto md:px-2">
                           <div className="space-y-4">
-                            {students.map((student) => (
-                              <div key={student.id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
-                                <div className="flex items-center gap-4">
+                            {!isMorningHoliday && students && students?.map((student) => (
+                              <div key={student.student_id} className="flex flex-col md:flex-row items-center justify-between p-4 border rounded-lg bg-gray-50">
+                                <div className="flex items-center gap-4 mb-4 md:mb-0">
                                   <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-semibold">
-                                    {student.name.split(' ').map(n => n[0]).join('')}
+                                    {student.student_name.split(' ').map(n => n[0]).join('')}
                                   </div>
                                   <div>
-                                    <p className="font-medium">{student.name}</p>
-                                    <p className="text-sm text-gray-600">Roll No. {student.rollNumber}</p>
+                                    <p className="font-medium">{student.student_name}</p>
+                                    <p className="text-sm text-gray-600">Roll No. {student.roll_number}</p>
                                   </div>
                                 </div>
-                                <div className="flex gap-2">
-                                  <Button
-                                    size="sm"
-                                    variant={student.morningPresent ? "default" : "outline"}
-                                    onClick={() => toggleAttendance(student.id, true)}
-                                    className={student.morningPresent ? "bg-green-600 hover:bg-green-700" : ""}
-                                  >
-                                    Present
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant={!student.morningPresent ? "destructive" : "outline"}
-                                    onClick={() => toggleAttendance(student.id, false)}
-                                  >
-                                    Absent
-                                  </Button>
-                                </div>
+                                {
+                                  (!isSessionSubmitted(activeSession) || isEditing == activeSession || isPastDate) ? (
+                                    <div className="flex gap-2">
+                                      <Button
+                                        size="sm"
+                                        variant={student.morningPresent ? "default" : "outline"}
+                                        onClick={() => toggleAttendance(student.student_id, true)}
+                                        className={student.morningPresent ? "bg-green-600 hover:bg-green-700" : ""}
+                                      >
+                                        Present
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant={!student.morningPresent ? "destructive" : "outline"}
+                                        onClick={() => toggleAttendance(student.student_id, false)}
+                                      >
+                                        Absent
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <>
+                                      {
+                                        getStatusBadge(student.morningPresent ? 'Present' : 'Absent')
+                                      }
+                                    </>
+                                  )
+                                }
                               </div>
                             ))}
+
+                            {
+                              isMorningHoliday && (
+                                <div className="flex flex-col md:flex-row items-center justify-between p-4 border rounded-lg bg-gray-50">
+                                  <div className="flex items-center justify-center w-full gap-4 mb-4 md:mb-0">
+                                    Marked as Holiday.
+                                    {/* <div>
+                                    <p className="font-medium">{student.student_name}</p>
+                                    <p className="text-sm text-gray-600">Roll No. {student.roll_number}</p>
+                                  </div> */}
+                                  </div>
+                                </div>
+                              )
+                            }
                           </div>
                         </TabsContent>
 
-                        <TabsContent value="afternoon" className="mt-6">
+                        <TabsContent value="afternoon" className="mt-6 max-h-[27rem] overflow-auto md:px-2">
                           <div className="space-y-4">
-                            {students.map((student) => (
-                              <div key={student.id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
-                                <div className="flex items-center gap-4">
+                            {!isAfternoonHoliday && students && students?.map((student) => (
+                              <div key={student.student_id} className="flex flex-col md:flex-row  items-center justify-between p-4 border rounded-lg bg-gray-50">
+                                <div className="flex items-center gap-4 mb-4 md:mb-0">
                                   <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-semibold">
-                                    {student.name.split(' ').map(n => n[0]).join('')}
+                                    {student.student_name.split(' ').map(n => n[0]).join('')}
                                   </div>
                                   <div>
-                                    <p className="font-medium">{student.name}</p>
-                                    <p className="text-sm text-gray-600">Roll No. {student.rollNumber}</p>
+                                    <p className="font-medium">{student.student_name}</p>
+                                    <p className="text-sm text-gray-600">Roll No. {student.roll_number}</p>
                                   </div>
                                 </div>
                                 <div className="flex gap-2">
-                                  <Button
-                                    size="sm"
-                                    variant={student.afternoonPresent ? "default" : "outline"}
-                                    onClick={() => toggleAttendance(student.id, true)}
-                                    className={student.afternoonPresent ? "bg-green-600 hover:bg-green-700" : ""}
-                                  >
-                                    Present
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant={!student.afternoonPresent ? "destructive" : "outline"}
-                                    onClick={() => toggleAttendance(student.id, false)}
-                                  >
-                                    Absent
-                                  </Button>
+                                  {
+                                    (!isSessionSubmitted(activeSession) || isEditing == activeSession || isPastDate) ? (
+                                      <div className="flex gap-2">
+                                        <Button
+                                          size="sm"
+                                          variant={student.afternoonPresent ? "default" : "outline"}
+                                          onClick={() => toggleAttendance(student.student_id, true)}
+                                          className={student.afternoonPresent ? "bg-green-600 hover:bg-green-700" : ""}
+                                        >
+                                          Present
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant={!student.afternoonPresent ? "destructive" : "outline"}
+                                          onClick={() => toggleAttendance(student.student_id, false)}
+                                        >
+                                          Absent
+                                        </Button>
+                                      </div>
+                                    ) : (
+                                      <>
+                                        {
+                                          getStatusBadge(student.afternoonPresent ? 'Present' : 'Absent')
+                                        }
+                                      </>
+                                    )
+                                  }
                                 </div>
                               </div>
                             ))}
+
+                            {
+                              isAfternoonHoliday && (
+                                <div className="flex flex-col md:flex-row items-center justify-between p-4 border rounded-lg bg-gray-50">
+                                  <div className="flex items-center justify-center w-full gap-4 mb-4 md:mb-0">
+                                    Marked as Holiday.
+                                    {/* <div>
+                                    <p className="font-medium">{student.student_name}</p>
+                                    <p className="text-sm text-gray-600">Roll No. {student.roll_number}</p>
+                                  </div> */}
+                                  </div>
+                                </div>
+                              )
+                            }
                           </div>
                         </TabsContent>
                       </Tabs>
@@ -530,14 +1043,54 @@ const Attendance: React.FC = () => {
                   </Card>
                 )}
 
-                {isFutureDate && (
-                  <Card>
+                {(isFutureDate || !selectedClass || (sampleAttendanceRecords.length == 0 && isPastDate && !allowTakeAttendence && (!isMorningHoliday && !isAfternoonHoliday)) || isHoliday) && (
+                  <Card className='py-[13rem]'>
                     <CardContent className="p-8 text-center">
                       <AlertCircle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Future Date Selected</h3>
-                      <p className="text-gray-600">
-                        Attendance cannot be marked for future dates. Please select today or a past date.
-                      </p>
+                      {
+                        isFutureDate && (
+                          <>
+                            <h2 className="text-2xl font-bold mb-2">Future Date Selected</h2>
+                            <p className="text-gray-600">Attendance can only be marked for today or past dates.</p>
+                          </>
+                        )
+                      }
+                      {
+                        !selectedClass && (
+                          <>
+                            <h2 className="text-2xl font-bold mb-2">No Class Selected</h2>
+                            <p className="text-gray-600">Select the class to view the attendance data.</p>
+                          </>
+                        )
+                      }
+                      {
+                        sampleAttendanceRecords.length == 0 && selectedClass && isPastDate && !allowTakeAttendence && !isHoliday && (
+                          <>
+                            <h2 className="text-2xl font-bold mb-2">No Attendence Found</h2>
+                            {/* <p className="text-gray-600">Try changing date to view the attendance data.</p> */}
+                            <Button
+                              onClick={setNewAttendence}
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              {'Update Attendance'}
+                            </Button>
+                          </>
+                        )
+                      }
+                      {
+                        isHoliday && (
+                          <>
+                            <h3 className="text-2xl font-bold mb-2">No Attendence Found</h3>
+                            <p className="text-gray-500 mb-2">{format(selectedDate, 'dd-MM-yyyy')}(Sunday) is marked as Holiday.</p>
+                            {/* <Button
+                              onClick={setNewAttendence}
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              {'Update Attendance'}
+                            </Button> */}
+                          </>
+                        )
+                      }
                     </CardContent>
                   </Card>
                 )}

@@ -81,7 +81,7 @@ const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
           />
           {/* 👇 forward the ref here */}
           <main ref={ref} className="flex-1 overflow-y-auto p-6">
-            <div className="max-w-full">
+            <div className="max-w-full mb-[1rem]">
               {children}
             </div>
           </main>

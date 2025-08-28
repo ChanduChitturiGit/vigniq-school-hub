@@ -72,7 +72,6 @@ const SuperAdminDashboard: React.FC = () => {
     try {
       const response = await getHomePageData();
       // Process and set the data as needed
-      console.log(response);
       if (response && response.data) {
         setStats(response.data);
       } else {

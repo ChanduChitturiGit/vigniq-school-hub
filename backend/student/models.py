@@ -34,30 +34,51 @@ class StudentClassAssignment(models.Model):
 
 
 class StudentAttendance(models.Model):
-    """Stores attendance for each student per session per date."""
     SESSION_CHOICES = [
         ('M', 'Morning'),
         ('A', 'Afternoon'),
     ]
-    student = models.ForeignKey(Student, on_delete=models.CASCADE,
-                                related_name="attendances")
+
     date = models.DateField()
     session = models.CharField(max_length=1, choices=SESSION_CHOICES)
-    present = models.BooleanField(default=True)
+    class_section = models.ForeignKey('classes.SchoolSection', on_delete=models.CASCADE,null=True, blank=True)
     academic_year = models.ForeignKey('academics.SchoolAcademicYear', on_delete=models.CASCADE,
                                       null=True, blank=True)
+    is_holiday = models.BooleanField(default=False, )
+    taken_by_user_id = models.IntegerField(null=True, blank=True)
+    updated_by_user_id = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['date']),
+            models.Index(fields=['session']),
+            models.Index(fields=['academic_year']),
+        ]
+
+        db_table = 'student_attendance'
+
+class StudentAttendanceData(models.Model):
+    """Stores attendance for each student per session per date."""
+    attendance = models.ForeignKey(StudentAttendance, on_delete=models.CASCADE,
+                                   related_name="attendance_data")
+    student = models.ForeignKey(Student, on_delete=models.CASCADE,
+                                related_name="attendances")
+    
+    is_present = models.BooleanField(default=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+    
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['student', 'date', 'session'],
-                name='unique_student_date_session'
+                fields=['student', 'attendance'],
+                name='unique_student_attendance'
             )
         ]
         indexes = [
-            models.Index(fields=['date']),
-            models.Index(fields=['session']),
-            models.Index(fields=['student', 'date']),
+            models.Index(fields=['attendance', 'student']),
         ]
 
-        db_table = 'student_attendance'
+        db_table = 'student_attendance_data'

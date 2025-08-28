@@ -2,15 +2,21 @@
 
 import logging
 
+from asgiref.sync import sync_to_async
+
 from django.conf import settings
 
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+from langchain_core.runnables.base import RunnableLambda
+from langchain_core.output_parsers import StrOutputParser
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain.output_parsers import PydanticOutputParser
+from langchain.memory import ConversationSummaryBufferMemory
 
 from core.common_modules.common_functions import CommonFunctions
-
+from syllabus.models import ChatSession, ChatMessage
 
 from .states import ChapterInfo,LessonPlan
 from .queries import LangchainQueries
@@ -19,11 +25,11 @@ logger = logging.getLogger(__name__)
 
 class LangChainService:
     """Service for Langchain operations."""
-    def __init__(self):
+    def __init__(self,temperature=0):
         self.llm = ChatGoogleGenerativeAI(
             model=settings.AI_MODELS.get('GEMINI_MODEL', 'gemini-2.5-flash'),
-            temperature=0,
-            api_key=settings.API_KEYS.get('GEMINI_API_KEY')
+            temperature=temperature,
+            api_key=settings.API_KEYS.get('GEMINI_API_KEY'),
         )
 
     def invoke_llm(self, pdf_text,prompt):
@@ -69,3 +75,62 @@ class LangChainService:
         parsed = lesson_plan_parser.parse(response)
 
         return parsed.model_dump()
+
+    @sync_to_async
+    def get_chain_with_memory(self, school_db_name, session: ChatSession):
+        """Load memory from DB messages + summary, return LLMChain + memory."""
+
+        memory = ConversationSummaryBufferMemory(
+            llm=self.llm,
+            max_token_limit=1000,
+            memory_key="chat_history",
+            input_key="question",
+            return_messages=True
+        )
+
+        chat_messages = ChatMessage.objects.using(school_db_name).filter(
+            session=session
+        ).order_by("created_at")
+
+        for msg in chat_messages:
+            if msg.role == "user":
+                memory.chat_memory.add_user_message(msg.content)
+            else:
+                memory.chat_memory.add_ai_message(msg.content)
+
+        chat_history_messages = memory.load_memory_variables({})["chat_history"]
+
+        def format_messages_for_gemini(inputs):
+            formatted_messages = []
+
+            system_instruction = LangchainQueries.ASSISTANT_CHAT.value.format(
+                lesson_plan=inputs['lesson_plan']
+            )
+            formatted_messages.append(SystemMessage(content=system_instruction))
+
+            formatted_messages.extend(chat_history_messages)
+
+            formatted_messages.append(HumanMessage(content=inputs["question"]))
+
+            return formatted_messages
+
+        
+        chain = (
+            RunnableLambda(format_messages_for_gemini)
+            | self.llm
+            | StrOutputParser()
+        )
+
+        return chain
+
+
+    async def process_user_question(self, session,
+                              school_db_name, lesson_plan: str, user_question: str):
+        """Handle user input, run LLM, store messages + updated summary."""
+
+        chain = await self.get_chain_with_memory(school_db_name, session)
+
+        async for chunk in chain.astream({"lesson_plan": lesson_plan, "question": user_question}):
+            yield {"type": "token", "data": chunk}
+
+        yield {"type": "final"}
