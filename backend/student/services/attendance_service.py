@@ -41,10 +41,10 @@ class AttendanceService:
 
             attendance_date = datetime.strptime(date_str, "%Y-%m-%d").date()
 
-            if attendance_date != timezone.localdate():
-                logger.error("Attendance date must be today's date.")
-                return Response({"error": "Attendance can only be marked for today's date."},
-                                status=status.HTTP_400_BAD_REQUEST)
+            # if attendance_date != timezone.localdate():
+            #     logger.error("Attendance date must be today's date.")
+            #     return Response({"error": "Attendance can only be marked for today's date."},
+            #                     status=status.HTTP_400_BAD_REQUEST)
 
             if session not in ['M', 'A']:
                 logger.error("Invalid session provided.")
@@ -160,7 +160,6 @@ class AttendanceService:
                             "student_name": user_map.get(student_id, "Unknown"),
                             "is_present": record.is_present if record else None,
                         })
-
             output = {
                 "session": session,
                 "attendance_taken": attendance_taken,
