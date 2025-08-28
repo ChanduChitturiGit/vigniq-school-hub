@@ -220,10 +220,8 @@ const Attendance: React.FC = () => {
         // console.log('Fetched Past Attendance Data:', response);
         if (response && response.data && response.data.attendance_data) {
           setSampleAttendanceRecords(response.data.attendance_data);
-          if (response.data.attendance_data.length == 0) {
-            setIsMorningHoliday(response.data.morning_holiday);
-            setIsAfternoonHoliday(response.data.afternoon_holiday);
-          }
+          setIsMorningHoliday(response.data.morning_holiday);
+          setIsAfternoonHoliday(response.data.afternoon_holiday);
         } else {
           showSnackbar({
             title: "⛔ Error",
@@ -422,6 +420,10 @@ const Attendance: React.FC = () => {
   };
 
   const handleEditAttendance = (session: 'morning' | 'afternoon') => {
+    setNewAttendenceCheck((prev) => ({
+      ...prev,
+      back: true
+    }))
     setIsMorningSessionSubmitted(false);
     setIsAfternoonSessionSubmitted(false);
     setEditingSession(session);
@@ -459,6 +461,8 @@ const Attendance: React.FC = () => {
         return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Present</Badge>;
       case 'Absent':
         return <Badge variant="destructive">Absent</Badge>;
+      // case 'Holiday':
+      //   return <Badge variant="destructive">Holiday</Badge>;
       case 'Full Day Present':
         return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Full Day Present</Badge>;
       case 'Partial Attendance':
@@ -466,9 +470,22 @@ const Attendance: React.FC = () => {
       case 'Full Day Absent':
         return <Badge variant="destructive">Full Day Absent</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">{status}</Badge>;
     }
   };
+
+  const getOverallStatus = (morning, afternoon) => {
+    // getStatusBadge((record.morning && record.afternoon) ? 'Full Day Present' : ((record.morning || record.afternoon)) ? 'Partial Attendance' : 'Full Day Absent')
+    const morningCheck = (morning || isMorningHoliday);
+    const afternoonCheck = (afternoon || isAfternoonHoliday);
+    if (morningCheck && afternoonCheck) {
+      return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Full Day Present</Badge>;
+    } else if (morningCheck || afternoonCheck) {
+      return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Partial Attendance</Badge>;
+    } else {
+      return <Badge variant="destructive">Full Day Absent</Badge>;
+    }
+  }
 
   const backToData = async () => {
     setEditingSession(null);
@@ -525,16 +542,18 @@ const Attendance: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Clock className="w-5 h-5" />
-                  Select Date
+                  <Clock className="w-5 h-6 mt-2" />
+                  <p className="text-lg mt-2">
+                    Date : <span className='text-gray-600'>{selectedDate ? format(selectedDate, "EEEE, dd MMM yyyy") : "No date selected"}</span>
+                  </p>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className='w-full '>
                 <Calendar
                   mode="single"
                   selected={selectedDate}
                   onSelect={handleDateSelect}
-                  className="rounded-md border overflow-auto"
+                  className="w-full h-full rounded-md border overflow-auto flex items-center justify-center"
                   disabled={(date) => isAfter(date, startOfDay(new Date()))}
                 />
               </CardContent>
@@ -602,7 +621,9 @@ const Attendance: React.FC = () => {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleEditAttendance('afternoon')}
+                        onClick={() => {
+                          handleEditAttendance('afternoon');
+                        }}
                         className="flex items-center gap-1"
                       >
                         <Edit className="w-3 h-3" />
@@ -648,9 +669,9 @@ const Attendance: React.FC = () => {
                             <TableRow key={record.roll_number}>
                               <TableCell className="font-medium">{record.roll_number}</TableCell>
                               <TableCell>{record.student_name}</TableCell>
-                              <TableCell>{getStatusBadge(record.morning ? 'Present' : 'Absent')}</TableCell>
-                              <TableCell>{getStatusBadge(record.afternoon ? 'Present' : 'Absent')}</TableCell>
-                              <TableCell>{getStatusBadge((record.morning && record.afternoon) ? 'Full Day Present' : ((record.morning || record.afternoon)) ? 'Partial Attendance' : 'Full Day Absent')}</TableCell>
+                              <TableCell>{getStatusBadge(record.morning ? 'Present' : isMorningHoliday ? 'Holiday' : 'Absent')}</TableCell>
+                              <TableCell>{getStatusBadge(record.afternoon ? 'Present' : isAfternoonHoliday ? 'Holiday' : 'Absent')}</TableCell>
+                              <TableCell>{getOverallStatus(record.morning, record.afternoon)}</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
@@ -663,7 +684,7 @@ const Attendance: React.FC = () => {
               // Attendance Taking View
               <>
                 {/* Stats Cards */}
-                {!isFutureDate && selectedClass && (!isPastDate || allowTakeAttendence || editingSession || isMorningHoliday || isAfternoonHoliday) && !isHoliday && (
+                {!isFutureDate && selectedClass && (!isPastDate || allowTakeAttendence || editingSession || !(isMorningHoliday && isAfternoonHoliday)) && !isHoliday && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Card>
                       <CardContent className="p-4">
@@ -842,7 +863,7 @@ const Attendance: React.FC = () => {
                             </AlertDialogContent>
                           </AlertDialog>
                           {
-                            !isSessionSubmitted(activeSession) && !isPastDate && (
+                            !isSessionSubmitted(activeSession) && !isPastDate && !(activeSession == 'morning' ? isMorningHoliday : isAfternoonHoliday) && (
                               <Button
                                 onClick={submitAttendance}
                                 className="bg-blue-600 hover:bg-blue-700"
@@ -852,7 +873,7 @@ const Attendance: React.FC = () => {
                             )
                           }
                           {
-                            isSessionSubmitted(activeSession) && isEditing != activeSession && !isPastDate && (
+                            isSessionSubmitted(activeSession) && isEditing != activeSession && !isPastDate && !(activeSession == 'morning' ? isMorningHoliday : isAfternoonHoliday) && (
 
                               <Button
                                 onClick={() => setIsEditing(activeSession)}
@@ -864,7 +885,7 @@ const Attendance: React.FC = () => {
                             )
                           }
                           {
-                            ((isSessionSubmitted(activeSession) && isEditing == activeSession) || isPastDate) && (
+                            ((isSessionSubmitted(activeSession) && isEditing == activeSession) || isPastDate) && !(activeSession == 'morning' ? isMorningHoliday : isAfternoonHoliday) && (
                               <Button
                                 onClick={() => {
                                   setIsEditing('');
@@ -898,7 +919,7 @@ const Attendance: React.FC = () => {
                         </TabsList>
 
 
-                        <TabsContent value="morning" className="mt-6">
+                        <TabsContent value="morning" className="mt-6 max-h-[27rem] overflow-auto md:px-2">
                           <div className="space-y-4">
                             {!isMorningHoliday && students && students?.map((student) => (
                               <div key={student.student_id} className="flex flex-col md:flex-row items-center justify-between p-4 border rounded-lg bg-gray-50">
@@ -957,7 +978,7 @@ const Attendance: React.FC = () => {
                           </div>
                         </TabsContent>
 
-                        <TabsContent value="afternoon" className="mt-6">
+                        <TabsContent value="afternoon" className="mt-6 max-h-[27rem] overflow-auto md:px-2">
                           <div className="space-y-4">
                             {!isAfternoonHoliday && students && students?.map((student) => (
                               <div key={student.student_id} className="flex flex-col md:flex-row  items-center justify-between p-4 border rounded-lg bg-gray-50">
@@ -1022,7 +1043,7 @@ const Attendance: React.FC = () => {
                   </Card>
                 )}
 
-                {(isFutureDate || !selectedClass || (sampleAttendanceRecords.length == 0 && isPastDate && !allowTakeAttendence && (!isMorningHoliday || !isAfternoonHoliday)) || isHoliday) && (
+                {(isFutureDate || !selectedClass || (sampleAttendanceRecords.length == 0 && isPastDate && !allowTakeAttendence && (!isMorningHoliday && !isAfternoonHoliday)) || isHoliday) && (
                   <Card className='py-[13rem]'>
                     <CardContent className="p-8 text-center">
                       <AlertCircle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
