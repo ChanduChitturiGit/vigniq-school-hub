@@ -49,6 +49,8 @@ class ExamType(models.TextChoices):
 
 class ExamCategory(models.Model):
     name = models.CharField(max_length=100)
+    class Meta:
+        db_table = 'exam_category'
 
 class Exam(models.Model):
     name = models.CharField(max_length=100)
@@ -67,25 +69,30 @@ class Exam(models.Model):
     pass_marks = models.PositiveIntegerField()
     exam_date = models.DateField(null=True)
     is_active = models.BooleanField(default=True)
-    created_by_teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
-    updated_by_teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, null=True, blank=True)
+    created_by_teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='exams_created')
+    updated_by_teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, null=True, blank=True, related_name='exams_updated')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'exam'
 
     def __str__(self):
         return f"{self.name} ({self.exam_type})"
 
 class ExamResult(models.Model):
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE)
-    student = models.ForeignKey('students.Student', on_delete=models.CASCADE)
+    student = models.ForeignKey('student.Student', on_delete=models.CASCADE)
     marks_obtained = models.DecimalField(max_digits=6, decimal_places=2)
-    updated_by_teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, null=True, blank=True)
+    created_by_teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='exam_results_created')
+    updated_by_teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, null=True, blank=True, related_name='exam_results_updated')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
 
     class Meta:
-        unique_together = [
+        db_table = 'exam_result'
+        constraints = [
             models.UniqueConstraint(fields=['exam', 'student'], name='unique_exam_student')
         ]
 

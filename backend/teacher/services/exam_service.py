@@ -3,9 +3,10 @@
 import logging
 
 from django.http import JsonResponse
+from django.db import transaction
 from psycopg2 import IntegrityError
 
-from teacher.models import Exam, ExamCategory, ExamType
+from teacher.models import Exam, ExamCategory, ExamType,ExamResult
 from core.common_modules.common_functions import CommonFunctions
 
 logger = logging.getLogger(__name__)
@@ -118,5 +119,93 @@ class OfflineExamsService:
             logger.error("Error deleting offline exam: %s", e)
             return JsonResponse({"error": "Unable to delete offline exam"}, status=500)
     
-    # def assign_marks_to_exam(self):
-    #     """"""
+    def assign_marks_to_exam(self):
+        """Assign marks to exam"""
+        try:
+            data = self.request.data
+            exam_id = data.get("exam_id")
+            student_marks = data.get("student_marks", [])
+
+            exam = Exam.objects.using(self.school_db_name).get(id=exam_id)
+
+            with transaction.atomic(using=self.school_db_name):
+                student_ids = [item["student_id"] for item in student_marks if item.get("student_id")]
+
+                existing = ExamResult.objects.using(self.school_db_name).filter(
+                    exam=exam,
+                    student_id__in=student_ids
+                ).in_bulk(field_name="student_id")
+
+                to_create = []
+                to_update = []
+
+                for item in student_marks:
+                    student_id = item.get("student_id")
+                    marks = item.get("marks")
+
+                    if not student_id or marks is None:
+                        continue
+
+                    if student_id in existing:
+                        obj = existing[student_id]
+                        obj.marks = marks
+                        obj.updated_by_teacher = self.user
+                        to_update.append(obj)
+                    else:
+                        to_create.append(
+                            ExamResult(
+                                exam=exam,
+                                student_id=student_id,
+                                marks=marks,
+                                updated_by_teacher=self.user,
+                                created_by_teacher=self.user,
+                            )
+                        )
+
+                if to_create:
+                    ExamResult.objects.using(self.school_db_name).bulk_create(to_create)
+
+                if to_update:
+                    ExamResult.objects.using(self.school_db_name).bulk_update(
+                        to_update, ["marks", "updated_by_teacher"]
+                    )
+
+            logger.info("Marks assigned successfully for exam ID %s", exam.id)
+            return JsonResponse({"message": "Marks assigned successfully"}, status=200)
+        except Exam.DoesNotExist:
+            logger.error("Exam not found while assigning marks: %s", exam_id)
+            return JsonResponse({"error": "Exam not found"}, status=404)
+        except Exception as e:
+            logger.error("Error assigning marks to exam: %s", e)
+            return JsonResponse({"error": "Unable to assign marks to exam"}, status=500)
+
+    def get_exam_details_by_id(self):
+        """Get Exam Details"""
+        try:
+            data = self.request.data
+            exam_id = data.get("exam_id")
+            exam = Exam.objects.using(self.school_db_name).select_related(
+                'subject', 'created_by_teacher', 'updated_by_teacher'
+            ).get(id=exam_id)
+
+            marks = ExamResult.objects.using(self.school_db_name).filter(exam=exam).values("student_id", "marks_obtained")
+            exam_data = {
+                "exam_id": exam.id,
+                "name": exam.name,
+                "exam_type": exam.exam_type,
+                "max_marks": exam.max_marks,
+                "pass_marks": exam.pass_marks,
+                "exam_date": exam.exam_date,
+                "subject_name": exam.subject.name,
+                "created_by": exam.created_by_teacher.full_name,
+                "updated_by": exam.updated_by_teacher.full_name if exam.updated_by_teacher else None,
+                "marks": marks
+            }
+            logger.info("Fetched exam details successfully for exam ID %s", exam_id)
+            return JsonResponse({"data": exam_data}, status=200)
+        except Exam.DoesNotExist:
+            logger.error("Exam not found while fetching details: %s", exam_id)
+            return JsonResponse({"error": "Exam not found"}, status=404)
+        except Exception as e:
+            logger.error("Error fetching exam details: %s", e)
+            return JsonResponse({"error": "Unable to fetch exam details"}, status=500)

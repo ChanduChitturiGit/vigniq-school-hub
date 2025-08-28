@@ -14,9 +14,9 @@ def load_fixture(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('teacher', '0002_populate_subjects'),
+        ('teacher', '0003_examcategory_exam_examresult'),
     ]
 
     operations = [
-        migrations.RunPython(load_fixture),
+        migrations.RunPython(load_fixture,reverse_code=migrations.RunPython.noop),
     ]

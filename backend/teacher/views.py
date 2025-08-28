@@ -6,8 +6,9 @@ from rest_framework import status
 
 from teacher.services.teacher_service import TeacherService
 from teacher.services.subject_service import SubjectService
+from teacher.services.exam_service import OfflineExamsService
 
-from core.permissions import IsSuperAdminOrAdmin
+from core.permissions import IsSuperAdminOrAdmin, IsSuperAdminOrAdminOrTeacher
 
 
 class TeacherActionView(APIView):
@@ -82,3 +83,36 @@ class SubjectActionView(APIView):
         if action == "updateSubjectById":
             return SubjectService().update_subject_by_id(request)
         return Response({"error": "Invalid PUT action"}, status=status.HTTP_400_BAD_REQUEST)
+
+class OfflineExamActionView(APIView):
+    """Offline Exam Management"""
+
+    permission_classes = [IsAuthenticated, IsSuperAdminOrAdminOrTeacher]
+
+    def get(self, request, action=None):
+
+        if action == "getExamCategories":
+            return OfflineExamsService(request).get_exam_categories()
+        elif action == "getExamDetailsById":
+            return OfflineExamsService(request).get_exam_details_by_id()
+        return Response({"error": "Invalid GET action"}, status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request, action=None):
+
+        if action == "createExam":
+            return OfflineExamsService(request).create_offline_exam()
+        elif action == "assignExamMarks":
+            return OfflineExamsService(request).assign_marks_to_exam()
+        return Response({"error": "Invalid POST action"}, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, action=None):
+
+        if action == "updateExam":
+            return OfflineExamsService(request).edit_offline_exam()
+        return Response({"error": "Invalid PUT action"}, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, action=None):
+
+        if action == "deleteExam":
+            return OfflineExamsService(request).delete_offline_exam()
+        return Response({"error": "Invalid DELETE action"}, status=status.HTTP_400_BAD_REQUEST)
