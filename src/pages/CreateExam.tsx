@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, FileText, Eye, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,9 +7,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dayjs } from "dayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import MainLayout from '@/components/Layout/MainLayout';
+import { createExam, getExamCategories } from '../services/exams'
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { format } from 'date-fns';
 
 const CreateExam: React.FC = () => {
+  const { showSnackbar } = useSnackbar();
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const className = searchParams.get('class') || '';
@@ -19,14 +29,74 @@ const CreateExam: React.FC = () => {
   const subjectId = searchParams.get('subject_id') || '';
   const schoolId = searchParams.get('school_id') || '';
   const boardId = searchParams.get('school_board_id') || '';
+  const [examCategories, setExamCategories] = useState([]);
+  const [creationDate, setCreationDate] = React.useState<Dayjs | null>(null);
   const pathData = `${subjectId}?class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
 
   const [examData, setExamData] = useState({
     name: '',
+    category: '',
+    category_id: null,
     date: '',
     totalMarks: '',
     passMarks: ''
   });
+
+
+  const getExamCategoriesList = async () => {
+    try {
+      const payload = { "school_id": userData.school_id };
+      const response = await getExamCategories(payload);
+      // console.log('Fetched Attendance Data:', response);
+      if (response && response.data) {
+        setExamCategories(response.data);
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
+  const createExamData = async () => {
+    try {
+      const payload = {
+        "school_id": userData.school_id,
+        "exam_name": examData.name,
+        "exam_category_id": examData.category_id,
+        "exam_type": "offline",
+        "exam_date": (creationDate.format("YYYY-MM-DD")),
+        "total_marks": Number(examData.totalMarks),
+        "pass_marks": Number(examData.passMarks),
+        "subject_id": Number(subjectId),
+        "class_section_id": Number(classId)
+      };
+      const response = await createExam(payload);
+      //console.log('Fetched Attendance Data:', response);
+      if (response && response.message) {
+        showSnackbar({
+          title: "Success",
+          description: response.message,
+          status: "success"
+        });
+        navigate(`/grades/exams/${pathData}`);
+      } else {
+        showSnackbar({
+          title: "⛔ Error",
+          description: "Something went wrong",
+          status: "error"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
 
   const handleInputChange = (field: string, value: string) => {
     setExamData(prev => ({
@@ -35,15 +105,36 @@ const CreateExam: React.FC = () => {
     }));
   };
 
-  const handleCreateExam = () => {
-    // Handle exam creation logic here
-    console.log('Creating exam:', examData);
-    navigate('/exams');
-  };
+  // const handleCreateExam = () => {
+  //   // Handle exam creation logic here
+  //   console.log('Creating exam:', examData);
+  //   createExamData();
+  //   //navigate('/exams');
+  // };
 
   const handleCancel = () => {
-    navigate('/exams');
+    navigate(`/grades/exams/${pathData}`);
   };
+
+  useEffect(() => {
+    getExamCategoriesList();
+  }, [])
+
+  const getCategoryId = (value: string) => {
+    const categoryData = examCategories.find((val: any) => (val.name == value));
+    const id = categoryData?.id ? categoryData.id : 0;
+    return id;
+  }
+
+  const handleCategoryChange = (value: string) => {
+    setExamData(prev => ({
+      ...prev,
+      category: value,
+      category_id: getCategoryId(value)
+    }));
+    //setErrors(prev => ({ ...prev, gender: '' }));
+  };
+
 
   return (
     <MainLayout pageTitle='Create Exam'>
@@ -88,23 +179,47 @@ const CreateExam: React.FC = () => {
                         placeholder="e.g., Mid-term Mathematics, Chapter 5 Quiz, Final Assessment"
                         value={examData.name}
                         onChange={(e) => handleInputChange('name', e.target.value)}
-                        className="w-full"
+                        className="w-full h-[3rem]"
                       />
                       <p className="text-sm text-gray-500">Choose a clear, descriptive name for your exam</p>
                     </div>
 
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Exam Category
+                      </label>
+                      <Select value={examData.category} onValueChange={handleCategoryChange}>
+                        <SelectTrigger className="w-full h-[3rem]">
+                          <SelectValue placeholder="Select a Exam Category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {examCategories.map((val, index) => (
+                            <SelectItem key={index} value={val.name}>
+                              {val.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-sm text-gray-500 mt-1">What type of exam.</p>
+                      {/* {errors.gender && <p className="text-red-500 text-xs mt-1">{errors.gender}</p>} */}
+                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="dateConducuted">Date Conducted *</Label>
-                      <Input
-                        id="dateConducuted"
-                        type="text"
-                        placeholder="mm/dd/yyyy"
-                        value={examData.date}
-                        onChange={(e) => handleInputChange('date', e.target.value)}
-                        className="w-full"
-                      />
-                      <p className="text-sm text-gray-500">When was this exam conducted?</p>
+                      <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DatePicker
+                          className="date-div w-full px-3  border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          label=""
+                          value={creationDate}
+                          onChange={(newValue) => {
+                            setCreationDate(newValue);
+                            examData.date = newValue ? newValue.format("DD-MM-YYYY") : null;
+                          }}
+                          format="DD/MM/YYYY"   // 👈 force display format
+                        />
+                      </LocalizationProvider>
                     </div>
+                    <p className="text-sm text-gray-500 mt-1">When was this exam conducted?</p>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
@@ -136,7 +251,7 @@ const CreateExam: React.FC = () => {
 
                     <div className="flex gap-3 pt-4">
                       <Button
-                        onClick={handleCreateExam}
+                        onClick={createExamData}
                         className="bg-blue-500 hover:bg-blue-600 text-white flex-1"
                         disabled={!examData.name || !examData.date || !examData.totalMarks || !examData.passMarks}
                       >
@@ -161,6 +276,10 @@ const CreateExam: React.FC = () => {
                       <div>
                         <h3 className="font-semibold text-gray-700">Exam Name</h3>
                         <p className="text-gray-900">{examData.name || 'Enter exam name...'}</p>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-700">Exam Category</h3>
+                        <p className="text-gray-900">{examData.category || 'select exam category...'}</p>
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-700">Date</h3>

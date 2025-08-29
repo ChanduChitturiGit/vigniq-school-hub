@@ -51,7 +51,7 @@ class OfflineExamsService:
 
             exam = Exam.objects.using(self.school_db_name).create(
                 name=exam_name,
-                category_id=exam_category_id,
+                exam_category_id=exam_category_id,
                 exam_type=exam_type,
                 exam_date=exam_date,
                 max_marks=max_marks,
@@ -81,7 +81,7 @@ class OfflineExamsService:
             exam = Exam.objects.using(self.school_db_name).get(id=exam_id)
 
             exam.name = data.get("exam_name", exam.name)
-            exam.category_id = data.get("exam_category_id", exam.category_id)
+            exam.exam_category_id = data.get("exam_category_id", exam.exam_category_id)
             exam.exam_date = data.get("exam_date", exam.exam_date)
             exam.max_marks = data.get("total_marks", exam.max_marks)
             exam.pass_marks = data.get("pass_marks", exam.pass_marks)
