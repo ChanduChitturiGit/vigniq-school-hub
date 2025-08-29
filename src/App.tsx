@@ -42,6 +42,9 @@ import Syllabus from './pages/Syllabus';
 import ViewLessonPlan from './pages/ViewLessonPlan';
 import Attendance from './pages/Attendance';
 import AttendanceReports from './pages/AttendanceReports';
+import CreateExam from './pages/CreateExam';
+import ExamResults from './pages/ExamResults';
+import Exams from './pages/Exams';
 
 function App() {
   return (
@@ -205,8 +208,17 @@ function App() {
           <Route path="/grades/lesson-plan/day/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}><DayLessonPlan /></ProtectedRoute>} />
           <Route path="/grades/lesson-plan/whiteboard/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}><WhiteboardTeaching /></ProtectedRoute>} />
           <Route path="/grades/lesson-plan/ai-chat/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}><AIChatLessonPlan /></ProtectedRoute>} />
+          <Route path="/grades/exams/:subjectId" element={<ProtectedRoute><Exams /></ProtectedRoute>} />
+          <Route path="/grades/create-exam/:subjectId" element={<ProtectedRoute><CreateExam /></ProtectedRoute>} />
+          <Route path="/grades/exam-results/:examId" element={<ProtectedRoute><ExamResults /></ProtectedRoute>} />
+
+
+
           <Route path="/attendance" element={<ProtectedRoute allowedRoles={['teacher']}><Attendance /></ProtectedRoute>} />
           <Route path="/attendance/reports" element={<ProtectedRoute allowedRoles={['teacher']}><AttendanceReports /></ProtectedRoute>} />
+
+
+
 
           <Route path="*" element={<NotFound />} />
         </Routes>
