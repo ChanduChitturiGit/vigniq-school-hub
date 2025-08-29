@@ -1,0 +1,19 @@
+[
+  { "model": "teacher.examcategory", "pk": 1, "fields": { "name": "Slip Test" } },
+  { "model": "teacher.examcategory", "pk": 2, "fields": { "name": "Unit Test" } },
+  { "model": "teacher.examcategory", "pk": 3, "fields": { "name": "Quarterly Exam" } },
+  { "model": "teacher.examcategory", "pk": 4, "fields": { "name": "Half-Yearly Exam" } },
+  { "model": "teacher.examcategory", "pk": 5, "fields": { "name": "Pre-Final Exam" } },
+  { "model": "teacher.examcategory", "pk": 6, "fields": { "name": "Final Exam" } },
+  { "model": "teacher.examcategory", "pk": 7, "fields": { "name": "Class Test" } },
+  { "model": "teacher.examcategory", "pk": 8, "fields": { "name": "Mid-Term Exam" } },
+  { "model": "teacher.examcategory", "pk": 9, "fields": { "name": "Annual Exam" } },
+  { "model": "teacher.examcategory", "pk": 10, "fields": { "name": "Monthly Test" } },
+  { "model": "teacher.examcategory", "pk": 11, "fields": { "name": "Weekly Test" } },
+  { "model": "teacher.examcategory", "pk": 12, "fields": { "name": "Open Book Test" } },
+  { "model": "teacher.examcategory", "pk": 13, "fields": { "name": "Practical Exam" } },
+  { "model": "teacher.examcategory", "pk": 14, "fields": { "name": "Oral Exam" } },
+  { "model": "teacher.examcategory", "pk": 15, "fields": { "name": "Project/Assignment" } },
+  { "model": "teacher.examcategory", "pk": 16, "fields": { "name": "Surprise Test" } },
+  { "model": "teacher.examcategory", "pk": 17, "fields": { "name": "Other" } }
+]
