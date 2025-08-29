@@ -23,7 +23,8 @@ import {
   TrendingUp,
   Plus,
   UserCheck,
-  ClipboardCheck
+  ClipboardCheck,
+  FileCheck
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -156,6 +157,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
           ]
         },
         { path: '/grades', icon: Award, label: 'Grades', roles: ['teacher'] },
+        { path: '/exams', icon: FileCheck, label: 'Exams', roles: ['teacher'] },
         { path: '/attendance', icon: ClipboardCheck, label: 'Attendance', roles: ['teacher'] },
         { path: '/view-ebooks', icon: BookOpen, label: 'E-Books', roles: ['teacher'] }
       ],
