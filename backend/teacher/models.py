@@ -47,8 +47,14 @@ class ExamType(models.TextChoices):
     OFFLINE = "offline", "Offline"
     ONLINE = "online", "Online"
 
+class ExamCategory(models.Model):
+    name = models.CharField(max_length=100)
+    class Meta:
+        db_table = 'exam_category'
+
 class Exam(models.Model):
-    name = models.CharField(max_length=100)  # e.g., "Mid Term", "Finals"
+    name = models.CharField(max_length=100)
+    exam_category = models.ForeignKey(ExamCategory, on_delete=models.CASCADE)
     exam_type = models.CharField(
         max_length=10, choices=ExamType.choices, default=ExamType.OFFLINE
     )
@@ -58,29 +64,37 @@ class Exam(models.Model):
     class_section = models.ForeignKey(
         'classes.SchoolSection', on_delete=models.CASCADE
     )
-    start_date = models.DateField()
-    end_date = models.DateField()
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    max_marks = models.PositiveIntegerField()
+    pass_marks = models.PositiveIntegerField()
+    exam_date = models.DateField(null=True)
+    is_active = models.BooleanField(default=True)
+    created_by_teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='exams_created')
+    updated_by_teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, null=True, blank=True, related_name='exams_updated')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'exam'
 
     def __str__(self):
         return f"{self.name} ({self.exam_type})"
 
-
-class ExamSubject(models.Model):
-    exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name="subjects")
-    subject = models.ForeignKey('academics.Subject', on_delete=models.CASCADE)
-    max_marks = models.PositiveIntegerField()
-
-    def __str__(self):
-        return f"{self.exam.name} - {self.subject.name}"
-
-
 class ExamResult(models.Model):
-    exam_subject = models.ForeignKey(ExamSubject, on_delete=models.CASCADE)
-    student = models.ForeignKey('students.Student', on_delete=models.CASCADE)
+    exam = models.ForeignKey(Exam, on_delete=models.CASCADE)
+    student = models.ForeignKey('student.Student', on_delete=models.CASCADE)
     marks_obtained = models.DecimalField(max_digits=6, decimal_places=2)
+    created_by_teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='exam_results_created')
+    updated_by_teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, null=True, blank=True, related_name='exam_results_updated')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
 
     class Meta:
-        unique_together = ('exam_subject', 'student')
+        db_table = 'exam_result'
+        constraints = [
+            models.UniqueConstraint(fields=['exam', 'student'], name='unique_exam_student')
+        ]
 
     def __str__(self):
-        return f"{self.student} - {self.exam_subject}: {self.marks_obtained}"
+        return f"{self.student} - {self.exam}: {self.marks_obtained}"
