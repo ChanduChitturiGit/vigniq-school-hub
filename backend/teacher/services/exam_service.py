@@ -2,6 +2,7 @@
 
 import logging
 
+from django.db.models import Avg, Count, Case, When, Value, F, FloatField, Q
 from django.http import JsonResponse
 from django.db import transaction
 from psycopg2 import IntegrityError
@@ -41,7 +42,7 @@ class OfflineExamsService:
             data = self.request.data
             exam_name = data.get("exam_name")
             exam_category_id = data.get("exam_category_id")
-            exam_type = data.get("exam_type","offline"),
+            exam_type = data.get("exam_type","offline")
             exam_date = data.get("exam_date")
             max_marks = data.get("total_marks")
             pass_marks = data.get("pass_marks")
@@ -64,12 +65,12 @@ class OfflineExamsService:
             )
 
             logger.info("Offline exam created successfully with ID %s", exam.id)
-            return JsonResponse({"data": {"exam_id": exam.id}})
+            return JsonResponse({"message": "Offline exam created successfully"}, status=201)
         except IntegrityError as e:
             logger.error("Invalid foreign key while creating exam: %s", e)
             return JsonResponse({"error": "Invalid related ID provided"}, status=400)
         except Exception as e:
-            logger.error("Error creating offline exam: %s", e)
+            logger.exception("Error creating offline exam: %s", e)
             return JsonResponse({"error": "Unable to create offline exam"},
                                 status=500)
     
@@ -209,3 +210,69 @@ class OfflineExamsService:
         except Exception as e:
             logger.error("Error fetching exam details: %s", e)
             return JsonResponse({"error": "Unable to fetch exam details"}, status=500)
+    
+    def get_exams_list(self):
+        """Get Exams List"""
+        try:
+            data = self.request.GET
+            class_section_id = data.get("class_section_id")
+            subject_id = data.get("subject_id")
+            academic_year_id = data.get("academic_year_id", 1)
+
+            if not any([class_section_id, subject_id, academic_year_id]):
+                return JsonResponse({"error": "Mandatory fields are required"}, status=400)
+
+            exams = Exam.objects.using(self.school_db_name).filter(
+                class_section_id=class_section_id,
+                subject_id=subject_id,
+                academic_year_id=academic_year_id,
+                is_active=True
+            )
+
+            if not exams.exists():
+                return JsonResponse({"data": []}, status=200)
+
+            exam_results = (
+                ExamResult.objects.using(self.school_db_name)
+                .filter(exam_id__in=exams.values_list("id", flat=True))
+                .values("exam_id")
+                .annotate(
+                    average_marks=Avg("marks_obtained"),
+                    student_count=Count("student_id"),
+                    passed_students=Count(
+                        "student_id",
+                        filter=Q(marks_obtained__gte=F("exam__pass_marks"))
+                    ),
+                )
+                .annotate(
+                    pass_percentage=Case(
+                        When(student_count=0, then=Value(0)),
+                        default=F("passed_students") * 100.0 / F("student_count"),
+                        output_field=FloatField(),
+                    )
+                )
+            )
+
+            exam_results_map = {res["exam_id"]: res for res in exam_results}
+
+            output = []
+            for exam in exams:
+                res = exam_results_map.get(exam.id, {})
+                output.append({
+                    "exam_id": exam.id,
+                    "exam_name": exam.name,
+                    "exam_type": exam.exam_type,
+                    "exam_date": exam.exam_date,
+                    "total_marks": exam.max_marks,
+                    "pass_marks": exam.pass_marks,
+                    "average_marks": res.get("average_marks", 0),
+                    "student_count": res.get("student_count", 0),
+                    "passed_students": res.get("passed_students", 0),
+                    "pass_percentage": res.get("pass_percentage", 0),
+                })
+
+            return JsonResponse({"data": output}, status=200)
+
+        except Exception as e:
+            logger.error("Error fetching exams list: %s", e)
+            return JsonResponse({"error": "Unable to fetch exams list"}, status=500)
