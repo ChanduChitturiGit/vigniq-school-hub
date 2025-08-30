@@ -1,6 +1,5 @@
-
-import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Edit, Users, TrendingUp, Award, BarChart3, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,7 +26,15 @@ interface ExamDetails {
 const ExamResults: React.FC = () => {
   const navigate = useNavigate();
   const { examId } = useParams();
+  const [searchParams] = useSearchParams();
   const [isEditing, setIsEditing] = useState(false);
+
+  // Check if edit=true in query params to enable editing by default
+  useEffect(() => {
+    if (searchParams.get('edit') === 'true') {
+      setIsEditing(true);
+    }
+  }, [searchParams]);
 
   // Sample exam details
   const [examDetails] = useState<ExamDetails>({

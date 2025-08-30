@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Calendar, Users, TrendingUp, Plus, Eye } from 'lucide-react';
+import { Calendar, Users, TrendingUp, Plus, Eye, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -15,12 +15,13 @@ interface Exam {
   averageScore: number;
   passRate: number;
   type: 'offline' | 'online';
+  marksSubmitted: boolean; // New field to track if marks are submitted
 }
 
 const Exams: React.FC = () => {
   const navigate = useNavigate();
   
-  // Sample exam data
+  // Sample exam data with marksSubmitted field
   const [exams] = useState<Exam[]>([
     {
       id: '1',
@@ -31,7 +32,8 @@ const Exams: React.FC = () => {
       studentsCount: 3,
       averageScore: 84,
       passRate: 100,
-      type: 'offline'
+      type: 'offline',
+      marksSubmitted: true
     },
     {
       id: '2',
@@ -42,7 +44,8 @@ const Exams: React.FC = () => {
       studentsCount: 3,
       averageScore: 44,
       passRate: 100,
-      type: 'offline'
+      type: 'offline',
+      marksSubmitted: true
     },
     {
       id: '3',
@@ -53,23 +56,48 @@ const Exams: React.FC = () => {
       studentsCount: 3,
       averageScore: 65,
       passRate: 100,
-      type: 'online'
+      type: 'online',
+      marksSubmitted: false
     }
   ]);
 
   const offlineExams = exams.filter(exam => exam.type === 'offline');
   const onlineExams = exams.filter(exam => exam.type === 'online');
 
+  const handleExamAction = (exam: Exam) => {
+    if (exam.marksSubmitted) {
+      // Navigate to view results
+      navigate(`/exam-results/${exam.id}`);
+    } else {
+      // Navigate to submit marks (which is the exam results page with editing enabled by default)
+      navigate(`/exam-results/${exam.id}?edit=true`);
+    }
+  };
+
   const renderExamCard = (exam: Exam) => (
     <div key={exam.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">{exam.name}</h3>
         <Button
-          onClick={() => navigate(`/exam-results/${exam.id}`)}
-          className="bg-blue-500 hover:bg-blue-600 text-white"
+          onClick={() => handleExamAction(exam)}
+          className={`${
+            exam.marksSubmitted 
+              ? 'bg-green-500 hover:bg-green-600' 
+              : 'bg-blue-500 hover:bg-blue-600'
+          } text-white`}
           size="sm"
         >
-          View Results
+          {exam.marksSubmitted ? (
+            <>
+              <Eye className="w-4 h-4 mr-1" />
+              View Results
+            </>
+          ) : (
+            <>
+              <Edit className="w-4 h-4 mr-1" />
+              Submit Marks
+            </>
+          )}
         </Button>
       </div>
       
@@ -91,25 +119,29 @@ const Exams: React.FC = () => {
         <div className="bg-green-50 rounded-lg p-4 text-center">
           <div className="text-2xl font-bold text-green-600">{exam.passMarks}</div>
           <div className="text-sm text-gray-600">Pass Marks</div>
-          <div className="flex items-center justify-center gap-1 mt-2 text-xs text-gray-500">
-            <TrendingUp className="w-3 h-3" />
-            <span>Avg. {exam.averageScore}</span>
-          </div>
+          {exam.marksSubmitted && (
+            <div className="flex items-center justify-center gap-1 mt-2 text-xs text-gray-500">
+              <TrendingUp className="w-3 h-3" />
+              <span>Avg. {exam.averageScore}</span>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="mt-4">
-        <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
-          <span>Pass Rate</span>
-          <span>{exam.passRate}%</span>
+      {exam.marksSubmitted && (
+        <div className="mt-4">
+          <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
+            <span>Pass Rate</span>
+            <span>{exam.passRate}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className="bg-green-500 h-2 rounded-full" 
+              style={{ width: `${exam.passRate}%` }}
+            ></div>
+          </div>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div 
-            className="bg-green-500 h-2 rounded-full" 
-            style={{ width: `${exam.passRate}%` }}
-          ></div>
-        </div>
-      </div>
+      )}
     </div>
   );
 
