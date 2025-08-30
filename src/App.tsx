@@ -209,8 +209,8 @@ function App() {
           <Route path="/grades/lesson-plan/whiteboard/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}><WhiteboardTeaching /></ProtectedRoute>} />
           <Route path="/grades/lesson-plan/ai-chat/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}><AIChatLessonPlan /></ProtectedRoute>} />
           <Route path="/grades/exams/:subjectId" element={<ProtectedRoute><Exams /></ProtectedRoute>} />
-          <Route path="/grades/create-exam/:subjectId" element={<ProtectedRoute><CreateExam /></ProtectedRoute>} />
-          <Route path="/grades/exam-results/:examId" element={<ProtectedRoute><ExamResults /></ProtectedRoute>} />
+          <Route path="/grades/exams/create-exam/:subjectId" element={<ProtectedRoute><CreateExam /></ProtectedRoute>} />
+          <Route path="/grades/exams/exam-results/:examId" element={<ProtectedRoute><ExamResults /></ProtectedRoute>} />
 
 
 

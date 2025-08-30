@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Edit, Users, TrendingUp, Award, BarChart3, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import MainLayout from '@/components/Layout/MainLayout';
+import { getExamDetailsById, submitMarks } from '../services/exams'
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
+import { getClassesById, editClass } from '../services/class'
 
 interface StudentResult {
   id: string;
@@ -18,14 +20,17 @@ interface StudentResult {
 }
 
 interface ExamDetails {
-  id: string;
+  exam_id: string;
   name: string;
-  date: string;
-  totalMarks: number;
-  passMarks: number;
+  exam_date: string;
+  max_marks: number;
+  pass_marks: number;
+  subject_name: string;
 }
 
 const ExamResults: React.FC = () => {
+  const { showSnackbar } = useSnackbar();
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const navigate = useNavigate();
   const { examId } = useParams();
   const [isEditing, setIsEditing] = useState(false);
@@ -41,16 +46,17 @@ const ExamResults: React.FC = () => {
 
 
   // Sample exam details
-  const [examDetails] = useState<ExamDetails>({
-    id: examId || '1',
+  const [examDetails, setExamDetails] = useState<any>({
+    exam_id: examId || '1',
     name: 'Mid-term Mathematics',
-    date: 'January 15, 2024',
-    totalMarks: 100,
-    passMarks: 40
+    exam_date: 'January 15, 2024',
+    max_marks: 100,
+    pass_marks: 40,
+    subject_name: 'Maths'
   });
 
   // Sample student results
-  const [studentResults, setStudentResults] = useState<StudentResult[]>([
+  const [studentResults, setStudentResults] = useState<any>([
     {
       id: '1',
       name: 'John Smith',
@@ -86,12 +92,12 @@ const ExamResults: React.FC = () => {
 
   const handleMarksChange = (studentId: string, newMarks: string) => {
     const marks = parseInt(newMarks) || 0;
-    const percentage = Math.round((marks / examDetails.totalMarks) * 100);
-    const result = marks >= examDetails.passMarks ? 'PASS' : 'FAIL';
+    const percentage = Math.round((marks / examDetails.max_marks) * 100);
+    const result = marks >= examDetails.pass_marks ? 'PASS' : 'FAIL';
 
     setStudentResults(prev =>
       prev.map(student =>
-        student.id === studentId
+        student.student_id === studentId
           ? { ...student, marks, percentage, result }
           : student
       )
@@ -100,7 +106,96 @@ const ExamResults: React.FC = () => {
 
   const handleEditToggle = () => {
     setIsEditing(!isEditing);
+    submitMarksData();
   };
+
+  // Check if edit=true in query params to enable editing by default
+  useEffect(() => {
+    getExamData();
+    if (searchParams.get('edit') === 'true') {
+      setIsEditing(true);
+    }
+  }, [searchParams]);
+
+  const getExamData = async () => {
+    try {
+      const payload = {
+        "school_id": userData.school_id,
+        "subject_id": Number(subjectId),
+        "class_section_id": Number(classId),
+        "exam_id": Number(examId)
+      };
+      const response = await getExamDetailsById(payload);
+      console.log('Fetched Attendance Data:', response);
+      if (response && response.data) {
+        //getExamDetailsById(response.data);
+        setExamDetails(response.data);
+
+        if (response.data?.marks.length == 0) {
+          getStudents();
+        }
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
+
+
+  const getStudents = async () => {
+    if (userData && userData.role && userData.role == 'superadmin') {
+      userData.school_id = localStorage.getItem('current_school_id');
+    }
+    const response = await getClassesById(Number(classId), userData.school_id);
+    if (response && response.class) {
+      console.log('class', response.class);
+      setStudentResults(response.class.studends_list);
+
+    }
+  }
+
+  const submitMarksData = async () => {
+    try {
+      const payload = {
+        "school_id": userData.school_id,
+        "exam_id": Number(examId),
+        "student_marks": studentResults.map((val) => {
+          return {
+            student_id: val.student_id,
+            student_name: val.student_name,
+            marks: val.marks
+          }
+        })
+      };
+      const response = await submitMarks(payload);
+      console.log('Fetched Attendance Data:', response);
+      if (response && response.meessage) {
+        //getExamDetailsById(response.data);
+        //setExamDetails(response.data);
+        showSnackbar({
+          title: "Success",
+          description: `${response.meessage}`,
+          status: "success"
+        });
+      } else {
+        showSnackbar({
+          title: "⛔ Error",
+          description: "Something went wrong",
+          status: "error"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
 
   return (
     <MainLayout pageTitle='Exam Results'>
@@ -118,9 +213,9 @@ const ExamResults: React.FC = () => {
 
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">{examDetails.name}</h1>
+            <h1 className="text-2xl font-bold text-gray-800">{examDetails.name} - {examDetails.subject_name}</h1>
             <p className="text-gray-600 mt-1">
-              {examDetails.date} • {examDetails.totalMarks} Total Marks • {examDetails.passMarks} Pass Marks
+              {examDetails.exam_date} • {examDetails.max_marks} Total Marks • {examDetails.pass_marks} Pass Marks
             </p>
           </div>
           <Button
@@ -153,7 +248,7 @@ const ExamResults: React.FC = () => {
                 <TrendingUp className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-gray-900">{averageScore}</div>
+                <div className="text-2xl font-bold text-gray-900">{averageScore > 0 ? averageScore : 0}</div>
                 <div className="text-sm text-gray-600">Average Score</div>
               </div>
             </CardContent>
@@ -207,16 +302,16 @@ const ExamResults: React.FC = () => {
                   </TableHeader>
                   <TableBody>
                     {studentResults.map((student, index) => (
-                      <TableRow key={student.id}>
+                      <TableRow key={student.student_id}>
                         <TableCell>
                           <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                            {index + 1}
+                            {student.roll_number}
                           </div>
                         </TableCell>
                         <TableCell>
                           <div>
-                            <div className="font-medium">{student.name}</div>
-                            <div className="text-sm text-gray-500">ID: {student.studentId}</div>
+                            <div className="font-medium">{student.student_name}</div>
+                            {/* <div className="text-sm text-gray-500">ID: {student.student_name}</div> */}
                           </div>
                         </TableCell>
                         <TableCell>
@@ -225,32 +320,44 @@ const ExamResults: React.FC = () => {
                               <Input
                                 type="number"
                                 value={student.marks}
-                                onChange={(e) => handleMarksChange(student.id, e.target.value)}
-                                className="w-20"
+                                onChange={(e) => handleMarksChange(student.student_id, e.target.value)}
+                                className={`w-20`}
                                 min="0"
-                                max={examDetails.totalMarks}
+                                max={examDetails.max_marks}
+                                autoFocus={index === 0}
                               />
-                              <span className="text-sm text-gray-500">/ {examDetails.totalMarks}</span>
+                              <span className="text-sm text-gray-500">/ {examDetails.max_marks}</span>
                             </div>
                           ) : (
-                            <span>{student.marks} / {examDetails.totalMarks}</span>
+                            <span>{student.marks} / {examDetails.max_marks}</span>
                           )}
                         </TableCell>
                         <TableCell>
-                          <span className={student.percentage >= 80 ? 'text-green-600 font-medium' :
-                            student.percentage >= 60 ? 'text-blue-600 font-medium' :
-                              student.percentage >= 40 ? 'text-yellow-600 font-medium' :
-                                'text-red-600 font-medium'}>
-                            {student.percentage}%
-                          </span>
+                          {
+                            student.percentage && (
+                              <>
+                                <span className={student.percentage >= 80 ? 'text-green-600 font-medium' :
+                                  student.percentage >= 60 ? 'text-blue-600 font-medium' :
+                                    student.percentage >= 40 ? 'text-yellow-600 font-medium' :
+                                      'text-red-600 font-medium'}>
+                                  {student.percentage}%
+                                </span>
+                              </>
+                            )
+                          }
+
                         </TableCell>
                         <TableCell>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${student.result === 'PASS'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                            }`}>
-                            {student.result}
-                          </span>
+                          {
+                            student.result && (
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${student.result === 'PASS'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                                }`}>
+                                {student.result}
+                              </span>
+                            )
+                          }
                         </TableCell>
                       </TableRow>
                     ))}
@@ -294,15 +401,15 @@ const ExamResults: React.FC = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Highest</span>
-                    <span className="font-medium">{highestScore}</span>
+                    <span className="font-medium">{highestScore > 0 ? highestScore : 0}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Lowest</span>
-                    <span className="font-medium">{lowestScore}</span>
+                    <span className="font-medium">{lowestScore > 0 ? lowestScore : 0}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Average</span>
-                    <span className="font-medium">{averageScore}</span>
+                    <span className="font-medium">{averageScore > 0 ? averageScore : 0}</span>
                   </div>
                 </div>
               </CardContent>
