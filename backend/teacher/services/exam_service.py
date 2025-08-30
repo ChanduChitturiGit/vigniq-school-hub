@@ -183,13 +183,14 @@ class OfflineExamsService:
     def get_exam_details_by_id(self):
         """Get Exam Details"""
         try:
-            data = self.request.data
+            data = self.request.GET
             exam_id = data.get("exam_id")
             exam = Exam.objects.using(self.school_db_name).select_related(
                 'subject', 'created_by_teacher', 'updated_by_teacher'
             ).get(id=exam_id)
 
             marks = ExamResult.objects.using(self.school_db_name).filter(exam=exam).values("student_id", "marks_obtained")
+
             exam_data = {
                 "exam_id": exam.id,
                 "name": exam.name,
@@ -200,7 +201,7 @@ class OfflineExamsService:
                 "subject_name": exam.subject.name,
                 "created_by": exam.created_by_teacher.full_name,
                 "updated_by": exam.updated_by_teacher.full_name if exam.updated_by_teacher else None,
-                "marks": marks
+                "marks": list(marks)
             }
             logger.info("Fetched exam details successfully for exam ID %s", exam_id)
             return JsonResponse({"data": exam_data}, status=200)
