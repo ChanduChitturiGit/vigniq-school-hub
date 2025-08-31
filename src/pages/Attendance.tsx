@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Users, Clock, CheckCircle, XCircle, AlertCircle, FileText, Edit, ArrowLeft, MoveLeft, Loader2 } from 'lucide-react';
+import { Users, Clock, CheckCircle, XCircle, AlertCircle, FileText, Edit, ArrowLeft, MoveLeft, Loader2, Download } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 import { format, isSameDay, isAfter, startOfDay, set } from 'date-fns';
@@ -27,6 +27,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '../components/ui/alert-dialog';
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
 interface Student {
   student_id: string;
@@ -91,6 +93,10 @@ const Attendance: React.FC = () => {
   });
   const [isMorningHoliday, setIsMorningHoliday] = useState(false);
   const [isAfternoonHoliday, setIsAfternoonHoliday] = useState(false);
+  const [downloadForm, setDownloadForm] = useState({
+    type: 'daily',
+    date: null,
+  });
 
 
   // Sample data - in real app this would come from API
@@ -305,7 +311,7 @@ const Attendance: React.FC = () => {
       } else {
         response = await markAsHoiday(requestData);
       }
-      console.log('Holday is marked Attendance Response:', response);
+      //console.log('Holday is marked Attendance Response:', response);
       if (response && response.message) {
         showSnackbar({
           title: "Success",
@@ -480,7 +486,7 @@ const Attendance: React.FC = () => {
     const afternoonCheck = (afternoon || isAfternoonHoliday);
     if (morningCheck && afternoonCheck) {
       return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Full Day Present</Badge>;
-    } else if (morningCheck || afternoonCheck) {
+    } else if ((morningCheck || afternoonCheck) && !(isMorningHoliday || isAfternoonHoliday)) {
       return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Partial Attendance</Badge>;
     } else {
       return <Badge variant="destructive">Full Day Absent</Badge>;
@@ -510,6 +516,94 @@ const Attendance: React.FC = () => {
       sessionData: value,
       session: value == 'Full Day' ? 'F' : value == 'Morning Session' ? 'M' : 'A'
     }))
+  }
+
+
+  const downloadExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Attendance");
+
+    await getPastAttendenceDataList();
+
+
+    // Header row
+    const headerRow = [
+      "Roll No",
+      "Student Name",
+      "Morning",
+      "Afternoon",
+      "Overall",
+    ];
+
+    const header = worksheet.addRow(headerRow);
+
+    // Style header
+    header.eachCell((cell) => {
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "4472C4" }, // Blue shade
+      };
+      cell.font = {
+        color: { argb: "FFFFFF" }, // White text
+        bold: true,
+      };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+    });
+
+    // Attendance Rows
+    sampleAttendanceRecords.forEach((student) => {
+      let morningStatus = isMorningHoliday ? "Holiday" : student.morning ? "Present" : "Absent";
+      let afternoonStatus = isAfternoonHoliday ? "Holiday" : student.afternoon ? "Present" : "Absent";
+
+      let overall =
+        morningStatus === "Holiday" && afternoonStatus === "Holiday"
+          ? "Holiday"
+          : (morningStatus === "Present" && afternoonStatus === "Present")
+            ? "Present"
+            : "Partial";
+
+      const row = worksheet.addRow([
+        student.roll_number,
+        student.student_name,
+        morningStatus,
+        afternoonStatus,
+        overall,
+      ]);
+      // Apply colors to Morning, Afternoon, and Overall columns
+      [3, 4, 5].forEach((colIndex) => {
+        const cell = row.getCell(colIndex);
+        if (cell.value === "Present") {
+          cell.font = { color: { argb: "008000" }, bold: true }; // Green
+        } else if (cell.value === "Absent") {
+          cell.font = { color: { argb: "FF0000" }, bold: true }; // Red
+        } else if (cell.value === "Partial") {
+          cell.font = { color: { argb: "FFA500" }, bold: true }; // Orange/Yellow
+        } else if (cell.value === "Holiday") {
+          cell.font = { color: { argb: "808080" }, italic: true }; // Gray
+        }
+      });
+    });
+
+
+
+    // Adjust column widths
+    worksheet.columns = [
+      { width: 15 },
+      { width: 25 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+    ];
+
+    // Generate and download file
+    const buffer = await workbook.xlsx.writeBuffer();
+    const fileName = `Attendance_${selectedClass.replace(/\s+/g, '')}_${format(selectedDate, 'dd-MM-yyyy')}.xlsx`;
+    saveAs(new Blob([buffer]), fileName);
+  };
+
+  const statConditionCheck = () => {
+    return ((sampleAttendanceRecords.length != 0) || (!isPastDate && !isFutureDate && students.length>0)) ;
   }
 
 
@@ -560,8 +654,8 @@ const Attendance: React.FC = () => {
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle>Select Class</CardTitle>
+              <CardHeader >
+                <CardTitle className='text-lg'>Select Class</CardTitle>
               </CardHeader>
               <CardContent>
                 <Select value={selectedClass} onValueChange={handleClassChange}>
@@ -576,9 +670,21 @@ const Attendance: React.FC = () => {
                     ))}
                   </SelectContent>
                 </Select>
+                {
+                  (statConditionCheck()) && (
+                    <div className='w-full mt-4 flex justify-center'>
+                      <button className="px-4 py-3 flex items-center gap-2 bg-blue-500 text-white px-2 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                        onClick={downloadExcel}>
+                        <Download />
+                        Download Daily Report
+                      </button>
+                    </div>
+                  )
+                }
               </CardContent>
             </Card>
           </div>
+
 
           {/* Right Panel - Dynamic Content */}
           <div className="lg:col-span-2 space-y-6">
@@ -591,7 +697,7 @@ const Attendance: React.FC = () => {
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                       <CardTitle className="text-lg">Morning Session</CardTitle>
-                      <Button
+                      {/* <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleEditAttendance('morning')}
@@ -599,7 +705,7 @@ const Attendance: React.FC = () => {
                       >
                         <Edit className="w-3 h-3" />
                         Edit
-                      </Button>
+                      </Button> */}
                     </CardHeader>
                     <CardContent>
                       <div className="flex justify-between items-center">
@@ -618,7 +724,7 @@ const Attendance: React.FC = () => {
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                       <CardTitle className="text-lg">Afternoon Session</CardTitle>
-                      <Button
+                      {/* <Button
                         size="sm"
                         variant="outline"
                         onClick={() => {
@@ -628,7 +734,7 @@ const Attendance: React.FC = () => {
                       >
                         <Edit className="w-3 h-3" />
                         Edit
-                      </Button>
+                      </Button> */}
                     </CardHeader>
                     <CardContent>
                       <div className="flex justify-between items-center">
@@ -648,8 +754,17 @@ const Attendance: React.FC = () => {
                 {/* Detailed Attendance Report */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className='text-md md:text-lg'>
-                      Attendance Report for {classes.find(c => c.id === selectedClass)?.name} - {format(selectedDate, 'E MMM dd yyyy')}
+                    <CardTitle className='flex flex-col md:flex-row justify-between text-md md:text-lg'>
+                      <span>Attendance Report for {classes.find(c => c.id === selectedClass)?.name} - {format(selectedDate, 'E MMM dd yyyy')}</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEditAttendance('morning')}
+                        className="flex items-center gap-1"
+                      >
+                        <Edit className="w-3 h-3" />
+                        Edit
+                      </Button>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>

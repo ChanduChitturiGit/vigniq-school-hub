@@ -62,7 +62,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
   const schoolName = userData?.school_name ?? '';
 
   // Check if we're in a subject-specific context
-  const isInSubjectContext = location.pathname.includes('/grades/syllabus') || location.pathname.includes('/grades/progress/')  || location.pathname.includes('/grades/lesson-plan');
+  const isInSubjectContext = location.pathname.includes('/grades/syllabus') || location.pathname.includes('/grades/progress/')  || location.pathname.includes('/grades/lesson-plan') || location.pathname.includes('/grades/exams');
 
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
@@ -85,11 +85,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
   const getSubjectSpecificMenuItems = (): MenuItem[] => {
     const baseSubjectPath = `/grades/syllabus/${pathData}`;
     const progressPath = `/grades/progress/${pathData}`;
+    const examsPath = `/grades/exams/${pathData}`;
 
     return [
       { path: '/grades', icon: Award, label: 'Grades', roles: ['teacher'] },
       { path: baseSubjectPath, icon: BookOpen, label: 'Syllabus', roles: ['teacher'] },
-      { path: progressPath, icon: TrendingUp, label: 'Progress', roles: ['teacher'] }
+      { path: progressPath, icon: TrendingUp, label: 'Progress', roles: ['teacher'] },
+       { path: examsPath, icon: FileCheck, label: 'Exams', roles: ['teacher'] },
     ];
   };
 
@@ -157,7 +159,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
           ]
         },
         { path: '/grades', icon: Award, label: 'Grades', roles: ['teacher'] },
-        { path: '/exams', icon: FileCheck, label: 'Exams', roles: ['teacher'] },
         { path: '/attendance', icon: ClipboardCheck, label: 'Attendance', roles: ['teacher'] },
         { path: '/view-ebooks', icon: BookOpen, label: 'E-Books', roles: ['teacher'] }
       ],

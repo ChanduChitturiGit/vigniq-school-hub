@@ -47,11 +47,15 @@ class SyllabusService:
                                 status=status.HTTP_400_BAD_REQUEST)
             school_db_name = CommonFunctions.get_school_db_name(school_id)
 
+            school_section_obj = SchoolSection.objects.using(school_db_name).get(
+                id=class_number_id
+            )
+
             chapters = SchoolChapter.objects.using(school_db_name).filter(
                 subject_id=subject_id,
                 school_board_id=school_board_id,
                 academic_year_id=academic_year_id,
-                class_number_id=class_number_id
+                class_number_id=school_section_obj.class_instance_id
             ).order_by('chapter_number')
             chapters_list = []
 
@@ -66,7 +70,10 @@ class SyllabusService:
             logger.info("Chapters fetched successfully.")
             return Response({"data": chapters_list},
                             status=status.HTTP_200_OK)
-
+        except SchoolSection.DoesNotExist:
+            logger.error("School section not found.")
+            return Response({"error": "School section not found."},
+                            status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             logger.error(f"Error fetching chapters: {e}")
             return Response({"error": "Failed to fetch chapters."},
