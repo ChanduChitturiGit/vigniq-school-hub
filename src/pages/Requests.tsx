@@ -209,7 +209,7 @@ const Requests: React.FC = () => {
   return (
     <MainLayout pageTitle="Support Responses">
       <div className="space-y-6">
-        <Breadcrumb items={breadcrumbItems} />
+        {/* <Breadcrumb items={breadcrumbItems} /> */}
         
         <div className="flex items-center gap-3">
           <div className="p-2 bg-purple-100 rounded-lg">
