@@ -18,7 +18,10 @@ import {
   Edit3,
   CheckCircle2,
   Save,
-  X
+  X,
+  Eye,
+  MessageSquare,
+  RefreshCw
 } from 'lucide-react';
 
 interface Topic {
@@ -33,6 +36,18 @@ interface Prerequisite {
   explanation: string;
 }
 
+interface LessonPlanDay {
+  day: number;
+  status: string;
+  date?: string;
+}
+
+interface LessonPlan {
+  id: number;
+  days: LessonPlanDay[];
+  totalDays: number;
+}
+
 const ChapterDetails: React.FC = () => {
   const { chapterId } = useParams();
   const [searchParams] = useSearchParams();
@@ -45,6 +60,7 @@ const ChapterDetails: React.FC = () => {
 
   const [topics, setTopics] = useState<Topic[]>([]);
   const [prerequisites, setPrerequisites] = useState<Prerequisite[]>([]);
+  const [lessonPlan, setLessonPlan] = useState<LessonPlan | null>(null);
   const [showAddTopic, setShowAddTopic] = useState(false);
   const [showAddPrerequisite, setShowAddPrerequisite] = useState(false);
   const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
@@ -82,27 +98,28 @@ const ChapterDetails: React.FC = () => {
       id: 3,
       topic: 'Highest Common Factor (HCF) and Least Common Multiple (LCM)',
       explanation: 'Understanding HCF and LCM is essential for simplifying fractions and understanding rational number properties.'
-    },
-    {
-      id: 4,
-      topic: 'Number Systems (Natural, Integers, Rational, Irrational)',
-      explanation: 'Basic understanding of different number systems and their properties is required before studying real numbers.'
-    },
-    {
-      id: 5,
-      topic: 'Prime Factorization',
-      explanation: 'The ability to express numbers as products of prime factors is crucial for various proofs in this chapter.'
-    },
-    {
-      id: 6,
-      topic: 'Prime and Composite Numbers',
-      explanation: 'Understanding the difference between prime and composite numbers and their properties.'
     }
   ];
+
+  const sampleLessonPlan: LessonPlan = {
+    id: 1,
+    totalDays: 8,
+    days: [
+      { day: 1, status: 'Pending', date: 'Oct 26, 2023' },
+      { day: 2, status: 'Pending', date: 'Oct 27, 2023' },
+      { day: 3, status: 'Pending', date: 'Oct 28, 2023' },
+      { day: 4, status: 'Pending', date: 'Oct 29, 2023' },
+      { day: 5, status: 'Pending', date: 'Oct 30, 2023' },
+      { day: 6, status: 'Pending', date: 'Oct 31, 2023' },
+      { day: 7, status: 'Pending', date: 'Nov 1, 2023' },
+      { day: 8, status: 'Pending', date: 'Nov 2, 2023' }
+    ]
+  };
 
   useEffect(() => {
     setTopics(sampleTopics);
     setPrerequisites(samplePrerequisites);
+    setLessonPlan(sampleLessonPlan);
   }, []);
 
   const handleAddTopic = () => {
@@ -345,24 +362,77 @@ const ChapterDetails: React.FC = () => {
                 <h2 className="text-2xl font-bold text-gray-900">Lesson Plan</h2>
                 <p className="text-gray-600">Create and manage lesson plans for this chapter</p>
               </div>
-              <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
-                <Plus className="w-4 h-4" />
-                Generate Lesson Plan
-              </Button>
+              {lessonPlan ? (
+                <Link to={`/grades/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`}>
+                  <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
+                    <RefreshCw className="w-4 h-4" />
+                    Re-generate Lesson Plan
+                  </Button>
+                </Link>
+              ) : (
+                <Link to={`/grades/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`}>
+                  <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
+                    <Plus className="w-4 h-4" />
+                    Generate Lesson Plan
+                  </Button>
+                </Link>
+              )}
             </div>
 
-            <Card>
-              <CardContent className="p-8 text-center">
-                <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Lesson Plan Available</h3>
-                <p className="text-gray-500 mb-4">
-                  Generate a lesson plan for this chapter to get started with structured teaching.
-                </p>
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  Create Lesson Plan
-                </Button>
-              </CardContent>
-            </Card>
+            {lessonPlan ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {lessonPlan.days.map((day) => (
+                  <Card key={day.day} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="space-y-3">
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">Day {day.day}</h3>
+                          <p className="text-sm text-gray-500">{day.status}</p>
+                          {day.date && <p className="text-xs text-gray-400">{day.date}</p>}
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Link 
+                            to={`/grades/lesson-plan/view/${chapterId}/${lessonPlan.id}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}&day=${day.day}`}
+                            className="w-full"
+                          >
+                            <Button variant="outline" className="w-full flex items-center gap-2 text-blue-600 border-blue-200 hover:bg-blue-50">
+                              <Eye className="w-4 h-4" />
+                              View
+                            </Button>
+                          </Link>
+                          
+                          <Link 
+                            to={`/grades/lesson-plan/ai-chat/${chapterId}/${day.day}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`}
+                            className="w-full"
+                          >
+                            <Button className="w-full flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white">
+                              <MessageSquare className="w-4 h-4" />
+                              Chat with AI Assistant
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Lesson Plan Available</h3>
+                  <p className="text-gray-500 mb-4">
+                    Generate a lesson plan for this chapter to get started with structured teaching.
+                  </p>
+                  <Link to={`/grades/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`}>
+                    <Button className="bg-blue-600 hover:bg-blue-700">
+                      Create Lesson Plan
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="prerequisites" className="space-y-6">
