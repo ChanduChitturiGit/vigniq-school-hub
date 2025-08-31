@@ -222,7 +222,8 @@ const DayLessonPlan: React.FC = () => {
                   Download
                 </Button> */}
                 {/* onClick={handleStartTeaching} */}
-                <Button className="bg-blue-600 hover:bg-blue-700">
+                <Button className="bg-blue-600 hover:bg-blue-700"
+                  onClick={handleStartTeaching}>
                   <Play className="w-4 h-4 mr-2" />
                   Start
                 </Button>
@@ -244,7 +245,7 @@ const DayLessonPlan: React.FC = () => {
                         {topic.title}
                       </h3>
                       <h3 className="md:hidden text-sm md:text-lg font-semibold text-gray-900">
-                        {(index + 1)+') '+topic.title}
+                        {(index + 1) + ') ' + topic.title}
                       </h3>
                       <div className="flex items-center gap-1 text-sm text-gray-600 bg-white px-3 py-1 rounded-full border ml-4">
                         <Clock className="w-3 h-3" />

@@ -46,6 +46,7 @@ import CreateExam from './pages/CreateExam';
 import ExamResults from './pages/ExamResults';
 import Exams from './pages/Exams';
 import SupportDetails from './pages/SupportDetails';
+import ChapterDetails from './pages/ChapterDetails';
 
 function App() {
   return (
@@ -178,9 +179,9 @@ function App() {
             </ProtectedRoute>
           } />
 
-          <Route path="/grades" element={<ProtectedRoute allowedRoles={['teacher']}><Grades /></ProtectedRoute>} />
+          {/* <Route path="/grades" element={<ProtectedRoute allowedRoles={['teacher']}><Grades /></ProtectedRoute>} />
           <Route path="/grades/syllabus/:subjectId" element={<ProtectedRoute allowedRoles={['teacher']}><Syllabus /></ProtectedRoute>} />
-          <Route path="/grades/progress/:subjectId" element={<ProtectedRoute allowedRoles={['teacher']}><GradesProgress /></ProtectedRoute>} />
+          <Route path="/grades/progress/:subjectId" element={<ProtectedRoute allowedRoles={['teacher']}><GradesProgress /></ProtectedRoute>} /> */}
           <Route path="/grades/lesson-plan/create/:chapterId" element={<ProtectedRoute allowedRoles={['teacher']}><CreateLessonPlan /></ProtectedRoute>} />
           <Route path="/grades/lesson-plan/view/:chapterId/:lessonPlanId" element={<ProtectedRoute allowedRoles={['teacher']}><ViewLessonPlan /></ProtectedRoute>} />
           <Route path="/grades/lesson-plan/day/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}><DayLessonPlan /></ProtectedRoute>} />
@@ -190,16 +191,21 @@ function App() {
           <Route path="/grades/exams/create-exam/:subjectId" element={<ProtectedRoute><CreateExam /></ProtectedRoute>} />
           <Route path="/grades/exams/exam-results/:examId" element={<ProtectedRoute><ExamResults /></ProtectedRoute>} />
 
+          <Route path="/grades" element={<ProtectedRoute><Grades /></ProtectedRoute>} />
+          <Route path="/grades/syllabus/:subjectId" element={<ProtectedRoute><Syllabus /></ProtectedRoute>} />
+          <Route path="/grades/progress/:subjectId" element={<ProtectedRoute><GradesProgress /></ProtectedRoute>} />
+          <Route path="/grades/chapter/:chapterId" element={<ProtectedRoute><ChapterDetails /></ProtectedRoute>} />
+
 
 
           <Route path="/attendance" element={<ProtectedRoute allowedRoles={['teacher']}><Attendance /></ProtectedRoute>} />
           <Route path="/attendance/reports" element={<ProtectedRoute allowedRoles={['teacher']}><AttendanceReports /></ProtectedRoute>} />
 
 
-          <Route path="/support" element={<Support/>} />
-          <Route path="/requests" element={<Requests/>} />
-          <Route path="/support-details/:requestId" element={<SupportDetails />}/>
-            {/* <Route path="/support" element={
+          <Route path="/support" element={<Support />} />
+          <Route path="/requests" element={<Requests />} />
+          <Route path="/support-details/:requestId" element={<SupportDetails />} />
+          {/* <Route path="/support" element={
             <ProtectedRoute>
               <Support />
             </ProtectedRoute>
@@ -214,7 +220,7 @@ function App() {
           <Route path="/admin-requests" element={
             <ProtectedRoute allowedRoles={['admin', 'superadmin', 'teacher', 'superadmin']}>
               {/* <AdminRequests /> */}
-              <Requests/>
+              <Requests />
             </ProtectedRoute>
           } />
 
