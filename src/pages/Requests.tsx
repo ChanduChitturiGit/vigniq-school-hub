@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { MessageSquare, CheckCircle, Clock, AlertCircle, Search, Calendar, CalendarIcon, MoreHorizontal, Paperclip, Eye } from 'lucide-react';
+import { MessageSquare, CheckCircle, Clock, AlertCircle, Search, Calendar, CalendarIcon, MoreHorizontal, Paperclip, Eye, Download, FileText } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Calendar as CalendarComponent } from '../components/ui/calendar';
@@ -160,11 +160,24 @@ const Requests: React.FC = () => {
     switch (priority) {
       case 'High':
       case 'Critical':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800 border-red-200';
       case 'Medium':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'Low':
+        return 'bg-green-100 text-green-800 border-green-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Resolved':
         return 'bg-green-100 text-green-800';
+      case 'In Progress':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Open':
+        return 'bg-blue-100 text-blue-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -182,6 +195,15 @@ const Requests: React.FC = () => {
 
   const handleViewDetails = (requestId: string) => {
     navigate(`/support-details/${requestId}`);
+  };
+
+  const formatFileSize = (bytes: number) => {
+    return (bytes / 1024 / 1024).toFixed(2);
+  };
+
+  const getNewMessageCount = (request: SupportRequest) => {
+    // For demo purposes, showing 2 new messages for resolved requests
+    return request.status === 'Resolved' ? 2 : 0;
   };
 
   return (
@@ -210,64 +232,6 @@ const Requests: React.FC = () => {
           />
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 border border-purple-200 rounded-lg">
-            <Calendar className="w-4 h-4 text-purple-600" />
-            <span className="text-sm font-medium text-purple-800">
-              {formatDateRange()}
-            </span>
-          </div>
-
-          <div className="hidden sm:flex items-center gap-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="justify-start text-left font-normal">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  From Date
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <CalendarComponent
-                  mode="single"
-                  selected={fromDate}
-                  onSelect={setFromDate}
-                  className="rounded-md border pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="justify-start text-left font-normal">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  To Date
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <CalendarComponent
-                  mode="single"
-                  selected={toDate}
-                  onSelect={setToDate}
-                  className="rounded-md border pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">All Status</option>
-              <option value="open">Open</option>
-              <option value="in progress">In Progress</option>
-              <option value="resolved">Resolved</option>
-              <option value="closed">Closed</option>
-            </select>
-          </div>
-        </div>
-
         <div className="space-y-4">
           {filteredAndSortedRequests.map((request) => (
             <div
@@ -276,30 +240,27 @@ const Requests: React.FC = () => {
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    {getStatusIcon(request.status)}
+                  <div className="flex items-center gap-3 mb-3">
                     <h3 className="text-lg font-semibold text-gray-800">{request.title}</h3>
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(request.priority)}`}>
+                    {getStatusIcon(request.status)}
+                    <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(request.status)}`}>
+                      {request.status}
+                    </span>
+                    <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getPriorityColor(request.priority)}`}>
                       {request.priority} Priority
                     </span>
+                    <span className="text-blue-500 text-sm">{request.attachments.length} attachments</span>
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-gray-500 mb-2">
+                  <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
                     <span>ID: {request.id}</span>
                     <span>Category: {request.category}</span>
                     <span>Created: {request.createdAt}</span>
                     {request.updatedAt && <span>Updated: {request.updatedAt}</span>}
                   </div>
                 </div>
-                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                  request.status === 'Resolved' ? 'bg-green-100 text-green-800' :
-                  request.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-blue-100 text-blue-800'
-                }`}>
-                  {request.status}
-                </span>
               </div>
               
-              <div className="bg-gray-50 p-4 rounded-lg mb-4">
+              <div className="mb-4">
                 <p className="text-gray-700">{request.description}</p>
               </div>
               
@@ -307,23 +268,20 @@ const Requests: React.FC = () => {
                 <div className="flex items-center gap-2 text-sm text-gray-500">
                   <MessageSquare className="w-4 h-4" />
                   <span>{request.messages.length} messages</span>
-                  {request.attachments.length > 0 && (
+                  {getNewMessageCount(request) > 0 && (
                     <>
-                      <span>•</span>
-                      <span>2 new</span>
+                      <span className="text-red-500 font-medium">{getNewMessageCount(request)} new</span>
                     </>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  {request.attachments.length > 0 && (
-                    <button
-                      onClick={() => handleViewAttachments(request)}
-                      className="flex items-center gap-1 px-3 py-1 text-sm text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50"
-                    >
-                      <Paperclip className="w-4 h-4" />
-                      View Attachments
-                    </button>
-                  )}
+                  <button
+                    onClick={() => handleViewAttachments(request)}
+                    className="flex items-center gap-1 px-3 py-1 text-sm text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50"
+                  >
+                    <Paperclip className="w-4 h-4" />
+                    View Attachments
+                  </button>
                   <button
                     onClick={() => handleViewDetails(request.id)}
                     className="flex items-center gap-1 px-3 py-1 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700"
@@ -362,12 +320,15 @@ const Requests: React.FC = () => {
               <div className="space-y-2">
                 {selectedRequest?.attachments.map((attachment, index) => (
                   <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Paperclip className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm font-medium">{attachment.name}</span>
-                      <span className="text-xs text-gray-500">({(attachment.size / 1024).toFixed(2)} MB)</span>
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-5 h-5 text-gray-500" />
+                      <div>
+                        <div className="text-sm font-medium">{attachment.name}</div>
+                        <div className="text-xs text-gray-500">{formatFileSize(attachment.size)} MB</div>
+                      </div>
                     </div>
-                    <button className="text-blue-600 hover:text-blue-800 text-sm">
+                    <button className="flex items-center gap-1 px-3 py-1 text-sm text-blue-600 border border-blue-200 rounded hover:bg-blue-50">
+                      <Download className="w-4 h-4" />
                       Download
                     </button>
                   </div>
@@ -381,7 +342,7 @@ const Requests: React.FC = () => {
                 message.attachments?.map((attachment, attIndex) => (
                   <div key={`${msgIndex}-${attIndex}`} className="mb-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className={`px-2 py-1 rounded text-xs ${
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
                         message.sender === 'You' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
                       }`}>
                         {message.sender}
@@ -389,12 +350,15 @@ const Requests: React.FC = () => {
                       <span className="text-xs text-gray-500">{message.timestamp}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <Paperclip className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm font-medium">{attachment.name}</span>
-                        <span className="text-xs text-gray-500">({(attachment.size / 1024).toFixed(2)} MB)</span>
+                      <div className="flex items-center gap-3">
+                        <FileText className="w-5 h-5 text-gray-500" />
+                        <div>
+                          <div className="text-sm font-medium">{attachment.name}</div>
+                          <div className="text-xs text-gray-500">{formatFileSize(attachment.size)} MB</div>
+                        </div>
                       </div>
-                      <button className="text-blue-600 hover:text-blue-800 text-sm">
+                      <button className="flex items-center gap-1 px-3 py-1 text-sm text-blue-600 border border-blue-200 rounded hover:bg-blue-50">
+                        <Download className="w-4 h-4" />
                         Download
                       </button>
                     </div>

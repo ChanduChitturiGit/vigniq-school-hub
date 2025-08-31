@@ -91,13 +91,13 @@ const SupportDetails: React.FC = () => {
     switch (priority) {
       case 'High':
       case 'Critical':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800 border-red-200';
       case 'Medium':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'Low':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 border-green-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -161,6 +161,13 @@ const SupportDetails: React.FC = () => {
     setAttachments(attachments.filter((_, i) => i !== index));
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage(e as any);
+    }
+  };
+
   if (!request) {
     return (
       <MainLayout pageTitle="Support Details">
@@ -177,7 +184,7 @@ const SupportDetails: React.FC = () => {
     <MainLayout pageTitle="Support Details">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => navigate('/requests')}
             className="flex items-center gap-2 text-blue-600 hover:text-blue-800"
@@ -185,33 +192,30 @@ const SupportDetails: React.FC = () => {
             <ArrowLeft className="w-4 h-4" />
             Back to Responses
           </button>
+          
+          <div className="flex items-center gap-3">
+            <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getPriorityColor(request.priority)}`}>
+              {request.priority} Priority
+            </span>
+            <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(request.status)}`}>
+              {request.status}
+            </span>
+          </div>
         </div>
 
         {/* Request Info */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h1 className="text-xl font-semibold text-gray-800 mb-2">{request.title}</h1>
-              <div className="flex items-center gap-4 text-sm text-gray-500">
-                <span>ID: {request.id}</span>
-                <span>•</span>
-                <span>{request.category}</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(request.priority)}`}>
-                {request.priority} Priority
-              </span>
-              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(request.status)}`}>
-                {request.status}
-              </span>
-            </div>
+        <div className="mb-6">
+          <h1 className="text-xl font-semibold text-gray-800 mb-2">{request.title}</h1>
+          <div className="flex items-center gap-4 text-sm text-gray-500">
+            <span>ID: {request.id}</span>
+            <span>•</span>
+            <span>{request.category}</span>
           </div>
         </div>
 
         {/* Chat Messages */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="h-96 overflow-y-auto p-6 space-y-4">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-[600px] flex flex-col">
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {request.messages.map((message, index) => (
               <div
                 key={index}
@@ -222,7 +226,7 @@ const SupportDetails: React.FC = () => {
                     ? 'bg-blue-600 text-white' 
                     : 'bg-gray-100 text-gray-800'
                 }`}>
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-2">
                     <span className={`text-xs font-semibold ${
                       message.sender === 'You' ? 'text-blue-100' : 'text-gray-600'
                     }`}>
@@ -234,21 +238,23 @@ const SupportDetails: React.FC = () => {
                       {message.timestamp}
                     </span>
                   </div>
-                  <p className="text-sm">{message.message}</p>
+                  <p className="text-sm leading-relaxed">{message.message}</p>
                   
                   {message.attachments && message.attachments.length > 0 && (
                     <div className="mt-3 space-y-2">
                       {message.attachments.map((attachment, attIndex) => (
                         <div
                           key={attIndex}
-                          className={`flex items-center gap-2 p-2 rounded ${
+                          className={`flex items-center justify-between p-2 rounded ${
                             message.sender === 'You' 
                               ? 'bg-blue-500 bg-opacity-50' 
                               : 'bg-white border'
                           }`}
                         >
-                          <FileText className="w-4 h-4" />
-                          <span className="text-xs flex-1">{attachment.name}</span>
+                          <div className="flex items-center gap-2">
+                            <FileText className="w-4 h-4" />
+                            <span className="text-xs">{attachment.name}</span>
+                          </div>
                           <button className="text-xs hover:underline">
                             <Download className="w-3 h-3" />
                           </button>
@@ -263,11 +269,11 @@ const SupportDetails: React.FC = () => {
           </div>
 
           {/* Message Input */}
-          <div className="border-t p-4">
+          <div className="border-t p-4 bg-gray-50">
             {attachments.length > 0 && (
               <div className="mb-3 space-y-2">
                 {attachments.map((file, index) => (
-                  <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                  <div key={index} className="flex items-center justify-between bg-white p-2 rounded border">
                     <div className="flex items-center gap-2">
                       <FileText className="w-4 h-4 text-gray-500" />
                       <span className="text-sm">{file.name}</span>
@@ -289,6 +295,7 @@ const SupportDetails: React.FC = () => {
                 <textarea
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   placeholder="Type your message here..."
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                   rows={2}
@@ -317,7 +324,8 @@ const SupportDetails: React.FC = () => {
                 
                 <button
                   type="submit"
-                  className="flex items-center gap-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="flex items-center gap-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  disabled={!newMessage.trim() && attachments.length === 0}
                 >
                   <Send className="w-4 h-4" />
                   Send
