@@ -2,50 +2,63 @@
 import React, { useState } from 'react';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
+import { Upload, FileText } from 'lucide-react';
+import { useToast } from '../hooks/use-toast';
 
 const Support: React.FC = () => {
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
-    issueType: '',
-    section: '',
-    description: '',
+    requestTitle: '',
+    category: '',
+    priorityLevel: '',
+    detailedDescription: '',
     expectedOutcome: '',
-    userName: '',
-    email: '',
-    schoolName: ''
+    attachments: [] as File[]
   });
 
   const breadcrumbItems = [
-    { label: 'Support' }
+    { label: 'Help & Support' }
   ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Create help object
-    const helpObject = {
-      id: Date.now().toString(),
-      ...formData,
+    // Create support request object
+    const supportRequest = {
+      id: `VIGYS-${Date.now()}`,
+      title: formData.requestTitle,
+      category: formData.category,
+      priority: formData.priorityLevel,
+      description: formData.detailedDescription,
+      expectedOutcome: formData.expectedOutcome,
+      status: 'Open',
       createdAt: new Date().toISOString(),
-      status: 'Open'
+      attachments: formData.attachments.map(file => ({
+        name: file.name,
+        size: file.size,
+        type: file.type
+      })),
+      messages: []
     };
     
     // Save to localStorage
-    const existingHelp = JSON.parse(localStorage.getItem('vigniq_help') || '[]');
-    existingHelp.push(helpObject);
-    localStorage.setItem('vigniq_help', JSON.stringify(existingHelp));
+    const existingRequests = JSON.parse(localStorage.getItem('support_requests') || '[]');
+    existingRequests.push(supportRequest);
+    localStorage.setItem('support_requests', JSON.stringify(existingRequests));
     
-    console.log('Support request submitted:', helpObject);
-    alert('Support request submitted successfully!');
+    toast({
+      title: "Support Request Submitted",
+      description: "Your request has been submitted successfully. We'll get back to you shortly.",
+    });
     
     // Reset form
     setFormData({
-      issueType: '',
-      section: '',
-      description: '',
+      requestTitle: '',
+      category: '',
+      priorityLevel: '',
+      detailedDescription: '',
       expectedOutcome: '',
-      userName: '',
-      email: '',
-      schoolName: ''
+      attachments: []
     });
   };
 
@@ -56,150 +69,185 @@ const Support: React.FC = () => {
     });
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setFormData({
+      ...formData,
+      attachments: [...formData.attachments, ...files]
+    });
+  };
+
+  const removeFile = (index: number) => {
+    const newAttachments = formData.attachments.filter((_, i) => i !== index);
+    setFormData({
+      ...formData,
+      attachments: newAttachments
+    });
+  };
+
   return (
-    <MainLayout pageTitle="Support">
+    <MainLayout pageTitle="Help & Support">
       <div className="max-w-4xl mx-auto space-y-6">
-        <Breadcrumb items={breadcrumbItems} />
+        {/* <Breadcrumb items={breadcrumbItems} /> */}
         
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Support</h1>
-          <p className="text-gray-600">Need help? Raise a query and we'll get back to you.</p>
-        </div>
+          {/* <h1 className="text-2xl font-bold text-gray-800 mb-2">Help & Support</h1> */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mt-8">
+            {/* <div className="text-center mb-8">
+              <h2 className="text-xl font-semibold text-gray-800 mb-2">Support Center</h2>
+              <p className="text-gray-600">Submit your questions, issues, or feature requests. Our support team will get back to you shortly.</p>
+            </div> */}
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-          <h2 className="text-xl font-semibold text-gray-800 mb-6">Raise a Query</h2>
-          
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  User Name
-                </label>
-                <input
-                  type="text"
-                  name="userName"
-                  value={formData.userName}
-                  onChange={handleChange}
-                  placeholder="Enter your name"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                />
+            <div className=" rounded-lg p-6 mb-8">
+              <div className="flex items-center gap-2 mb-4">
+                <FileText className="w-5 h-5 text-blue-600" />
+                <h3 className="text-lg font-semibold text-blue-800">Create Support Request</h3>
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="Enter your email address"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                />
-              </div>
-            </div>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="flex iems-start text-sm font-medium text-gray-700 mb-2">
+                      Request Title *
+                    </label>
+                    <input
+                      type="text"
+                      name="requestTitle"
+                      value={formData.requestTitle}
+                      onChange={handleChange}
+                      placeholder="Brief description of your issue"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="flex iems-start text-sm font-medium text-gray-700 mb-2">
+                      Category *
+                    </label>
+                    <select
+                      name="category"
+                      value={formData.category}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    >
+                      <option value="">Select category</option>
+                      <option value="attendance">Attendance</option>
+                      <option value="feature">Feature Request</option>
+                      <option value="technical">Technical Issue</option>
+                      <option value="account">Account Issue</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                School Name
-              </label>
-              <input
-                type="text"
-                name="schoolName"
-                value={formData.schoolName}
-                onChange={handleChange}
-                placeholder="Enter your school name"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
-            </div>
+                <div>
+                  <label className="flex iems-start text-sm font-medium text-gray-700 mb-2">
+                    Priority Level *
+                  </label>
+                  <select
+                    name="priorityLevel"
+                    value={formData.priorityLevel}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="">Select priority</option>
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                    <option value="Critical">Critical</option>
+                  </select>
+                </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Issue Type
-                </label>
-                <select
-                  name="issueType"
-                  value={formData.issueType}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                >
-                  <option value="">Select issue type</option>
-                  <option value="Technical">Technical Issue</option>
-                  <option value="Account">Account Issue</option>
-                  <option value="Feature">Feature Request</option>
-                  <option value="Bug">Bug Report</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Related Section
-                </label>
-                <select
-                  name="section"
-                  value={formData.section}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                >
-                  <option value="">Select section</option>
-                  <option value="Dashboard">Dashboard</option>
-                  <option value="Schools">Schools</option>
-                  <option value="Teachers">Teachers</option>
-                  <option value="Students">Students</option>
-                  <option value="Classes">Classes</option>
-                  <option value="Login">Login/Authentication</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-            </div>
+                <div>
+                  <label className="flex iems-start text-sm font-medium text-gray-700 mb-2">
+                    Detailed Description *
+                  </label>
+                  <textarea
+                    name="detailedDescription"
+                    value={formData.detailedDescription}
+                    onChange={handleChange}
+                    placeholder="Please provide detailed information about your issue, including steps to reproduce if applicable..."
+                    rows={6}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                    required
+                  />
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Issue Description
-              </label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                placeholder="Describe your issue in detail"
-                rows={6}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                required
-              />
-            </div>
+                <div>
+                  <label className="flex iems-start text-sm font-medium text-gray-700 mb-2">
+                    Expected Outcome *
+                  </label>
+                  <textarea
+                    name="expectedOutcome"
+                    value={formData.expectedOutcome}
+                    onChange={handleChange}
+                    placeholder="What outcome are you expecting?"
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                    required
+                  />
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Expected Outcome
-              </label>
-              <textarea
-                name="expectedOutcome"
-                value={formData.expectedOutcome}
-                onChange={handleChange}
-                placeholder="What outcome are you expecting?"
-                rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                required
-              />
-            </div>
+                <div>
+                  <label className="flex iems-start text-sm font-medium text-gray-700 mb-2">
+                    Attachments (Optional)
+                  </label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-2">Drop files here or click to upload</p>
+                    <input
+                      type="file"
+                      multiple
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      id="file-upload"
+                      accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt"
+                    />
+                    <label
+                      htmlFor="file-upload"
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 cursor-pointer inline-block"
+                    >
+                      Choose Files
+                    </label>
+                    <p className="text-xs text-gray-500 mt-2">Max file size: 10MB. Supported formats: JPG, PNG, PDF, DOC, TXT</p>
+                  </div>
+                  
+                  {formData.attachments.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      {formData.attachments.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-gray-500" />
+                            <span className="text-sm text-gray-700">{file.name}</span>
+                            <span className="text-xs text-gray-500">({(file.size / 1024).toFixed(1)} KB)</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeFile(index)}
+                            className="text-red-500 hover:text-red-700 text-sm"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-              >
-                Submit Request
-              </button>
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                  >
+                    Submit Request
+                  </button>
+                </div>
+              </form>
             </div>
-          </form>
+          </div>
         </div>
       </div>
     </MainLayout>

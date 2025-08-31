@@ -1,146 +1,155 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { MessageSquare, CheckCircle, Clock, AlertCircle, Search, Calendar, CalendarIcon, MoreHorizontal } from 'lucide-react';
+import { MessageSquare, CheckCircle, Clock, AlertCircle, Search, Calendar, CalendarIcon, MoreHorizontal, Paperclip, Eye, Download, FileText } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Calendar as CalendarComponent } from '../components/ui/calendar';
 import { format, subMonths, isWithinInterval, parseISO } from 'date-fns';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { useNavigate } from 'react-router-dom';
+
+interface SupportRequest {
+  id: string;
+  title: string;
+  category: string;
+  priority: string;
+  description: string;
+  expectedOutcome: string;
+  status: string;
+  createdAt: string;
+  updatedAt?: string;
+  attachments: Array<{
+    name: string;
+    size: number;
+    type: string;
+  }>;
+  messages: Array<{
+    sender: string;
+    message: string;
+    timestamp: string;
+    attachments?: Array<{
+      name: string;
+      size: number;
+    }>;
+  }>;
+}
 
 const Requests: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [requests, setRequests] = useState<SupportRequest[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [fromDate, setFromDate] = useState<Date | undefined>(subMonths(new Date(), 3));
   const [toDate, setToDate] = useState<Date | undefined>(new Date());
   const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const [showAttachmentsModal, setShowAttachmentsModal] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<SupportRequest | null>(null);
 
-  // Mock requests data based on user role
-  const getRequestsData = () => {
-    if (user?.role === 'Super Admin') {
-      return [
-        {
-          id: '1',
-          requestId: 'REQ-001',
-          subject: 'New Teacher Addition Request',
-          description: 'Need approval to add 3 new math teachers for the upcoming semester',
-          requestedBy: 'Admin John Smith - Greenwood High School',
-          requestDate: '2024-01-15',
-          status: 'Pending',
-          priority: 'High'
-        },
-        {
-          id: '2',
-          requestId: 'REQ-002',
-          subject: 'Budget Approval Request',
-          description: 'Requesting budget approval for new laboratory equipment',
-          requestedBy: 'Admin Sarah Johnson - Oak Valley School',
-          requestDate: '2024-01-14',
-          status: 'In Review',
-          priority: 'Medium'
-        }
-      ];
-    } else if (user?.role === 'Admin') {
-      return [
-        {
-          id: '1',
-          requestId: 'REQ-001',
-          subject: 'Class Schedule Change',
-          description: 'Request to change math class timing from 10 AM to 2 PM',
-          requestedBy: 'Teacher Alice Brown',
-          requestDate: '2024-01-15',
-          status: 'Pending',
-          priority: 'Medium'
-        },
-        {
-          id: '2',
-          requestId: 'REQ-002',
-          subject: 'Additional Resources',
-          description: 'Need additional teaching materials for advanced mathematics',
-          requestedBy: 'Teacher Robert Green',
-          requestDate: '2024-01-14',
-          status: 'Approved',
-          priority: 'Low'
-        }
-      ];
-    } else if (user?.role === 'Teacher') {
-      return [
-        {
-          id: '1',
-          requestId: 'REQ-001',
-          subject: 'Grade Review Request',
-          description: 'Student requesting review of final exam grade',
-          requestedBy: 'Student Alice Johnson',
-          requestDate: '2024-01-15',
-          status: 'Pending',
-          priority: 'Medium'
-        },
-        {
-          id: '2',
-          requestId: 'REQ-002',
-          subject: 'Assignment Extension',
-          description: 'Request for 2-day extension on math assignment due to illness',
-          requestedBy: 'Student Bob Wilson',
-          requestDate: '2024-01-14',
-          status: 'Approved',
-          priority: 'Low'
-        }
-      ];
-    } else {
-      return [
-        {
-          id: '1',
-          requestId: 'REQ-001',
-          subject: 'Grade Correction Request',
-          description: 'My grade for the final exam seems incorrect. Please review.',
-          requestedBy: 'You',
-          requestDate: '2024-01-15',
-          status: 'Pending',
-          priority: 'High'
-        },
-        {
-          id: '2',
-          requestId: 'REQ-002',
-          subject: 'Class Transfer Request',
-          description: 'Request to transfer from Section A to Section B',
-          requestedBy: 'You',
-          requestDate: '2024-01-14',
-          status: 'In Review',
-          priority: 'Medium'
-        }
-      ];
-    }
-  };
+  const breadcrumbItems = [
+    { label: 'Support Responses' }
+  ];
 
-  const requests = getRequestsData();
+  useEffect(() => {
+    // Load requests from localStorage and add sample data
+    const savedRequests = JSON.parse(localStorage.getItem('support_requests') || '[]');
+    const sampleRequests: SupportRequest[] = [
+      {
+        id: 'VIGYS-1734567890',
+        title: 'Unable to mark attendance for Class 8A',
+        category: 'attendance',
+        priority: 'High',
+        description: 'I am experiencing issues when trying to mark attendance for Class 8A. The system shows an error message "Failed to save attendance" every time I try to submit.',
+        expectedOutcome: 'Be able to mark attendance successfully without errors',
+        status: 'Resolved',
+        createdAt: 'Aug 28, 2025, 04:44 PM',
+        updatedAt: 'Aug 30, 2025, 04:44 PM',
+        attachments: [
+          { name: 'attendance-error-screenshot.png', size: 1024, type: 'image/png' },
+          { name: 'error-log-details.txt', size: 512, type: 'text/plain' }
+        ],
+        messages: [
+          {
+            sender: 'You',
+            message: 'I am experiencing issues when trying to mark attendance for Class 8A. The system shows an error message "Failed to save attendance" every time I try to submit.',
+            timestamp: 'Aug 28, 2025, 04:44 PM'
+          },
+          {
+            sender: 'Support Team',
+            message: 'Hello! Thank you for reaching out. I can see there was a server issue affecting attendance submission. Our technical team has resolved this issue. Could you please try marking attendance again and let me know if you still face any problems?',
+            timestamp: 'Aug 29, 2025, 04:44 PM',
+            attachments: [
+              { name: 'server-fix-documentation.pdf', size: 2048 },
+              { name: 'troubleshooting-steps.docx', size: 1536 }
+            ]
+          },
+          {
+            sender: 'You',
+            message: 'Great! It\'s working perfectly now. Thank you for the quick resolution.',
+            timestamp: 'Aug 30, 2025, 04:44 PM',
+            attachments: [
+              { name: 'working-attendance-screenshot.png', size: 1024 }
+            ]
+          },
+          {
+            sender: 'Support Team',
+            message: 'Wonderful! I\'m glad everything is working smoothly now. I\'ll mark this issue as resolved. Please don\'t hesitate to reach out if you need any further assistance.',
+            timestamp: 'Aug 30, 2025, 04:44 PM'
+          }
+        ]
+      },
+      {
+        id: 'VIGYS-1734567891',
+        title: 'Request for grade export feature',
+        category: 'feature',
+        priority: 'Medium',
+        description: 'It would be very helpful to have an option to export student grades to Excel format for easier sharing with parents and administration.',
+        expectedOutcome: 'Add export functionality for student grades',
+        status: 'In Progress',
+        createdAt: 'Aug 31, 2025, 02:44 PM',
+        attachments: [
+          { name: 'grade-export-mockup.png', size: 2048, type: 'image/png' }
+        ],
+        messages: [
+          {
+            sender: 'You',
+            message: 'It would be very helpful to have an option to export student grades to Excel format for easier sharing with parents and administration.',
+            timestamp: 'Aug 31, 2025, 02:44 PM'
+          }
+        ]
+      }
+    ];
+
+    setRequests([...sampleRequests, ...savedRequests]);
+  }, []);
 
   const filteredAndSortedRequests = requests
     .filter(request => {
-      const requestDate = parseISO(request.requestDate);
+      const requestDate = parseISO(request.createdAt);
       
-      const matchesSearch = request.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      const matchesSearch = request.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            request.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           request.requestedBy.toLowerCase().includes(searchTerm.toLowerCase());
+                           request.category.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'all' || request.status.toLowerCase() === statusFilter.toLowerCase();
       const matchesDateRange = (!fromDate || !toDate) || isWithinInterval(requestDate, { start: fromDate, end: toDate });
       
       return matchesSearch && matchesStatus && matchesDateRange;
     })
     .sort((a, b) => {
-      // Sort by date, latest first
-      return parseISO(b.requestDate).getTime() - parseISO(a.requestDate).getTime();
+      return parseISO(b.createdAt).getTime() - parseISO(a.createdAt).getTime();
     });
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'Approved':
+      case 'Resolved':
         return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'Pending':
-      case 'In Review':
+      case 'Open':
+      case 'In Progress':
         return <Clock className="w-4 h-4 text-yellow-500" />;
-      case 'Rejected':
+      case 'Closed':
         return <AlertCircle className="w-4 h-4 text-red-500" />;
       default:
         return <Clock className="w-4 h-4 text-gray-500" />;
@@ -150,11 +159,25 @@ const Requests: React.FC = () => {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'High':
-        return 'bg-red-100 text-red-800';
+      case 'Critical':
+        return 'bg-red-100 text-red-800 border-red-200';
       case 'Medium':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'Low':
+        return 'bg-green-100 text-green-800 border-green-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Resolved':
         return 'bg-green-100 text-green-800';
+      case 'In Progress':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Open':
+        return 'bg-blue-100 text-blue-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -165,23 +188,34 @@ const Requests: React.FC = () => {
     return `${format(fromDate, 'MMM dd, yyyy')} - ${format(toDate, 'MMM dd, yyyy')}`;
   };
 
-  const breadcrumbItems = [
-    { label: 'Requests' }
-  ];
+  const handleViewAttachments = (request: SupportRequest) => {
+    setSelectedRequest(request);
+    setShowAttachmentsModal(true);
+  };
+
+  const handleViewDetails = (requestId: string) => {
+    navigate(`/support-details/${requestId}`);
+  };
+
+  const formatFileSize = (bytes: number) => {
+    return (bytes / 1024 / 1024).toFixed(2);
+  };
+
+  const getNewMessageCount = (request: SupportRequest) => {
+    // For demo purposes, showing 2 new messages for resolved requests
+    return request.status === 'Resolved' ? 2 : 0;
+  };
 
   return (
-    <MainLayout pageTitle="Requests">
+    <MainLayout pageTitle="Support Responses">
       <div className="space-y-6">
-        <Breadcrumb items={breadcrumbItems} />
+        {/* <Breadcrumb items={breadcrumbItems} /> */}
         
         <div className="flex items-center gap-3">
           <div className="p-2 bg-purple-100 rounded-lg">
             <MessageSquare className="w-6 h-6 text-purple-600" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">Requests</h1>
-          <div className="ml-auto text-sm text-gray-500">
-            {filteredAndSortedRequests.length} total requests
-          </div>
+          <h1 className="text-2xl font-bold text-gray-800">Support Responses</h1>
         </div>
 
         {/* Search Bar */}
@@ -198,138 +232,6 @@ const Requests: React.FC = () => {
           />
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          {/* Time Period Display - Always Visible */}
-          <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 border border-purple-200 rounded-lg">
-            <Calendar className="w-4 h-4 text-purple-600" />
-            <span className="text-sm font-medium text-purple-800">
-              {formatDateRange()}
-            </span>
-          </div>
-
-          {/* Desktop Filters */}
-          <div className="hidden sm:flex items-center gap-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="justify-start text-left font-normal">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  From Date
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <CalendarComponent
-                  mode="single"
-                  selected={fromDate}
-                  onSelect={setFromDate}
-                  className="rounded-md border pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="justify-start text-left font-normal">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  To Date
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <CalendarComponent
-                  mode="single"
-                  selected={toDate}
-                  onSelect={setToDate}
-                  className="rounded-md border pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="in review">In Review</option>
-              <option value="rejected">Rejected</option>
-            </select>
-          </div>
-
-          {/* Mobile More Options */}
-          <div className="sm:hidden">
-            <Popover open={showMoreFilters} onOpenChange={setShowMoreFilters}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <MoreHorizontal className="w-4 h-4" />
-                  More
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 p-4" align="start">
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">From Date</label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start">
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {fromDate ? format(fromDate, 'PPP') : 'Select From Date'}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <CalendarComponent
-                          mode="single"
-                          selected={fromDate}
-                          onSelect={setFromDate}
-                          initialFocus
-                          className="pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">To Date</label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start">
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {toDate ? format(toDate, 'PPP') : 'Select To Date'}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <CalendarComponent
-                          mode="single"
-                          selected={toDate}
-                          onSelect={setToDate}
-                          initialFocus
-                          className="pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Status</label>
-                    <select
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="all">All Status</option>
-                      <option value="pending">Pending</option>
-                      <option value="approved">Approved</option>
-                      <option value="in review">In Review</option>
-                      <option value="rejected">Rejected</option>
-                    </select>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
-
         <div className="space-y-4">
           {filteredAndSortedRequests.map((request) => (
             <div
@@ -338,32 +240,55 @@ const Requests: React.FC = () => {
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="text-lg font-semibold text-gray-800">{request.subject}</h3>
+                  <div className="flex items-center gap-3 mb-3">
+                    <h3 className="text-lg font-semibold text-gray-800">{request.title}</h3>
                     {getStatusIcon(request.status)}
+                    <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(request.status)}`}>
+                      {request.status}
+                    </span>
+                    <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getPriorityColor(request.priority)}`}>
+                      {request.priority} Priority
+                    </span>
+                    <span className="text-blue-500 text-sm">{request.attachments.length} attachments</span>
                   </div>
-                  <p className="text-sm text-gray-500 mb-2">Request ID: {request.requestId}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(request.priority)}`}>
-                    {request.priority}
-                  </span>
-                  <span className="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
-                    {request.status}
-                  </span>
+                  <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
+                    <span>ID: {request.id}</span>
+                    <span>Category: {request.category}</span>
+                    <span>Created: {request.createdAt}</span>
+                    {request.updatedAt && <span>Updated: {request.updatedAt}</span>}
+                  </div>
                 </div>
               </div>
               
-              <div className="bg-gray-50 p-4 rounded-lg mb-4">
+              <div className="mb-4">
                 <p className="text-gray-700">{request.description}</p>
               </div>
               
-              <div className="flex items-center justify-between text-sm text-gray-500">
-                <div>
-                  <span className="font-medium">Requested by:</span> {request.requestedBy}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <MessageSquare className="w-4 h-4" />
+                  <span>{request.messages.length} messages</span>
+                  {getNewMessageCount(request) > 0 && (
+                    <>
+                      <span className="text-red-500 font-medium">{getNewMessageCount(request)} new</span>
+                    </>
+                  )}
                 </div>
-                <div>
-                  <span className="font-medium">Date:</span> {format(parseISO(request.requestDate), 'MMM dd, yyyy')}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleViewAttachments(request)}
+                    className="flex items-center gap-1 px-3 py-1 text-sm text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50"
+                  >
+                    <Paperclip className="w-4 h-4" />
+                    View Attachments
+                  </button>
+                  <button
+                    onClick={() => handleViewDetails(request.id)}
+                    className="flex items-center gap-1 px-3 py-1 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                  >
+                    <Eye className="w-4 h-4" />
+                    View Details
+                  </button>
                 </div>
               </div>
             </div>
@@ -382,6 +307,68 @@ const Requests: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Attachments Modal */}
+      <Dialog open={showAttachmentsModal} onOpenChange={setShowAttachmentsModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Attachments - {selectedRequest?.title}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            <div>
+              <h4 className="font-semibold text-gray-800 mb-3">Initial Submission Attachments</h4>
+              <div className="space-y-2">
+                {selectedRequest?.attachments.map((attachment, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-5 h-5 text-gray-500" />
+                      <div>
+                        <div className="text-sm font-medium">{attachment.name}</div>
+                        <div className="text-xs text-gray-500">{formatFileSize(attachment.size)} MB</div>
+                      </div>
+                    </div>
+                    <button className="flex items-center gap-1 px-3 py-1 text-sm text-blue-600 border border-blue-200 rounded hover:bg-blue-50">
+                      <Download className="w-4 h-4" />
+                      Download
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-gray-800 mb-3">Message Attachments</h4>
+              {selectedRequest?.messages.map((message, msgIndex) => 
+                message.attachments?.map((attachment, attIndex) => (
+                  <div key={`${msgIndex}-${attIndex}`} className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        message.sender === 'You' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                      }`}>
+                        {message.sender}
+                      </span>
+                      <span className="text-xs text-gray-500">{message.timestamp}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <FileText className="w-5 h-5 text-gray-500" />
+                        <div>
+                          <div className="text-sm font-medium">{attachment.name}</div>
+                          <div className="text-xs text-gray-500">{formatFileSize(attachment.size)} MB</div>
+                        </div>
+                      </div>
+                      <button className="flex items-center gap-1 px-3 py-1 text-sm text-blue-600 border border-blue-200 rounded hover:bg-blue-50">
+                        <Download className="w-4 h-4" />
+                        Download
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 };

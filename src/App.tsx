@@ -45,6 +45,7 @@ import AttendanceReports from './pages/AttendanceReports';
 import CreateExam from './pages/CreateExam';
 import ExamResults from './pages/ExamResults';
 import Exams from './pages/Exams';
+import SupportDetails from './pages/SupportDetails';
 
 function App() {
   return (
@@ -164,29 +165,6 @@ function App() {
             </ProtectedRoute>
           } />
 
-          <Route path="/support" element={
-            <ProtectedRoute>
-              <Support />
-            </ProtectedRoute>
-          } />
-
-          <Route path="/requests" element={
-            <ProtectedRoute allowedRoles={['student', 'teacher', 'admin', 'superadmin']}>
-              <Requests />
-            </ProtectedRoute>
-          } />
-
-          <Route path="/admin-requests" element={
-            <ProtectedRoute allowedRoles={['admin', 'superadmin', 'teacher', 'superadmin']}>
-              <AdminRequests />
-            </ProtectedRoute>
-          } />
-
-          <Route path="/responses" element={
-            <ProtectedRoute allowedRoles={['superadmin', 'admin', 'teacher', 'student']}>
-              <Responses />
-            </ProtectedRoute>
-          } />
 
           <Route path="/upload-ebooks" element={
             <ProtectedRoute allowedRoles={['superadmin']}>
@@ -217,6 +195,34 @@ function App() {
           <Route path="/attendance" element={<ProtectedRoute allowedRoles={['teacher']}><Attendance /></ProtectedRoute>} />
           <Route path="/attendance/reports" element={<ProtectedRoute allowedRoles={['teacher']}><AttendanceReports /></ProtectedRoute>} />
 
+
+          <Route path="/support" element={<Support/>} />
+          <Route path="/requests" element={<Requests/>} />
+          <Route path="/support-details/:requestId" element={<SupportDetails />}/>
+            {/* <Route path="/support" element={
+            <ProtectedRoute>
+              <Support />
+            </ProtectedRoute>
+          } /> */}
+
+          {/* <Route path="/requests" element={
+            <ProtectedRoute allowedRoles={['student', 'teacher', 'admin', 'superadmin']}>
+              <Requests />
+            </ProtectedRoute>
+          } /> */}
+
+          <Route path="/admin-requests" element={
+            <ProtectedRoute allowedRoles={['admin', 'superadmin', 'teacher', 'superadmin']}>
+              {/* <AdminRequests /> */}
+              <Requests/>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/responses" element={
+            <ProtectedRoute allowedRoles={['superadmin', 'admin', 'teacher', 'student']}>
+              <Responses />
+            </ProtectedRoute>
+          } />
 
 
 
