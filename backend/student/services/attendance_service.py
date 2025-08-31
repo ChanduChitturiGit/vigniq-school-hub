@@ -110,7 +110,8 @@ class AttendanceService:
 
             students_list = StudentClassAssignment.objects.using(school_db_name).filter(
                 class_instance_id=class_section_id,
-                academic_year_id=academic_year_id
+                academic_year_id=academic_year_id,
+                student__is_active=True
             )
 
             attendance_obj = StudentAttendance.objects.using(school_db_name).filter(

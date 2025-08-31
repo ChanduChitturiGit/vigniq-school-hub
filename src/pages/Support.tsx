@@ -88,17 +88,17 @@ const Support: React.FC = () => {
   return (
     <MainLayout pageTitle="Help & Support">
       <div className="max-w-4xl mx-auto space-y-6">
-        <Breadcrumb items={breadcrumbItems} />
+        {/* <Breadcrumb items={breadcrumbItems} /> */}
         
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Help & Support</h1>
+          {/* <h1 className="text-2xl font-bold text-gray-800 mb-2">Help & Support</h1> */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mt-8">
-            <div className="text-center mb-8">
+            {/* <div className="text-center mb-8">
               <h2 className="text-xl font-semibold text-gray-800 mb-2">Support Center</h2>
               <p className="text-gray-600">Submit your questions, issues, or feature requests. Our support team will get back to you shortly.</p>
-            </div>
+            </div> */}
 
-            <div className="bg-blue-50 rounded-lg p-6 mb-8">
+            <div className=" rounded-lg p-6 mb-8">
               <div className="flex items-center gap-2 mb-4">
                 <FileText className="w-5 h-5 text-blue-600" />
                 <h3 className="text-lg font-semibold text-blue-800">Create Support Request</h3>
@@ -107,7 +107,7 @@ const Support: React.FC = () => {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="flex iems-start text-sm font-medium text-gray-700 mb-2">
                       Request Title *
                     </label>
                     <input
@@ -122,7 +122,7 @@ const Support: React.FC = () => {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="flex iems-start text-sm font-medium text-gray-700 mb-2">
                       Category *
                     </label>
                     <select
@@ -143,7 +143,7 @@ const Support: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="flex iems-start text-sm font-medium text-gray-700 mb-2">
                     Priority Level *
                   </label>
                   <select
@@ -162,7 +162,7 @@ const Support: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="flex iems-start text-sm font-medium text-gray-700 mb-2">
                     Detailed Description *
                   </label>
                   <textarea
@@ -177,7 +177,7 @@ const Support: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="flex iems-start text-sm font-medium text-gray-700 mb-2">
                     Expected Outcome *
                   </label>
                   <textarea
@@ -192,7 +192,7 @@ const Support: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="flex iems-start text-sm font-medium text-gray-700 mb-2">
                     Attachments (Optional)
                   </label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
