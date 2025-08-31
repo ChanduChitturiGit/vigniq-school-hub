@@ -248,13 +248,13 @@ const CreateExam: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex gap-3 pt-4">
+                <div className="flex flex-col mid:flex-row gap-3 pt-4">
                   <Button
                     onClick={createExamData}
                     className="bg-blue-500 hover:bg-blue-600 text-white flex-1"
                     disabled={!examData.name || !examData.date || !examData.totalMarks || !examData.passMarks}
                   >
-                    Create Exam & Add Student Marks
+                    Create Exam
                   </Button>
                   <Button
                     variant="outline"
