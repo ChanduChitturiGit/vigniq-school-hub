@@ -185,86 +185,91 @@ const Grades: React.FC = () => {
         <div className="mt-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">My Subjects</h1>
           
-          {/* Subjects Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Subjects with Classes */}
+          <div className="space-y-8">
             {subjectGroups.map((subjectGroup) => {
               const SubjectIcon = getSubjectIcon(subjectGroup.subject_name);
               const colorGradient = getSubjectColor(subjectGroup.subject_name);
               
               return (
-                <Link
-                  key={subjectGroup.subject_name}
-                  to={`/grades/syllabus/${subjectGroup.subject_id}?class=${subjectGroup.classes[0]?.class_name}&class_id=${subjectGroup.classes[0]?.class_id}&section=${subjectGroup.classes[0]?.section}&subject=${subjectGroup.subject_name}&subject_id=${subjectGroup.subject_id}&school_board_id=${subjectGroup.classes[0]?.board_id}&school_id=${userData.school_id}`}
-                  className="group"
-                >
-                  <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-200 hover:border-blue-300">
-                    {/* Header with gradient */}
-                    <div className={`bg-gradient-to-r ${colorGradient} p-6 text-white`}>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                            <SubjectIcon className="w-6 h-6 text-white" />
-                          </div>
-                          <div>
-                            <h3 className="text-xl font-semibold">{subjectGroup.subject_name}</h3>
-                            <p className="text-white/80 text-sm">{subjectGroup.classes.length} {subjectGroup.classes.length === 1 ? 'class' : 'classes'}</p>
-                          </div>
-                        </div>
-                        <ChevronRight className="w-5 h-5 text-white/70 group-hover:text-white group-hover:translate-x-1 transition-all" />
-                      </div>
+                <div key={subjectGroup.subject_name} className="space-y-4">
+                  {/* Subject Header */}
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-12 h-12 bg-gradient-to-r ${colorGradient} rounded-lg flex items-center justify-center`}>
+                      <SubjectIcon className="w-6 h-6 text-white" />
                     </div>
-
-                    {/* Body */}
-                    <div className="p-6">
-                      <div className="space-y-4">
-                        {/* Classes Summary */}
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">Classes taught:</span>
-                          <span className="font-medium text-gray-900">
-                            {subjectGroup.classes.map(cls => `${String(cls.class_number)}${cls.section}`).join(', ')}
-                          </span>
-                        </div>
-
-                        {/* Students Count */}
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600 flex items-center space-x-1">
-                            <Users className="w-4 h-4" />
-                            <span>Total Students:</span>
-                          </span>
-                          <span className="font-medium text-gray-900">
-                            {subjectGroup.classes.reduce((total, cls) => total + cls.student_count, 0)}
-                          </span>
-                        </div>
-
-                        {/* Average Progress */}
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600">Average Progress:</span>
-                            <span className="font-medium text-gray-900">
-                              {Math.round(subjectGroup.classes.reduce((sum, cls) => sum + cls.progress, 0) / subjectGroup.classes.length)}%
-                            </span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                              className={`bg-gradient-to-r ${colorGradient} h-2 rounded-full transition-all duration-500`}
-                              style={{
-                                width: `${Math.round(subjectGroup.classes.reduce((sum, cls) => sum + cls.progress, 0) / subjectGroup.classes.length)}%`
-                              }}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Action hint */}
-                        <div className="flex items-center justify-center pt-2 border-t border-gray-100">
-                          <span className="text-xs text-gray-500 flex items-center space-x-1">
-                            <Clock className="w-3 h-3" />
-                            <span>Click to view syllabus</span>
-                          </span>
-                        </div>
-                      </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900">{subjectGroup.subject_name}</h2>
+                      <p className="text-gray-500">{subjectGroup.classes.length} {subjectGroup.classes.length === 1 ? 'class' : 'classes'}</p>
                     </div>
                   </div>
-                </Link>
+
+                  {/* Classes Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {subjectGroup.classes.map((classItem) => (
+                      <Link
+                        key={classItem.class_id}
+                        to={`/grades/syllabus/${classItem.subject_id}?class=${classItem.class_name}&class_id=${classItem.class_id}&section=${classItem.section}&subject=${classItem.subject_name}&subject_id=${classItem.subject_id}&school_board_id=${classItem.board_id}&school_id=${userData.school_id}`}
+                        className="group"
+                      >
+                        <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-200 hover:border-blue-300">
+                          {/* Class Header */}
+                          <div className="p-6 border-b border-gray-100">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h3 className="text-xl font-semibold text-gray-900">{classItem.class_name}</h3>
+                                <p className="text-blue-600 font-medium">Section {classItem.section}</p>
+                              </div>
+                              <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                            </div>
+                          </div>
+
+                          {/* Class Body */}
+                          <div className="p-6">
+                            <div className="space-y-4">
+                              {/* Students Count */}
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-gray-600 flex items-center space-x-1">
+                                  <Users className="w-4 h-4" />
+                                  <span>Total Students:</span>
+                                </span>
+                                <span className="font-medium text-gray-900">
+                                  {classItem.student_count}
+                                </span>
+                              </div>
+
+                              {/* Progress */}
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between text-sm">
+                                  <span className="text-gray-600">Course Progress:</span>
+                                  <span className="font-medium text-gray-900">
+                                    {classItem.progress}%
+                                  </span>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                  <div
+                                    className={`bg-gradient-to-r ${colorGradient} h-2 rounded-full transition-all duration-500`}
+                                    style={{
+                                      width: `${classItem.progress}%`
+                                    }}
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Action hint */}
+                              <div className="flex items-center justify-center pt-2 border-t border-gray-100">
+                                <span className="text-xs text-gray-500 flex items-center space-x-1">
+                                  <Clock className="w-3 h-3" />
+                                  <span>Click to view syllabus</span>
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
               );
             })}
           </div>
