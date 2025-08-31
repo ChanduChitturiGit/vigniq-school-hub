@@ -132,10 +132,12 @@ class OfflineExamsService:
             with transaction.atomic(using=self.school_db_name):
                 student_ids = [item["student_id"] for item in student_marks if item.get("student_id")]
 
-                existing = ExamResult.objects.using(self.school_db_name).filter(
+                existing_results = ExamResult.objects.using(self.school_db_name).filter(
                     exam=exam,
                     student_id__in=student_ids
-                ).in_bulk(field_name="student_id")
+                )
+
+                existing = {res.student_id: res for res in existing_results}
 
                 to_create = []
                 to_update = []
@@ -150,16 +152,16 @@ class OfflineExamsService:
                     if student_id in existing:
                         obj = existing[student_id]
                         obj.marks = marks
-                        obj.updated_by_teacher = self.user
+                        obj.updated_by_teacher_id = self.user.id
                         to_update.append(obj)
                     else:
                         to_create.append(
                             ExamResult(
                                 exam=exam,
                                 student_id=student_id,
-                                marks=marks,
-                                updated_by_teacher=self.user,
-                                created_by_teacher=self.user,
+                                marks_obtained=marks,
+                                updated_by_teacher_id=self.user.id,
+                                created_by_teacher_id=self.user.id,
                             )
                         )
 
