@@ -191,13 +191,21 @@ export const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ onCanvasChan
       
       let slideData;
       if (index === currentSlide) {
-        slideData = fabricCanvas.toDataURL({ format: 'png' });
+        slideData = fabricCanvas.toDataURL({ 
+          format: 'png',
+          multiplier: 1,
+          quality: 0.8
+        });
       } else {
         const savedData = localStorage.getItem(`whiteboard-slide-${index}`);
         if (savedData) {
           const tempCanvas = new FabricCanvas(document.createElement('canvas'));
           tempCanvas.loadFromJSON(JSON.parse(savedData), () => {
-            slideData = tempCanvas.toDataURL({ format: 'png' });
+            slideData = tempCanvas.toDataURL({ 
+              format: 'png',
+              multiplier: 1,
+              quality: 0.8
+            });
             tempCanvas.dispose();
           });
         }
