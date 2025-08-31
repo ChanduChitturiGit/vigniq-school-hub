@@ -12,7 +12,9 @@ import {
   Beaker,
   BookIcon,
   Languages,
-  Palette
+  Palette,
+  Users,
+  Clock
 } from 'lucide-react';
 import { getGradeByTeacherId } from '../services/grades'
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
@@ -165,110 +167,118 @@ const Grades: React.FC = () => {
     return BookIcon;
   };
 
-  const getSubjectIconColor = (subjectName: string) => {
+  const getSubjectColor = (subjectName: string) => {
     const subject = subjectName.toLowerCase();
-    if (subject.includes('math')) return 'text-blue-600 bg-blue-100';
-    if (subject.includes('english')) return 'text-purple-600 bg-purple-100';
-    if (subject.includes('science') || subject.includes('physics')) return 'text-green-600 bg-green-100';
-    if (subject.includes('social')) return 'text-orange-600 bg-orange-100';
-    if (subject.includes('art')) return 'text-pink-600 bg-pink-100';
-    return 'text-gray-600 bg-gray-100';
+    if (subject.includes('math')) return 'from-blue-500 to-blue-600';
+    if (subject.includes('english')) return 'from-purple-500 to-purple-600';
+    if (subject.includes('science') || subject.includes('physics')) return 'from-green-500 to-green-600';
+    if (subject.includes('social')) return 'from-orange-500 to-orange-600';
+    if (subject.includes('art')) return 'from-pink-500 to-pink-600';
+    return 'from-gray-500 to-gray-600';
   };
 
   return (
     <MainLayout pageTitle="Grades">
-      <div className="space-y-8">
+      <div className="min-h-screen bg-gray-50 p-6">
         <Breadcrumb items={breadcrumbItems} />
-
-        {/* Subject Groups */}
-        <div className="space-y-12">
-          {subjectGroups.map((subjectGroup) => {
-            const SubjectIcon = getSubjectIcon(subjectGroup.subject_name);
-            const iconColor = getSubjectIconColor(subjectGroup.subject_name);
-            
-            return (
-              <div key={subjectGroup.subject_name} className="space-y-6">
-                {/* Subject Header */}
-                <div className="flex items-center gap-4 pb-4 border-b-4 border-blue-500">
-                  <div className={`w-12 h-12 ${iconColor} rounded-xl flex items-center justify-center`}>
-                    <SubjectIcon className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">{subjectGroup.subject_name}</h2>
-                    <p className="text-gray-600">{subjectGroup.classes.length} classes</p>
-                  </div>
-                </div>
-
-                {/* Class Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {subjectGroup.classes.map((classItem) => (
-                    <Link
-                      key={`${classItem.class_number}_${classItem.subject_id}`}
-                      to={`/grades/syllabus/${classItem.subject_id}?class=${classItem.class_name}&class_id=${classItem.class_id}&section=${classItem.section}&subject=${classItem.subject_name}&subject_id=${classItem.subject_id}&school_board_id=${classItem.board_id}&school_id=${userData.school_id}`}
-                      className="bg-white rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300 group overflow-hidden"
-                    >
-                      {/* Gradient Header */}
-                      <div className="h-2 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500"></div>
-                      
-                      <div className="p-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                              <span className="text-lg font-bold text-blue-600">{classItem.class_number}</span>
-                            </div>
-                            <div>
-                              <h3 className="text-lg font-semibold text-gray-900">
-                                {classItem.class_name}
-                              </h3>
-                              <p className="text-purple-600 text-sm font-medium">
-                                Section {classItem.section}
-                              </p>
-                            </div>
+        
+        <div className="mt-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-8">My Subjects</h1>
+          
+          {/* Subjects Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {subjectGroups.map((subjectGroup) => {
+              const SubjectIcon = getSubjectIcon(subjectGroup.subject_name);
+              const colorGradient = getSubjectColor(subjectGroup.subject_name);
+              
+              return (
+                <Link
+                  key={subjectGroup.subject_name}
+                  to={`/grades/syllabus/${subjectGroup.subject_id}?class=${subjectGroup.classes[0]?.class_name}&class_id=${subjectGroup.classes[0]?.class_id}&section=${subjectGroup.classes[0]?.section}&subject=${subjectGroup.subject_name}&subject_id=${subjectGroup.subject_id}&school_board_id=${subjectGroup.classes[0]?.board_id}&school_id=${userData.school_id}`}
+                  className="group"
+                >
+                  <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-200 hover:border-blue-300">
+                    {/* Header with gradient */}
+                    <div className={`bg-gradient-to-r ${colorGradient} p-6 text-white`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                            <SubjectIcon className="w-6 h-6 text-white" />
                           </div>
-                          <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
+                          <div>
+                            <h3 className="text-xl font-semibold">{subjectGroup.subject_name}</h3>
+                            <p className="text-white/80 text-sm">{subjectGroup.classes.length} {subjectGroup.classes.length === 1 ? 'class' : 'classes'}</p>
+                          </div>
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-white/70 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                      </div>
+                    </div>
+
+                    {/* Body */}
+                    <div className="p-6">
+                      <div className="space-y-4">
+                        {/* Classes Summary */}
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Classes taught:</span>
+                          <span className="font-medium text-gray-900">
+                            {subjectGroup.classes.map(cls => `${String(cls.class_number)}${cls.section}`).join(', ')}
+                          </span>
                         </div>
 
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Course Progress</span>
-                            <span className="text-lg font-bold text-gray-900">{classItem.progress}%</span>
-                          </div>
-                          
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                              className="bg-blue-500 h-2 rounded-full transition-all duration-500"
-                              style={{ width: `${classItem.progress}%` }}
-                            />
-                          </div>
+                        {/* Students Count */}
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600 flex items-center space-x-1">
+                            <Users className="w-4 h-4" />
+                            <span>Total Students:</span>
+                          </span>
+                          <span className="font-medium text-gray-900">
+                            {subjectGroup.classes.reduce((total, cls) => total + cls.student_count, 0)}
+                          </span>
+                        </div>
 
-                          <div className="flex items-center justify-between pt-2">
-                            <div className="flex items-center gap-1 text-gray-600">
-                              <BookOpen className="w-4 h-4" />
-                              <span className="text-sm">12 chapters</span>
-                            </div>
-                            <span className="text-xs text-gray-500">
-                              Click to explore chapter
+                        {/* Average Progress */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600">Average Progress:</span>
+                            <span className="font-medium text-gray-900">
+                              {Math.round(subjectGroup.classes.reduce((sum, cls) => sum + cls.progress, 0) / subjectGroup.classes.length)}%
                             </span>
                           </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className={`bg-gradient-to-r ${colorGradient} h-2 rounded-full transition-all duration-500`}
+                              style={{
+                                width: `${Math.round(subjectGroup.classes.reduce((sum, cls) => sum + cls.progress, 0) / subjectGroup.classes.length)}%`
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Action hint */}
+                        <div className="flex items-center justify-center pt-2 border-t border-gray-100">
+                          <span className="text-xs text-gray-500 flex items-center space-x-1">
+                            <Clock className="w-3 h-3" />
+                            <span>Click to view syllabus</span>
+                          </span>
                         </div>
                       </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {subjectGroups.length === 0 && (
-          <div className="text-center py-12">
-            <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Classes Assigned</h3>
-            <p className="text-gray-500">
-              You don't have any classes assigned yet. Contact your administrator for class assignments.
-            </p>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
-        )}
+
+          {subjectGroups.length === 0 && (
+            <div className="text-center py-12">
+              <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Subjects Assigned</h3>
+              <p className="text-gray-500">
+                You don't have any subjects assigned yet. Contact your administrator for subject assignments.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </MainLayout>
   );
