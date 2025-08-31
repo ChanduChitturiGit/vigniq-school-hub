@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
@@ -6,6 +5,10 @@ import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../components/ui/accordion';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
+import { Input } from '../components/ui/input';
+import { Textarea } from '../components/ui/textarea';
 import {
   ArrowLeft,
   BookOpen,
@@ -13,14 +16,21 @@ import {
   Lightbulb,
   Plus,
   Edit3,
-  Clock,
-  CheckCircle2
+  CheckCircle2,
+  Save,
+  X
 } from 'lucide-react';
 
 interface Topic {
   id: number;
   title: string;
   completed?: boolean;
+}
+
+interface Prerequisite {
+  id: number;
+  topic: string;
+  explanation: string;
 }
 
 const ChapterDetails: React.FC = () => {
@@ -34,6 +44,14 @@ const ChapterDetails: React.FC = () => {
   const progress = parseInt(searchParams.get('progress') || '0');
 
   const [topics, setTopics] = useState<Topic[]>([]);
+  const [prerequisites, setPrerequisites] = useState<Prerequisite[]>([]);
+  const [showAddTopic, setShowAddTopic] = useState(false);
+  const [showAddPrerequisite, setShowAddPrerequisite] = useState(false);
+  const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
+  const [editingPrerequisite, setEditingPrerequisite] = useState<Prerequisite | null>(null);
+  const [newTopicTitle, setNewTopicTitle] = useState('');
+  const [newPrerequisiteTitle, setNewPrerequisiteTitle] = useState('');
+  const [newPrerequisiteExplanation, setNewPrerequisiteExplanation] = useState('');
 
   const breadcrumbItems = [
     { label: 'Grades', path: '/grades' },
@@ -49,9 +67,104 @@ const ChapterDetails: React.FC = () => {
     { id: 5, title: 'Laws of Exponents', completed: false }
   ];
 
+  const samplePrerequisites: Prerequisite[] = [
+    {
+      id: 1,
+      topic: 'Basic Algebra and Squaring',
+      explanation: 'Understanding basic algebraic manipulation and the concept of squaring a number is crucial for following the proofs in this chapter. **Basic Algebra:** This involves working with variables (like \'a\' or \'b\'), performing operations (addition, subtraction, multiplication, division) with them, and solving simple equations. **Squaring:** Multiplying a number by itself. For example, \'a squared\' (a²) means a × a. Example: - If a = 5, then a² = 5 × 5 = 25. - If you have an equation like b² = 2c², you should understand that if 2 divides b², it implies something about b.'
+    },
+    {
+      id: 2,
+      topic: 'Coprime Numbers (Relatively Prime)',
+      explanation: 'Two numbers are coprime if their greatest common divisor (GCD) is 1. This concept is fundamental in proofs involving rational numbers.'
+    },
+    {
+      id: 3,
+      topic: 'Highest Common Factor (HCF) and Least Common Multiple (LCM)',
+      explanation: 'Understanding HCF and LCM is essential for simplifying fractions and understanding rational number properties.'
+    },
+    {
+      id: 4,
+      topic: 'Number Systems (Natural, Integers, Rational, Irrational)',
+      explanation: 'Basic understanding of different number systems and their properties is required before studying real numbers.'
+    },
+    {
+      id: 5,
+      topic: 'Prime Factorization',
+      explanation: 'The ability to express numbers as products of prime factors is crucial for various proofs in this chapter.'
+    },
+    {
+      id: 6,
+      topic: 'Prime and Composite Numbers',
+      explanation: 'Understanding the difference between prime and composite numbers and their properties.'
+    }
+  ];
+
   useEffect(() => {
     setTopics(sampleTopics);
+    setPrerequisites(samplePrerequisites);
   }, []);
+
+  const handleAddTopic = () => {
+    if (newTopicTitle.trim()) {
+      const newTopic: Topic = {
+        id: Math.max(...topics.map(t => t.id)) + 1,
+        title: newTopicTitle.trim(),
+        completed: false
+      };
+      setTopics([...topics, newTopic]);
+      setNewTopicTitle('');
+      setShowAddTopic(false);
+    }
+  };
+
+  const handleEditTopic = (topic: Topic) => {
+    setEditingTopic(topic);
+    setNewTopicTitle(topic.title);
+  };
+
+  const handleSaveTopicEdit = () => {
+    if (editingTopic && newTopicTitle.trim()) {
+      setTopics(topics.map(t => 
+        t.id === editingTopic.id ? { ...t, title: newTopicTitle.trim() } : t
+      ));
+      setEditingTopic(null);
+      setNewTopicTitle('');
+    }
+  };
+
+  const handleAddPrerequisite = () => {
+    if (newPrerequisiteTitle.trim() && newPrerequisiteExplanation.trim()) {
+      const newPrerequisite: Prerequisite = {
+        id: Math.max(...prerequisites.map(p => p.id)) + 1,
+        topic: newPrerequisiteTitle.trim(),
+        explanation: newPrerequisiteExplanation.trim()
+      };
+      setPrerequisites([...prerequisites, newPrerequisite]);
+      setNewPrerequisiteTitle('');
+      setNewPrerequisiteExplanation('');
+      setShowAddPrerequisite(false);
+    }
+  };
+
+  const handleEditPrerequisite = (prerequisite: Prerequisite) => {
+    setEditingPrerequisite(prerequisite);
+    setNewPrerequisiteTitle(prerequisite.topic);
+    setNewPrerequisiteExplanation(prerequisite.explanation);
+  };
+
+  const handleSavePrerequisiteEdit = () => {
+    if (editingPrerequisite && newPrerequisiteTitle.trim() && newPrerequisiteExplanation.trim()) {
+      setPrerequisites(prerequisites.map(p => 
+        p.id === editingPrerequisite.id 
+          ? { ...p, topic: newPrerequisiteTitle.trim(), explanation: newPrerequisiteExplanation.trim() }
+          : p
+      ));
+      setEditingPrerequisite(null);
+      setNewPrerequisiteTitle('');
+      setNewPrerequisiteExplanation('');
+    }
+  };
 
   const completedTopics = topics.filter(topic => topic.completed).length;
   const totalTopics = topics.length;
@@ -112,10 +225,45 @@ const ChapterDetails: React.FC = () => {
                 <h2 className="text-2xl font-bold text-gray-900">Chapter Topics</h2>
                 <p className="text-gray-600">Manage topics for this chapter</p>
               </div>
-              <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
-                <Plus className="w-4 h-4" />
-                Add Topic
-              </Button>
+              <Dialog open={showAddTopic} onOpenChange={setShowAddTopic}>
+                <DialogTrigger asChild>
+                  <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
+                    <Plus className="w-4 h-4" />
+                    Add Topic
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add New Topic</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Topic Title
+                      </label>
+                      <Input
+                        value={newTopicTitle}
+                        onChange={(e) => setNewTopicTitle(e.target.value)}
+                        placeholder="Enter topic title..."
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setShowAddTopic(false);
+                          setNewTopicTitle('');
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button onClick={handleAddTopic} className="bg-blue-600 hover:bg-blue-700">
+                        Add Topic
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
 
             <div className="space-y-4">
@@ -135,9 +283,54 @@ const ChapterDetails: React.FC = () => {
                         {topic.completed && (
                           <CheckCircle2 className="w-5 h-5 text-green-600" />
                         )}
-                        <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
-                          <Edit3 className="w-4 h-4" />
-                        </Button>
+                        <Dialog open={editingTopic?.id === topic.id} onOpenChange={(open) => {
+                          if (!open) {
+                            setEditingTopic(null);
+                            setNewTopicTitle('');
+                          }
+                        }}>
+                          <DialogTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-blue-600 hover:text-blue-700"
+                              onClick={() => handleEditTopic(topic)}
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Edit Topic</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Topic Title
+                                </label>
+                                <Input
+                                  value={newTopicTitle}
+                                  onChange={(e) => setNewTopicTitle(e.target.value)}
+                                  placeholder="Enter topic title..."
+                                />
+                              </div>
+                              <div className="flex justify-end gap-2">
+                                <Button 
+                                  variant="outline" 
+                                  onClick={() => {
+                                    setEditingTopic(null);
+                                    setNewTopicTitle('');
+                                  }}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button onClick={handleSaveTopicEdit} className="bg-blue-600 hover:bg-blue-700">
+                                  Save Changes
+                                </Button>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
                       </div>
                     </div>
                   </CardContent>
@@ -178,24 +371,150 @@ const ChapterDetails: React.FC = () => {
                 <h2 className="text-2xl font-bold text-gray-900">Prerequisites</h2>
                 <p className="text-gray-600">Define prerequisites for this chapter</p>
               </div>
-              <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
-                <Plus className="w-4 h-4" />
-                Add Prerequisite
-              </Button>
+              <Dialog open={showAddPrerequisite} onOpenChange={setShowAddPrerequisite}>
+                <DialogTrigger asChild>
+                  <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
+                    <Plus className="w-4 h-4" />
+                    Add Prerequisite
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Add New Prerequisite</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Prerequisite Title
+                      </label>
+                      <Input
+                        value={newPrerequisiteTitle}
+                        onChange={(e) => setNewPrerequisiteTitle(e.target.value)}
+                        placeholder="Enter prerequisite title..."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Explanation
+                      </label>
+                      <Textarea
+                        value={newPrerequisiteExplanation}
+                        onChange={(e) => setNewPrerequisiteExplanation(e.target.value)}
+                        placeholder="Enter detailed explanation..."
+                        rows={4}
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setShowAddPrerequisite(false);
+                          setNewPrerequisiteTitle('');
+                          setNewPrerequisiteExplanation('');
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button onClick={handleAddPrerequisite} className="bg-green-600 hover:bg-green-700">
+                        <Save className="w-4 h-4 mr-2" />
+                        Save
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
 
-            <Card>
-              <CardContent className="p-8 text-center">
-                <Lightbulb className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Prerequisites Defined</h3>
-                <p className="text-gray-500 mb-4">
-                  Add prerequisites to help students understand what they need to know before starting this chapter.
-                </p>
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  Add Prerequisites
-                </Button>
-              </CardContent>
-            </Card>
+            {editingPrerequisite && (
+              <Card className="border-blue-200 bg-blue-50">
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium text-gray-900">Edit Prerequisite</h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setEditingPrerequisite(null);
+                        setNewPrerequisiteTitle('');
+                        setNewPrerequisiteExplanation('');
+                      }}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Prerequisite Title
+                    </label>
+                    <Input
+                      value={newPrerequisiteTitle}
+                      onChange={(e) => setNewPrerequisiteTitle(e.target.value)}
+                      placeholder="Enter prerequisite title..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Explanation
+                    </label>
+                    <Textarea
+                      value={newPrerequisiteExplanation}
+                      onChange={(e) => setNewPrerequisiteExplanation(e.target.value)}
+                      placeholder="Enter detailed explanation..."
+                      rows={4}
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setEditingPrerequisite(null);
+                        setNewPrerequisiteTitle('');
+                        setNewPrerequisiteExplanation('');
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button onClick={handleSavePrerequisiteEdit} className="bg-green-600 hover:bg-green-700">
+                      <Save className="w-4 h-4 mr-2" />
+                      Save
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="space-y-4">
+              <Accordion type="multiple" className="space-y-4">
+                {prerequisites.map((prerequisite) => (
+                  <AccordionItem key={prerequisite.id} value={`prerequisite-${prerequisite.id}`} className="border rounded-lg">
+                    <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center gap-3">
+                          <Lightbulb className="w-5 h-5 text-blue-600" />
+                          <span className="font-medium text-left">{prerequisite.topic}</span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-blue-600 hover:text-blue-700 mr-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditPrerequisite(prerequisite);
+                          }}
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 pb-4">
+                      <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                        {prerequisite.explanation}
+                      </p>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
