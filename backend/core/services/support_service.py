@@ -156,7 +156,7 @@ class SupportService:
             paginated_tickets = paginator.get_page(page)
             ticket_data = [
                 {
-                    "id": ticket.id,
+                    "ticket_id": ticket.id,
                     "title": ticket.title,
                     "status": ticket.status,
                     "created_at": ticket.created_at,
@@ -198,7 +198,7 @@ class SupportService:
                     "file_attachment": [s3_client.generate_temp_link(file_path) for file_path in (response.file_attachment or [])]
                 })
             ticket_data = {
-                "id": ticket.id,
+                "ticket_id": ticket.id,
                 "title": ticket.title,
                 "status": ticket.status,
                 "created_at": ticket.created_at,
