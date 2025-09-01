@@ -82,7 +82,7 @@ const Attendance: React.FC = () => {
     afternoon: false,
     back: true
   });
-  const [isHoliday, setIsHoliday] = useState(false);
+  const [isSunday, setIsSunday] = useState(false);
   const [formData, setFormData] = useState({
     class: '',
     class_section_id: '',
@@ -368,10 +368,10 @@ const Attendance: React.FC = () => {
     setIsAfternoonHoliday(false);
     const date = new Date(selectedDate);
     if (date.getDay() === 0) {
-      setIsHoliday(true);
+      setIsSunday(true);
       return;
     } else {
-      setIsHoliday(false);
+      setIsSunday(false);
     }
 
     if (isPastDate) {
@@ -689,7 +689,7 @@ const Attendance: React.FC = () => {
           {/* Right Panel - Dynamic Content */}
           <div className="lg:col-span-2 space-y-6">
             {viewMode === 'reports' && selectedClass &&
-              !editingSession && (sampleAttendanceRecords.length > 0) && !isHoliday ? (
+              !editingSession && (sampleAttendanceRecords.length > 0) && !isSunday ? (
               // Reports View for Past Dates
               <>
                 {/* Session Summary Cards */}
@@ -799,7 +799,7 @@ const Attendance: React.FC = () => {
               // Attendance Taking View
               <>
                 {/* Stats Cards */}
-                {!isFutureDate && selectedClass && (!isPastDate || allowTakeAttendence || editingSession || !(isMorningHoliday && isAfternoonHoliday) && !(sampleAttendanceRecords.length == 0 && selectedClass && isPastDate)) && !isHoliday && (
+                {!isFutureDate && selectedClass && (!isPastDate || allowTakeAttendence || editingSession || !(isMorningHoliday && isAfternoonHoliday) && !(sampleAttendanceRecords.length == 0 && selectedClass && isPastDate)) && !isSunday && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Card>
                       <CardContent className="p-4">
@@ -852,7 +852,7 @@ const Attendance: React.FC = () => {
                 )}
 
                 {/* Student Attendance List */}
-                {!isFutureDate && selectedClass && (!isPastDate || allowTakeAttendence || editingSession || isMorningHoliday || isAfternoonHoliday) && !isHoliday && (
+                {!isFutureDate && selectedClass && (!isPastDate || allowTakeAttendence || editingSession || isMorningHoliday || isAfternoonHoliday) && !isSunday && (
                   <Card>
                     <CardHeader>
                       <div className="flex flex-col md:flex-row  justify-between items-center gap-3">
@@ -1158,7 +1158,8 @@ const Attendance: React.FC = () => {
                   </Card>
                 )}
 
-                {(isFutureDate || !selectedClass || (sampleAttendanceRecords.length == 0 && isPastDate && !allowTakeAttendence && (!isMorningHoliday && !isAfternoonHoliday)) || isHoliday) && (
+                {/* Message section */}
+                {(isFutureDate || !selectedClass || (sampleAttendanceRecords.length == 0 && isPastDate && !allowTakeAttendence && (!isMorningHoliday && !isAfternoonHoliday)) || isSunday) && (
                   <Card className='py-[13rem]'>
                     <CardContent className="p-8 text-center">
                       <AlertCircle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
@@ -1179,7 +1180,7 @@ const Attendance: React.FC = () => {
                         )
                       }
                       {
-                        sampleAttendanceRecords.length == 0 && selectedClass && isPastDate && !allowTakeAttendence && !isHoliday && (
+                        sampleAttendanceRecords.length == 0 && selectedClass && isPastDate && !allowTakeAttendence && !isSunday && (
                           <>
                             <h2 className="text-2xl font-bold mb-2">No Attendence Found</h2>
                             {/* <p className="text-gray-600">Try changing date to view the attendance data.</p> */}
@@ -1193,7 +1194,7 @@ const Attendance: React.FC = () => {
                         )
                       }
                       {
-                        isHoliday && (
+                        isSunday && selectedClass && (
                           <>
                             <h3 className="text-2xl font-bold mb-2">No Attendence Found</h3>
                             <p className="text-gray-500 mb-2">{format(selectedDate, 'dd-MM-yyyy')}(Sunday) is marked as Holiday.</p>
