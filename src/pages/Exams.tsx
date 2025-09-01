@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Calendar, Users, TrendingUp, Plus, Eye, Edit } from 'lucide-react';
+import { Calendar, Users, TrendingUp, Plus, Eye, Edit, Award, BookCheckIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MainLayout from '@/components/Layout/MainLayout';
@@ -20,7 +20,7 @@ interface Exam {
   average_marks: number;
   pass_percentage: number;
   exam_type?: 'offline' | 'online';
-  is_submitted ?: boolean; // New field to track if marks are submitted
+  is_submitted?: boolean; // New field to track if marks are submitted
 }
 
 const Exams: React.FC = () => {
@@ -47,7 +47,7 @@ const Exams: React.FC = () => {
   const onlineExams = exams.filter(exam => exam.exam_type === 'online');
 
   const handleExamAction = (exam: Exam) => {
-    if (exam.is_submitted ) {
+    if (exam.is_submitted) {
       // Navigate to view results
       navigate(`/grades/exams/exam-results/${exam.exam_id}?${pathParams}`);
     } else {
@@ -93,13 +93,13 @@ const Exams: React.FC = () => {
         <h3 className="text-lg font-semibold text-gray-900 mb-2 md:mb-0">{toCapitalCase(exam.exam_name)}</h3>
         <Button
           onClick={() => handleExamAction(exam)}
-          className={`${exam.is_submitted 
+          className={`${exam.is_submitted
             ? 'bg-green-500 hover:bg-green-600'
             : 'bg-blue-500 hover:bg-blue-600'
             } text-white`}
           size="sm"
         >
-          {exam.is_submitted  ? (
+          {exam.is_submitted ? (
             <>
               <Eye className="w-4 h-4 mr-1" />
               View Results
@@ -131,7 +131,7 @@ const Exams: React.FC = () => {
         <div className="bg-green-50 rounded-lg p-4 text-center">
           <div className="text-2xl font-bold text-green-600">{exam.pass_marks}</div>
           <div className="text-sm text-gray-600">Pass Marks</div>
-          { exam.is_submitted  && (
+          {exam.is_submitted && (
             <div className="flex items-center justify-center gap-1 mt-2 text-xs text-gray-500">
               <TrendingUp className="w-3 h-3" />
               <span>Avg Marks. {Number(exam.average_marks).toFixed(2)}</span>
@@ -199,6 +199,21 @@ const Exams: React.FC = () => {
                 {onlineExams.map(renderExamCard)}
               </div>
             </TabsContent>
+            {
+              offlineExams.length==0 && (
+                <div className="text-center py-12">
+                  <BookCheckIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Exams Created</h3>
+                  <Button
+                    onClick={() => navigate(`/grades/exams/create-exam/${pathData}`)}
+                    className="bg-blue-500 hover:bg-blue-600 text-white  gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add New Exam
+                  </Button>
+                </div>
+              )
+            }
           </Tabs>
         </div>
       </MainLayout>
