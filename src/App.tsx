@@ -45,6 +45,7 @@ import AttendanceReports from './pages/AttendanceReports';
 import CreateExam from './pages/CreateExam';
 import ExamResults from './pages/ExamResults';
 import Exams from './pages/Exams';
+import ComingSoon from './pages/ComingSoon';
 
 function App() {
   return (
@@ -166,25 +167,29 @@ function App() {
 
           <Route path="/support" element={
             <ProtectedRoute>
-              <Support />
+              {/* <Support /> */}
+              <ComingSoon />
             </ProtectedRoute>
           } />
 
           <Route path="/requests" element={
             <ProtectedRoute allowedRoles={['student', 'teacher', 'admin', 'superadmin']}>
-              <Requests />
+              {/* <Requests /> */}
+              <ComingSoon />
             </ProtectedRoute>
           } />
 
           <Route path="/admin-requests" element={
             <ProtectedRoute allowedRoles={['admin', 'superadmin', 'teacher', 'superadmin']}>
-              <AdminRequests />
+              {/* <AdminRequests /> */}
+              <ComingSoon />
             </ProtectedRoute>
           } />
 
           <Route path="/responses" element={
             <ProtectedRoute allowedRoles={['superadmin', 'admin', 'teacher', 'student']}>
-              <Responses />
+              {/* <Responses /> */}
+              <ComingSoon />
             </ProtectedRoute>
           } />
 
@@ -216,8 +221,6 @@ function App() {
 
           <Route path="/attendance" element={<ProtectedRoute allowedRoles={['teacher']}><Attendance /></ProtectedRoute>} />
           <Route path="/attendance/reports" element={<ProtectedRoute allowedRoles={['teacher']}><AttendanceReports /></ProtectedRoute>} />
-
-
 
 
           <Route path="*" element={<NotFound />} />
