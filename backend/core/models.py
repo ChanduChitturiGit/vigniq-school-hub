@@ -127,7 +127,6 @@ class TicketResponse(models.Model):
     message = models.TextField()
     file_attachment = models.JSONField(default=list,null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    is_responder_admin = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'ticket_response'
