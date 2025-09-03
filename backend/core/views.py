@@ -17,6 +17,7 @@ from .serializers import CustomTokenObtainPairSerializer
 from core.services.password_manager_service import PasswordManagerService
 from core.services.user_profile_service import UserProfileService
 from core.services.dashboard_service import DashboardService
+from core.services.support_service import SupportService
 
 logger = logging.getLogger(__name__)
 
@@ -116,3 +117,42 @@ class DashboardView(APIView):
         if action == 'getDashboardData':
             return DashboardService().get_dashboard_data(request)
         return Response({"error": "Invalid GET action"}, status=status.HTTP_400_BAD_REQUEST)
+
+class SupportView(APIView):
+    """
+    View to handle support ticket actions.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, action=None):
+        """
+        Retrieve support tickets or details of a specific ticket.
+        """
+        if action == 'getTickets':
+            return SupportService(request).get_tickets()
+        elif action == 'getTicketById':
+            return SupportService(request).get_ticket_by_id()
+        elif action == 'getIssueTypes':
+            return SupportService(request).get_issue_types()
+        elif action == 'getAvailableModules':
+            return SupportService(request).get_available_modules()
+        return Response({"error": "Invalid GET action"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def post(self, request, action=None):
+        """
+        Create a new support ticket or respond to an existing ticket.
+        """
+        if action == 'createTicket':
+            return SupportService(request).create_ticket()
+        elif action == 'respondToTicket':
+            return SupportService(request).respond_to_ticket()
+        return Response({"error": "Invalid POST action"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def put(self, request, action=None):
+        """
+        Update the status of an existing support ticket.
+        """
+        if action == 'updateTicketStatus':
+            return SupportService(request).update_ticket_status()
+        return Response({"error": "Invalid PUT action"}, status=status.HTTP_400_BAD_REQUEST)
