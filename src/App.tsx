@@ -46,6 +46,7 @@ import CreateExam from './pages/CreateExam';
 import ExamResults from './pages/ExamResults';
 import Exams from './pages/Exams';
 import ComingSoon from './pages/ComingSoon';
+import SupportDetails from './pages/SupportRequest';
 
 function App() {
   return (
@@ -167,22 +168,30 @@ function App() {
 
           <Route path="/support" element={
             <ProtectedRoute>
-              {/* <Support /> */}
-              <ComingSoon />
+              <Support />
+              {/* <ComingSoon /> */}
             </ProtectedRoute>
           } />
 
           <Route path="/requests" element={
             <ProtectedRoute allowedRoles={['student', 'teacher', 'admin', 'superadmin']}>
-              {/* <Requests /> */}
-              <ComingSoon />
+              <Requests />
+              {/* <ComingSoon /> */}
             </ProtectedRoute>
           } />
 
           <Route path="/admin-requests" element={
-            <ProtectedRoute allowedRoles={['admin', 'superadmin', 'teacher', 'superadmin']}>
+            <ProtectedRoute allowedRoles={['admin', 'student', 'teacher', 'superadmin']}>
               {/* <AdminRequests /> */}
-              <ComingSoon />
+              <Requests />
+              {/* <ComingSoon /> */}
+            </ProtectedRoute>
+          } />
+
+          <Route path="/support-details/:requestId" element={
+            <ProtectedRoute allowedRoles={['admin', 'student', 'teacher', 'superadmin']}>
+              <SupportDetails />
+              {/* <ComingSoon /> */}
             </ProtectedRoute>
           } />
 
