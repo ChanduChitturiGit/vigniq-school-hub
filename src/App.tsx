@@ -45,6 +45,7 @@ import AttendanceReports from './pages/AttendanceReports';
 import CreateExam from './pages/CreateExam';
 import ExamResults from './pages/ExamResults';
 import Exams from './pages/Exams';
+import ComingSoon from './pages/ComingSoon';
 import SupportDetails from './pages/SupportDetails';
 import ChapterDetails from './pages/ChapterDetails';
 
@@ -166,6 +167,41 @@ function App() {
             </ProtectedRoute>
           } />
 
+          <Route path="/support" element={
+            <ProtectedRoute>
+              <Support />
+              {/* <ComingSoon /> */}
+            </ProtectedRoute>
+          } />
+
+          <Route path="/requests" element={
+            <ProtectedRoute allowedRoles={['student', 'teacher', 'admin', 'superadmin']}>
+              <Requests />
+              {/* <ComingSoon /> */}
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin-requests" element={
+            <ProtectedRoute allowedRoles={['admin', 'student', 'teacher', 'superadmin']}>
+              {/* <AdminRequests /> */}
+              <Requests />
+              {/* <ComingSoon /> */}
+            </ProtectedRoute>
+          } />
+
+          <Route path="/support-details/:requestId" element={
+            <ProtectedRoute allowedRoles={['admin', 'student', 'teacher', 'superadmin']}>
+            <SupportDetails />
+              {/* <ComingSoon /> */}
+            </ProtectedRoute>
+          } />
+
+          <Route path="/responses" element={
+            <ProtectedRoute allowedRoles={['superadmin', 'admin', 'teacher', 'student']}>
+              {/* <Responses /> */}
+              <ComingSoon />
+            </ProtectedRoute>
+          } />
 
           <Route path="/upload-ebooks" element={
             <ProtectedRoute allowedRoles={['superadmin']}>
@@ -229,8 +265,6 @@ function App() {
               <Responses />
             </ProtectedRoute>
           } />
-
-
 
           <Route path="*" element={<NotFound />} />
         </Routes>

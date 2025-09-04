@@ -9,7 +9,7 @@ const suburl = '/syllabus/manage_ebook';
 //upload books
 export const uploadEbook = async (data : any) => {
   const response = await api.post(baseurl+suburl+'/uploadEbook',data,{ headers: {
-      'Content-Type': 'multipart/form-data',   // 👈 important for file upload
+      'Content-Type': 'multipart/form-data', 
     }});
   return response.data;
 }
