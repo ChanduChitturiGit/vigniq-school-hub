@@ -213,7 +213,7 @@ const Support: React.FC = () => {
 
         <div className="text-center">
           {/* <h1 className="text-2xl font-bold text-gray-800 mb-2">Help & Support</h1> */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mt-8">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 sm:p-0 md:p-8 mt-8">
             {/* <div className="text-center mb-8">
               <h2 className="text-xl font-semibold text-gray-800 mb-2">Support Center</h2>
               <p className="text-gray-600">Submit your questions, issues, or feature requests. Our support team will get back to you shortly.</p>

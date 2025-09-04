@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
@@ -50,6 +50,7 @@ const Requests: React.FC = () => {
   const { showSnackbar } = useSnackbar();
   const { user } = useAuth();
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
   const [requests, setRequests] = useState<SupportRequest[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -59,6 +60,7 @@ const Requests: React.FC = () => {
   const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [showAttachmentsModal, setShowAttachmentsModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<SupportRequest | null>(null);
+  const [hasMore, setHasMore] = useState(true);
   const [filters, setFilters] = useState({
     school_id: null,
     school_name: '',
@@ -87,7 +89,8 @@ const Requests: React.FC = () => {
   const [startDate, setStartDate] = React.useState<Dayjs | null>(null);
   const [endDate, setEndDate] = React.useState<Dayjs | null>(null);
   const [requestsData, setRequestsData] = useState([]);
-  const [loader, setLoader] = useState(true);
+  const [loader, setLoader] = useState(false);
+
 
   const breadcrumbItems = [
     { label: 'Support Responses' }
@@ -118,14 +121,31 @@ const Requests: React.FC = () => {
     setLoader(true);
     try {
       let params = {};
-      if (payload.school_id || payload.status_name || (payload.from_date && payload.to_date)) {
-        params = { ...payload }
+      if (payload.school_id || payload.status_name || (payload.from_date && payload.to_date) || payload.page || page) {
+        params = Object.fromEntries(
+          Object.entries({ ...payload, page }).filter(
+            ([, value]) => value !== null && value !== ""
+          )
+        );
       }
+      params = {...params,page}
       const response = await getTickets(params);
       if (response && response.data) {
-        console.log(response.data);
-        setRequestsData(response.data);
+        //console.log(response.data);
+        if (page == 1) {
+          setRequestsData(response.data);
+        } else {
+          setRequestsData((prev) => ([
+            ...prev,
+            ...response.data
+          ]))
+          console.log('requestData',requestsData);
+        }
         setLoader(false);
+      }
+      if (response && (response.message || response.data.length < 10)) {
+        setLoader(false);
+        setHasMore(false);
       }
     } catch (error) {
       setLoader(false);
@@ -216,6 +236,7 @@ const Requests: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    setPage(1);
     getTicketsData();
   }, [payload])
 
@@ -328,7 +349,7 @@ const Requests: React.FC = () => {
         [field]: value,
         'status': getStatusId(value)
       }));
-    }else{
+    } else {
       setPayload(prev => ({
         ...prev,
         [field]: value
@@ -363,8 +384,36 @@ const Requests: React.FC = () => {
     //getEbookList(payload);
   };
 
+
+  const handleScroll = () => {
+    const container = scrollContainerRef.current;
+    const isBottom =
+      (container.scrollHeight - container.scrollTop) <= (container.clientHeight + (30)); //loader ? (-200) :
+    //console.log('scrollScheck',(!container || loader || !hasMore || !isBottom));
+    if (!container || loader || !hasMore || !isBottom) {
+      return; // avoid multiple calls while loading
+    } else {
+      //console.log('scrolled');
+      if (isBottom && hasMore && !loader) {
+        setPage(prev => prev + 1);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    container?.addEventListener("scroll", handleScroll);
+    return () => container?.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    if (page > 1) {
+      getTicketsData();
+    }
+  }, [page]);
+
   return (
-    <MainLayout pageTitle="Support Responses">
+    <MainLayout ref={scrollContainerRef} pageTitle="Support Responses">
       <div className="space-y-6">
         {/* <Breadcrumb items={breadcrumbItems} /> */}
 
@@ -402,9 +451,9 @@ const Requests: React.FC = () => {
                     onChange={(newValue) => {
                       setStartDate(newValue);
                       filters.from_date = newValue ? newValue.format("YYYY-MM-DD") : null;
-                      handleFilterChange('from_date',(newValue ? newValue.format("YYYY-MM-DD") : null));
+                      handleFilterChange('from_date', (newValue ? newValue.format("YYYY-MM-DD") : null));
                     }}
-                    format="DD/MM/YYYY"   // 👈 force display format
+                    format="DD/MM/YYYY"  
                   />
                 </LocalizationProvider>
               </div>
@@ -419,7 +468,7 @@ const Requests: React.FC = () => {
                     onChange={(newValue) => {
                       setEndDate(newValue);
                       filters.to_date = newValue ? newValue.format("YYYY-MM-DD") : null;
-                      handleFilterChange('to_date',(newValue ? newValue.format("YYYY-MM-DD") : null));
+                      handleFilterChange('to_date', (newValue ? newValue.format("YYYY-MM-DD") : null));
                     }}
                     format="DD/MM/YYYY"
                     disabled={
@@ -473,7 +522,7 @@ const Requests: React.FC = () => {
         </Card>
 
         <div className="space-y-4">
-          {requestsData && requestsData.map((request) => (
+          {requestsData && requestsData.length>0 && requestsData?.map((request) => (
             <div
               key={request.ticket_id}
               className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"

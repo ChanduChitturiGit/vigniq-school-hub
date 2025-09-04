@@ -190,7 +190,7 @@ function App() {
 
           <Route path="/support-details/:requestId" element={
             <ProtectedRoute allowedRoles={['admin', 'student', 'teacher', 'superadmin']}>
-              <SupportDetails />
+            <SupportDetails />
               {/* <ComingSoon /> */}
             </ProtectedRoute>
           } />

@@ -2,13 +2,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
-import { ArrowLeft, Send, Paperclip, Download, FileText, Upload, Eye } from 'lucide-react';
+import { ArrowLeft, Send, Paperclip, Download, FileText, Upload, Eye, AlertCircle, CheckCircle, Clock, Save, Edit } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
-import { getTicketById, respondToTicket } from '../services/support'
+import { getTicketById, respondToTicket, updateTicketStatus } from '../services/support'
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { format, subMonths, isWithinInterval, parseISO } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 
 interface SupportRequest {
     ticket_id: string;
@@ -48,6 +49,20 @@ const SupportDetails: React.FC = () => {
     const [attachments, setAttachments] = useState<File[]>([]);
 
     const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
+    const [isEditing, setIsEditing] = useState(false);
+
+    const [statusList, setStatusList] = useState([
+        { id: "open", value: "Open" },
+        { id: "in_progress", value: "In Progress" },
+        { id: "resolved", value: "Resolved" },
+        { id: "closed", value: "Closed" }
+    ])
+
+    const [formData, setFormData] = useState({
+        ticket_id: null,
+        status: '',
+        status_name: ''
+    });
 
 
     const getTicketData = async () => {
@@ -61,6 +76,10 @@ const SupportDetails: React.FC = () => {
                 //setRequestsData(response.data);
                 //setLoader(false);
                 setRequest(response.data);
+                setFormData((prev) => ({
+                    ...prev,
+                    status_name : getStatusName(response.data.status)
+                }))
             }
         } catch (error) {
             //setLoader(false);
@@ -151,6 +170,8 @@ const SupportDetails: React.FC = () => {
                 return 'bg-yellow-100 text-yellow-800';
             case 'Open':
                 return 'bg-blue-100 text-blue-800';
+            case 'Closed':
+                return 'bg-purple-100 text-purple-800';
             default:
                 return 'bg-gray-100 text-gray-800';
         }
@@ -180,7 +201,7 @@ const SupportDetails: React.FC = () => {
             a.href = downloadUrl;
 
             // Extract filename from the S3 path or use a default one
-            const filename = `attachment${index+1}` || "downloaded-file";
+            const filename = `attachment${index + 1}` || "downloaded-file";
             a.download = filename;
 
             document.body.appendChild(a);
@@ -304,6 +325,74 @@ const SupportDetails: React.FC = () => {
         }
     };
 
+    const getStatusId = (status: string) => {
+        const data = statusList.find((val: any) => (val.value) == status);
+        const id = data.id ? data.id : null;
+        return id;
+    }
+
+    const getStatusName = (statusId) => {
+        const data = statusList.find((val: any) => (val.id) == statusId);
+        const name = data.value ? data.value : '';
+        return name;
+    }
+
+    const getStatusIcon = (status: string) => {
+        switch (status) {
+            case 'Resolved':
+                return <CheckCircle className="w-4 h-4 text-green-500" />;
+            case 'Open':
+            case 'In Progress':
+                return <Clock className="w-4 h-4 text-yellow-500" />;
+            case 'Closed':
+                return <AlertCircle className="w-4 h-4 text-red-500" />;
+            default:
+                return <Clock className="w-4 h-4 text-gray-500" />;
+        }
+    };
+
+    const handleStatusChange = (value: string) => {
+        setFormData((prev) => ({
+            ...prev,
+            status_name : value,
+            status: getStatusId(value)
+        }))
+    }
+
+
+    const UpdateStatusData = async () => {
+        setIsEditing(false);
+        formData.ticket_id = Number(requestId);
+        try {
+            const response = await updateTicketStatus(formData);
+            if (response && response.message) {
+                showSnackbar({
+                    title: "Success",
+                    description: `${response.message} ✅`,
+                    status: "success"
+                });
+            } else {
+                showSnackbar({
+                    title: "⛔ Error",
+                    description: "Something went wrong",
+                    status: "error"
+                });
+            }
+        } catch (error) {
+            showSnackbar({
+                title: "⛔ Error",
+                description: error?.response?.data?.error || "Something went wrong",
+                status: "error"
+            });
+        }
+        getTicketData();
+    }
+
+
+
+
+
+
     if (!request) {
         return (
             <MainLayout pageTitle="Support Details">
@@ -329,25 +418,80 @@ const SupportDetails: React.FC = () => {
                         Back to Responses
                     </button>
 
-                    <div className="flex items-center gap-3">
+                    {/* <div className="flex items-center gap-3">
                         <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getPriorityColor(request.priority)}`}>
                             {request.priority} Priority
                         </span>
                         <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(request.status)}`}>
                             {request.status}
                         </span>
-                    </div>
+                    </div> */}
                 </div>
 
                 {/* Request Info */}
-                <div className="mb-6">
-                    <h1 className="text-xl font-semibold text-gray-800 mb-2">{request.title}</h1>
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                        <span>ID: {request.ticket_id}</span>
-                        <span>•</span>
-                        <span>{request.related_section_name}</span>
-                        <span>•</span>
-                        <span>{request.issue_type_name}</span>
+                <div className="mb-6 px-2 w-full flex flex-col md:flex-row sm:mb-4 md:mb-0 items-center justify-between  ">
+                    <div>
+                        <h1 className="text-xl font-semibold text-gray-800 mb-2">{request.title}</h1>
+                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                            <span className="block text-sm font-medium text-gray-700 mb-2">ID: {request.ticket_id}</span>
+                            <span className="block text-sm font-medium text-gray-700 mb-2">Category : {request.related_section_name}</span>
+                            <span className="block text-sm font-medium text-gray-700 mb-2">Issue type : {request.issue_type_name}</span>
+                        </div>
+                    </div>
+
+                    <div className='flex  flex-wrap  mb-2 md:mb-0 mt-2 md:mt-0 gap-4'>
+                        {!isEditing ? (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Status
+                                </label>
+                                <span className={`px-3 py-3 text-xs font-medium rounded-full ${getStatusColor(formData.status_name)} flex gap-2`}>
+                                    {getStatusIcon(request.status)}
+                                    <span>{formData.status_name}</span>
+                                </span>
+                            </div>
+                        ) : (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Status
+                                </label>
+                                <Select value={formData.status_name} onValueChange={handleStatusChange}>
+                                    <SelectTrigger className="w-full px-4">
+                                        <SelectValue placeholder="Select a status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {statusList.map((val, index) => (
+                                            <SelectItem key={index} value={val.value}>
+                                                {val.value}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+
+                        {(userData.role == 'superadmin') && (
+                            <div className='flex flex-wrap'>
+                                {
+                                    isEditing && (
+                                        <button
+                                            onClick={UpdateStatusData}
+                                            className="flex items-center gap-2 px-2 py-2 mx-4 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                        >
+                                            <Save className="w-4 h-4" />
+                                            {'Save'}
+                                        </button>
+                                    )
+                                }
+                                <button
+                                    onClick={() => setIsEditing(!isEditing)}
+                                    className="flex items-center gap-2 px-2 py-2 mx-4 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                >
+                                    <Edit className="w-4 h-4" />
+                                    {isEditing ? 'Cancel' : 'Edit'}
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -439,7 +583,7 @@ const SupportDetails: React.FC = () => {
                             </div>
                         )}
 
-                        <form onSubmit={handleSendMessage} className="flex items-end gap-2">
+                        <form onSubmit={handleSendMessage} className="flex flex-col md:flex-row items-center justify-between gap-2">
                             <div className="flex-1">
                                 <textarea
                                     value={newMessage}
@@ -454,7 +598,7 @@ const SupportDetails: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center justify-center gap-2">
                                 <input
                                     type="file"
                                     ref={fileInputRef}
