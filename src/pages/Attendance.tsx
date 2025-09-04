@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Calendar } from '@/components/ui/calendar';
@@ -29,6 +28,12 @@ import {
 } from '../components/ui/alert-dialog';
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import dayjs, { Dayjs } from "dayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { getTickets } from '../services/support'
+
 
 interface Student {
   student_id: string;
@@ -93,6 +98,7 @@ const Attendance: React.FC = () => {
     type: 'daily',
     date: null,
   });
+  const [startDate, setStartDate] = React.useState<Dayjs | null>(dayjs());
 
 
   // Sample data - in real app this would come from API
@@ -564,7 +570,7 @@ const Attendance: React.FC = () => {
       let morningStatus = isMorningHoliday ? "Holiday" : student.morning ? "Present" : "Absent";
       let afternoonStatus = isAfternoonHoliday ? "Holiday" : student.afternoon ? "Present" : "Absent";
 
-      let overall = getOverallStatusString(student.morning,student.afternoon);
+      let overall = getOverallStatusString(student.morning, student.afternoon);
 
       const row = worksheet.addRow([
         student.roll_number,
@@ -606,101 +612,108 @@ const Attendance: React.FC = () => {
   };
 
   const statConditionCheck = () => {
-    return ((sampleAttendanceRecords.length != 0) || (!isPastDate && students.length>0 && (isMorningSessionSubmitted && isAfternoonSessionSubmitted))) ;
+    return ((sampleAttendanceRecords.length != 0) || (!isPastDate && students.length > 0 && (isMorningSessionSubmitted && isAfternoonSessionSubmitted)));
   }
 
 
   return (
     <MainLayout pageTitle={`Attendance Center`}>
       <div className="container mx-auto p-6 space-y-6">
-        {/* <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Attendance Center</h1>
-            <p className="text-gray-600">Mark and manage student attendance</p>
+        {/* Top Controls Bar */}
+        <div className="bg-background border rounded-lg p-4">
+          <div className="flex flex-col gap-4 md:flex-row md:flex-wrap lg:flex-nowrap items-start lg:items-center justify-between">
+            <div className="flex flex-col gap-4 w-full md:flex-row md:flex-wrap lg:flex-nowrap  md:items-center md:w-auto">
+              {/* Date Selection */}
+              <div className="flex flex-col gap-2 w-full md:flex-row md:items-center md:w-auto">
+                <div className='flex gap-1 w-full md:w-auto'>
+                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Select Date</span>
+                </div>
+                <div className='w-full md:w-auto'>
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <DatePicker
+                      className="w-full px-3 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      label=""
+                      value={startDate}
+                      onChange={(newValue) => {
+                        setStartDate(newValue);
+                        setSelectedDate(newValue ? newValue.toDate() : new Date());
+                      }}
+                      format="DD/MM/YYYY"
+                      disableFuture
+                    />
+                  </LocalizationProvider>
+                </div>
+              </div>
+              {/* Class Selection */}
+              <div className="flex flex-col gap-2 w-full md:flex-row md:items-center md:w-auto min-w-fit">
+                <div className='flex gap-1 w-full md:w-auto'>
+                  <Users className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Select Class</span>
+                </div>
+                <div className='w-full md:w-auto'>
+                  <Select value={selectedClass} onValueChange={handleClassChange}>
+                    <SelectTrigger className="w-full md:min-w-[12rem] h-[3.5rem] text-sm">
+                      <SelectValue placeholder="Select Class" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {classes.map((cls) => (
+                        <SelectItem key={cls.class_id} value={'Class ' + cls.class_number + ' - ' + cls.section}>
+                          {'Class ' + cls.class_number + ' - ' + cls.section}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+            {/* Action Buttons */}
+            <div className="flex gap-2 w-full md:w-auto justify-end">
+              {(statConditionCheck()) && selectedClass && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={downloadExcel}
+                  className="flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Export Data
+                </Button>
+              )}
+              {/* <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <FileText className="w-4 h-4" />
+                Download Report
+              </Button> */}
+            </div>
           </div>
-          {editingSession && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                setEditingSession(null);
-                if (isPastDate) setViewMode('reports');
-              }}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back to {isPastDate ? 'Reports' : 'Attendance'}
-            </Button>
-          )}
-        </div> */}
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Panel - Calendar and Class Selection */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="w-5 h-6 mt-2" />
-                  <p className="text-lg mt-2">
-                    Date : <span className='text-gray-600'>{selectedDate ? format(selectedDate, "EEEE, dd MMM yyyy") : "No date selected"}</span>
-                  </p>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className='w-full '>
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={handleDateSelect}
-                  className="w-full h-full rounded-md border overflow-auto flex items-center justify-center"
-                  disabled={(date) => isAfter(date, startOfDay(new Date()))}
-                />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader >
-                <CardTitle className='text-lg'>Select Class</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Select value={selectedClass} onValueChange={handleClassChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a class" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {classes.map((cls) => (
-                      <SelectItem key={cls.class_id} value={'Class ' + cls.class_number + ' - ' + cls.section}>
-                        {'Class ' + cls.class_number + ' - ' + cls.section}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {
-                  (statConditionCheck()) && selectedClass && (
-                    <div className='w-full mt-4 flex justify-center'>
-                      <button className="px-4 py-3 flex items-center gap-2 bg-blue-500 text-white px-2 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-                        onClick={downloadExcel}>
-                        <Download />
-                        Download Daily Report
-                      </button>
-                    </div>
-                  )
-                }
-              </CardContent>
-            </Card>
+          {/* Calendar Dropdown */}
+          <div data-calendar className="mt-4 hidden">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={handleDateSelect}
+              className="w-fit rounded-md border bg-background"
+              disabled={(date) => isAfter(date, startOfDay(new Date()))}
+            />
           </div>
+        </div>
 
-
-          {/* Right Panel - Dynamic Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {viewMode === 'reports' && selectedClass &&
-              !editingSession && (sampleAttendanceRecords.length > 0) && !isSunday ? (
-              // Reports View for Past Dates
-              <>
-                {/* Session Summary Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                      <CardTitle className="text-lg">Morning Session</CardTitle>
-                      {/* <Button
+        {/* Main Content Area */}
+        <div className="space-y-6">
+          {viewMode === 'reports' && selectedClass &&
+            !editingSession && (sampleAttendanceRecords.length > 0) && !isSunday ? (
+            // Reports View for Past Dates
+            <>
+              {/* Session Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                    <CardTitle className="text-lg">Morning Session</CardTitle>
+                    {/* <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleEditAttendance('morning')}
@@ -709,25 +722,25 @@ const Attendance: React.FC = () => {
                         <Edit className="w-3 h-3" />
                         Edit
                       </Button> */}
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex justify-between items-center">
-                        <div className="text-center">
-                          <div className="text-3xl font-bold text-green-600">{morningStats?.present || 0}</div>
-                          <div className="text-sm text-gray-600">Present</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-3xl font-bold text-red-600">{morningStats?.absent || 0}</div>
-                          <div className="text-sm text-gray-600">Absent</div>
-                        </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex justify-between items-center">
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-green-600">{morningStats?.present || 0}</div>
+                        <div className="text-sm text-gray-600">Present</div>
                       </div>
-                    </CardContent>
-                  </Card>
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-red-600">{morningStats?.absent || 0}</div>
+                        <div className="text-sm text-gray-600">Absent</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                      <CardTitle className="text-lg">Afternoon Session</CardTitle>
-                      {/* <Button
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                    <CardTitle className="text-lg">Afternoon Session</CardTitle>
+                    {/* <Button
                         size="sm"
                         variant="outline"
                         onClick={() => {
@@ -738,109 +751,109 @@ const Attendance: React.FC = () => {
                         <Edit className="w-3 h-3" />
                         Edit
                       </Button> */}
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex justify-between items-center">
-                        <div className="text-center">
-                          <div className="text-3xl font-bold text-green-600">{afternoonStats?.present || 0}</div>
-                          <div className="text-sm text-gray-600">Present</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-3xl font-bold text-red-600">{afternoonStats?.absent || 0}</div>
-                          <div className="text-sm text-gray-600">Absent</div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex justify-between items-center">
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-green-600">{afternoonStats?.present || 0}</div>
+                        <div className="text-sm text-gray-600">Present</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-red-600">{afternoonStats?.absent || 0}</div>
+                        <div className="text-sm text-gray-600">Absent</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Detailed Attendance Report */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className='flex flex-col md:flex-row justify-between text-md md:text-lg'>
+                    <span>Attendance Report for {classes.find(c => c.id === selectedClass)?.name} - {format(selectedDate, 'E MMM dd yyyy')}</span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEditAttendance('morning')}
+                      className="flex items-center gap-1"
+                    >
+                      <Edit className="w-3 h-3" />
+                      Edit
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Roll No.</TableHead>
+                          <TableHead>Student Name</TableHead>
+                          <TableHead>Morning Session</TableHead>
+                          <TableHead>Afternoon Session</TableHead>
+                          <TableHead>Overall Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {sampleAttendanceRecords && sampleAttendanceRecords?.map((record) => (
+                          <TableRow key={record.roll_number}>
+                            <TableCell className="font-medium">{record.roll_number}</TableCell>
+                            <TableCell>{record.student_name}</TableCell>
+                            <TableCell>{getStatusBadge(record.morning ? 'Present' : isMorningHoliday ? 'Holiday' : 'Absent')}</TableCell>
+                            <TableCell>{getStatusBadge(record.afternoon ? 'Present' : isAfternoonHoliday ? 'Holiday' : 'Absent')}</TableCell>
+                            <TableCell>{getOverallStatus(record.morning, record.afternoon)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            // Attendance Taking View
+            <>
+              {/* Stats Cards */}
+              {selectedClass && (!isPastDate || allowTakeAttendence || editingSession || !(isMorningHoliday && isAfternoonHoliday) && !(sampleAttendanceRecords.length == 0 && selectedClass && isPastDate)) && !isSunday && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-5 h-5 text-blue-500" />
+                        <div>
+                          <p className="text-2xl font-bold text-blue-600">{stats?.totalStudents}</p>
+                          <p className="text-sm text-gray-600">Total Students</p>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
-                </div>
 
-                {/* Detailed Attendance Report */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className='flex flex-col md:flex-row justify-between text-md md:text-lg'>
-                      <span>Attendance Report for {classes.find(c => c.id === selectedClass)?.name} - {format(selectedDate, 'E MMM dd yyyy')}</span>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleEditAttendance('morning')}
-                        className="flex items-center gap-1"
-                      >
-                        <Edit className="w-3 h-3" />
-                        Edit
-                      </Button>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Roll No.</TableHead>
-                            <TableHead>Student Name</TableHead>
-                            <TableHead>Morning Session</TableHead>
-                            <TableHead>Afternoon Session</TableHead>
-                            <TableHead>Overall Status</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {sampleAttendanceRecords && sampleAttendanceRecords?.map((record) => (
-                            <TableRow key={record.roll_number}>
-                              <TableCell className="font-medium">{record.roll_number}</TableCell>
-                              <TableCell>{record.student_name}</TableCell>
-                              <TableCell>{getStatusBadge(record.morning ? 'Present' : isMorningHoliday ? 'Holiday' : 'Absent')}</TableCell>
-                              <TableCell>{getStatusBadge(record.afternoon ? 'Present' : isAfternoonHoliday ? 'Holiday' : 'Absent')}</TableCell>
-                              <TableCell>{getOverallStatus(record.morning, record.afternoon)}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </CardContent>
-                </Card>
-              </>
-            ) : (
-              // Attendance Taking View
-              <>
-                {/* Stats Cards */}
-                {selectedClass && (!isPastDate || allowTakeAttendence || editingSession || !(isMorningHoliday && isAfternoonHoliday) && !(sampleAttendanceRecords.length == 0 && selectedClass && isPastDate)) && !isSunday && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-2">
-                          <Users className="w-5 h-5 text-blue-500" />
-                          <div>
-                            <p className="text-2xl font-bold text-blue-600">{stats?.totalStudents}</p>
-                            <p className="text-sm text-gray-600">Total Students</p>
-                          </div>
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                        <div>
+                          <p className="text-2xl font-bold text-green-600">{stats?.presentStudents}</p>
+                          <p className="text-sm text-gray-600">Marked Present</p>
                         </div>
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="w-5 h-5 text-green-500" />
-                          <div>
-                            <p className="text-2xl font-bold text-green-600">{stats?.presentStudents}</p>
-                            <p className="text-sm text-gray-600">Marked Present</p>
-                          </div>
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2">
+                        <XCircle className="w-5 h-5 text-red-500" />
+                        <div>
+                          <p className="text-2xl font-bold text-red-600">{stats?.absentStudents}</p>
+                          <p className="text-sm text-gray-600">Marked Absent</p>
                         </div>
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-2">
-                          <XCircle className="w-5 h-5 text-red-500" />
-                          <div>
-                            <p className="text-2xl font-bold text-red-600">{stats?.absentStudents}</p>
-                            <p className="text-sm text-gray-600">Marked Absent</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* <Card>
+                  {/* <Card>
                       <CardContent className="p-4">
                         <div className="flex items-center gap-2">
                           <AlertCircle className="w-5 h-5 text-orange-500" />
@@ -851,34 +864,34 @@ const Attendance: React.FC = () => {
                         </div>
                       </CardContent>
                     </Card> */}
-                  </div>
-                )}
+                </div>
+              )}
 
-                {/* Student Attendance List */}
-                {selectedClass && (!isPastDate || allowTakeAttendence || editingSession || isMorningHoliday || isAfternoonHoliday) && !isSunday && (
-                  <Card>
-                    <CardHeader>
-                      <div className="flex flex-col md:flex-row  justify-between items-center gap-3">
-                        {
-                          isPastDate && newAttendenceCheck.back && !(isMorningHoliday && isAfternoonHoliday) && (
-                            <>
-                              <Button
-                                onClick={backToData}
-                                className="bg-blue-600 hover:bg-blue-700 px-2"
-                              >
-                                <MoveLeft />
-                                {'back'}
-                              </Button>
-                            </>
-                          )
-                        }
-                        {/* - {activeSession === 'morning' ? 'Morning Session' : 'Afternoon Session'} */}
-                        <CardTitle className='text-md my-4 md:my-0 md:text-lg'>
-                          Student Attendance - {activeSession === 'morning' ? 'Morning Session' : 'Afternoon Session'}
-                        </CardTitle>
+              {/* Student Attendance List */}
+              {selectedClass && (!isPastDate || allowTakeAttendence || editingSession || isMorningHoliday || isAfternoonHoliday) && !isSunday && (
+                <Card>
+                  <CardHeader>
+                    <div className="flex flex-col md:flex-row  justify-between items-center gap-3">
+                      {
+                        isPastDate && newAttendenceCheck.back && !(isMorningHoliday && isAfternoonHoliday) && (
+                          <>
+                            <Button
+                              onClick={backToData}
+                              className="bg-blue-600 hover:bg-blue-700 px-2"
+                            >
+                              <MoveLeft />
+                              {'back'}
+                            </Button>
+                          </>
+                        )
+                      }
+                      {/* - {activeSession === 'morning' ? 'Morning Session' : 'Afternoon Session'} */}
+                      <CardTitle className='text-md my-4 md:my-0 md:text-lg'>
+                        Student Attendance - {activeSession === 'morning' ? 'Morning Session' : 'Afternoon Session'}
+                      </CardTitle>
 
-                        <div className='flex flex-col lg:flex-row gap-3'>
-                          {/* <Button
+                      <div className='flex flex-col lg:flex-row gap-3'>
+                        {/* <Button
                             onClick={() => {
                               setIsEditing('');
                               markAttendenceAsHoiday();
@@ -887,10 +900,85 @@ const Attendance: React.FC = () => {
                           >
                             {'Mark as Holiday'}
                           </Button> */}
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <button className="flex items-center gap-2 bg-orange-400 text-white px-2 py-2 rounded-lg hover:bg-orange-600 transition-colors">
-                                {/* <KeyRound className="w-4 h-4" /> */}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button className="flex items-center gap-2 bg-orange-400 text-white px-2 py-2 rounded-lg hover:bg-orange-600 transition-colors">
+                              {/* <KeyRound className="w-4 h-4" /> */}
+                              {
+                                (activeSession == 'morning' ? !isMorningHoliday : !isAfternoonHoliday) && (
+                                  'Mark As Holiday'
+                                )
+                              }
+                              {
+                                (activeSession == 'morning' ? isMorningHoliday : isAfternoonHoliday) && (
+                                  'Mark as Working Day'
+                                )
+                              }
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              {
+                                (activeSession == 'morning' ? !isMorningHoliday : !isAfternoonHoliday) && (
+                                  <AlertDialogTitle>Mark As Holiday</AlertDialogTitle>
+                                )
+                              }
+                              {
+                                (activeSession == 'morning' ? isMorningHoliday : isAfternoonHoliday) && (
+                                  <AlertDialogTitle>Mark as Working Day</AlertDialogTitle>
+                                )
+                              }
+                              <AlertDialogDescription>
+
+                                <form className="space-y-6">
+
+                                  {/* Date Field */}
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      Date
+                                    </label>
+                                    <input className='w-full py-2 px-2' type="text" value={format(selectedDate, 'dd-MM-yyyy')} disabled />
+                                    {/* {errors.class && <p className="text-red-500 text-xs mt-1">{errors.class}</p>} */}
+                                  </div>
+
+                                  {/* Class Name Field */}
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      Class
+                                    </label>
+                                    <input className='w-full py-2 px-2' type="text" value={selectedClass} disabled />
+                                    {/* {errors.class && <p className="text-red-500 text-xs mt-1">{errors.class}</p>} */}
+                                  </div>
+
+                                  {/* Session Field */}
+                                  <div className='text-gray-700'>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      Session
+                                    </label>
+                                    <Select value={formData.sessionData} onValueChange={handleSessionChange}>
+                                      <SelectTrigger className="w-full text-gray-600">
+                                        <SelectValue placeholder="Select a Session" />
+                                      </SelectTrigger>
+                                      <SelectContent className='text-gray-600'>
+                                        {['Full Day', 'Morning Session', 'Afternoon Session'].map((val, index) => (
+                                          <SelectItem key={index} value={val}>
+                                            {val}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    {/* {errors.board && <p className="text-red-500 text-xs mt-1">{errors.board}</p>} */}
+                                  </div>
+                                </form>
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter className='flex content-center'>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => {
+                                setIsEditing('');
+                                const check = (activeSession == 'morning' ? !isMorningHoliday : !isAfternoonHoliday) ? 'Mark' : 'remove';
+                                markAttendenceAsHoiday(check);
+                              }}>
                                 {
                                   (activeSession == 'morning' ? !isMorningHoliday : !isAfternoonHoliday) && (
                                     'Mark As Holiday'
@@ -901,169 +989,154 @@ const Attendance: React.FC = () => {
                                     'Mark as Working Day'
                                   )
                                 }
-                              </button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                {
-                                  (activeSession == 'morning' ? !isMorningHoliday : !isAfternoonHoliday) && (
-                                    <AlertDialogTitle>Mark As Holiday</AlertDialogTitle>
-                                  )
-                                }
-                                {
-                                  (activeSession == 'morning' ? isMorningHoliday : isAfternoonHoliday) && (
-                                    <AlertDialogTitle>Mark as Working Day</AlertDialogTitle>
-                                  )
-                                }
-                                <AlertDialogDescription>
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                        {
+                          !isSessionSubmitted(activeSession) && !isPastDate && !(activeSession == 'morning' ? isMorningHoliday : isAfternoonHoliday) && (
+                            <Button
+                              onClick={submitAttendance}
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              {'Submit Attendance'}
+                            </Button>
+                          )
+                        }
+                        {
+                          isSessionSubmitted(activeSession) && isEditing != activeSession && !isPastDate && !(activeSession == 'morning' ? isMorningHoliday : isAfternoonHoliday) && (
 
-                                  <form className="space-y-6">
+                            <Button
+                              onClick={() => setIsEditing(activeSession)}
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              {'Edit Attendance'}
+                            </Button>
 
-                                    {/* Date Field */}
-                                    <div>
-                                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Date
-                                      </label>
-                                      <input className='w-full py-2 px-2' type="text" value={format(selectedDate, 'dd-MM-yyyy')} disabled />
-                                      {/* {errors.class && <p className="text-red-500 text-xs mt-1">{errors.class}</p>} */}
-                                    </div>
+                          )
+                        }
+                        {
+                          ((isSessionSubmitted(activeSession) && isEditing == activeSession) || isPastDate) && !(activeSession == 'morning' ? isMorningHoliday : isAfternoonHoliday) && (
+                            <Button
+                              onClick={() => {
+                                setIsEditing('');
+                                submitAttendance();
+                              }}
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              {'Save Attendance'}
+                            </Button>
+                          )
+                        }
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <Tabs value={activeSession} onValueChange={(value) => setActiveSession(value as 'morning' | 'afternoon')}>
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="morning" className="relative">
+                          {window.innerWidth >= 768 ? 'Morning Session' : 'Morning'}
+                          {isSessionSubmitted('morning') && (
+                            <CheckCircle className="w-4 h-4 ml-2 text-green-600" />
+                          )}
+                        </TabsTrigger>
+                        <TabsTrigger value="afternoon" className="relative">
+                          {window.innerWidth >= 768 ? 'Afternoon Session' : 'Afternoon'}
 
-                                    {/* Class Name Field */}
-                                    <div>
-                                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Class
-                                      </label>
-                                      <input className='w-full py-2 px-2' type="text" value={selectedClass} disabled />
-                                      {/* {errors.class && <p className="text-red-500 text-xs mt-1">{errors.class}</p>} */}
-                                    </div>
+                          {isSessionSubmitted('afternoon') && (
+                            <CheckCircle className="w-4 h-4 ml-2 text-green-600" />
+                          )}
+                        </TabsTrigger>
+                      </TabsList>
 
-                                    {/* Session Field */}
-                                    <div className='text-gray-700'>
-                                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Session
-                                      </label>
-                                      <Select value={formData.sessionData} onValueChange={handleSessionChange}>
-                                        <SelectTrigger className="w-full text-gray-600">
-                                          <SelectValue placeholder="Select a Session" />
-                                        </SelectTrigger>
-                                        <SelectContent className='text-gray-600'>
-                                          {['Full Day', 'Morning Session', 'Afternoon Session'].map((val, index) => (
-                                            <SelectItem key={index} value={val}>
-                                              {val}
-                                            </SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                      {/* {errors.board && <p className="text-red-500 text-xs mt-1">{errors.board}</p>} */}
-                                    </div>
-                                  </form>
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter className='flex content-center'>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => {
-                                  setIsEditing('');
-                                  const check = (activeSession == 'morning' ? !isMorningHoliday : !isAfternoonHoliday) ? 'Mark' : 'remove';
-                                  markAttendenceAsHoiday(check);
-                                }}>
-                                  {
-                                    (activeSession == 'morning' ? !isMorningHoliday : !isAfternoonHoliday) && (
-                                      'Mark As Holiday'
-                                    )
-                                  }
-                                  {
-                                    (activeSession == 'morning' ? isMorningHoliday : isAfternoonHoliday) && (
-                                      'Mark as Working Day'
-                                    )
-                                  }
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+
+                      <TabsContent value="morning" className="mt-6 max-h-[27rem] overflow-auto md:px-2">
+                        <div className="space-y-4">
+                          {!isMorningHoliday && students && students?.map((student) => (
+                            <div key={student.student_id} className="flex flex-col md:flex-row items-center justify-between p-4 border rounded-lg bg-gray-50">
+                              <div className="flex items-center gap-4 mb-4 md:mb-0">
+                                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-semibold">
+                                  {student.student_name.split(' ').map(n => n[0]).join('')}
+                                </div>
+                                <div>
+                                  <p className="font-medium">{student.student_name}</p>
+                                  <p className="text-sm text-gray-600">Roll No. {student.roll_number}</p>
+                                </div>
+                              </div>
+                              {
+                                (!isSessionSubmitted(activeSession) || isEditing == activeSession || isPastDate) ? (
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant={student.morningPresent ? "default" : "outline"}
+                                      onClick={() => toggleAttendance(student.student_id, true)}
+                                      className={student.morningPresent ? "bg-green-600 hover:bg-green-700" : ""}
+                                    >
+                                      Present
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant={!student.morningPresent ? "destructive" : "outline"}
+                                      onClick={() => toggleAttendance(student.student_id, false)}
+                                    >
+                                      Absent
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <>
+                                    {
+                                      getStatusBadge(student.morningPresent ? 'Present' : 'Absent')
+                                    }
+                                  </>
+                                )
+                              }
+                            </div>
+                          ))}
+
                           {
-                            !isSessionSubmitted(activeSession) && !isPastDate && !(activeSession == 'morning' ? isMorningHoliday : isAfternoonHoliday) && (
-                              <Button
-                                onClick={submitAttendance}
-                                className="bg-blue-600 hover:bg-blue-700"
-                              >
-                                {'Submit Attendance'}
-                              </Button>
-                            )
-                          }
-                          {
-                            isSessionSubmitted(activeSession) && isEditing != activeSession && !isPastDate && !(activeSession == 'morning' ? isMorningHoliday : isAfternoonHoliday) && (
-
-                              <Button
-                                onClick={() => setIsEditing(activeSession)}
-                                className="bg-blue-600 hover:bg-blue-700"
-                              >
-                                {'Edit Attendance'}
-                              </Button>
-
-                            )
-                          }
-                          {
-                            ((isSessionSubmitted(activeSession) && isEditing == activeSession) || isPastDate) && !(activeSession == 'morning' ? isMorningHoliday : isAfternoonHoliday) && (
-                              <Button
-                                onClick={() => {
-                                  setIsEditing('');
-                                  submitAttendance();
-                                }}
-                                className="bg-blue-600 hover:bg-blue-700"
-                              >
-                                {'Save Attendance'}
-                              </Button>
+                            isMorningHoliday && (
+                              <div className="flex flex-col md:flex-row items-center justify-between p-4 border rounded-lg bg-gray-50">
+                                <div className="flex items-center justify-center w-full gap-4 mb-4 md:mb-0">
+                                  Marked as Holiday.
+                                  {/* <div>
+                                    <p className="font-medium">{student.student_name}</p>
+                                    <p className="text-sm text-gray-600">Roll No. {student.roll_number}</p>
+                                  </div> */}
+                                </div>
+                              </div>
                             )
                           }
                         </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <Tabs value={activeSession} onValueChange={(value) => setActiveSession(value as 'morning' | 'afternoon')}>
-                        <TabsList className="grid w-full grid-cols-2">
-                          <TabsTrigger value="morning" className="relative">
-                            {window.innerWidth >= 768 ? 'Morning Session' : 'Morning'}
-                            {isSessionSubmitted('morning') && (
-                              <CheckCircle className="w-4 h-4 ml-2 text-green-600" />
-                            )}
-                          </TabsTrigger>
-                          <TabsTrigger value="afternoon" className="relative">
-                            {window.innerWidth >= 768 ? 'Afternoon Session' : 'Afternoon'}
+                      </TabsContent>
 
-                            {isSessionSubmitted('afternoon') && (
-                              <CheckCircle className="w-4 h-4 ml-2 text-green-600" />
-                            )}
-                          </TabsTrigger>
-                        </TabsList>
-
-
-                        <TabsContent value="morning" className="mt-6 max-h-[27rem] overflow-auto md:px-2">
-                          <div className="space-y-4">
-                            {!isMorningHoliday && students && students?.map((student) => (
-                              <div key={student.student_id} className="flex flex-col md:flex-row items-center justify-between p-4 border rounded-lg bg-gray-50">
-                                <div className="flex items-center gap-4 mb-4 md:mb-0">
-                                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-semibold">
-                                    {student.student_name.split(' ').map(n => n[0]).join('')}
-                                  </div>
-                                  <div>
-                                    <p className="font-medium">{student.student_name}</p>
-                                    <p className="text-sm text-gray-600">Roll No. {student.roll_number}</p>
-                                  </div>
+                      <TabsContent value="afternoon" className="mt-6 max-h-[27rem] overflow-auto md:px-2">
+                        <div className="space-y-4">
+                          {!isAfternoonHoliday && students && students?.map((student) => (
+                            <div key={student.student_id} className="flex flex-col md:flex-row  items-center justify-between p-4 border rounded-lg bg-gray-50">
+                              <div className="flex items-center gap-4 mb-4 md:mb-0">
+                                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-semibold">
+                                  {student.student_name.split(' ').map(n => n[0]).join('')}
                                 </div>
+                                <div>
+                                  <p className="font-medium">{student.student_name}</p>
+                                  <p className="text-sm text-gray-600">Roll No. {student.roll_number}</p>
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
                                 {
                                   (!isSessionSubmitted(activeSession) || isEditing == activeSession || isPastDate) ? (
                                     <div className="flex gap-2">
                                       <Button
                                         size="sm"
-                                        variant={student.morningPresent ? "default" : "outline"}
+                                        variant={student.afternoonPresent ? "default" : "outline"}
                                         onClick={() => toggleAttendance(student.student_id, true)}
-                                        className={student.morningPresent ? "bg-green-600 hover:bg-green-700" : ""}
+                                        className={student.afternoonPresent ? "bg-green-600 hover:bg-green-700" : ""}
                                       >
                                         Present
                                       </Button>
                                       <Button
                                         size="sm"
-                                        variant={!student.morningPresent ? "destructive" : "outline"}
+                                        variant={!student.afternoonPresent ? "destructive" : "outline"}
                                         onClick={() => toggleAttendance(student.student_id, false)}
                                       >
                                         Absent
@@ -1072,101 +1145,41 @@ const Attendance: React.FC = () => {
                                   ) : (
                                     <>
                                       {
-                                        getStatusBadge(student.morningPresent ? 'Present' : 'Absent')
+                                        getStatusBadge(student.afternoonPresent ? 'Present' : 'Absent')
                                       }
                                     </>
                                   )
                                 }
                               </div>
-                            ))}
+                            </div>
+                          ))}
 
-                            {
-                              isMorningHoliday && (
-                                <div className="flex flex-col md:flex-row items-center justify-between p-4 border rounded-lg bg-gray-50">
-                                  <div className="flex items-center justify-center w-full gap-4 mb-4 md:mb-0">
-                                    Marked as Holiday.
-                                    {/* <div>
+                          {
+                            isAfternoonHoliday && (
+                              <div className="flex flex-col md:flex-row items-center justify-between p-4 border rounded-lg bg-gray-50">
+                                <div className="flex items-center justify-center w-full gap-4 mb-4 md:mb-0">
+                                  Marked as Holiday.
+                                  {/* <div>
                                     <p className="font-medium">{student.student_name}</p>
                                     <p className="text-sm text-gray-600">Roll No. {student.roll_number}</p>
                                   </div> */}
-                                  </div>
-                                </div>
-                              )
-                            }
-                          </div>
-                        </TabsContent>
-
-                        <TabsContent value="afternoon" className="mt-6 max-h-[27rem] overflow-auto md:px-2">
-                          <div className="space-y-4">
-                            {!isAfternoonHoliday && students && students?.map((student) => (
-                              <div key={student.student_id} className="flex flex-col md:flex-row  items-center justify-between p-4 border rounded-lg bg-gray-50">
-                                <div className="flex items-center gap-4 mb-4 md:mb-0">
-                                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-semibold">
-                                    {student.student_name.split(' ').map(n => n[0]).join('')}
-                                  </div>
-                                  <div>
-                                    <p className="font-medium">{student.student_name}</p>
-                                    <p className="text-sm text-gray-600">Roll No. {student.roll_number}</p>
-                                  </div>
-                                </div>
-                                <div className="flex gap-2">
-                                  {
-                                    (!isSessionSubmitted(activeSession) || isEditing == activeSession || isPastDate) ? (
-                                      <div className="flex gap-2">
-                                        <Button
-                                          size="sm"
-                                          variant={student.afternoonPresent ? "default" : "outline"}
-                                          onClick={() => toggleAttendance(student.student_id, true)}
-                                          className={student.afternoonPresent ? "bg-green-600 hover:bg-green-700" : ""}
-                                        >
-                                          Present
-                                        </Button>
-                                        <Button
-                                          size="sm"
-                                          variant={!student.afternoonPresent ? "destructive" : "outline"}
-                                          onClick={() => toggleAttendance(student.student_id, false)}
-                                        >
-                                          Absent
-                                        </Button>
-                                      </div>
-                                    ) : (
-                                      <>
-                                        {
-                                          getStatusBadge(student.afternoonPresent ? 'Present' : 'Absent')
-                                        }
-                                      </>
-                                    )
-                                  }
                                 </div>
                               </div>
-                            ))}
+                            )
+                          }
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                  </CardContent>
+                </Card>
+              )}
 
-                            {
-                              isAfternoonHoliday && (
-                                <div className="flex flex-col md:flex-row items-center justify-between p-4 border rounded-lg bg-gray-50">
-                                  <div className="flex items-center justify-center w-full gap-4 mb-4 md:mb-0">
-                                    Marked as Holiday.
-                                    {/* <div>
-                                    <p className="font-medium">{student.student_name}</p>
-                                    <p className="text-sm text-gray-600">Roll No. {student.roll_number}</p>
-                                  </div> */}
-                                  </div>
-                                </div>
-                              )
-                            }
-                          </div>
-                        </TabsContent>
-                      </Tabs>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Message section */}
-                {(!selectedClass || (sampleAttendanceRecords.length == 0 && isPastDate && !allowTakeAttendence && (!isMorningHoliday && !isAfternoonHoliday)) || isSunday) && (
-                  <Card className='py-[13rem]'>
-                    <CardContent className="p-8 text-center">
-                      <AlertCircle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
-                      {/* {
+              {/* Message section */}
+              {(!selectedClass || (sampleAttendanceRecords.length == 0 && isPastDate && !allowTakeAttendence && (!isMorningHoliday && !isAfternoonHoliday)) || isSunday) && (
+                <Card className='py-[13rem]'>
+                  <CardContent className="p-8 text-center">
+                    <AlertCircle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
+                    {/* {
                          && (
                           <>
                             <h2 className="text-2xl font-bold mb-2">Future Date Selected</h2>
@@ -1174,48 +1187,47 @@ const Attendance: React.FC = () => {
                           </>
                         )
                       } */}
-                      {
-                        !selectedClass && (
-                          <>
-                            <h2 className="text-2xl font-bold mb-2">No Class Selected</h2>
-                            <p className="text-gray-600">Select the class to view the attendance data.</p>
-                          </>
-                        )
-                      }
-                      {
-                        sampleAttendanceRecords.length == 0 && selectedClass && isPastDate && !allowTakeAttendence && !isSunday && (
-                          <>
-                            <h2 className="text-2xl font-bold mb-2">No Attendence Found</h2>
-                            {/* <p className="text-gray-600">Try changing date to view the attendance data.</p> */}
-                            <Button
-                              onClick={setNewAttendence}
-                              className="bg-blue-600 hover:bg-blue-700"
-                            >
-                              {'Update Attendance'}
-                            </Button>
-                          </>
-                        )
-                      }
-                      {
-                        isSunday && selectedClass && (
-                          <>
-                            <h3 className="text-2xl font-bold mb-2">No Attendence Found</h3>
-                            <p className="text-gray-500 mb-2">{format(selectedDate, 'dd-MM-yyyy')}(Sunday) is marked as Holiday.</p>
-                            {/* <Button
+                    {
+                      !selectedClass && (
+                        <>
+                          <h2 className="text-2xl font-bold mb-2">No Class Selected</h2>
+                          <p className="text-gray-600">Select the class to view the attendance data.</p>
+                        </>
+                      )
+                    }
+                    {
+                      sampleAttendanceRecords.length == 0 && selectedClass && isPastDate && !allowTakeAttendence && !isSunday && (
+                        <>
+                          <h2 className="text-2xl font-bold mb-2">No Attendence Found</h2>
+                          {/* <p className="text-gray-600">Try changing date to view the attendance data.</p> */}
+                          <Button
+                            onClick={setNewAttendence}
+                            className="bg-blue-600 hover:bg-blue-700"
+                          >
+                            {'Update Attendance'}
+                          </Button>
+                        </>
+                      )
+                    }
+                    {
+                      isSunday && selectedClass && (
+                        <>
+                          <h3 className="text-2xl font-bold mb-2">No Attendence Found</h3>
+                          <p className="text-gray-500 mb-2">{format(selectedDate, 'dd-MM-yyyy')}(Sunday) is marked as Holiday.</p>
+                          {/* <Button
                               onClick={setNewAttendence}
                               className="bg-blue-600 hover:bg-blue-700"
                             >
                               {'Update Attendance'}
                             </Button> */}
-                          </>
-                        )
-                      }
-                    </CardContent>
-                  </Card>
-                )}
-              </>
-            )}
-          </div>
+                        </>
+                      )
+                    }
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
         </div>
       </div>
     </MainLayout>
