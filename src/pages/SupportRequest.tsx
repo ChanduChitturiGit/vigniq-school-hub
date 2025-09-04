@@ -395,7 +395,7 @@ const SupportDetails: React.FC = () => {
 
     if (!request) {
         return (
-            <MainLayout pageTitle="Support Details">
+            <MainLayout pageTitle="Support Details">bg-white rounded-lg shadow-sm border border-gray-200
                 <div className="flex items-center justify-center h-96">
                     <div className="text-center">
                         <h3 className="text-lg font-medium text-gray-900 mb-2">Loading...</h3>
@@ -407,9 +407,9 @@ const SupportDetails: React.FC = () => {
 
     return (
         <MainLayout pageTitle="Support Details">
-            <div className="max-w-4xl mx-auto space-y-6">
+            <div className="max-w-4xl mx-auto space-y-1">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-6 ">
                     <button
                         onClick={() => navigate('/requests')}
                         className="flex items-center gap-2 text-blue-600 hover:text-blue-800"
@@ -429,7 +429,7 @@ const SupportDetails: React.FC = () => {
                 </div>
 
                 {/* Request Info */}
-                <div className="mb-6 px-2 w-full flex flex-col md:flex-row sm:mb-4 md:mb-0 items-center justify-between  ">
+                <div className="mb-6 px-4 md:px-6 py-4 w-full flex flex-col md:flex-row sm:mb-4 md:mb-0 items-center justify-between  bg-white rounded-lg shadow-sm border border-gray-200">
                     <div>
                         <h1 className="text-xl font-semibold text-gray-800 mb-2">{request.title}</h1>
                         <div className="flex items-center gap-4 text-sm text-gray-500">
@@ -439,9 +439,9 @@ const SupportDetails: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className='flex  flex-wrap  mb-2 md:mb-0 mt-2 md:mt-0 gap-4'>
+                    <div className='flex flex-wrap  mb-2 md:mb-0 mt-2 md:mt-0 gap-4'>
                         {!isEditing ? (
-                            <div>
+                            <div className='flex flex-wrap items-center gap-4'>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Status
                                 </label>
@@ -496,7 +496,7 @@ const SupportDetails: React.FC = () => {
                 </div>
 
                 {/* Chat Messages */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-[600px] flex flex-col">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-[38rem] flex flex-col">
                     <div className="flex-1 overflow-y-auto p-6 space-y-4">
                         {request.responses.map((message, index) => (
                             <div
