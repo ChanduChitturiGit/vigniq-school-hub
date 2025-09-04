@@ -32,11 +32,11 @@ class SupportService:
             related_section_id = input_data.get("related_section_id")
             issue_description = input_data.get("issue_description")
             expected_outcome = input_data.get("expected_outcome")
-            files = input_data.get("file_attachment", [])
+            files = self.request.FILES.getlist("file_attachment[]", [])
 
             if not all([school_id, title, issue_type_id, related_section_id,
                         issue_description, expected_outcome]):
-                logger.warning("Missing required fields for creating support ticket")
+                logger.error("Missing required fields for creating support ticket")
                 return JsonResponse({"error": "Missing required fields"}, status=400)
             with transaction.atomic():
                 ticket = SupportTicket.objects.create(
@@ -56,7 +56,7 @@ class SupportService:
                             f"**Expected Outcome**:\n{expected_outcome}",
                     file_attachment=files_paths if files_paths else None
                 )
-            logger.info("Support ticket created successfully: %s", ticket)
+            logger.info("Support ticket created successfully")
             return JsonResponse({"message": "Support ticket created successfully"}, status=201)
         except Exception as e:
             logger.error("Error creating support ticket for user %s: %s", self.user, e)
@@ -68,7 +68,7 @@ class SupportService:
             ticket_id = self.request.data.get("ticket_id")
             responder = self.user
             message = self.request.data.get("message")
-            file_attachment = self.request.data.get("file_attachment")
+            file_attachment = self.request.FILES.getlist("file_attachment[]", [])
 
             logger.info("Responding to ticket %s by %s", ticket_id, responder)
             ticket_obj = SupportTicket.objects.get(
@@ -99,8 +99,9 @@ class SupportService:
                 content_type = file.content_type
                 s3_key = f"support_tickets/{ticket.id}/attachment_{timezone.now()}.{ext}"
                 file_obj = BytesIO(file.read())
-                s3_path = s3_client.upload_file(file_obj, s3_key, content_type)
-                s3_paths.append(s3_path)
+                status = s3_client.upload_file(file_obj, s3_key, content_type)
+                if status:
+                    s3_paths.append(s3_key)
             return s3_paths
         except Exception as e:
             logger.error("Error saving files to S3: %s", e)
