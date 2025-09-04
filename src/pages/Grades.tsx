@@ -121,7 +121,6 @@ const Grades: React.FC = () => {
       const schoolId = userData.school_id ?? 1;
       const teacherId = userData.user_id ?? 3;
       const data = await getGradeByTeacherId(schoolId, teacherId);
-      console.log('Fetched Grades Data:', data);
       if (data && data.data) {
         setTeacherClasses(data.data);
         groupSubjects(data.data);
