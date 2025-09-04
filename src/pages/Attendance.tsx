@@ -613,57 +613,35 @@ const Attendance: React.FC = () => {
   return (
     <MainLayout pageTitle={`Attendance Center`}>
       <div className="container mx-auto p-6 space-y-6">
-        {/* <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Attendance Center</h1>
-            <p className="text-gray-600">Mark and manage student attendance</p>
-          </div>
-          {editingSession && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                setEditingSession(null);
-                if (isPastDate) setViewMode('reports');
-              }}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back to {isPastDate ? 'Reports' : 'Attendance'}
-            </Button>
-          )}
-        </div> */}
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Panel - Calendar and Class Selection */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="w-5 h-6 mt-2" />
-                  <p className="text-lg mt-2">
-                    Date : <span className='text-gray-600'>{selectedDate ? format(selectedDate, "EEEE, dd MMM yyyy") : "No date selected"}</span>
-                  </p>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className='w-full '>
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={handleDateSelect}
-                  className="w-full h-full rounded-md border overflow-auto flex items-center justify-center"
-                  disabled={(date) => isAfter(date, startOfDay(new Date()))}
-                />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader >
-                <CardTitle className='text-lg'>Select Class</CardTitle>
-              </CardHeader>
-              <CardContent>
+        {/* Top Controls Bar */}
+        <div className="bg-background border rounded-lg p-4">
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1">
+              {/* Date Selection */}
+              <div className="flex items-center gap-2 min-w-fit">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Select Date</span>
+                <Button 
+                  variant="outline" 
+                  className="text-sm"
+                  onClick={() => {
+                    const calendarEl = document.querySelector('[data-calendar]') as HTMLElement;
+                    if (calendarEl) {
+                      calendarEl.classList.toggle('hidden');
+                    }
+                  }}
+                >
+                  {selectedDate ? format(selectedDate, "E MMM dd yyyy") : "Select Date"}
+                </Button>
+              </div>
+              
+              {/* Class Selection */}
+              <div className="flex items-center gap-2 min-w-fit">
+                <Users className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Select Class</span>
                 <Select value={selectedClass} onValueChange={handleClassChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a class" />
+                  <SelectTrigger className="w-[200px] text-sm">
+                    <SelectValue placeholder="Select Class" />
                   </SelectTrigger>
                   <SelectContent>
                     {classes.map((cls) => (
@@ -673,24 +651,47 @@ const Attendance: React.FC = () => {
                     ))}
                   </SelectContent>
                 </Select>
-                {
-                  (statConditionCheck()) && selectedClass && (
-                    <div className='w-full mt-4 flex justify-center'>
-                      <button className="px-4 py-3 flex items-center gap-2 bg-blue-500 text-white px-2 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-                        onClick={downloadExcel}>
-                        <Download />
-                        Download Daily Report
-                      </button>
-                    </div>
-                  )
-                }
-              </CardContent>
-            </Card>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              {(statConditionCheck()) && selectedClass && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={downloadExcel}
+                  className="flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Export Data
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <FileText className="w-4 h-4" />
+                Download Report
+              </Button>
+            </div>
           </div>
+          
+          {/* Calendar Dropdown */}
+          <div data-calendar className="mt-4 hidden">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={handleDateSelect}
+              className="w-fit rounded-md border bg-background"
+              disabled={(date) => isAfter(date, startOfDay(new Date()))}
+            />
+          </div>
+        </div>
 
-
-          {/* Right Panel - Dynamic Content */}
-          <div className="lg:col-span-2 space-y-6">
+        {/* Main Content Area */}
+        <div className="space-y-6">
             {viewMode === 'reports' && selectedClass &&
               !editingSession && (sampleAttendanceRecords.length > 0) && !isSunday ? (
               // Reports View for Past Dates
@@ -1209,13 +1210,12 @@ const Attendance: React.FC = () => {
                             </Button> */}
                           </>
                         )
-                      }
+                       }
                     </CardContent>
                   </Card>
                 )}
               </>
             )}
-          </div>
         </div>
       </div>
     </MainLayout>
