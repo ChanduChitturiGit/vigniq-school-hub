@@ -538,7 +538,7 @@ const Requests: React.FC = () => {
                     {/* <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getPriorityColor(request.priority)}`}>
                       {request.priority} Priority
                     </span> */}
-                    <span className="text-blue-500 text-sm">{request?.attachments?.length} attachments</span>
+                    <span className="text-blue-500 text-sm">{request?.attachments_count} attachments</span>
                   </div>
                   <div className="flex flex-col md:flex-row items-center gap-4 text-sm text-gray-500 mb-3">
                     {/* <span>ID: {request.id}</span> */}
@@ -556,7 +556,7 @@ const Requests: React.FC = () => {
               <div className="flex flex-col md:flex-row  items-center justify-between">
                 <div className="flex  items-center gap-2 text-sm text-gray-500">
                   <MessageSquare className="w-4 h-4" />
-                  <span>{request?.messages?.length} messages</span>
+                  <span>{request?.total_responses} messages</span>
                   {/* {getNewMessageCount(request) > 0 && (
                     <>
                       <span className="text-red-500 font-medium">{getNewMessageCount(request)} new</span>
