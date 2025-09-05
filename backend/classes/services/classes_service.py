@@ -7,7 +7,7 @@ from django.db import IntegrityError,transaction
 
 from classes.models import SchoolClass,ClassAssignment,SchoolSection
 
-from teacher.models import Teacher
+from teacher.models import Teacher, TeacherSubjectAssignment
 from academics.models import SchoolAcademicYear
 
 from core.common_modules.common_functions import CommonFunctions
@@ -65,10 +65,31 @@ class ClassesService:
             
             school_db_name = CommonFunctions.get_school_db_name(school_id)
 
-            classes = SchoolSection.objects.using(school_db_name).all()
+            classes_qs = SchoolSection.objects.using(school_db_name).all()
+
+            teacher_obj = Teacher.objects.using(school_db_name).filter(
+                teacher_id=request.user.id
+            ).first()
+
+            if teacher_obj:
+                # get classes where teacher is class teacher
+                class_teacher_class_ids = ClassAssignment.objects.using(school_db_name).filter(
+                    class_teacher=teacher_obj,
+                    academic_year_id=academic_year_id
+                ).values_list('class_instance_id', flat=True)
+
+                # get classes where teacher teaches a subject
+                subject_teacher_class_ids = TeacherSubjectAssignment.objects.using(school_db_name).filter(
+                    teacher=teacher_obj,
+                    academic_year_id=academic_year_id
+                ).values_list('school_class_id', flat=True)
+
+                allowed_class_ids = set(class_teacher_class_ids) | set(subject_teacher_class_ids)
+
+                classes_qs = classes_qs.filter(id__in=allowed_class_ids)
 
             data = []
-            for class_obj in classes:
+            for class_obj in classes_qs:
                 school_board = SchoolBoard.objects.get(
                     id=class_obj.board_id
                 )
