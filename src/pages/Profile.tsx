@@ -161,8 +161,8 @@ const Profile: React.FC = () => {
         <Breadcrumb items={breadcrumbItems} />
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col md:flex-row items-center justify-between mb-6">
+            <div className="flex mb-4 md:mb-0 items-center gap-4">
               <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center">
                 <User className="w-8 h-8 text-white" />
               </div>
