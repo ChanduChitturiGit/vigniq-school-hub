@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { getSupportNotifications } from '../../services/support';
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { get } from 'http';
 
 interface TopNavbarProps {
   isCollapsed: boolean;
@@ -134,13 +135,20 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ isCollapsed, toggleSidebar, pageT
         {/* Notification Icon */}
         <div className="relative" ref={notificationMenuRef}>
           <button
-            onClick={() => setShowNotificationMenu(!showNotificationMenu)}
+            onClick={() => {
+              setShowNotificationMenu(!showNotificationMenu)
+              fetchNotifications()
+            }}
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative"
             aria-label="Notifications"
           >
             <Bell className="w-5 h-5 text-gray-600" />
             {/* Red dot for unread notifications */}
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+            {
+              notifications.length > 0 && (
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+              )
+            }
           </button>
           {/* Notification Dropdown */}
           {showNotificationMenu && (
