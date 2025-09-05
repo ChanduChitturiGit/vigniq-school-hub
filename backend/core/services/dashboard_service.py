@@ -1,13 +1,14 @@
 """Dashboard Service Module"""
 
 import logging
+from urllib import request
 
 from rest_framework.response import Response
 
 from school.models import School
 from core.models import User
 
-from classes.models import SchoolSection
+from classes.models import SchoolSection,ClassAssignment
 from student.models import StudentClassAssignment
 from teacher.models import Teacher
 
@@ -70,21 +71,30 @@ class DashboardService:
             }, status=200)
         
         elif request.user.role_id == 3:
-            academic_year_id = request.data.get('academic_year_id',1)
+            academic_year_id = request.data.get('academic_year_id', 1)
             school_db_name = CommonFunctions.get_school_db_name(request.user.school_id)
-            total_classes = TeacherSubjectAssignment.objects.using(school_db_name).filter(
+
+            subject_classes = TeacherSubjectAssignment.objects.using(school_db_name).filter(
                 teacher_id=request.user.id,
                 academic_year_id=academic_year_id
-            ).values_list('school_class_id',flat=True).distinct()
+            ).values_list('school_class_id', flat=True)
+
+            class_teacher_classes = ClassAssignment.objects.using(school_db_name).filter(
+                class_teacher_id=request.user.id,
+                academic_year_id=academic_year_id
+            ).values_list('class_instance_id', flat=True)
+
+            all_classes = set(subject_classes) | set(class_teacher_classes)
+
             total_students = StudentClassAssignment.objects.using(school_db_name).filter(
                 student__is_active=True,
                 academic_year_id=academic_year_id,
-                class_instance_id__in=total_classes
+                class_instance_id__in=all_classes
             ).count()
 
             return Response({
-                "data":{
-                    "total_classes": total_classes.count(),
+                "data": {
+                    "total_classes": len(all_classes),
                     "total_students": total_students
                 }
             }, status=200)

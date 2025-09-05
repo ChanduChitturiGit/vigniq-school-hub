@@ -189,7 +189,7 @@ class OfflineExamsService:
             data = self.request.GET
             exam_id = data.get("exam_id")
             exam = Exam.objects.using(self.school_db_name).select_related(
-                'subject', 'created_by_teacher', 'updated_by_teacher'
+                'subject', 'created_by_teacher', 'updated_by_teacher',"exam_category"
             ).get(id=exam_id)
 
             marks = ExamResult.objects.using(self.school_db_name).filter(
@@ -225,6 +225,7 @@ class OfflineExamsService:
                 "exam_id": exam.id,
                 "name": exam.name,
                 "exam_type": exam.exam_type,
+                "exam_category": exam.exam_category.name,
                 "max_marks": round(exam.max_marks, 2),
                 "pass_marks": round(exam.pass_marks, 2),
                 "exam_date": exam.exam_date,
@@ -258,7 +259,7 @@ class OfflineExamsService:
                 subject_id=subject_id,
                 academic_year_id=academic_year_id,
                 is_active=True
-            )
+            ).select_related('exam_category')
 
             if not exams.exists():
                 return JsonResponse({"data": []}, status=200)
@@ -294,6 +295,7 @@ class OfflineExamsService:
                     "exam_name": exam.name,
                     "exam_type": exam.exam_type,
                     "exam_date": exam.exam_date,
+                    "exam_category": exam.exam_category.name,
                     "total_marks": round(exam.max_marks, 2),
                     "pass_marks": round(exam.pass_marks, 2),
                     "average_marks": round(res.get("average_marks", 0), 2),
