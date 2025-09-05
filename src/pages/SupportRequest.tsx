@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import { ArrowLeft, Send, Paperclip, Download, FileText, Upload, Eye, AlertCircle, CheckCircle, Clock, Save, Edit } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
-import { getTicketById, respondToTicket, updateTicketStatus,markMessageAsRead } from '../services/support'
+import { getTicketById, respondToTicket, updateTicketStatus, markMessageAsRead } from '../services/support'
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -226,6 +226,34 @@ const SupportDetails: React.FC = () => {
         }
     };
 
+    const sendStatusUpdateMessage = (status) => {
+        let message = '';
+        switch (status) {
+            case 'open':
+                message = 'Your ticket has been re-opened and is now in our system. Our team will review it soon.';
+                break;
+            case 'in_progress':
+                message = 'Good news! Your ticket is now in progress. Our team is actively working on it.';
+                break;
+            case 'resolved':
+                message = 'Your ticket has been resolved. Please check and confirm if everything is working as expected.';
+                break;
+            case 'closed':
+                message = 'Your ticket has been closed. Thank you for reaching out to us!';
+                break;
+            default:
+                message = '';
+        }
+        const payload = {
+            ticket_id: requestId,
+            message: message,
+            file_attachment: []
+        }
+
+        respondToTicketData(payload);
+
+    }
+
 
     const handleSendMessage = (e: React.FormEvent) => {
         e.preventDefault();
@@ -367,6 +395,7 @@ const SupportDetails: React.FC = () => {
         try {
             const response = await updateTicketStatus(formData);
             if (response && response.message) {
+                sendStatusUpdateMessage(formData.status);
                 showSnackbar({
                     title: "Success",
                     description: `${response.message} ✅`,
@@ -393,7 +422,7 @@ const SupportDetails: React.FC = () => {
     const markMessageAsReadData = async () => {
         try {
             const response = await markMessageAsRead({ ticket_id: Number(requestId) });
-            console.log("respomse",response);
+            console.log("respomse", response);
             if (response && response.message) {
                 // showSnackbar({
                 //     title: "Success",
