@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import { ArrowLeft, Send, Paperclip, Download, FileText, Upload, Eye, AlertCircle, CheckCircle, Clock, Save, Edit } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
-import { getTicketById, respondToTicket, updateTicketStatus } from '../services/support'
+import { getTicketById, respondToTicket, updateTicketStatus,markMessageAsRead } from '../services/support'
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -138,6 +138,7 @@ const SupportDetails: React.FC = () => {
         setRequest(sampleRequest);
 
         getTicketData();
+        markMessageAsReadData();
     }, [requestId]);
 
     useEffect(() => {
@@ -386,6 +387,33 @@ const SupportDetails: React.FC = () => {
             });
         }
         getTicketData();
+    }
+
+    //markMessageAsRead
+    const markMessageAsReadData = async () => {
+        try {
+            const response = await markMessageAsRead({ ticket_id: Number(requestId) });
+            console.log("respomse",response);
+            if (response && response.message) {
+                // showSnackbar({
+                //     title: "Success",
+                //     description: `${response.message} ✅`,
+                //     status: "success"
+                // });
+            } else {
+                showSnackbar({
+                    title: "⛔ Error",
+                    description: "Something went wrong",
+                    status: "error"
+                });
+            }
+        } catch (error) {
+            showSnackbar({
+                title: "⛔ Error",
+                description: error?.response?.data?.error || "Something went wrong",
+                status: "error"
+            });
+        }
     }
 
     const formatChatDate = (date: Date | string) => {

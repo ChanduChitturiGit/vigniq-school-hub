@@ -58,3 +58,15 @@ export const getTicketAttachments = async (data : any) => {
   const response = await api.get(baseurl+suburl+'/getTicketAttachments',{params : data});
   return response.data;
 }
+
+//markMessageAsRead
+export const markMessageAsRead = async (data : any) => {
+  const response = await api.put(baseurl+suburl+'/markMessageAsRead',data);
+  return response.data;
+}
+
+//getSupportNotifications
+export const getSupportNotifications = async () => {
+  const response = await api.get(baseurl+suburl+'/getSupportNotifications');
+  return response.data;
+}
