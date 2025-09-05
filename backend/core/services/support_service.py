@@ -291,7 +291,7 @@ class SupportService:
                     "responses",
                     queryset=TicketResponse.objects.order_by(
                         "created_at"
-                    )
+                    ).select_related("responder")
                 )
             ).get(id=ticket_id)
 
@@ -306,7 +306,9 @@ class SupportService:
                         "response_id": response.id,
                         "created_at": response.created_at,
                         "is_responder_superuser": response.responder.is_superuser if response.responder else None,
-                        "is_initial_submission": initial_submission
+                        "is_initial_submission": initial_submission,
+                        "responder_first_name": response.responder.first_name if response.responder else None,
+                        "responder_last_name": response.responder.last_name if response.responder else None,
                     })
                 initial_submission = False
             return JsonResponse({"data": attachments}, status=200)
@@ -320,17 +322,16 @@ class SupportService:
     def mark_message_as_read(self):
         """Mark messages as read in a ticket."""
         try:
-            response_id = self.request.data.get("response_id")
-            if not response_id:
-                logger.error("Missing response_id for marking messages as read")
-                return JsonResponse({"error": "Missing response_id"}, status=400)
-            ticket_response = TicketResponse.objects.get(id=response_id)
-            ticket_response.is_read = True
-            ticket_response.save()
-            logger.info("Marked response %d as read", response_id)
+            ticket_id = self.request.data.get("ticket_id")
+            if not ticket_id:
+                logger.error("Missing ticket_id for marking messages as read")
+                return JsonResponse({"error": "Missing ticket_id"}, status=400)
+            ticket_response = TicketResponse.objects.filter(ticket_id=ticket_id,is_read=False)
+            ticket_response.update(is_read=True)
+            logger.info("Marked response %d as read", ticket_id)
             return JsonResponse({"message": "Marked response as read"}, status=200)
         except Exception as e:
-            logger.error("Error marking messages as read for response %s: %s", response_id, e)
+            logger.error("Error marking messages as read for response %s: %s", ticket_id, e)
             return JsonResponse({"error": "Unable to mark messages as read"}, status=500)
 
     
