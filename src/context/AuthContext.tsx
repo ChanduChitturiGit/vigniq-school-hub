@@ -83,7 +83,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // Check for existing session
     const savedUser = localStorage.getItem('vigniq_current_user');
-    if (savedUser) {
+    const token = sessionStorage.getItem('access_token');
+    const refreshToken = sessionStorage.getItem('refresh_token');
+    if (savedUser && token && refreshToken) {
       setUser(JSON.parse(savedUser));
       setIsAuthenticated(true);
     }
@@ -93,8 +95,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       const res = await loginApi({ user_name: username, password });
 
-      localStorage.setItem('access_token', res.access);
-      localStorage.setItem('refresh_token', res.refresh);
+      sessionStorage.setItem('access_token', res.access);
+      sessionStorage.setItem('refresh_token', res.refresh);
       localStorage.setItem('vigniq_current_user', JSON.stringify(res.user));
 
       const foundUser = res.user;
