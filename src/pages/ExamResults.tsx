@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Edit, Users, TrendingUp, Award, BarChart3, Download, X } from 'lucide-react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, Edit, Users, TrendingUp, Award, BarChart3, Download, X, Calendar, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -260,9 +260,9 @@ const ExamResults: React.FC = () => {
 
   return (
     <>
-      <MainLayout pageTitle='Exam Results'>
+      <MainLayout pageTitle={`Exam Results : ${toCapitalCase(examDetails.name) + ' - ' + examDetails.subject_name}`}>
         <div className="space-y-6">
-          <div className="flex items-center gap-4">
+          {/* <div className="flex items-center gap-4">
             <Button
               variant="ghost"
               onClick={() => navigate(`/grades/exams/${pathData}`)}
@@ -271,14 +271,16 @@ const ExamResults: React.FC = () => {
               <ArrowLeft className="w-4 h-4" />
               Back to Exams
             </Button>
-          </div>
-
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className='mb-3 md:mb-0'>
-              <h1 className="text-xl md:text-2xl font-bold text-gray-800">{toCapitalCase(examDetails.name)} - {examDetails.subject_name}</h1>
-              <p className="text-gray-600 mt-1">
-                {examDetails.exam_date} • {examDetails.max_marks} Total Marks • {examDetails.pass_marks} Pass Marks
-              </p>
+          </div> */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Link
+                to={`/grades/exams/${pathData}`}
+                className="flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                <span className="font-medium">Back to Exams</span>
+              </Link>
             </div>
             <div className='flex gap-3'>
               <Button
@@ -303,6 +305,15 @@ const ExamResults: React.FC = () => {
               }
             </div>
           </div>
+
+          {/* <div className="flex flex-col md:flex-row items-center justify-between">
+            <div className='mb-3 md:mb-0'>
+              <h1 className="text-xl md:text-2xl font-bold text-gray-800">{toCapitalCase(examDetails.name)} - {examDetails.subject_name}</h1>
+              <p className="text-gray-600 mt-1">
+                {examDetails.exam_date} • {examDetails.max_marks} Total Marks • {examDetails.pass_marks} Pass Marks
+              </p>
+            </div> 
+          </div> */}
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -360,16 +371,37 @@ const ExamResults: React.FC = () => {
             <div className="lg:col-span-3">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="w-5 h-5" />
-                    Student Results
+                  <CardTitle className="flex items-center justify-between gap-2">
+                    <div className='flex gap-2 items-center'>
+                      <Users className="w-5 h-5" />
+                      <span>Student Results</span>
+                    </div>
+                    <div className="flex gap-3 text-gray-600 text-sm mt-1">
+                      <div className='flex gap-1 items-center'>
+                        <BookOpen className="w-5 h-5" />
+                        {className} - {section}
+                      </div>
+                      <div className='flex gap-1 items-center'>
+                        <Calendar className="w-5 h-5" />
+                        {examDetails.exam_date}
+                      </div>
+                      <div className='flex gap-1 items-center'>
+                        Total marks :
+                        {Number(examDetails.max_marks).toFixed(0)}
+                      </div>
+                      <div className='flex gap-1 items-center'>
+                        Pass marks :
+                        {Number(examDetails.pass_marks).toFixed(0)}
+                      </div>
+                      {/* • {examDetails.max_marks} Total Marks • {examDetails.pass_marks} Pass Marks */}
+                    </div>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-12">#</TableHead>
+                        <TableHead className="w-12">Roll no.</TableHead>
                         <TableHead>Student Name</TableHead>
                         <TableHead>Marks</TableHead>
                         <TableHead>Percentage</TableHead>
@@ -380,7 +412,7 @@ const ExamResults: React.FC = () => {
                       {studentResults.map((student, index) => (
                         <TableRow key={student.student_id}>
                           <TableCell>
-                            <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                            <div className="w-8 h-8  text-blue-700 rounded-full flex items-center justify-center text-sm font-medium">
                               {student.roll_number}
                             </div>
                           </TableCell>
@@ -402,10 +434,10 @@ const ExamResults: React.FC = () => {
                                   max={examDetails.max_marks}
                                   autoFocus={index === 0}
                                 />
-                                <span className="text-sm text-gray-500">/ {examDetails.max_marks}</span>
+                                <span className="text-sm text-gray-500">/ {Number(examDetails.max_marks).toFixed(0)}</span>
                               </div>
                             ) : (
-                              <span>{Number(student.marks_obtained)} / {examDetails.max_marks}</span>
+                              <span>{Number(student.marks_obtained)} / {Number(examDetails.max_marks).toFixed(0)}</span>
                             )}
                           </TableCell>
                           <TableCell>

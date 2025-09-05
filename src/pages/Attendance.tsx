@@ -669,17 +669,18 @@ const Attendance: React.FC = () => {
             </div>
             {/* Action Buttons */}
             <div className="flex gap-2 w-full md:w-auto justify-end">
-              {(statConditionCheck()) && selectedClass && (
+              {/* {(statConditionCheck()) && selectedClass && ( */}
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={downloadExcel}
                   className="flex items-center gap-2"
+                  disabled={(statConditionCheck()) && selectedClass ? false : true}
                 >
                   <Download className="w-4 h-4" />
-                  Export Data
+                  Download Daily Report
                 </Button>
-              )}
+              {/* )} */}
               {/* <Button
                 variant="outline"
                 size="sm"

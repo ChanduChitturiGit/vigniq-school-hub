@@ -18,7 +18,7 @@ import { useSnackbar } from '../components/snackbar/SnackbarContext';
 import { getLessonPlanDataByDay } from '../services/grades';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '../components/ui/accordion';
 import { sendMessage as sendMessageApi, getChat as getChatApi } from '../services/aiChat'
-import { format } from 'date-fns';
+import { format, isToday, isYesterday } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -290,12 +290,24 @@ const AIChatLessonPlan: React.FC = () => {
     }
   };
 
+  const formatChatDate = (date: Date | string) => {
+  const d = typeof date === "string" ? new Date(date) : date;
+
+  if (isToday(d)) {
+    return `Today, ${format(d, "hh:mm a")}`;
+  }
+  if (isYesterday(d)) {
+    return `Yesterday, ${format(d, "hh:mm a")}`;
+  }
+  return format(d, "dd-MM-yyyy, hh:mm a");
+}
+
   return (
     <MainLayout pageTitle={`AI Chat - Chapter ${chapterId}: ${chapterName} - Day ${dayCount}`}>
       <div className="space-y-8">
         <Breadcrumb items={breadcrumbItems} />
 
-        <div className="flex items-center justify-between">
+        {/* <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link
               to={`/grades/syllabus/${pathData}`}
@@ -305,7 +317,7 @@ const AIChatLessonPlan: React.FC = () => {
               <span className="font-medium">Back</span>
             </Link>
           </div>
-        </div>
+        </div> */}
 
         {/* <div className="flex items-center gap-4 mb-6">
           <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center border border-blue-200">
@@ -331,7 +343,7 @@ const AIChatLessonPlan: React.FC = () => {
                 </AccordionTrigger>
               </Card>
               <AccordionContent>
-                <Card className="shadow-lg border-0 h-[420px] flex flex-col">
+                <Card className="shadow-lg border-0 h-[80vh] flex flex-col">
                   <CardContent className="flex-1 p-0 min-h-0">
                     <ScrollArea className="h-full">
                       <div className="p-6 space-y-4">
@@ -364,10 +376,10 @@ const AIChatLessonPlan: React.FC = () => {
 
           {/* Chat Section */}
           <div className="lg:col-span-2">
-            <Card className="shadow-lg border-0 h-[600px] flex flex-col">
-              <CardHeader className="flex-shrink-0 border-b">
-                <CardTitle className="flex items-center gap-3 text-2xl">
-                  <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+            <Card className="shadow-lg border-0 h-[80vh] flex flex-col">
+              <CardHeader className="flex-shrink-0 border-b h-14 px-6 flex items-start justify-center">
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <div className="w-6 h-6 bg-purple-100 rounded-xl flex items-center justify-center">
                     <MessageSquare className="w-6 h-6 text-purple-600" />
                   </div>
                   Chat with AI Assistant
@@ -410,7 +422,7 @@ const AIChatLessonPlan: React.FC = () => {
                                   </ReactMarkdown>
                                 </p>
                                 <span className="text-xs opacity-70 mt-2 block">
-                                  {format(message.created_at, 'dd-MM-yyyy hh:mm aa')}
+                                  {formatChatDate(message.created_at)}
                                 </span>
                               </>
                             </div>
@@ -434,12 +446,12 @@ const AIChatLessonPlan: React.FC = () => {
 
                 {/* Input Area */}
                 <div className="flex-shrink-0 border-t p-6">
-                  <div className="flex gap-3">
+                  <div className="flex items-center justify-center gap-3">
                     <textarea
                       value={inputMessage}
                       onChange={(e) => setInputMessage(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      placeholder="Ask me about teaching strategies, lesson modifications, or curriculum guidance..."
+                      placeholder="Type your message here..."
                       className="flex-1 resize-none rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[60px] max-h-[120px]"
                       rows={2}
                     />
@@ -458,8 +470,8 @@ const AIChatLessonPlan: React.FC = () => {
 
           {/* Fixed Lesson Plan Panel */}
           <div className="hidden lg:block lg:col-span-1">
-            <Card className="shadow-lg border-0 h-[600px] flex flex-col">
-              <CardHeader className="flex-shrink-0 bg-gray-50 border-b">
+            <Card className="shadow-lg border-0 h-[80vh] flex flex-col">
+              <CardHeader className="flex-shrink-0 bg-gray-50 border-b h-14 px-6 flex items-start justify-center">
                 <CardTitle className="text-xl text-gray-900">Today's Lesson Plan</CardTitle>
               </CardHeader>
 
