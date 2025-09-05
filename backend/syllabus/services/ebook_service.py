@@ -79,15 +79,15 @@ class EbookService:
                     logger.error("Chapter number is required for chapter-wise upload.")
                     return Response({"error": "Chapter number is required."},
                                     status=status.HTTP_400_BAD_REQUEST)
-                file_name = f"{subject_obj.name}_chapter_{chapter_number}_{timezone.now().strftime('%Y%m%d%H%M%S')}.pdf"
+                file_name = f"{subject_obj.name}_chapter_{chapter_number}_{timezone.now().strftime('%Y%m%d%H%M%S')}"
                 s3_key = f"ebooks/class_{class_obj.class_number}/{board_obj.board_name.replace(' ', '_')}/{subject_obj.name}/{file_name}"
             else:
-                file_name = f"{subject_obj.name}_{timezone.now().strftime('%Y%m%d%H%M%S')}.pdf"
+                file_name = f"{subject_obj.name}_{timezone.now().strftime('%Y%m%d%H%M%S')}"
                 s3_key = f"ebooks/class_{class_obj.class_number}/{board_obj.board_name.replace(' ', '_')}/{file_name}"
 
             file_type = 'application/pdf'
             file_bytes = file.read()
-            upload_success = s3_client.upload_file(BytesIO(file_bytes), s3_key, file_type=file_type)
+            upload_success = s3_client.upload_file(BytesIO(file_bytes), f"{s3_key}.pdf", file_type=file_type)
             if upload_success:
                 with transaction.atomic():
                     filters = {
@@ -118,8 +118,16 @@ class EbookService:
                     if upload_type == 'chapter_wise':
                         ebook.chapter_number = int(chapter_number)
                         ebook.save()
-                    self.extract_topics_and_prerequisites(BytesIO(file_bytes), ebook,
+                    extract_status, pdf_text = self.extract_topics_and_prerequisites(BytesIO(file_bytes), ebook,
                                                           previously_uploaded_ebook_id)
+                    pdf_text_file = BytesIO()
+                    pdf_text_file.write(pdf_text.encode("utf-8"))
+                    pdf_text_file.seek(0)
+                    text_file_upload_status = s3_client.upload_file(pdf_text_file, f"{s3_key}.txt", file_type='text/plain')
+                    if not text_file_upload_status:
+                        logger.error("Failed to upload extracted text file to S3.")
+                    logger.info("Uploaded extracted text file to S3 successfully.")
+                    logger.info("eBook uploaded successfully with ID: %s", ebook.id)
                 return Response({"message": "eBook uploaded successfully"},
                                 status=status.HTTP_201_CREATED)
             else:
@@ -217,7 +225,7 @@ class EbookService:
             for ebook in ebooks:
                 ebook_list.append({
                     "id": ebook.id,
-                    "file_path": s3_client.generate_temp_link(ebook.file_path),
+                    "file_path": s3_client.generate_temp_link(f"{ebook.file_path}.pdf"),
                     "board": ebook.board.board_name,
                     "subject_name": ebook.subject.name,
                     "class_number": ebook.class_number.class_number,
@@ -250,7 +258,11 @@ class EbookService:
                                 status=status.HTTP_400_BAD_REQUEST)
 
             ebook = SchoolSyllabusEbooks.objects.get(id=ebook_id)
-            s3_client.delete_file(ebook.file_path)
+            try:
+                s3_client.delete_file(f"{ebook.file_path}.pdf")
+                s3_client.delete_file(f"{ebook.file_path}.txt")
+            except Exception as e:
+                logger.error(f"Error deleting files from S3: {e}")
             ebook.delete()
 
             logger.info("eBook with ID %s deleted successfully.",ebook_id)
@@ -266,7 +278,7 @@ class EbookService:
         """Extract topics and prerequisites from the provided PDF file."""
 
         lang_chain_service = LangChainService()
-        chapters_obj = lang_chain_service.get_topics_and_prerequisites(pdf_file)
+        chapters_obj,pdf_text = lang_chain_service.get_topics_and_prerequisites(pdf_file)
         with transaction.atomic():
             Chapter.objects.filter(ebook_id=previously_uploaded_ebook_id).delete()
             for chapter_item in chapters_obj:
@@ -289,7 +301,7 @@ class EbookService:
                         explanation=prerequisite['explanation']
                     )
         
-        return True
+        return True, pdf_text
     
     def copy_syllabus_data_to_school_db(self,school_db_metadata,academic_year_id):
         try:
