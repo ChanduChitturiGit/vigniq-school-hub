@@ -8,7 +8,7 @@ import { getTicketById, respondToTicket, updateTicketStatus } from '../services/
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { format, subMonths, isWithinInterval, parseISO } from 'date-fns';
+import { format, subMonths, isWithinInterval, parseISO, isToday, isYesterday } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 
 interface SupportRequest {
@@ -78,7 +78,7 @@ const SupportDetails: React.FC = () => {
                 setRequest(response.data);
                 setFormData((prev) => ({
                     ...prev,
-                    status_name : getStatusName(response.data.status)
+                    status_name: getStatusName(response.data.status)
                 }))
             }
         } catch (error) {
@@ -354,7 +354,7 @@ const SupportDetails: React.FC = () => {
     const handleStatusChange = (value: string) => {
         setFormData((prev) => ({
             ...prev,
-            status_name : value,
+            status_name: value,
             status: getStatusId(value)
         }))
     }
@@ -386,6 +386,18 @@ const SupportDetails: React.FC = () => {
             });
         }
         getTicketData();
+    }
+
+    const formatChatDate = (date: Date | string) => {
+        const d = typeof date === "string" ? new Date(date) : date;
+
+        if (isToday(d)) {
+            return `Today, ${format(d, "hh:mm a")}`;
+        }
+        if (isYesterday(d)) {
+            return `Yesterday, ${format(d, "hh:mm a")}`;
+        }
+        return format(d, "dd-MM-yyyy, hh:mm a");
     }
 
 
@@ -503,58 +515,60 @@ const SupportDetails: React.FC = () => {
                                 key={index}
                                 className={`flex ${(message.responder_first_name + message.responder_last_name) === (userData.first_name + userData.last_name) ? 'justify-end' : 'justify-start'}`}
                             >
-                                <div className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${(message.responder_first_name + message.responder_last_name) === (userData.first_name + userData.last_name)
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-gray-100 text-gray-800'
-                                    }`}>
+                                <div className='flex flex-col'>
                                     <div className="flex items-center gap-2 mb-2">
-                                        <span className={`text-xs font-semibold ${(message.responder_first_name + message.responder_last_name) === (userData.first_name + userData.last_name) ? 'text-blue-100' : 'text-gray-600'
+                                        <span className={`text-xs font-semibold 'text-gray-600'
                                             }`}>
-                                            {message.sender}
+                                            {(message.responder_first_name + message.responder_last_name) === (userData.first_name + userData.last_name) ? 'You' : `${message.responder_first_name} ${message.responder_last_name}`}
                                         </span>
-                                        <span className={`text-xs ${(message.responder_first_name + message.responder_last_name) === (userData.first_name + userData.last_name) ? 'text-blue-100' : 'text-gray-500'
+                                        <span className={`text-xs 'text-gray-500'
                                             }`}>
-                                            {message.created_at}
+                                            {formatChatDate(message.created_at)}
                                         </span>
                                     </div>
-                                    <p className="text-sm leading-relaxed">
-                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                            {message.message}
-                                        </ReactMarkdown>
-                                    </p>
+                                    <div className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${(message.responder_first_name + message.responder_last_name) === (userData.first_name + userData.last_name)
+                                        ? 'bg-blue-100 text-gray-800'
+                                        : 'bg-gray-100 text-gray-800'
+                                        }`}>
+                                        <p className="text-sm leading-relaxed">
+                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                {message.message}
+                                            </ReactMarkdown>
+                                        </p>
 
-                                    {message.file_attachment && message.file_attachment.length > 0 && (
-                                        <div className="mt-3 space-y-2">
-                                            {message.file_attachment.map((attachment, attIndex) => (
-                                                <div
-                                                    key={attIndex}
-                                                    className={`flex items-center justify-between p-2 rounded ${(message.responder_first_name + message.responder_last_name) === (userData.first_name + userData.last_name)
-                                                        ? 'bg-blue-500 bg-opacity-50'
-                                                        : 'bg-white border'
-                                                        }`}
-                                                >
-                                                    <div className="flex items-center gap-2">
-                                                        <FileText className="w-4 h-4" />
-                                                        <span className="text-xs">{attachment?.name || `attachment ${attIndex + 1}`}</span>
+                                        {message.file_attachment && message.file_attachment.length > 0 && (
+                                            <div className="mt-3 space-y-2">
+                                                {message.file_attachment.map((attachment, attIndex) => (
+                                                    <div
+                                                        key={attIndex}
+                                                        className={`flex items-center justify-between p-2 rounded ${(message.responder_first_name + message.responder_last_name) === (userData.first_name + userData.last_name)
+                                                            ? 'bg-blue-300 text-gray-800 bg-opacity-50'
+                                                            : 'bg-white border'
+                                                            }`}
+                                                    >
+                                                        <div className="flex items-center gap-2">
+                                                            <FileText className="w-4 h-4" />
+                                                            <span className="text-xs">{attachment?.name || `attachment ${attIndex + 1}`}</span>
+                                                        </div>
+                                                        <div className='ms-2'>
+                                                            <button className="text-xs hover:underline mr-2"
+                                                                onClick={() => {
+                                                                    handleView(attachment, attIndex);
+                                                                }}>
+                                                                <Eye className="w-3 h-3" />
+                                                            </button>
+                                                            <button className="text-xs hover:underline"
+                                                                onClick={() => {
+                                                                    handleDownload(attachment, attIndex);
+                                                                }}>
+                                                                <Download className="w-3 h-3" />
+                                                            </button>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <button className="text-xs hover:underline mr-2"
-                                                            onClick={() => {
-                                                                handleView(attachment, attIndex);
-                                                            }}>
-                                                            <Eye className="w-3 h-3" />
-                                                        </button>
-                                                        <button className="text-xs hover:underline"
-                                                            onClick={() => {
-                                                                handleDownload(attachment, attIndex);
-                                                            }}>
-                                                            <Download className="w-3 h-3" />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         ))}

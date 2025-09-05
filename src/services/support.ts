@@ -52,3 +52,9 @@ export const updateTicketStatus = async (data : any) => {
   const response = await api.put(baseurl+suburl+'/updateTicketStatus',data);
   return response.data;
 }
+
+//getTicketAttachments
+export const getTicketAttachments = async (data : any) => {
+  const response = await api.get(baseurl+suburl+'/getTicketAttachments',{params : data});
+  return response.data;
+}
