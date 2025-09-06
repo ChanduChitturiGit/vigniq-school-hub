@@ -116,15 +116,15 @@ class SyllabusService:
                           'school_class__section', 'subject_id','subject__name',
                           'school_class__board_id')
 
-            data = []
+            data = {}
             for assignment in teacher_assignment_obj:
-                progress = self.get_subject_progress(
+                progress, chapters_count = self.get_subject_progress_and_chapters_count(
                     school_db_name,
                     assignment["school_class_id"],
                     assignment["school_class__class_instance_id"],
                     assignment["subject_id"]
                 )
-                data.append({
+                assignment_data = {
                     "class_id": assignment["school_class_id"],
                     "class_number": assignment["school_class__class_instance_id"],
                     "section": assignment["school_class__section"],
@@ -132,7 +132,11 @@ class SyllabusService:
                     "subject_name": assignment["subject__name"],
                     "board_id": assignment["school_class__board_id"],
                     "progress": round(progress, 2),
-                })
+                    "chapters_count": chapters_count
+                }
+                if assignment["subject__name"] not in data:
+                    data[assignment["subject__name"]] = []
+                data[assignment["subject__name"]].append(assignment_data)
             logger.info("Grade by teacher ID fetched successfully.")
             return Response({"data": data}, status=status.HTTP_200_OK)
 
@@ -141,7 +145,8 @@ class SyllabusService:
             return Response({"error": "Failed to fetch grade."},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def get_subject_progress(self,school_db_name, section_id, class_id, subject_id):
+    def get_subject_progress_and_chapters_count(self, school_db_name, section_id, class_id, subject_id):
+        """Calculate subject progress based on completed lesson plan days."""
         chapters = SchoolChapter.objects.using(school_db_name).filter(
             class_number_id=class_id,
             subject_id=subject_id
@@ -149,7 +154,7 @@ class SyllabusService:
 
         total_chapters = chapters.count()
         if total_chapters == 0:
-            return 0
+            return 0,0
 
         chapter_weight = 100 / total_chapters
         total_progress = 0
@@ -172,7 +177,7 @@ class SyllabusService:
             chapter_progress = (completed_days / total_days) * chapter_weight
             total_progress += chapter_progress
 
-        return round(total_progress, 2)
+        return round(total_progress, 2), total_chapters
 
     def get_syllabus_subject(self, request):
         """Fetch syllabus by subject."""
@@ -216,12 +221,6 @@ class SyllabusService:
                         )
                     ),
                     Prefetch(
-                        'class_prerequisites',
-                        queryset=SchoolClassPrerequisite.objects.using(school_db_name).filter(
-                            class_section=school_class
-                        )
-                    ),
-                    Prefetch(
                         'school_chapter_lesson_plan_days',
                         queryset=SchoolLessonPlanDay.objects.using(school_db_name).filter(
                             class_section=school_class
@@ -233,27 +232,12 @@ class SyllabusService:
             data = []
             for chapter in chapters:
                 sub_topics = chapter.class_sub_topics.all()
-                prerequisites = chapter.class_prerequisites.all()
                 lesson_plan_days = chapter.school_chapter_lesson_plan_days.all()
 
-                
-                renamed_sub_topics = [
-                    {'sub_topic_id': item['id'], 'sub_topic': item['name']}
-                    for item in sub_topics.values('id', 'name')
-                ]
-                renamed_prerequisites = [
-                    {'prerequisite_id': item['id'], 'topic': item['topic'], 'explanation': item['explanation']}
-                    for item in prerequisites.values('id', 'topic', 'explanation')
-                ]
-                lesson_plan_days_data = [
-                    {
-                        "lesson_plan_day_id": day.id,
-                        "day": day.day,
-                        "status": day.status,
-                    }
-                    for day in lesson_plan_days
-                ]
-                
+                sub_topics_count = sub_topics.count()
+
+                has_lesson_plan = lesson_plan_days.exists()
+
                 total_days = lesson_plan_days.count()
                 completed_days = lesson_plan_days.filter(status='completed').count()
                 progress = (completed_days / total_days) * 100 if total_days > 0 else 0
@@ -262,9 +246,8 @@ class SyllabusService:
                     "chapter_id": chapter.id,
                     "chapter_name": chapter.chapter_name,
                     "chapter_number": chapter.chapter_number,
-                    "sub_topics": renamed_sub_topics,
-                    "prerequisites": renamed_prerequisites,
-                    "lesson_plan_days": lesson_plan_days_data,
+                    "sub_topics_count": sub_topics_count,
+                    "has_lesson_plan": has_lesson_plan,
                     "progress": round(progress, 2),
                 })
             logger.info("Syllabus by subject fetched successfully.")
@@ -274,27 +257,26 @@ class SyllabusService:
             return Response({"error": "Failed to fetch syllabus."},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def get_prerequisites(self, request):
-        """Fetch lesson plan and prerequisites for a chapter."""
+    def get_chapter_details_by_id(self, request):
+        """Fetch lesson plan, prerequisites, and sub-topics for a chapter."""
         try:
-            logger.info("Fetching lesson plan and prerequisites...")
+            logger.info("Fetching lesson plan, prerequisites, and sub-topics...")
             school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
             chapter_id = request.GET.get("chapter_id")
             class_section_id = request.GET.get("class_section_id")
 
             if not all([school_id, chapter_id, class_section_id]):
-                logger.error("Missing required parameters for fetching lesson plan.")
+                logger.error("Missing required parameters for fetching chapter details.")
                 return Response({"error": "Missing required parameters."},
                                 status=status.HTTP_400_BAD_REQUEST)
 
             school_db_name = CommonFunctions.get_school_db_name(school_id)
 
-
+            # 🔹 Prerequisites
             prerequisites = SchoolClassPrerequisite.objects.using(school_db_name).filter(
                 chapter_id=chapter_id,
                 class_section_id=class_section_id
             )
-
             prerequisites_data = [
                 {
                     "prerequisite_id": prerequisite.id,
@@ -303,13 +285,54 @@ class SyllabusService:
                 }
                 for prerequisite in prerequisites
             ]
-            logger.info("Lesson plan and prerequisites fetched successfully.")
-            return Response({"data":prerequisites_data}, status=status.HTTP_200_OK)
+
+            # 🔹 Sub Topics
+            sub_topics = SchoolClassSubTopic.objects.using(school_db_name).filter(
+                chapter_id=chapter_id,
+                class_section_id=class_section_id
+            )
+            sub_topics_data = [
+                {
+                    "sub_topic_id": sub_topic.id,
+                    "sub_topic": sub_topic.name
+                }
+                for sub_topic in sub_topics
+            ]
+
+            # 🔹 Lesson Plan Days
+            lesson_plan_days = SchoolLessonPlanDay.objects.using(school_db_name).filter(
+                chapter_id=chapter_id,
+                class_section_id=class_section_id
+            ).order_by("day")
+            lesson_plan_days_data = [
+                {
+                    "lesson_plan_day_id": day.id,
+                    "day": day.day,
+                    "status": day.status,
+                }
+                for day in lesson_plan_days
+            ]
+
+            # 🔹 Progress (like in your first API)
+            total_days = lesson_plan_days.count()
+            completed_days = lesson_plan_days.filter(status="completed").count()
+            progress = (completed_days / total_days) * 100 if total_days > 0 else 0
+
+            response_data = {
+                "prerequisites": prerequisites_data,
+                "sub_topics": sub_topics_data,
+                "lesson_plan_days": lesson_plan_days_data,
+                "progress": round(progress, 2),
+            }
+
+            logger.info("Chapter details fetched successfully.")
+            return Response({"data": response_data}, status=status.HTTP_200_OK)
 
         except Exception as e:
-            logger.error(f"Error fetching lesson plan and prerequisites: {e}")
-            return Response({"error": "Failed to fetch lesson plan and prerequisites."},
+            logger.exception(f"Error fetching chapter details: {e}")
+            return Response({"error": "Failed to fetch chapter details."},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     
     def get_lesson_plan_by_chapter_id(self, request):
         """Fetch lesson plan by chapter ID."""

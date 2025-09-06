@@ -51,8 +51,8 @@ class SyllabusView(APIView):
             return SyllabusService().get_syllabus_subject(request)
         elif action == 'getGradeByTeacherId':
             return SyllabusService().get_grade_by_teacher_id(request)
-        elif action == 'getPrerequisites':
-            return SyllabusService().get_prerequisites(request)
+        elif action == 'getChapterDetailsById':
+            return SyllabusService().get_chapter_details_by_id(request)
         elif action == 'getLessionPlan':
             return SyllabusService().get_lesson_plan_by_chapter_id(request)
         elif action == "getLessonDayPlan":
