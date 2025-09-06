@@ -138,6 +138,10 @@ class SupportView(APIView):
             return SupportService(request).get_issue_types()
         elif action == 'getAvailableModules':
             return SupportService(request).get_available_modules()
+        elif action == 'getTicketAttachments':
+            return SupportService(request).get_ticket_attachments()
+        elif action == 'getSupportNotifications':
+            return SupportService(request).get_support_notifications()
         return Response({"error": "Invalid GET action"}, status=status.HTTP_400_BAD_REQUEST)
     
     def post(self, request, action=None):
@@ -156,4 +160,6 @@ class SupportView(APIView):
         """
         if action == 'updateTicketStatus':
             return SupportService(request).update_ticket_status()
+        if action == 'markMessageAsRead':
+            return SupportService(request).mark_message_as_read()
         return Response({"error": "Invalid PUT action"}, status=status.HTTP_400_BAD_REQUEST)

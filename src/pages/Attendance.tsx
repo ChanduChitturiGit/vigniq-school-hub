@@ -28,11 +28,12 @@ import {
 } from '../components/ui/alert-dialog';
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
-import { Dayjs } from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { getTickets } from '../services/support'
+
 
 interface Student {
   student_id: string;
@@ -97,7 +98,7 @@ const Attendance: React.FC = () => {
     type: 'daily',
     date: null,
   });
-  const [startDate, setStartDate] = React.useState<Dayjs | null>(null);
+  const [startDate, setStartDate] = React.useState<Dayjs | null>(dayjs());
 
 
   // Sample data - in real app this would come from API
@@ -668,17 +669,18 @@ const Attendance: React.FC = () => {
             </div>
             {/* Action Buttons */}
             <div className="flex gap-2 w-full md:w-auto justify-end">
-              {(statConditionCheck()) && selectedClass && (
+              {/* {(statConditionCheck()) && selectedClass && ( */}
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={downloadExcel}
                   className="flex items-center gap-2"
+                  disabled={(statConditionCheck()) && selectedClass ? false : true}
                 >
                   <Download className="w-4 h-4" />
-                  Export Data
+                  Download Daily Report
                 </Button>
-              )}
+              {/* )} */}
               {/* <Button
                 variant="outline"
                 size="sm"

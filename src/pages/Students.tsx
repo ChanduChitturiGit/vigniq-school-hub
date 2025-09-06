@@ -33,7 +33,7 @@ const Students: React.FC = () => {
       ];
     } else if (user?.role === 'teacher') {
       return [
-        { label: 'School Management' },
+        { label: 'Home', path: '/dashboard' },
         { label: 'Students' }
       ];
     } else {
@@ -115,6 +115,10 @@ const Students: React.FC = () => {
 
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
+              <span className="text-gray-500">Class :</span>
+              <span className="font-medium text-gray-800">{'Class '+student.class_number + ' - ' + student.section}</span>
+            </div>
+            <div className="flex justify-between text-sm">
               <span className="text-gray-500">Roll Number:</span>
               <span className="font-medium text-gray-800">{student.roll_number}</span>
             </div>
@@ -157,8 +161,8 @@ const Students: React.FC = () => {
           <TableHeader>
             <TableRow>
               <TableHead className="font-medium">Student</TableHead>
-              <TableHead className="font-medium">Roll No.</TableHead>
               <TableHead className="font-medium">Class</TableHead>
+              <TableHead className="font-medium">Roll No.</TableHead>
               <TableHead className="font-medium">Parent</TableHead>
               <TableHead className="font-medium">Phone</TableHead>
               <TableHead className="font-medium">Status</TableHead>
@@ -178,8 +182,8 @@ const Students: React.FC = () => {
                     <span className="font-medium">{student.student_name}</span>
                   </div>
                 </TableCell>
+                <TableCell>{'Class '+student.class_number + ' - ' + student.section}</TableCell>
                 <TableCell>{student.roll_number}</TableCell>
-                <TableCell>{student.class}</TableCell>
                 <TableCell>{student.parent_name}</TableCell>
                 <TableCell>{student.parent_phone}</TableCell>
                 <TableCell>
@@ -221,14 +225,15 @@ const Students: React.FC = () => {
   return (
     <MainLayout pageTitle="Students">
       <div className="space-y-6">
-        <Breadcrumb items={getBreadcrumbItems()} />
+        {/* <Breadcrumb items={getBreadcrumbItems()} /> */}
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 rounded-lg">
+            {/* <div className="p-2 bg-purple-100 rounded-lg">
               <GraduationCap className="w-6 h-6 text-purple-600" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-800">Students</h1>
+            <h1 className="text-2xl font-bold text-gray-800">Students</h1> */}
+            <Breadcrumb items={getBreadcrumbItems()} />
           </div>
           <div className="flex items-center gap-2">
             {/* window.innerWidth >= 768 */}

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
@@ -9,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Card, CardContent } from '../components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Calendar as CalendarComponent } from '../components/ui/calendar';
-import { format, subMonths, isWithinInterval, parseISO } from 'date-fns';
+import { format, subMonths, isWithinInterval, parseISO, set, isToday, isYesterday } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
@@ -18,7 +17,7 @@ import { Dayjs } from "dayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { getTickets } from '../services/support'
+import { getTickets, getTicketAttachments } from '../services/support'
 
 interface SupportRequest {
   id: string;
@@ -90,6 +89,8 @@ const Requests: React.FC = () => {
   const [endDate, setEndDate] = React.useState<Dayjs | null>(null);
   const [requestsData, setRequestsData] = useState([]);
   const [loader, setLoader] = useState(false);
+  const [ticketAtrtachments, setTicketAttachments] = useState([]);
+  const [attachmentLoader, setAttachmentLoader] = useState(false);
 
 
   const breadcrumbItems = [
@@ -117,9 +118,30 @@ const Requests: React.FC = () => {
     }
   };
 
-  const getTicketsData = async () => {
-    setLoader(true);
+  //getTicketAttachments
+  const getTicketAttachmentsData = async (ticket_id: string) => {
     try {
+      setAttachmentLoader(true);
+      const response = await getTicketAttachments({ ticket_id: Number(ticket_id) });
+      console.log('response', response);
+      if (response && response.data) {
+        setTicketAttachments(response.data)
+        setAttachmentLoader(false);
+      }
+    } catch (error) {
+      setAttachmentLoader(false);
+      showSnackbar({
+        title: "⛔ Something went wrong ",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
+  const getTicketsData = async () => {
+    try {
+      if (loader || !hasMore) return;
+      setLoader(true);
       let params = {};
       if (payload.school_id || payload.status_name || (payload.from_date && payload.to_date) || payload.page || page) {
         params = Object.fromEntries(
@@ -128,7 +150,7 @@ const Requests: React.FC = () => {
           )
         );
       }
-      params = {...params,page}
+      params = { ...params, page }
       const response = await getTickets(params);
       if (response && response.data) {
         //console.log(response.data);
@@ -139,11 +161,10 @@ const Requests: React.FC = () => {
             ...prev,
             ...response.data
           ]))
-          console.log('requestData',requestsData);
         }
         setLoader(false);
       }
-      if (response && (response.message || response.data.length < 10)) {
+      if (response && (response.data.length < 10)) {
         setLoader(false);
         setHasMore(false);
       }
@@ -159,84 +180,85 @@ const Requests: React.FC = () => {
 
   useEffect(() => {
     // Load requests from localStorage and add sample data
-    const savedRequests = JSON.parse(localStorage.getItem('support_requests') || '[]');
-    const sampleRequests: SupportRequest[] = [
-      {
-        id: 'VIGYS-1734567890',
-        title: 'Unable to mark attendance for Class 8A',
-        category: 'attendance',
-        priority: 'High',
-        description: 'I am experiencing issues when trying to mark attendance for Class 8A. The system shows an error message "Failed to save attendance" every time I try to submit.',
-        expectedOutcome: 'Be able to mark attendance successfully without errors',
-        status: 'Resolved',
-        createdAt: 'Aug 28, 2025, 04:44 PM',
-        updatedAt: 'Aug 30, 2025, 04:44 PM',
-        attachments: [
-          { name: 'attendance-error-screenshot.png', size: 1024, type: 'image/png' },
-          { name: 'error-log-details.txt', size: 512, type: 'text/plain' }
-        ],
-        messages: [
-          {
-            sender: 'You',
-            message: 'I am experiencing issues when trying to mark attendance for Class 8A. The system shows an error message "Failed to save attendance" every time I try to submit.',
-            timestamp: 'Aug 28, 2025, 04:44 PM'
-          },
-          {
-            sender: 'Support Team',
-            message: 'Hello! Thank you for reaching out. I can see there was a server issue affecting attendance submission. Our technical team has resolved this issue. Could you please try marking attendance again and let me know if you still face any problems?',
-            timestamp: 'Aug 29, 2025, 04:44 PM',
-            attachments: [
-              { name: 'server-fix-documentation.pdf', size: 2048 },
-              { name: 'troubleshooting-steps.docx', size: 1536 }
-            ]
-          },
-          {
-            sender: 'You',
-            message: 'Great! It\'s working perfectly now. Thank you for the quick resolution.',
-            timestamp: 'Aug 30, 2025, 04:44 PM',
-            attachments: [
-              { name: 'working-attendance-screenshot.png', size: 1024 }
-            ]
-          },
-          {
-            sender: 'Support Team',
-            message: 'Wonderful! I\'m glad everything is working smoothly now. I\'ll mark this issue as resolved. Please don\'t hesitate to reach out if you need any further assistance.',
-            timestamp: 'Aug 30, 2025, 04:44 PM'
-          }
-        ]
-      },
-      {
-        id: 'VIGYS-1734567891',
-        title: 'Request for grade export feature',
-        category: 'feature',
-        priority: 'Medium',
-        description: 'It would be very helpful to have an option to export student grades to Excel format for easier sharing with parents and administration.',
-        expectedOutcome: 'Add export functionality for student grades',
-        status: 'In Progress',
-        createdAt: 'Aug 31, 2025, 02:44 PM',
-        attachments: [
-          { name: 'grade-export-mockup.png', size: 2048, type: 'image/png' }
-        ],
-        messages: [
-          {
-            sender: 'You',
-            message: 'It would be very helpful to have an option to export student grades to Excel format for easier sharing with parents and administration.',
-            timestamp: 'Aug 31, 2025, 02:44 PM'
-          }
-        ]
-      }
-    ];
+    // const savedRequests = JSON.parse(localStorage.getItem('support_requests') || '[]');
+    // const sampleRequests: SupportRequest[] = [
+    //   {
+    //     id: 'VIGYS-1734567890',
+    //     title: 'Unable to mark attendance for Class 8A',
+    //     category: 'attendance',
+    //     priority: 'High',
+    //     description: 'I am experiencing issues when trying to mark attendance for Class 8A. The system shows an error message "Failed to save attendance" every time I try to submit.',
+    //     expectedOutcome: 'Be able to mark attendance successfully without errors',
+    //     status: 'Resolved',
+    //     createdAt: 'Aug 28, 2025, 04:44 PM',
+    //     updatedAt: 'Aug 30, 2025, 04:44 PM',
+    //     attachments: [
+    //       { name: 'attendance-error-screenshot.png', size: 1024, type: 'image/png' },
+    //       { name: 'error-log-details.txt', size: 512, type: 'text/plain' }
+    //     ],
+    //     messages: [
+    //       {
+    //         sender: 'You',
+    //         message: 'I am experiencing issues when trying to mark attendance for Class 8A. The system shows an error message "Failed to save attendance" every time I try to submit.',
+    //         timestamp: 'Aug 28, 2025, 04:44 PM'
+    //       },
+    //       {
+    //         sender: 'Support Team',
+    //         message: 'Hello! Thank you for reaching out. I can see there was a server issue affecting attendance submission. Our technical team has resolved this issue. Could you please try marking attendance again and let me know if you still face any problems?',
+    //         timestamp: 'Aug 29, 2025, 04:44 PM',
+    //         attachments: [
+    //           { name: 'server-fix-documentation.pdf', size: 2048 },
+    //           { name: 'troubleshooting-steps.docx', size: 1536 }
+    //         ]
+    //       },
+    //       {
+    //         sender: 'You',
+    //         message: 'Great! It\'s working perfectly now. Thank you for the quick resolution.',
+    //         timestamp: 'Aug 30, 2025, 04:44 PM',
+    //         attachments: [
+    //           { name: 'working-attendance-screenshot.png', size: 1024 }
+    //         ]
+    //       },
+    //       {
+    //         sender: 'Support Team',
+    //         message: 'Wonderful! I\'m glad everything is working smoothly now. I\'ll mark this issue as resolved. Please don\'t hesitate to reach out if you need any further assistance.',
+    //         timestamp: 'Aug 30, 2025, 04:44 PM'
+    //       }
+    //     ]
+    //   },
+    //   {
+    //     id: 'VIGYS-1734567891',
+    //     title: 'Request for grade export feature',
+    //     category: 'feature',
+    //     priority: 'Medium',
+    //     description: 'It would be very helpful to have an option to export student grades to Excel format for easier sharing with parents and administration.',
+    //     expectedOutcome: 'Add export functionality for student grades',
+    //     status: 'In Progress',
+    //     createdAt: 'Aug 31, 2025, 02:44 PM',
+    //     attachments: [
+    //       { name: 'grade-export-mockup.png', size: 2048, type: 'image/png' }
+    //     ],
+    //     messages: [
+    //       {
+    //         sender: 'You',
+    //         message: 'It would be very helpful to have an option to export student grades to Excel format for easier sharing with parents and administration.',
+    //         timestamp: 'Aug 31, 2025, 02:44 PM'
+    //       }
+    //     ]
+    //   }
+    // ];
 
-    setRequests([...sampleRequests, ...savedRequests]);
+    //setRequests([...sampleRequests, ...savedRequests]);
 
     if (userData.role == 'superadmin') {
       fetchSchools();
     }
-    getTicketsData();
+    // getTicketsData();
   }, []);
 
   useEffect(() => {
     setPage(1);
+    setHasMore(true);
     getTicketsData();
   }, [payload])
 
@@ -285,15 +307,14 @@ const Requests: React.FC = () => {
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Resolved':
-        return 'bg-green-100 text-green-800';
-      case 'In Progress':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'Open':
-        return 'bg-blue-100 text-blue-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+    if (status === 'Resolved' || status === 'resolved') {
+      return 'bg-green-100 text-green-800 py-2';
+    } else if (status === 'In Progress' || status === 'in_progress') {
+      return 'bg-yellow-100 text-yellow-800 py-2';
+    } else if (status === 'Open' || status === 'open') {
+      return 'bg-blue-100 text-blue-800 py-2';
+    } else {
+      return 'bg-gray-100 text-gray-800 py-2';
     }
   };
 
@@ -302,8 +323,9 @@ const Requests: React.FC = () => {
     return `${format(fromDate, 'MMM dd, yyyy')} - ${format(toDate, 'MMM dd, yyyy')}`;
   };
 
-  const handleViewAttachments = (request: SupportRequest) => {
-    setSelectedRequest(request);
+  const handleViewAttachments = (request: any) => {
+    getTicketAttachmentsData(request.ticket_id);
+    // setSelectedRequest(request);
     setShowAttachmentsModal(true);
   };
 
@@ -360,6 +382,7 @@ const Requests: React.FC = () => {
 
 
   const clearFilters = () => {
+    setHasMore(true);
     setFilters({
       school_id: null,
       school_name: '',
@@ -388,7 +411,7 @@ const Requests: React.FC = () => {
   const handleScroll = () => {
     const container = scrollContainerRef.current;
     const isBottom =
-      (container.scrollHeight - container.scrollTop) <= (container.clientHeight + (30)); //loader ? (-200) :
+      (container.scrollHeight - container.scrollTop) <= (container.clientHeight + (loader ? (-200) : 30)); //loader ? (-200) :
     //console.log('scrollScheck',(!container || loader || !hasMore || !isBottom));
     if (!container || loader || !hasMore || !isBottom) {
       return; // avoid multiple calls while loading
@@ -412,17 +435,77 @@ const Requests: React.FC = () => {
     }
   }, [page]);
 
+  const formatChatDate = (date: Date | string) => {
+    const d = typeof date === "string" ? new Date(date) : date;
+
+    if (isToday(d)) {
+      return `Today, ${format(d, "hh:mm a")}`;
+    }
+    if (isYesterday(d)) {
+      return `Yesterday, ${format(d, "hh:mm a")}`;
+    }
+    return format(d, "dd-MM-yyyy, hh:mm a");
+  }
+
+  const handleView = async (data: any, index: any) => {
+    // setSelecteddata(data);
+    const fileUrl = data;
+    // window.open(fileUrl, "_blank");
+    const res = await fetch(fileUrl);
+    const blob = await res.blob();
+    const file = URL.createObjectURL(blob);
+    window.open(file, "_blank");
+
+  };
+
+  const handleDownload = async (data: any, index: any) => {
+    // Simulate download
+    try {
+      const fileUrl = data;
+      const res = await fetch(fileUrl);
+      const blob = await res.blob();
+
+      // Create a temporary download link
+      const downloadUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+
+      // Extract filename from the S3 path or use a default one
+      const filename = `attachment${index + 1}` || "downloaded-file";
+      a.download = filename;
+
+      document.body.appendChild(a);
+      a.click();
+
+      // Clean up
+      document.body.removeChild(a);
+      URL.revokeObjectURL(downloadUrl);
+
+      showSnackbar({
+        title: "Success",
+        description: `PDF downloaded succesfully ✅`,
+        status: "success"
+      });
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: `Something went wrong please try again!`,
+        status: "error"
+      });
+    }
+  };
+
   return (
     <MainLayout ref={scrollContainerRef} pageTitle="Support Responses">
       <div className="space-y-6">
         {/* <Breadcrumb items={breadcrumbItems} /> */}
 
-        <div className="flex items-center gap-3">
+        {/* <div className="flex items-center gap-3">
           <div className="p-2 bg-purple-100 rounded-lg">
             <MessageSquare className="w-6 h-6 text-purple-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-800">Support Responses</h1>
-        </div>
+        </div> */}
 
         {/* Search Bar */}
         {/* <div className="relative">
@@ -453,7 +536,7 @@ const Requests: React.FC = () => {
                       filters.from_date = newValue ? newValue.format("YYYY-MM-DD") : null;
                       handleFilterChange('from_date', (newValue ? newValue.format("YYYY-MM-DD") : null));
                     }}
-                    format="DD/MM/YYYY"  
+                    format="DD/MM/YYYY"
                   />
                 </LocalizationProvider>
               </div>
@@ -521,30 +604,35 @@ const Requests: React.FC = () => {
           </CardContent>
         </Card>
 
-        <div className="space-y-4">
-          {requestsData && requestsData.length>0 && requestsData?.map((request) => (
+        <div className=" grid grid-cols-1 2xl:grid-cols-2 gap-4">
+          {requestsData && requestsData.length > 0 && requestsData?.map((request) => (
             <div
               key={request.ticket_id}
-              className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+              className=" bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <div className="flex flex-col md:flex-row md:flex-wrap items-center gap-3 mb-3">
-                    <h3 className="text-lg font-semibold text-gray-800 max-w-[60vw] truncate" title={request.title}>{request.title}</h3>
-                    <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(request.status)} flex gap-2`}>
-                      {getStatusIcon(request.status)}
-                      <span>{request.status}</span>
-                    </span>
-                    {/* <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getPriorityColor(request.priority)}`}>
+                  <div className="flex flex-col md:flex-row md:flex-wrap items-center justify-between gap-3 mb-3">
+                    <div className="flex gap-2 items-center p-2  rounded-lg">
+                      <MessageSquare className="w-6 h-6  text-purple-600" />
+                      <h3 className="text-lg font-semibold text-gray-800 max-w-[60vw] truncate" title={request.title}>{request.title}</h3>
+                    </div>
+                    <div className='flex flex-col md:flex-row items-center gap-3'>
+                      <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(request.status)} flex gap-2`}>
+                        {getStatusIcon(request.status)}
+                        <span>{request.status}</span>
+                      </span>
+                      {/* <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getPriorityColor(request.priority)}`}>
                       {request.priority} Priority
                     </span> */}
-                    <span className="text-blue-500 text-sm">{request?.attachments?.length} attachments</span>
+                      <span className="text-blue-500 text-sm">{request?.attachments_count} attachments</span>
+                    </div>
                   </div>
                   <div className="flex flex-col md:flex-row items-center gap-4 text-sm text-gray-500 mb-3">
                     {/* <span>ID: {request.id}</span> */}
                     {/* <span>Category: {request.category}</span> */}
-                    <span>Created: {format(request.created_at, 'dd-MM-yyyy hh-mm aa')}</span>
-                    {request.updated_at && <span>Updated: {format(request.updated_at, 'dd-MM-yyyy hh:mm aa')}</span>}
+                    <span>Created: {formatChatDate(request.created_at)}</span>
+                    {request.updated_at && <span>Updated: {formatChatDate(request.updated_at)}</span>}
                   </div>
                 </div>
               </div>
@@ -554,14 +642,16 @@ const Requests: React.FC = () => {
               </div>
 
               <div className="flex flex-col md:flex-row  items-center justify-between">
-                <div className="flex  items-center gap-2 text-sm text-gray-500">
-                  <MessageSquare className="w-4 h-4" />
-                  <span>{request?.messages?.length} messages</span>
-                  {/* {getNewMessageCount(request) > 0 && (
-                    <>
-                      <span className="text-red-500 font-medium">{getNewMessageCount(request)} new</span>
-                    </>
-                  )} */}
+                <div className="flex  items-center gap-2 text-sm text-gray-500 ">
+                  <div className='bg-gray-100 text-gray-800 border border-gray-200 px-3 py-1 rounded-lg flex items-center gap-1'>
+                    <MessageSquare className="w-4 h-4" />
+                    <span>{request?.total_responses} messages</span>
+                  </div>
+                  {request.new_messages_count > 0 && (
+                    <div className='bg-red-100 text-red-800 border border-red-200 px-3 py-1 rounded-lg flex items-center gap-1'>
+                      <span className="text-red-500 font-medium">{request.new_messages_count} new</span>
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-col md:flex-row mt-3 md:mt-0 items-center gap-2">
                   <button
@@ -607,60 +697,102 @@ const Requests: React.FC = () => {
       <Dialog open={showAttachmentsModal} onOpenChange={setShowAttachmentsModal}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Attachments - {selectedRequest?.title}</DialogTitle>
+            <DialogTitle>Attachments</DialogTitle>
           </DialogHeader>
           <div className="space-y-6">
-            <div>
-              <h4 className="font-semibold text-gray-800 mb-3">Initial Submission Attachments</h4>
-              <div className="space-y-2">
-                {selectedRequest?.attachments.map((attachment, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <FileText className="w-5 h-5 text-gray-500" />
-                      <div>
-                        <div className="text-sm font-medium">{attachment.name}</div>
-                        <div className="text-xs text-gray-500">{formatFileSize(attachment.size)} MB</div>
-                      </div>
-                    </div>
-                    <button className="flex items-center gap-1 px-3 py-1 text-sm text-blue-600 border border-blue-200 rounded hover:bg-blue-50">
-                      <Download className="w-4 h-4" />
-                      Download
-                    </button>
-                  </div>
-                ))}
+            {/* Initial Submission Attachments */}
+            {ticketAtrtachments.filter(att => att.is_initial_submission).length > 0 && (
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-3">Initial Submission Attachments</h4>
+                <div className="space-y-2">
+                  {ticketAtrtachments
+                    .filter(att => att.is_initial_submission)
+                    .map((att, idx) =>
+                      att.file_attachment.map((url, i) => (
+                        <div key={`init-${att.response_id}-${i}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <FileText className="w-5 h-5 text-gray-500" />
+                            <div>
+                              <div className="text-sm font-medium truncate max-w-[300px]">{decodeURIComponent(url.split('/').pop().split('?')[0])}</div>
+                              <div className="text-xs text-gray-500">{formatChatDate(new Date(att.created_at))}</div>
+                            </div>
+                          </div>
+                          <div className='ms-2 flex gap-1'>
+                            <button className="text-xs hover:underline mr-2 flex items-center gap-1 px-3 py-1 text-sm text-blue-600 border border-blue-200 rounded hover:bg-blue-50"
+                              onClick={() => {
+                                handleView(url, att.attIndex);
+                              }}>
+                              <Eye className="w-3 h-3" />
+                            </button>
+                            <button className="text-xs hover:underline flex items-center gap-1 px-3 py-1 text-sm text-green-600 border border-green-200 rounded hover:bg-green-50"
+                              onClick={() => {
+                                handleDownload(url, att.attIndex);
+                              }}>
+                              <Download className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                </div>
               </div>
-            </div>
+            )}
 
-            <div>
-              <h4 className="font-semibold text-gray-800 mb-3">Message Attachments</h4>
-              {selectedRequest?.messages.map((message, msgIndex) =>
-                message.attachments?.map((attachment, attIndex) => (
-                  <div key={`${msgIndex}-${attIndex}`} className="mb-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${message.sender === 'You' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-                        }`}>
-                        {message.sender}
-                      </span>
-                      <span className="text-xs text-gray-500">{message.timestamp}</span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <FileText className="w-5 h-5 text-gray-500" />
-                        <div>
-                          <div className="text-sm font-medium">{attachment.name}</div>
-                          <div className="text-xs text-gray-500">{formatFileSize(attachment.size)} MB</div>
+            {/* Message Attachments */}
+            {ticketAtrtachments.filter(att => !att.is_initial_submission).length > 0 && (
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-3">Message Attachments</h4>
+                {ticketAtrtachments
+                  .filter(att => !att.is_initial_submission)
+                  .map((att, idx) =>
+                    att.file_attachment.map((url, i) => (
+                      <div key={`msg-${att.response_id}-${i}`} className="mb-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${att.is_responder_superuser ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
+                            {att.is_responder_superuser ? 'VIGYS AI' : 'You'}
+                          </span>
+                          <span className="text-xs text-gray-500">{formatChatDate(new Date(att.created_at))}</span>
+                        </div>
+                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <FileText className="w-5 h-5 text-gray-500" />
+                            <div>
+                              <div className="text-sm font-medium truncate max-w-[300px]">{decodeURIComponent(url.split('/').pop().split('?')[0])}</div>
+                              <div className="text-xs text-gray-500">{formatChatDate(new Date(att.created_at))}</div>
+                            </div>
+                          </div>
+                          <div className='ms-2 flex gap-1'>
+                            <button className="text-xs hover:underline mr-2 flex items-center gap-1 px-3 py-1 text-sm text-blue-600 border border-blue-200 rounded hover:bg-blue-50"
+                              onClick={() => {
+                                handleView(url, att.attIndex);
+                              }}>
+                              <Eye className="w-3 h-3" />
+                            </button>
+                            <button className="text-xs hover:underline flex items-center gap-1 px-3 py-1 text-sm text-green-600 border border-green-200 rounded hover:bg-green-50"
+                              onClick={() => {
+                                handleDownload(url, att.attIndex);
+                              }}>
+                              <Download className="w-3 h-3" />
+                            </button>
+                          </div>
                         </div>
                       </div>
-                      <button className="flex items-center gap-1 px-3 py-1 text-sm text-blue-600 border border-blue-200 rounded hover:bg-blue-50">
-                        <Download className="w-4 h-4" />
-                        Download
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+                    ))
+                  )}
+              </div>
+            )}
+            {/* If no attachments */}
+            {ticketAtrtachments.length === 0 && (
+              <div className="text-center text-gray-500 py-8">
+                No attachments found for this ticket.
+              </div>
+            )}
           </div>
+          {attachmentLoader && (
+          <div className="text-center py-12">
+            <Loader2 className="w-10 h-10 mx-auto text-blue animate-spin" />
+          </div>
+        )}
         </DialogContent>
       </Dialog>
     </MainLayout>

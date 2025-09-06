@@ -126,6 +126,7 @@ class TicketResponse(models.Model):
     responder = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="responses")
     message = models.TextField()
     file_attachment = models.JSONField(default=list,null=True, blank=True)
+    is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

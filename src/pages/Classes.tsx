@@ -85,11 +85,11 @@ const Classes: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-4 pt-4 border-t border-gray-100">
+          {/* <div className="mt-4 pt-4 border-t border-gray-100">
             <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
               Active
             </span>
-          </div>
+          </div> */}
         </Link>
       ))}
     </div>
@@ -105,7 +105,7 @@ const Classes: React.FC = () => {
               <TableHead className="font-medium">Section</TableHead>
               <TableHead className="font-medium">Students</TableHead>
               <TableHead className="font-medium">Teacher</TableHead>
-              <TableHead className="font-medium">Status</TableHead>
+              {/* <TableHead className="font-medium">Status</TableHead> */}
               <TableHead className="font-medium text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -116,11 +116,11 @@ const Classes: React.FC = () => {
                 <TableCell>{classItem.section}</TableCell>
                 <TableCell>{classItem.student_count}</TableCell>
                 <TableCell>{classItem.teacher_name || 'N/A'}</TableCell>
-                <TableCell>
+                {/* <TableCell>
                   <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                     Active
                   </span>
-                </TableCell>
+                </TableCell> */}
                 <TableCell>
                   <div className="flex items-center justify-center gap-2">
                     <Link
@@ -155,10 +155,11 @@ const Classes: React.FC = () => {
   return (
     <MainLayout pageTitle="Classes">
       <div className="space-y-6">
-        <Breadcrumb items={breadcrumbItems} />
+        {/* <Breadcrumb items={breadcrumbItems} /> */}
 
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-800">Classes</h1>
+          {/* <h1 className="text-2xl font-bold text-gray-800">Classes</h1> */}
+          <Breadcrumb items={breadcrumbItems} />
           <div className="flex items-center gap-2">
             <div className="flex items-center bg-gray-100 rounded-lg p-1">
               <button

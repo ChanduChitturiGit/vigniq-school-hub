@@ -236,14 +236,15 @@ const Teachers: React.FC = () => {
   return (
     <MainLayout pageTitle="teachers">
       <div className="space-y-6">
-        <Breadcrumb items={breadcrumbItems} />
+        {/* <Breadcrumb items={breadcrumbItems} /> */}
 
         <div className="flex flex-wrap items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-green-100 rounded-lg">
+            {/* <div className="p-2 bg-green-100 rounded-lg">
               <UsersIcon className="w-6 h-6 text-green-600" />
-            </div>
-            <h1 className="text-xl md:text-2xl font-bold text-gray-800">Teachers</h1>
+            </div> */}
+            {/* <h1 className="text-xl md:text-2xl font-bold text-gray-800">Teachers</h1> */}
+            <Breadcrumb items={breadcrumbItems} />
           </div>
           <div className="flex items-center gap-2">
             <div className="flex items-center bg-gray-100 rounded-lg p-1">

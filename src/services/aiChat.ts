@@ -27,7 +27,7 @@ export const sendMessage = async (
 ) => {
   try {
     // Include access token like Axios interceptor
-    const accessToken = localStorage.getItem("access_token");
+    const accessToken = sessionStorage.getItem("access_token");
 
     const response = await fetch(baseurl + suburl + "/chatWithAssistant", {
       method: "POST",
