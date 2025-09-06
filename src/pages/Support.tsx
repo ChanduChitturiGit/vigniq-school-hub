@@ -23,13 +23,12 @@ const Support: React.FC = () => {
     detailedDescription: '',
     expectedOutcome: '',
     attachments: [] as File[]
-    attachments: [] as File[]
   });
   const [issueTypes, setIssueTypes] = useState([]);
   const [availableModules, setAvailableModules] = useState([]);
 
   const breadcrumbItems = [
-    { label: 'Help & Support' }
+    { label: 'Help & Support' },
     { label: 'Help & Support' }
   ];
 
@@ -48,12 +47,6 @@ const Support: React.FC = () => {
       expectedOutcome: formData.expectedOutcome,
       status: 'Open',
       createdAt: new Date().toISOString(),
-      attachments: formData.attachments.map(file => ({
-        name: file.name,
-        size: file.size,
-        type: file.type
-      })),
-      messages: []
       attachments: formData.attachments.map(file => ({
         name: file.name,
         size: file.size,
@@ -216,7 +209,6 @@ const Support: React.FC = () => {
 
   return (
     <MainLayout pageTitle="Help & Support">
-    <MainLayout pageTitle="Help & Support">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* <Breadcrumb items={breadcrumbItems} /> */}
 
@@ -369,13 +361,13 @@ const Support: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col md:flex-row justify-end">
-                  <Button
+                  {/* <Button
                     type="button"
                     variant="outline"
                     onClick={handleCancel}
                   >
                     Reset
-                  </Button>
+                  </Button> */}
                   <button
                     type="submit"
                     className="mt-3 md:mt-0 bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"

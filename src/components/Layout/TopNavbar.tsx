@@ -84,7 +84,7 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ isCollapsed, toggleSidebar, pageT
     try {
       const response = await getSupportNotifications();
       if (response && response.data) {
-        console.log('Fetched notifications:', response);
+        // console.log('Fetched notifications:', response);
         setNotifications(response.data || []);
       }
       // Update notifications state if needed
