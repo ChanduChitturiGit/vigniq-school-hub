@@ -40,6 +40,7 @@ import Grades from './pages/Grades';
 import GradesProgress from './pages/GradesProgress';
 import Syllabus from './pages/Syllabus';
 import ViewLessonPlan from './pages/ViewLessonPlan';
+import CustomizeLessonPlan from './pages/CustomizeLessonPlan';
 import Attendance from './pages/Attendance';
 import AttendanceReports from './pages/AttendanceReports';
 import CreateExam from './pages/CreateExam';
@@ -220,6 +221,7 @@ function App() {
           <Route path="/grades/progress/:subjectId" element={<ProtectedRoute allowedRoles={['teacher']}><GradesProgress /></ProtectedRoute>} /> */}
           <Route path="/grades/lesson-plan/create/:chapterId" element={<ProtectedRoute allowedRoles={['teacher']}><CreateLessonPlan /></ProtectedRoute>} />
           <Route path="/grades/lesson-plan/view/:chapterId/:lessonPlanId" element={<ProtectedRoute allowedRoles={['teacher']}><ViewLessonPlan /></ProtectedRoute>} />
+          <Route path="/grades/lesson-plan/customize/:chapterId" element={<ProtectedRoute allowedRoles={['teacher']}><CustomizeLessonPlan /></ProtectedRoute>} />
           <Route path="/grades/lesson-plan/day/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}><DayLessonPlan /></ProtectedRoute>} />
           <Route path="/grades/lesson-plan/whiteboard/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}><WhiteboardTeaching /></ProtectedRoute>} />
           <Route path="/grades/lesson-plan/ai-chat/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}><AIChatLessonPlan /></ProtectedRoute>} />
