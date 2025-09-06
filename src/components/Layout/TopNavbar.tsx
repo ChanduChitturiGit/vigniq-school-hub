@@ -35,6 +35,8 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ isCollapsed, toggleSidebar, pageT
     logout();
     setShowUserMenu(false);
     localStorage.clear();
+    navigate('/');
+
   };
 
   const handleProfileClick = () => {
@@ -43,7 +45,11 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ isCollapsed, toggleSidebar, pageT
   };
 
   const handleHelpClick = () => {
-    navigate('/support');
+    if(userData.role == 'superadmin'){
+      navigate('/requests');
+    }else{
+      navigate('/support');
+    }
     setShowUserMenu(false);
   };
 

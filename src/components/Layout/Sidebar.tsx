@@ -173,17 +173,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
     
 
     if (user?.role === 'superadmin') {
-      // helpSubItems.push({ path: '/responses', label: 'Responses', icon: MessageSquare });
-      helpSubItems.push({ path: '/requests', label: 'Responses', icon: MessageSquare });
+      helpSubItems.push({ path: '/requests', label: 'Requests', icon: MessageSquare });
     } else {
       helpSubItems.push({ path: '/support', label: 'Support', icon: HelpCircle });
       helpSubItems.push({ path: '/requests', label: 'Responses', icon: MessageSquare });
 
-      // if (user?.role !== 'student') {
-      //   helpSubItems.push({ path: '/requests', label: 'Responses', icon: FileText });
-      // }
+      if (user?.role !== 'student') {
+        helpSubItems.push({ path: '/requests', label: 'Requests', icon: FileText });
+      }
 
-      // helpSubItems.push({ path: '/responses', label: 'Responses', icon: MessageSquare });
+      //helpSubItems.push({ path: '/responses', label: 'Responses', icon: MessageSquare });
     }
 
     const helpItems: MenuItem[] = [

@@ -23,11 +23,13 @@ const Support: React.FC = () => {
     detailedDescription: '',
     expectedOutcome: '',
     attachments: [] as File[]
+    attachments: [] as File[]
   });
   const [issueTypes, setIssueTypes] = useState([]);
   const [availableModules, setAvailableModules] = useState([]);
 
   const breadcrumbItems = [
+    { label: 'Help & Support' }
     { label: 'Help & Support' }
   ];
 
@@ -46,6 +48,12 @@ const Support: React.FC = () => {
       expectedOutcome: formData.expectedOutcome,
       status: 'Open',
       createdAt: new Date().toISOString(),
+      attachments: formData.attachments.map(file => ({
+        name: file.name,
+        size: file.size,
+        type: file.type
+      })),
+      messages: []
       attachments: formData.attachments.map(file => ({
         name: file.name,
         size: file.size,
@@ -207,6 +215,7 @@ const Support: React.FC = () => {
   }
 
   return (
+    <MainLayout pageTitle="Help & Support">
     <MainLayout pageTitle="Help & Support">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* <Breadcrumb items={breadcrumbItems} /> */}

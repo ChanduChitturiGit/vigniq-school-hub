@@ -276,10 +276,12 @@ const Requests: React.FC = () => {
     })
     .sort((a, b) => {
       return parseISO(b.createdAt).getTime() - parseISO(a.createdAt).getTime();
+      return parseISO(b.createdAt).getTime() - parseISO(a.createdAt).getTime();
     });
 
   const getStatusIcon = (status: string) => {
     switch (status) {
+      case 'Resolved':
       case 'Resolved':
         return <CheckCircle className="w-4 h-4 text-green-500" />;
       case 'Open':
@@ -298,6 +300,7 @@ const Requests: React.FC = () => {
       case 'Critical':
         return 'bg-red-100 text-red-800 border-red-200';
       case 'Medium':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'Low':
         return 'bg-green-100 text-green-800 border-green-200';
@@ -793,6 +796,68 @@ const Requests: React.FC = () => {
             <Loader2 className="w-10 h-10 mx-auto text-blue animate-spin" />
           </div>
         )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Attachments Modal */}
+      <Dialog open={showAttachmentsModal} onOpenChange={setShowAttachmentsModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Attachments - {selectedRequest?.title}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            <div>
+              <h4 className="font-semibold text-gray-800 mb-3">Initial Submission Attachments</h4>
+              <div className="space-y-2">
+                {selectedRequest?.attachments.map((attachment, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-5 h-5 text-gray-500" />
+                      <div>
+                        <div className="text-sm font-medium">{attachment.name}</div>
+                        <div className="text-xs text-gray-500">{formatFileSize(attachment.size)} MB</div>
+                      </div>
+                    </div>
+                    <button className="flex items-center gap-1 px-3 py-1 text-sm text-blue-600 border border-blue-200 rounded hover:bg-blue-50">
+                      <Download className="w-4 h-4" />
+                      Download
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-gray-800 mb-3">Message Attachments</h4>
+              {selectedRequest?.messages.map((message, msgIndex) => 
+                message.attachments?.map((attachment, attIndex) => (
+                  <div key={`${msgIndex}-${attIndex}`} className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        message.sender === 'You' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                      }`}>
+                        {message.sender}
+                      </span>
+                      <span className="text-xs text-gray-500">{message.timestamp}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <FileText className="w-5 h-5 text-gray-500" />
+                        <div>
+                          <div className="text-sm font-medium">{attachment.name}</div>
+                          <div className="text-xs text-gray-500">{formatFileSize(attachment.size)} MB</div>
+                        </div>
+                      </div>
+                      <button className="flex items-center gap-1 px-3 py-1 text-sm text-blue-600 border border-blue-200 rounded hover:bg-blue-50">
+                        <Download className="w-4 h-4" />
+                        Download
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </MainLayout>
