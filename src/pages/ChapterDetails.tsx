@@ -383,6 +383,14 @@ const ChapterDetails: React.FC = () => {
                   </Button>
                 </Link>
               )}
+              <Link
+                to={`/grades/lesson-plan/customize/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`}
+              >
+                <Button className="bg-purple-600 hover:bg-purple-700">
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Customize Lesson Plan
+                </Button>
+              </Link>
             </div>
 
             {lessonPlan ? (
