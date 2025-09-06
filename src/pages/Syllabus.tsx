@@ -38,6 +38,7 @@ interface Chapter {
 
 const Syllabus: React.FC = () => {
   const { showSnackbar } = useSnackbar();
+  //const { subjectId } = useParams();
   const [searchParams] = useSearchParams();
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
@@ -46,6 +47,7 @@ const Syllabus: React.FC = () => {
   const subjectId = searchParams.get('subject_id') || '';
   const schoolId = searchParams.get('school_id') || '';
   const boardId = searchParams.get('school_board_id') || '';
+  const pathData = `class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
 
   const [chapters, setChapters] = useState<Chapter[]>([]);
 
@@ -72,26 +74,30 @@ const Syllabus: React.FC = () => {
         board_id: boardId
       };
       
-      localStorage.setItem('gradesData', JSON.stringify(payload));
-      
       const response = await getGradeByChapter(payload);
       if (response && response.data) {
-        console.log("chapters", response);
         const processedChapters = response.data.map((chapter: any, index: number) => ({
           chapter_id: chapter.chapter_id || index + 1,
           chapter_number: chapter.chapter_number || index + 1,
           chapter_name: chapter.chapter_name || `Chapter ${index + 1}`,
-          topics_count: chapter.topics_count || 4,
-          progress: Math.floor(Math.random() * 100), // Sample progress
-          status: index % 3 === 0 ? 'ready' : index % 3 === 1 ? 'pending' : 'ready'
+          topics_count: chapter.sub_topics_count || 4,
+          progress: (chapter.progress) || 0, // Sample progress
+          status: !chapter.has_lesson_plan ? 'pending' : 'ready'
         }));
         setChapters(processedChapters);
       } else {
-        setChapters(sampleChapters);
+        showSnackbar({
+        title: "⛔ Error",
+        description:  "Something went wrong",
+        status: "error"
+      });
       }
     } catch (error) {
-      console.log('Using sample data due to API error');
-      setChapters(sampleChapters);
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
     }
   };
 
@@ -135,9 +141,9 @@ const Syllabus: React.FC = () => {
   const SubjectIcon = getSubjectIcon(subject);
 
   return (
-    <MainLayout pageTitle={`${subject} - ${className}`}>
+    <MainLayout pageTitle={`${subject} - ${className} - ${section}`}>
       <div className="space-y-8">
-        <Breadcrumb items={breadcrumbItems} />
+        {/* <Breadcrumb items={breadcrumbItems} /> */}
 
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -157,7 +163,7 @@ const Syllabus: React.FC = () => {
         </div>
 
         {/* Subject Header */}
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6">
+        {/* <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-white rounded-xl shadow-md flex items-center justify-center">
               <SubjectIcon className="w-8 h-8 text-blue-600" />
@@ -167,7 +173,7 @@ const Syllabus: React.FC = () => {
               <p className="text-lg text-gray-600">{className} - Section {section}</p>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Chapters Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -178,7 +184,7 @@ const Syllabus: React.FC = () => {
             return (
               <Link
                 key={chapter.chapter_id}
-                to={`/grades/chapter/${chapter.chapter_id}?class=${className}&section=${section}&subject=${subject}&chapter_name=${encodeURIComponent(chapter.chapter_name)}&chapter_number=${chapter.chapter_number}&progress=${chapter.progress}`}
+                to={`/grades/chapter/${chapter.chapter_id}?${pathData}&chapter_name=${encodeURIComponent(chapter.chapter_name)}&chapter_number=${chapter.chapter_number}&progress=${chapter.progress}`}
                 className="group"
               >
                 <Card className="hover:shadow-lg transition-all duration-300 group-hover:-translate-y-1 overflow-hidden">

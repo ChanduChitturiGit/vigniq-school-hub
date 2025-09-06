@@ -28,6 +28,7 @@ const Support: React.FC = () => {
   const [availableModules, setAvailableModules] = useState([]);
 
   const breadcrumbItems = [
+    { label: 'Help & Support' },
     { label: 'Help & Support' }
   ];
 
@@ -360,13 +361,13 @@ const Support: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col md:flex-row justify-end">
-                  <Button
+                  {/* <Button
                     type="button"
                     variant="outline"
                     onClick={handleCancel}
                   >
                     Reset
-                  </Button>
+                  </Button> */}
                   <button
                     type="submit"
                     className="mt-3 md:mt-0 bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"

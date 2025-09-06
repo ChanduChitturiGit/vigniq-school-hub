@@ -57,6 +57,12 @@ const ChapterDetails: React.FC = () => {
   const chapterName = searchParams.get('chapter_name') || '';
   const chapterNumber = searchParams.get('chapter_number') || '';
   const progress = parseInt(searchParams.get('progress') || '0');
+  const classId = searchParams.get('class_id') || '';
+  const subjectId = searchParams.get('subject_id') || '';
+  const schoolId = searchParams.get('school_id') || '';
+  const boardId = searchParams.get('school_board_id') || '';
+  const pathData = `class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
+
 
   const [topics, setTopics] = useState<Topic[]>([]);
   const [prerequisites, setPrerequisites] = useState<Prerequisite[]>([]);
@@ -142,7 +148,7 @@ const ChapterDetails: React.FC = () => {
 
   const handleSaveTopicEdit = () => {
     if (editingTopic && newTopicTitle.trim()) {
-      setTopics(topics.map(t => 
+      setTopics(topics.map(t =>
         t.id === editingTopic.id ? { ...t, title: newTopicTitle.trim() } : t
       ));
       setEditingTopic(null);
@@ -172,8 +178,8 @@ const ChapterDetails: React.FC = () => {
 
   const handleSavePrerequisiteEdit = () => {
     if (editingPrerequisite && newPrerequisiteTitle.trim() && newPrerequisiteExplanation.trim()) {
-      setPrerequisites(prerequisites.map(p => 
-        p.id === editingPrerequisite.id 
+      setPrerequisites(prerequisites.map(p =>
+        p.id === editingPrerequisite.id
           ? { ...p, topic: newPrerequisiteTitle.trim(), explanation: newPrerequisiteExplanation.trim() }
           : p
       ));
@@ -187,18 +193,18 @@ const ChapterDetails: React.FC = () => {
   const totalTopics = topics.length;
 
   return (
-    <MainLayout pageTitle={`Chapter ${chapterNumber}: ${chapterName}`}>
+    <MainLayout pageTitle={`${subject} - Chapter ${chapterNumber}: ${chapterName} ( ${className} - ${section})`}>
       <div className="space-y-8">
-        <Breadcrumb items={breadcrumbItems} />
+        {/* <Breadcrumb items={breadcrumbItems} /> */}
 
         {/* Header */}
         <div className="flex items-center justify-between">
           <Link
-            to={`/grades/syllabus?class=${className}&section=${section}&subject=${subject}`}
+            to={`/grades/syllabus/${chapterId}?${pathData}`}
             className="flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
-            <span className="font-medium">Back to Syllabus</span>
+            <span className="font-medium">Back to Subject</span>
           </Link>
           <div className="text-right">
             <div className="text-sm text-gray-500">Progress</div>
@@ -207,7 +213,7 @@ const ChapterDetails: React.FC = () => {
         </div>
 
         {/* Chapter Header */}
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6">
+        {/* <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-white rounded-xl shadow-md flex items-center justify-center">
               <span className="text-2xl font-bold text-blue-600">{chapterNumber}</span>
@@ -217,7 +223,7 @@ const ChapterDetails: React.FC = () => {
               <p className="text-lg text-gray-600">{subject} - {className} - Section {section}</p>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Tabs */}
         <Tabs defaultValue="topics" className="space-y-6">
@@ -265,8 +271,8 @@ const ChapterDetails: React.FC = () => {
                       />
                     </div>
                     <div className="flex justify-end gap-2">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         onClick={() => {
                           setShowAddTopic(false);
                           setNewTopicTitle('');
@@ -307,9 +313,9 @@ const ChapterDetails: React.FC = () => {
                           }
                         }}>
                           <DialogTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               className="text-blue-600 hover:text-blue-700"
                               onClick={() => handleEditTopic(topic)}
                             >
@@ -332,8 +338,8 @@ const ChapterDetails: React.FC = () => {
                                 />
                               </div>
                               <div className="flex justify-end gap-2">
-                                <Button 
-                                  variant="outline" 
+                                <Button
+                                  variant="outline"
                                   onClick={() => {
                                     setEditingTopic(null);
                                     setNewTopicTitle('');
@@ -390,10 +396,10 @@ const ChapterDetails: React.FC = () => {
                           <p className="text-sm text-gray-500">{day.status}</p>
                           {day.date && <p className="text-xs text-gray-400">{day.date}</p>}
                         </div>
-                        
+
                         <div className="space-y-2">
-                          <Link 
-                            to={`/grades/lesson-plan/view/${chapterId}/${lessonPlan.id}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}&day=${day.day}`}
+                          <Link
+                            to={`/grades/lesson-plan/day/${chapterId}/${lessonPlan.id}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}&day=${day.day}`}
                             className="w-full"
                           >
                             <Button variant="outline" className="w-full flex items-center gap-2 text-blue-600 border-blue-200 hover:bg-blue-50">
@@ -401,8 +407,8 @@ const ChapterDetails: React.FC = () => {
                               View
                             </Button>
                           </Link>
-                          
-                          <Link 
+
+                          <Link
                             to={`/grades/lesson-plan/ai-chat/${chapterId}/${day.day}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`}
                             className="w-full"
                           >
@@ -475,8 +481,8 @@ const ChapterDetails: React.FC = () => {
                       />
                     </div>
                     <div className="flex justify-end gap-2">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         onClick={() => {
                           setShowAddPrerequisite(false);
                           setNewPrerequisiteTitle('');
@@ -534,8 +540,8 @@ const ChapterDetails: React.FC = () => {
                     />
                   </div>
                   <div className="flex justify-end gap-2">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => {
                         setEditingPrerequisite(null);
                         setNewPrerequisiteTitle('');
