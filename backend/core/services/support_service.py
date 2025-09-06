@@ -6,8 +6,8 @@ from io import BytesIO
 from django.http import JsonResponse
 from django.db import transaction
 from django.utils import timezone
-from django.db.models import Q, Prefetch
-from django.core.paginator import Paginator
+from django.db.models import Q, Prefetch, OuterRef, Subquery
+from django.core.paginator import Paginator, EmptyPage
 
 from core.models import SupportTicket, TicketResponse, IssueTypes, AvailableModules
 from core import s3_client
@@ -72,7 +72,6 @@ class SupportService:
 
             logger.info("Responding to ticket %s by %s", ticket_id, responder)
             ticket_obj = SupportTicket.objects.get(
-                ~Q(status='closed'),
                 id=ticket_id
             )
             file_paths = self.save_files_in_s3(file_attachment, ticket_obj)
@@ -151,19 +150,46 @@ class SupportService:
                 filters["school_id"] = school_id
             if not self.user.is_superuser:
                 filters["user"] = self.user
-            tickets = SupportTicket.objects.filter(**filters).order_by("-created_at")
+            tickets = (
+                SupportTicket.objects
+                .filter(**filters)
+                .order_by("-created_at")
+                .prefetch_related(
+                    Prefetch("responses", queryset=TicketResponse.objects.only("file_attachment"))
+                )
+            )
             paginator = Paginator(tickets, page_size)
 
-            paginated_tickets = paginator.get_page(page)
-            ticket_data = [
-                {
+            try:
+                paginated_tickets = paginator.page(page)
+            except EmptyPage:
+                paginated_tickets = []
+
+            ticket_data = []
+            for ticket in paginated_tickets:
+                attachments_count = sum(
+                    len(resp.file_attachment or []) for resp in ticket.responses.all()
+                )
+                if self.user.is_superuser:
+                    new_messages_count = sum(
+                        1 for resp in ticket.responses.all()
+                        if resp.responder and not resp.responder.is_superuser and not resp.is_read
+                    )
+                else:
+                    new_messages_count = sum(
+                        1 for resp in ticket.responses.all()
+                        if resp.responder and resp.responder.is_superuser and not resp.is_read
+                    )
+                ticket_data.append({
                     "ticket_id": ticket.id,
                     "title": ticket.title,
                     "status": ticket.status,
                     "created_at": ticket.created_at,
-                    "updated_at": ticket.updated_at
-                } for ticket in paginated_tickets
-            ]
+                    "updated_at": ticket.updated_at,
+                    "attachments_count": attachments_count,
+                    "total_responses": ticket.responses.count(),
+                    "new_messages_count": new_messages_count,
+                })
             return JsonResponse({"data": ticket_data}, status=200)
         except Exception as e:
             logger.error("Error retrieving tickets for user %s: %s", self.user, e)
@@ -183,14 +209,14 @@ class SupportService:
             ticket = SupportTicket.objects.select_related(
                 "user", "school", "issue_type", "related_section"
             ).prefetch_related(
-                Prefetch("responses", queryset=TicketResponse.objects.select_related("responder").order_by("-created_at"))
+                Prefetch("responses", queryset=TicketResponse.objects.select_related("responder").order_by("created_at"))
             ).get(id=ticket_id, **filters)
             responses = ticket.responses.all()
 
             formated_responses = []
             for response in responses:
                 formated_responses.append({
-                    "id": response.id,
+                    "response_id": response.id,
                     "message": response.message,
                     "created_at": response.created_at,
                     "responder_first_name": response.responder.first_name if response.responder else None,
@@ -251,3 +277,99 @@ class SupportService:
         except Exception as e:
             logger.error("Error retrieving available modules: %s", e)
             return JsonResponse({"error": "Unable to retrieve available modules"}, status=500)
+    
+    def get_ticket_attachments(self):
+        """Get attachments for a specific ticket."""
+        try:
+            ticket_id = self.request.GET.get("ticket_id")
+            if not ticket_id:
+                logger.error("Missing ticket_id for retrieving attachments")
+                return JsonResponse({"error": "Missing ticket_id"}, status=400)
+
+            ticket = SupportTicket.objects.prefetch_related(
+                Prefetch(
+                    "responses",
+                    queryset=TicketResponse.objects.order_by(
+                        "created_at"
+                    ).select_related("responder")
+                )
+            ).get(id=ticket_id)
+
+            attachments = []
+            initial_submission = True
+            for response in ticket.responses.all():
+                if response.file_attachment:
+                    attachments.append({
+                        "file_attachment": [
+                            s3_client.generate_temp_link(file_path) for file_path in response.file_attachment
+                        ],
+                        "response_id": response.id,
+                        "created_at": response.created_at,
+                        "is_responder_superuser": response.responder.is_superuser if response.responder else None,
+                        "is_initial_submission": initial_submission,
+                        "responder_first_name": response.responder.first_name if response.responder else None,
+                        "responder_last_name": response.responder.last_name if response.responder else None,
+                    })
+                initial_submission = False
+            return JsonResponse({"data": attachments}, status=200)
+        except SupportTicket.DoesNotExist:
+            logger.warning("Ticket not found: %s", ticket_id)
+            return JsonResponse({"error": "Ticket not found"}, status=404)
+        except Exception as e:
+            logger.error("Error retrieving attachments for ticket %s: %s", ticket_id, e)
+            return JsonResponse({"error": "Unable to retrieve attachments"}, status=500)
+    
+    def mark_message_as_read(self):
+        """Mark messages as read in a ticket."""
+        try:
+            ticket_id = self.request.data.get("ticket_id")
+            if not ticket_id:
+                logger.error("Missing ticket_id for marking messages as read")
+                return JsonResponse({"error": "Missing ticket_id"}, status=400)
+            ticket_response = TicketResponse.objects.filter(ticket_id=ticket_id,is_read=False)
+            ticket_response.update(is_read=True)
+            logger.info("Marked response %d as read", ticket_id)
+            return JsonResponse({"message": "Marked response as read"}, status=200)
+        except Exception as e:
+            logger.error("Error marking messages as read for response %s: %s", ticket_id, e)
+            return JsonResponse({"error": "Unable to mark messages as read"}, status=500)
+
+    
+    def get_support_notifications(self):
+        """Get tickets with latest unread messages for the current user."""
+        try:
+            logger.info("Retrieving support notifications for user %s", self.user)
+
+            if self.user.is_superuser:
+                unread_responses = TicketResponse.objects.filter(
+                    responder__isnull=False,
+                    responder__is_superuser=False,
+                    is_read=False,
+                )
+            else:
+                unread_responses = TicketResponse.objects.filter(
+                    ticket__user=self.user,
+                    responder__isnull=False,
+                    responder__is_superuser=True,
+                    is_read=False,
+                )
+
+            # Only keep latest unread per ticket
+            tickets_with_unread = {}
+            for resp in unread_responses.order_by("ticket_id", "-created_at"):
+                if resp.ticket_id not in tickets_with_unread:
+                    tickets_with_unread[resp.ticket_id] = resp
+
+            data = []
+            for ticket_id, resp in tickets_with_unread.items():
+                data.append({
+                    "ticket_id": ticket_id,
+                    "latest_message": resp.message or ("File Attachment" if resp.file_attachment else ""),
+                    "latest_message_time": resp.created_at,
+                })
+
+            return JsonResponse({"data": data}, status=200)
+
+        except Exception as e:
+            logger.error("Error retrieving support notifications for user %s: %s", self.user, e)
+            return JsonResponse({"error": "Unable to retrieve support notifications"}, status=500)

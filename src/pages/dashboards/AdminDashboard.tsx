@@ -116,9 +116,9 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-800">Admin Dashboard</h1>
-      </div>
+      </div> */}
 
       {/* School Info Card */}
       <div
@@ -155,9 +155,9 @@ const AdminDashboard: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-gray-600">{stat.title}</p>
                   <p className="text-3xl font-bold text-gray-900 mt-2">{stat.value}</p>
-                  <p className="text-xs text-green-600 mt-2">
+                  {/* <p className="text-xs text-green-600 mt-2">
                     {stat.change}
-                  </p>
+                  </p> */}
                 </div>
                 <div className={`p-4 rounded-lg ${stat.color}`}>
                   <Icon className="w-8 h-8 text-white" />
