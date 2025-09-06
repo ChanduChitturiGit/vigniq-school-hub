@@ -11,16 +11,16 @@ const api = axios.create({
   },
 });
 
-// 🔐 Attach access token to requests
+// Attach access token to requests
 api.interceptors.request.use((config) => {
-  const accessToken = localStorage.getItem('access_token');
+  const accessToken = sessionStorage.getItem('access_token');
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
   }
   return config;
 });
 
-// 🔁 Handle 401 and refresh token logic
+// Handle 401 and refresh token logic
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -30,13 +30,13 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry && !window.location.href.includes('/login')) {
       originalRequest._retry = true;
       try {
-        const refreshToken = localStorage.getItem('refresh_token');
+        const refreshToken = sessionStorage.getItem('refresh_token');
         const res = await axios.post(baseurl+'/auth/token/refresh/', {
           refresh: refreshToken,
         });
 
         const newAccessToken = res.data.access;
-        localStorage.setItem('access_token', newAccessToken);
+        sessionStorage.setItem('access_token', newAccessToken);
 
         // Update token in the failed request
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
@@ -45,8 +45,8 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         console.error("Refresh token failed:", refreshError);
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
+        sessionStorage.removeItem('access_token');
+        sessionStorage.removeItem('refresh_token');
         if(!window.location.href.includes('/login')){
           window.location.href = '/login';
         }

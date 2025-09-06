@@ -1,13 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Calendar, Users, TrendingUp, Plus, Eye, Edit, Award, BookCheckIcon } from 'lucide-react';
+import { Calendar, Users, TrendingUp, Plus, Eye, Edit, Award, BookCheckIcon, Notebook, BookOpenCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MainLayout from '@/components/Layout/MainLayout';
 import { getExamsList } from '../services/exams'
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import { SpinnerOverlay } from '../pages/SpinnerOverlay';
+import { FILE } from 'dns';
 
 interface Exam {
   exam_id: string;
@@ -114,6 +115,11 @@ const Exams: React.FC = () => {
       </div>
 
       <div className="flex items-center gap-2 mb-4 text-sm text-gray-600">
+        <BookOpenCheck className="w-4 h-4" />
+        <span>{exam.exam_category ?? 'NA'}</span>
+      </div>
+
+      <div className="flex items-center gap-2 mb-4 text-sm text-gray-600">
         <Calendar className="w-4 h-4" />
         <span>{exam.exam_date}</span>
       </div>
@@ -159,13 +165,13 @@ const Exams: React.FC = () => {
 
   return (
     <>
-      <MainLayout pageTitle='Exams'>
+      <MainLayout pageTitle={`Exams : ${subject} - ${className} - ${section}`} >
         <div className="space-y-6">
-          <div className="flex flex-col md:flex-row  items-center justify-between">
-            <div className='mb-4 md:mb-0'>
-              <h1 className="text-2xl font-bold text-gray-800">Mathematics - Class 06</h1>
+          {/* <div className="flex flex-col md:flex-row  items-center justify-between">
+             <div className='mb-4 md:mb-0'>
+              <h1 className="text-2xl font-bold text-gray-800">`${subject} - ${className}`</h1>
               <p className="text-gray-600 mt-1">Manage your exams and view results</p>
-            </div>
+            </div> 
             <Button
               onClick={() => navigate(`/grades/exams/create-exam/${pathData}`)}
               className="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"
@@ -173,20 +179,29 @@ const Exams: React.FC = () => {
               <Plus className="w-4 h-4" />
               Add New Exam
             </Button>
-          </div>
+          </div> */}
 
           <Tabs defaultValue="offline" className="w-full">
-            <TabsList className="grid w-full max-w-md grid-cols-2">
-              <TabsTrigger value="offline" className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                Offline Exams
-              </TabsTrigger>
-              <TabsTrigger value="online" className="flex items-center gap-2 text-gray-500" disabled>
-                <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-                Online Exams
-                <span className="bg-gray-200 text-gray-600 px-2 py-1 rounded text-xs">Soon</span>
-              </TabsTrigger>
-            </TabsList>
+            <div className="flex flex-col md:flex-row  items-center justify-between">
+              <TabsList className="grid w-full max-w-md grid-cols-2">
+                <TabsTrigger value="offline" className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  Offline Exams
+                </TabsTrigger>
+                <TabsTrigger value="online" className="flex items-center gap-2 text-gray-500" disabled>
+                  <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                  Online Exams
+                  <span className="bg-gray-200 text-gray-600 px-2 py-1 rounded text-xs">Soon</span>
+                </TabsTrigger>
+              </TabsList>
+              <Button
+                onClick={() => navigate(`/grades/exams/create-exam/${pathData}`)}
+                className="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add New Exam
+              </Button>
+            </div>
 
             <TabsContent value="offline" className="mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -200,7 +215,7 @@ const Exams: React.FC = () => {
               </div>
             </TabsContent>
             {
-              offlineExams.length==0 && (
+              offlineExams.length == 0 && (
                 <div className="text-center py-12">
                   <BookCheckIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No Exams Created</h3>
