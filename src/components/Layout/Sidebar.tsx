@@ -177,7 +177,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
       helpSubItems.push({ path: '/requests', label: 'Responses', icon: MessageSquare });
     } else {
       helpSubItems.push({ path: '/support', label: 'Support', icon: HelpCircle });
-      helpSubItems.push({ path: '/requests', label: 'Responses', icon: MessageSquare });
+      // helpSubItems.push({ path: '/requests', label: 'Responses', icon: MessageSquare });
 
       // if (user?.role !== 'student') {
       //   helpSubItems.push({ path: '/requests', label: 'Responses', icon: FileText });
