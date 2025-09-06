@@ -116,15 +116,15 @@ class SyllabusService:
                           'school_class__section', 'subject_id','subject__name',
                           'school_class__board_id')
 
-            data = []
+            data = {}
             for assignment in teacher_assignment_obj:
-                progress = self.get_subject_progress(
+                progress, chapters_count = self.get_subject_progress_and_chapters_count(
                     school_db_name,
                     assignment["school_class_id"],
                     assignment["school_class__class_instance_id"],
                     assignment["subject_id"]
                 )
-                data.append({
+                assignment_data = {
                     "class_id": assignment["school_class_id"],
                     "class_number": assignment["school_class__class_instance_id"],
                     "section": assignment["school_class__section"],
@@ -132,7 +132,11 @@ class SyllabusService:
                     "subject_name": assignment["subject__name"],
                     "board_id": assignment["school_class__board_id"],
                     "progress": round(progress, 2),
-                })
+                    "chapters_count": chapters_count
+                }
+                if assignment["subject__name"] not in data:
+                    data[assignment["subject__name"]] = []
+                data[assignment["subject__name"]].append(assignment_data)
             logger.info("Grade by teacher ID fetched successfully.")
             return Response({"data": data}, status=status.HTTP_200_OK)
 
@@ -141,7 +145,8 @@ class SyllabusService:
             return Response({"error": "Failed to fetch grade."},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def get_subject_progress(self,school_db_name, section_id, class_id, subject_id):
+    def get_subject_progress_and_chapters_count(self, school_db_name, section_id, class_id, subject_id):
+        """Calculate subject progress based on completed lesson plan days."""
         chapters = SchoolChapter.objects.using(school_db_name).filter(
             class_number_id=class_id,
             subject_id=subject_id
@@ -149,7 +154,7 @@ class SyllabusService:
 
         total_chapters = chapters.count()
         if total_chapters == 0:
-            return 0
+            return 0,0
 
         chapter_weight = 100 / total_chapters
         total_progress = 0
@@ -172,7 +177,7 @@ class SyllabusService:
             chapter_progress = (completed_days / total_days) * chapter_weight
             total_progress += chapter_progress
 
-        return round(total_progress, 2)
+        return round(total_progress, 2), total_chapters
 
     def get_syllabus_subject(self, request):
         """Fetch syllabus by subject."""
