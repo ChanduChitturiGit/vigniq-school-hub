@@ -1,0 +1,65 @@
+[
+    {
+        "model": "core.issuetypes",
+        "pk": 1,
+        "fields": {
+            "name": "Technical Issue"
+        }
+    },
+    {
+        "model": "core.issuetypes",
+        "pk": 2,
+        "fields": {
+            "name": "Logical Issue"
+        }
+    },
+    {
+        "model": "core.issuetypes",
+        "pk": 3,
+        "fields": {
+            "name": "Performance Issue"
+        }
+    },
+    {
+        "model": "core.issuetypes",
+        "pk": 4,
+        "fields": {
+            "name": "UI/UX Issue"
+        }
+    },
+    {
+        "model": "core.issuetypes",
+        "pk": 5,
+        "fields": {
+            "name": "Data inconsistency Issue"
+        }
+    },
+    {
+        "model": "core.issuetypes",
+        "pk": 6,
+        "fields": {
+            "name": "Account Issue"
+        }
+    },
+    {
+        "model": "core.issuetypes",
+        "pk": 7,
+        "fields": {
+            "name": "Feature Request"
+        }
+    },
+    {
+        "model": "core.issuetypes",
+        "pk": 8,
+        "fields": {
+            "name": "Bug Report"
+        }
+    },
+    {
+        "model": "core.issuetypes",
+        "pk": 9,
+        "fields": {
+            "name": "Other"
+        }
+    }
+]

@@ -9,6 +9,7 @@ from psycopg2 import IntegrityError
 
 from teacher.models import Exam, ExamCategory, ExamType,ExamResult
 from core.common_modules.common_functions import CommonFunctions
+from core.models import User
 
 logger = logging.getLogger(__name__)
 
@@ -132,10 +133,12 @@ class OfflineExamsService:
             with transaction.atomic(using=self.school_db_name):
                 student_ids = [item["student_id"] for item in student_marks if item.get("student_id")]
 
-                existing = ExamResult.objects.using(self.school_db_name).filter(
+                existing_results = ExamResult.objects.using(self.school_db_name).filter(
                     exam=exam,
                     student_id__in=student_ids
-                ).in_bulk(field_name="student_id")
+                )
+
+                existing = {res.student_id: res for res in existing_results}
 
                 to_create = []
                 to_update = []
@@ -150,16 +153,16 @@ class OfflineExamsService:
                     if student_id in existing:
                         obj = existing[student_id]
                         obj.marks = marks
-                        obj.updated_by_teacher = self.user
+                        obj.updated_by_teacher_id = self.user.id
                         to_update.append(obj)
                     else:
                         to_create.append(
                             ExamResult(
                                 exam=exam,
                                 student_id=student_id,
-                                marks=marks,
-                                updated_by_teacher=self.user,
-                                created_by_teacher=self.user,
+                                marks_obtained=marks,
+                                updated_by_teacher_id=self.user.id,
+                                created_by_teacher_id=self.user.id,
                             )
                         )
 
@@ -186,22 +189,50 @@ class OfflineExamsService:
             data = self.request.GET
             exam_id = data.get("exam_id")
             exam = Exam.objects.using(self.school_db_name).select_related(
-                'subject', 'created_by_teacher', 'updated_by_teacher'
+                'subject', 'created_by_teacher', 'updated_by_teacher',"exam_category"
             ).get(id=exam_id)
 
-            marks = ExamResult.objects.using(self.school_db_name).filter(exam=exam).values("student_id", "marks_obtained")
+            marks = ExamResult.objects.using(self.school_db_name).filter(
+                exam=exam
+            ).values("student_id", "student__roll_number", "marks_obtained")
+
+            marks_data = []
+
+            student_ids = [m["student_id"] for m in marks]
+
+            students = (
+                User.objects.using("default")
+                .filter(id__in=student_ids)
+                .values("id", "first_name", "last_name")
+            )
+
+            students_map = {
+                s["id"]: f"{s['first_name'] or ''} {s['last_name'] or ''}".strip()
+                for s in students
+            }
+
+            marks_data = [
+                {
+                    "student_id": mark["student_id"],
+                    "roll_number": mark["student__roll_number"],
+                    "marks_obtained": round(mark["marks_obtained"], 2),
+                    "student_name": students_map.get(mark["student_id"], ""),
+                }
+                for mark in marks
+            ]
 
             exam_data = {
                 "exam_id": exam.id,
                 "name": exam.name,
                 "exam_type": exam.exam_type,
-                "max_marks": exam.max_marks,
-                "pass_marks": exam.pass_marks,
+                "exam_category": exam.exam_category.name,
+                "max_marks": round(exam.max_marks, 2),
+                "pass_marks": round(exam.pass_marks, 2),
                 "exam_date": exam.exam_date,
                 "subject_name": exam.subject.name,
                 "created_by": exam.created_by_teacher.full_name,
                 "updated_by": exam.updated_by_teacher.full_name if exam.updated_by_teacher else None,
-                "marks": list(marks)
+                "marks": marks_data
             }
             logger.info("Fetched exam details successfully for exam ID %s", exam_id)
             return JsonResponse({"data": exam_data}, status=200)
@@ -228,7 +259,7 @@ class OfflineExamsService:
                 subject_id=subject_id,
                 academic_year_id=academic_year_id,
                 is_active=True
-            )
+            ).select_related('exam_category')
 
             if not exams.exists():
                 return JsonResponse({"data": []}, status=200)
@@ -264,12 +295,14 @@ class OfflineExamsService:
                     "exam_name": exam.name,
                     "exam_type": exam.exam_type,
                     "exam_date": exam.exam_date,
-                    "total_marks": exam.max_marks,
-                    "pass_marks": exam.pass_marks,
-                    "average_marks": res.get("average_marks", 0),
+                    "exam_category": exam.exam_category.name,
+                    "total_marks": round(exam.max_marks, 2),
+                    "pass_marks": round(exam.pass_marks, 2),
+                    "average_marks": round(res.get("average_marks", 0), 2),
                     "student_count": res.get("student_count", 0),
                     "passed_students": res.get("passed_students", 0),
-                    "pass_percentage": res.get("pass_percentage", 0),
+                    "pass_percentage": round(res.get("pass_percentage", 0), 2),
+                    "is_submitted": True if res else False,
                 })
 
             return JsonResponse({"data": output}, status=200)

@@ -50,10 +50,10 @@ class LangChainService:
         pdf_text = CommonFunctions.extract_text_from_pdf(pdf_file=pdf_file)
         response = self.invoke_llm(pdf_text=pdf_text, prompt=prompt)
         parsed = chapter_parser.parse(response)
-        
-        return parsed.model_dump()['result']
 
-    def generate_lesson_plan(self, chapter_number, chapter_title, num_days, time_period, pdf_file):
+        return parsed.model_dump()['result'], pdf_text
+
+    def generate_lesson_plan(self, chapter_number, chapter_title, num_days, time_period, pdf_file_content):
         lesson_plan_parser = PydanticOutputParser(pydantic_object=LessonPlan)
         prompt = PromptTemplate(
             template=LangchainQueries.GENERATE_LESSON_PLAN.value,
@@ -61,7 +61,10 @@ class LangChainService:
             partial_variables={"format_instructions": lesson_plan_parser.get_format_instructions()}
         )
 
-        pdf_text = CommonFunctions.extract_text_from_pdf(pdf_file=pdf_file)
+        if isinstance(pdf_file_content, str):
+            pdf_text = pdf_file_content
+        else:
+            pdf_text = CommonFunctions.extract_text_from_pdf(pdf_file=pdf_file_content)
 
         chain = LLMChain(llm=self.llm, prompt=prompt)
 

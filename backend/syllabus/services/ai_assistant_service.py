@@ -42,7 +42,7 @@ class AiAssistantService:
                 session = session.first()
             else:
                 session = None
-            print(session)
+
             chat_history = ChatMessage.objects.using(self.school_db_name).filter(
                 session_id=session
             ).order_by("created_at").values('role','content','created_at')
@@ -50,8 +50,8 @@ class AiAssistantService:
             logger.info(f"Chat with Lesson Plan Day ID %s for user %s retrieved successfully",
                         lesson_plan_day_id, user.id)
             output = {
-                'chat_id':session.chat_id,
-                'chat_history': list(chat_history)
+                'chat_id':session.chat_id if session else None,
+                'chat_history': list(chat_history) if session else []
             }
             return JsonResponse({"data": output})
         except Exception as e:
@@ -112,17 +112,17 @@ class AiAssistantService:
                     
                     response = ""
                     async def streaming_chat():
-                            nonlocal response
-                            streaming_response = LangChainService(temperature=0.1).process_user_question(
-                                    session, self.school_db_name, lesson_plan, user_message)
-                            async for event in streaming_response:
-                                if event["type"] == "token":
-                                    response += event["data"]
-                                    yield json.dumps({"data": event["data"], "status": "streaming"}) + "\n"
+                        nonlocal response
+                        streaming_response = LangChainService(temperature=0.1).process_user_question(
+                                session, self.school_db_name, lesson_plan, user_message)
+                        async for event in streaming_response:
+                            if event["type"] == "token":
+                                response += event["data"]
+                                yield json.dumps({"data": event["data"], "status": "streaming"}) + "\n"
 
-                            await self.save_chat_messages(session, user_message, response)
+                        await self.save_chat_messages(session, user_message, response)
 
-                            yield json.dumps({"status": "success"}) + "\n"
+                        yield json.dumps({"status": "success"}) + "\n"
 
                 return StreamingHttpResponse(streaming_chat(), content_type='text/event-stream')
             except Exception as e:

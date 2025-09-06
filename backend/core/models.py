@@ -77,6 +77,63 @@ class Role(models.Model):
     def __str__(self):
         return self.name
 
+class IssueTypes(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    class Meta:
+        db_table = 'issue_types'
+
+    def __str__(self):
+        return self.name
+
+class AvailableModules(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    class Meta:
+        db_table = 'available_modules'
+
+    def __str__(self):
+        return self.name
+
+class SupportTicket(models.Model):
+    STATUS_CHOICES = [
+        ('open', 'Open'),
+        ('in_progress', 'In Progress'),
+        ('resolved', 'Resolved'),
+        ('closed', 'Closed'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="tickets")
+    school = models.ForeignKey('school.School', on_delete=models.CASCADE, related_name="tickets")
+    title = models.CharField(max_length=255)
+    issue_type = models.ForeignKey(IssueTypes, on_delete=models.SET_NULL, null=True,
+                                   related_name="tickets")
+    related_section = models.ForeignKey(AvailableModules, on_delete=models.SET_NULL, null=True,
+                                        related_name="tickets")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="open")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'support_ticket'
+
+    def __str__(self):
+        return f"[{self.status}] {self.subject} ({self.user.username})"
+
+
+class TicketResponse(models.Model):
+    ticket = models.ForeignKey(SupportTicket, on_delete=models.CASCADE, related_name="responses")
+    responder = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="responses")
+    message = models.TextField()
+    file_attachment = models.JSONField(default=list,null=True, blank=True)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'ticket_response'
+
+    def __str__(self):
+        return f"Response by {self.responder} on {self.ticket}"
 
 
 

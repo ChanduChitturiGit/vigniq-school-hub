@@ -1,0 +1,79 @@
+[
+    {
+        "model": "core.availablemodules",
+        "pk": 1,
+        "fields": {
+            "name": "Dashboard"
+        }
+    },
+    {
+        "model": "core.availablemodules",
+        "pk": 2,
+        "fields": {
+            "name": "Teacher"
+        }
+    },
+    {
+        "model": "core.availablemodules",
+        "pk": 3,
+        "fields": {
+            "name": "Student"
+        }
+    },
+    {
+        "model": "core.availablemodules",
+        "pk": 4,
+        "fields": {
+            "name": "Classes"
+        }
+    },
+    {
+        "model": "core.availablemodules",
+        "pk": 5,
+        "fields": {
+            "name": "Login/Authentication"
+        }
+    },
+    {
+        "model": "core.availablemodules",
+        "pk": 6,
+        "fields": {
+            "name": "Attendance"
+        }
+    },
+    {
+        "model": "core.availablemodules",
+        "pk": 7,
+        "fields": {
+            "name": "Exams"
+        }
+    },
+    {
+        "model": "core.availablemodules",
+        "pk": 8,
+        "fields": {
+            "name": "Ebooks"
+        }
+    },
+    {
+        "model": "core.availablemodules",
+        "pk": 9,
+        "fields": {
+            "name": "Grades"
+        }
+    },
+    {
+        "model": "core.availablemodules",
+        "pk": 10,
+        "fields": {
+            "name": "Chat Assistant"
+        }
+    },
+    {
+        "model": "core.availablemodules",
+        "pk": 11,
+        "fields": {
+            "name": "Others"
+        }
+    }
+]

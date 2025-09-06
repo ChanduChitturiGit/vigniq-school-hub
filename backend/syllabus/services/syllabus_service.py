@@ -686,18 +686,27 @@ class SyllabusService:
                 return Response({"error": "Ebook not found for the chapter."},
                                 status=status.HTTP_404_NOT_FOUND)
             pdf_bytes_io = BytesIO()
-            s3_status = s3_client.download_file(ebook_instance.file_path, pdf_bytes_io)
+            is_text_file = True
+            s3_status = s3_client.download_file(f"{ebook_instance.file_path}.txt", pdf_bytes_io)
+            if not s3_status:
+                logger.error("Failed to download ebook text from S3.")
+                s3_status = s3_client.download_file(f"{ebook_instance.file_path}.pdf", pdf_bytes_io)
+                is_text_file = False
             if not s3_status:
                 logger.error("Failed to download ebook from S3.")
                 return Response({"error": "Failed to download ebook."},
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             lang_chain_service = LangChainService()
+            pdf_bytes_io.seek(0)
+            pdf_content = pdf_bytes_io
+            if is_text_file:
+                pdf_content = pdf_bytes_io.read().decode("utf-8")
             lesson_plan = lang_chain_service.generate_lesson_plan(
                 chapter_number=chapter.chapter_number,
                 chapter_title=chapter.chapter_name,
                 num_days=num_days,
                 time_period=time_period,
-                pdf_file=pdf_bytes_io
+                pdf_file_content=pdf_content
             )
 
             normalized = CommonFunctions.normalize_keys(lesson_plan)

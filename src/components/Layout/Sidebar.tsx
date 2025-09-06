@@ -147,6 +147,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
         { path: '/view-ebooks', icon: BookOpen, label: 'E-Books', roles: ['admin'] }
       ],
       'teacher': [
+        { path: '/grades', icon: Award, label: 'Grades', roles: ['teacher'] },
+        { path: '/attendance', icon: ClipboardCheck, label: 'Attendance', roles: ['teacher'] },
         {
           key: 'school-management',
           icon: Users,
@@ -158,8 +160,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
             { path: '/students', label: 'students', icon: Users }
           ]
         },
-        { path: '/grades', icon: Award, label: 'Grades', roles: ['teacher'] },
-        { path: '/attendance', icon: ClipboardCheck, label: 'Attendance', roles: ['teacher'] },
         { path: '/view-ebooks', icon: BookOpen, label: 'E-Books', roles: ['teacher'] }
       ],
       'student': [
@@ -170,11 +170,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
 
     // Help dropdown - different for superadmin vs others
     const helpSubItems: { path: string; label: string; icon: React.ComponentType<{ className?: string }> }[] = [];
+    
 
     if (user?.role === 'superadmin') {
       helpSubItems.push({ path: '/requests', label: 'Requests', icon: MessageSquare });
     } else {
       helpSubItems.push({ path: '/support', label: 'Support', icon: HelpCircle });
+      helpSubItems.push({ path: '/requests', label: 'Responses', icon: MessageSquare });
 
       if (user?.role !== 'student') {
         helpSubItems.push({ path: '/requests', label: 'Requests', icon: FileText });
@@ -264,7 +266,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
             <div className="transition-opacity duration-500 ease-in-out w-[70%]">
               <span className="text-xl font-bold">VIGYS AI</span>
                <div className={`text-xs text-blue-100 mt-1 truncate `} title={schoolName}>
-                  {schoolName+schoolName}
+                  {schoolName}
                 </div>
             </div>
           )}

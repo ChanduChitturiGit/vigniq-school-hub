@@ -1,13 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Calendar, Users, TrendingUp, Plus, Eye, Edit } from 'lucide-react';
+import { Calendar, Users, TrendingUp, Plus, Eye, Edit, Award, BookCheckIcon, Notebook, BookOpenCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MainLayout from '@/components/Layout/MainLayout';
 import { getExamsList } from '../services/exams'
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import { SpinnerOverlay } from '../pages/SpinnerOverlay';
+import { FILE } from 'dns';
 
 interface Exam {
   exam_id: string;
@@ -20,7 +21,7 @@ interface Exam {
   average_marks: number;
   pass_percentage: number;
   exam_type?: 'offline' | 'online';
-  marksSubmitted?: boolean; // New field to track if marks are submitted
+  is_submitted?: boolean; // New field to track if marks are submitted
 }
 
 const Exams: React.FC = () => {
@@ -40,16 +41,16 @@ const Exams: React.FC = () => {
   const [loader, setLoader] = useState(true);
 
 
-  // Sample exam data with marksSubmitted field
+  // Sample exam data with is_submitted  field
   const [exams, setExams] = useState<Exam[]>([]);
 
   const offlineExams = exams.filter(exam => exam.exam_type === 'offline');
   const onlineExams = exams.filter(exam => exam.exam_type === 'online');
 
   const handleExamAction = (exam: Exam) => {
-    if (exam.marksSubmitted) {
+    if (exam.is_submitted) {
       // Navigate to view results
-      navigate(`/grades/exams/exam-results/${exam.exam_id}`);
+      navigate(`/grades/exams/exam-results/${exam.exam_id}?${pathParams}`);
     } else {
       // Navigate to submit marks (which is the exam results page with editing enabled by default)
       navigate(`/grades/exams/exam-results/${exam.exam_id}?edit=true&${pathParams}`);
@@ -81,20 +82,25 @@ const Exams: React.FC = () => {
     getExamsListData();
   }, [])
 
+  const toCapitalCase = (str: string) => {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  }
+
 
   const renderExamCard = (exam: Exam) => (
     <div key={exam.exam_id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-lg hover:border-blue-400">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">{exam.exam_name}</h3>
+      <div className="flex flex-col md:flex-row md:flex-wrap lg:flex-nowrap items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-900 mb-2 md:mb-0">{toCapitalCase(exam.exam_name)}</h3>
         <Button
           onClick={() => handleExamAction(exam)}
-          className={`${exam.marksSubmitted
+          className={`${exam.is_submitted
             ? 'bg-green-500 hover:bg-green-600'
             : 'bg-blue-500 hover:bg-blue-600'
             } text-white`}
           size="sm"
         >
-          {exam.marksSubmitted ? (
+          {exam.is_submitted ? (
             <>
               <Eye className="w-4 h-4 mr-1" />
               View Results
@@ -106,6 +112,11 @@ const Exams: React.FC = () => {
             </>
           )}
         </Button>
+      </div>
+
+      <div className="flex items-center gap-2 mb-4 text-sm text-gray-600">
+        <BookOpenCheck className="w-4 h-4" />
+        <span>{exam.exam_category ?? 'NA'}</span>
       </div>
 
       <div className="flex items-center gap-2 mb-4 text-sm text-gray-600">
@@ -126,20 +137,20 @@ const Exams: React.FC = () => {
         <div className="bg-green-50 rounded-lg p-4 text-center">
           <div className="text-2xl font-bold text-green-600">{exam.pass_marks}</div>
           <div className="text-sm text-gray-600">Pass Marks</div>
-          {exam.marksSubmitted && (
+          {exam.is_submitted && (
             <div className="flex items-center justify-center gap-1 mt-2 text-xs text-gray-500">
               <TrendingUp className="w-3 h-3" />
-              <span>Avg. {exam.average_marks}</span>
+              <span>Avg Marks. {Number(exam.average_marks).toFixed(2)}</span>
             </div>
           )}
         </div>
       </div>
 
-      {exam.marksSubmitted && (
+      {exam.is_submitted && (
         <div className="mt-4">
           <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
             <span>Pass Rate</span>
-            <span>{exam.pass_percentage}%</span>
+            <span>{exam.pass_percentage.toFixed(2)}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
@@ -154,13 +165,13 @@ const Exams: React.FC = () => {
 
   return (
     <>
-      <MainLayout pageTitle='Exams'>
+      <MainLayout pageTitle={`Exams : ${subject} - ${className} - ${section}`} >
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">Mathematics - Class 06</h1>
+          {/* <div className="flex flex-col md:flex-row  items-center justify-between">
+             <div className='mb-4 md:mb-0'>
+              <h1 className="text-2xl font-bold text-gray-800">`${subject} - ${className}`</h1>
               <p className="text-gray-600 mt-1">Manage your exams and view results</p>
-            </div>
+            </div> 
             <Button
               onClick={() => navigate(`/grades/exams/create-exam/${pathData}`)}
               className="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"
@@ -168,20 +179,29 @@ const Exams: React.FC = () => {
               <Plus className="w-4 h-4" />
               Add New Exam
             </Button>
-          </div>
+          </div> */}
 
           <Tabs defaultValue="offline" className="w-full">
-            <TabsList className="grid w-full max-w-md grid-cols-2">
-              <TabsTrigger value="offline" className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                Offline Exams
-              </TabsTrigger>
-              <TabsTrigger value="online" className="flex items-center gap-2 text-gray-500" disabled>
-                <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-                Online Exams
-                <span className="bg-gray-200 text-gray-600 px-2 py-1 rounded text-xs">Soon</span>
-              </TabsTrigger>
-            </TabsList>
+            <div className="flex flex-col md:flex-row  items-center justify-between">
+              <TabsList className="grid w-full max-w-md grid-cols-2">
+                <TabsTrigger value="offline" className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  Offline Exams
+                </TabsTrigger>
+                <TabsTrigger value="online" className="flex items-center gap-2 text-gray-500" disabled>
+                  <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                  Online Exams
+                  <span className="bg-gray-200 text-gray-600 px-2 py-1 rounded text-xs">Soon</span>
+                </TabsTrigger>
+              </TabsList>
+              <Button
+                onClick={() => navigate(`/grades/exams/create-exam/${pathData}`)}
+                className="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add New Exam
+              </Button>
+            </div>
 
             <TabsContent value="offline" className="mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -194,6 +214,21 @@ const Exams: React.FC = () => {
                 {onlineExams.map(renderExamCard)}
               </div>
             </TabsContent>
+            {
+              offlineExams.length == 0 && (
+                <div className="text-center py-12">
+                  <BookCheckIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Exams Created</h3>
+                  <Button
+                    onClick={() => navigate(`/grades/exams/create-exam/${pathData}`)}
+                    className="bg-blue-500 hover:bg-blue-600 text-white  gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add New Exam
+                  </Button>
+                </div>
+              )
+            }
           </Tabs>
         </div>
       </MainLayout>
