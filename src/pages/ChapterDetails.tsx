@@ -21,34 +21,42 @@ import {
   X,
   Eye,
   MessageSquare,
-  RefreshCw
+  RefreshCw,
+  CheckCircle,
+  AlertCircle,
+  Circle,
+  Loader2Icon,
+  LoaderCircleIcon,
+  TimerIcon
 } from 'lucide-react';
+import { getGradeByChapter, saveTopicByLesson, editTopicByLesson, savePrerequisite, editPrerequisiteByLesson, getChapterDetailsById } from '../services/grades'
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
 
 interface Topic {
-  id: number;
-  title: string;
+  sub_topic_id: number;
+  sub_topic: string;
   completed?: boolean;
 }
 
 interface Prerequisite {
-  id: number;
+  prerequisite_id: number;
   topic: string;
   explanation: string;
 }
 
 interface LessonPlanDay {
+  lesson_plan_day_id: number;
   day: number;
   status: string;
-  date?: string;
 }
 
-interface LessonPlan {
-  id: number;
-  days: LessonPlanDay[];
-  totalDays: number;
-}
+type LessonPlan = LessonPlanDay[];
 
 const ChapterDetails: React.FC = () => {
+  const { showSnackbar } = useSnackbar();
   const { chapterId } = useParams();
   const [searchParams] = useSearchParams();
   const className = searchParams.get('class') || '';
@@ -61,12 +69,13 @@ const ChapterDetails: React.FC = () => {
   const subjectId = searchParams.get('subject_id') || '';
   const schoolId = searchParams.get('school_id') || '';
   const boardId = searchParams.get('school_board_id') || '';
+  const tab = searchParams.get('tab') || '';
   const pathData = `class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
 
 
   const [topics, setTopics] = useState<Topic[]>([]);
   const [prerequisites, setPrerequisites] = useState<Prerequisite[]>([]);
-  const [lessonPlan, setLessonPlan] = useState<LessonPlan | null>(null);
+  const [lessonPlan, setLessonPlan] = useState<LessonPlan>([]);
   const [showAddTopic, setShowAddTopic] = useState(false);
   const [showAddPrerequisite, setShowAddPrerequisite] = useState(false);
   const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
@@ -82,47 +91,212 @@ const ChapterDetails: React.FC = () => {
   ];
 
   const sampleTopics: Topic[] = [
-    { id: 1, title: 'Introduction to Real Numbers', completed: true },
-    { id: 2, title: 'Rational and Irrational Numbers', completed: true },
-    { id: 3, title: 'Decimal Representation', completed: false },
-    { id: 4, title: 'Operations on Real Numbers', completed: false },
-    { id: 5, title: 'Laws of Exponents', completed: false }
+    { sub_topic_id: 1, sub_topic: 'Introduction to Real Numbers', completed: true },
+    { sub_topic_id: 2, sub_topic: 'Rational and Irrational Numbers', completed: true },
+    { sub_topic_id: 3, sub_topic: 'Decimal Representation', completed: false },
+    { sub_topic_id: 4, sub_topic: 'Operations on Real Numbers', completed: false },
+    { sub_topic_id: 5, sub_topic: 'Laws of Exponents', completed: false }
   ];
 
   const samplePrerequisites: Prerequisite[] = [
     {
-      id: 1,
+      prerequisite_id: 1,
       topic: 'Basic Algebra and Squaring',
-      explanation: 'Understanding basic algebraic manipulation and the concept of squaring a number is crucial for following the proofs in this chapter. **Basic Algebra:** This involves working with variables (like \'a\' or \'b\'), performing operations (addition, subtraction, multiplication, division) with them, and solving simple equations. **Squaring:** Multiplying a number by itself. For example, \'a squared\' (a²) means a × a. Example: - If a = 5, then a² = 5 × 5 = 25. - If you have an equation like b² = 2c², you should understand that if 2 divides b², it implies something about b.'
+      explanation: 'Understanding basic algebraic manipulation and the concept of squaring a number is crucial for following the proofs in this chapter. **Basic Algebra:** This involves working with variables (like \'a\' or \'b\'), performing operations (addition, subtraction, multiplication, division) with them, and solving simple equations. **Squaring:** Multiplying a number by itself. For example, \'a squared\' (a²) means a × a. Example: - If a = 5, then a² = 5 × 5 = 25. - If you have an equation like b² = 2c², you should understand that if 2 divprerequisite_ides b², it implies something about b.'
     },
     {
-      id: 2,
+      prerequisite_id: 2,
       topic: 'Coprime Numbers (Relatively Prime)',
       explanation: 'Two numbers are coprime if their greatest common divisor (GCD) is 1. This concept is fundamental in proofs involving rational numbers.'
     },
     {
-      id: 3,
+      prerequisite_id: 3,
       topic: 'Highest Common Factor (HCF) and Least Common Multiple (LCM)',
       explanation: 'Understanding HCF and LCM is essential for simplifying fractions and understanding rational number properties.'
     }
   ];
 
-  const sampleLessonPlan: LessonPlan = {
-    id: 1,
-    totalDays: 8,
-    days: [
-      { day: 1, status: 'Pending', date: 'Oct 26, 2023' },
-      { day: 2, status: 'Pending', date: 'Oct 27, 2023' },
-      { day: 3, status: 'Pending', date: 'Oct 28, 2023' },
-      { day: 4, status: 'Pending', date: 'Oct 29, 2023' },
-      { day: 5, status: 'Pending', date: 'Oct 30, 2023' },
-      { day: 6, status: 'Pending', date: 'Oct 31, 2023' },
-      { day: 7, status: 'Pending', date: 'Nov 1, 2023' },
-      { day: 8, status: 'Pending', date: 'Nov 2, 2023' }
-    ]
+  const sampleLessonPlan: LessonPlan = [
+    { lesson_plan_day_id: 1, day: 1, status: "not_started" },
+    { lesson_plan_day_id: 2, day: 2, status: "not_started" },
+    { lesson_plan_day_id: 3, day: 3, status: "not_started" },
+    { lesson_plan_day_id: 4, day: 4, status: "not_started" },
+    { lesson_plan_day_id: 5, day: 5, status: "not_started" }
+  ];
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return CheckCircle;
+      case 'pending':
+        return AlertCircle;
+      default:
+        return TimerIcon;
+    }
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'text-green-600';
+      case 'pending':
+        return 'text-orange-600';
+      default:
+        return 'text-yellow-600';
+    }
+  };
+
+  const getGradesData = async () => {
+    try {
+      const data = {
+        class_section_id: classId,
+        subject_id: subjectId,
+        chapter_id: chapterId,
+        school_id: schoolId,
+        school_board_id: boardId
+      };
+      // localStorage.setItem('gradesData', JSON.stringify(data));
+      const response = await getChapterDetailsById(data);
+      if (response && response.data) {
+        setTopics(response.data.sub_topics);
+        setPrerequisites(response.data.prerequisites);
+        setLessonPlan(response.data.lesson_plan_days);
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
+
+  //save topic by lesson
+  const saveTopic = async (data: any) => {
+    try {
+      const payload = {
+        class_section_id: Number(classId),
+        subject_id: Number(subjectId),
+        school_id: Number(schoolId),
+        school_board_id: Number(boardId),
+        chapter_id: Number(chapterId),
+        sub_topic: data.sub_topic
+      };
+      const response = await saveTopicByLesson(payload);
+      if (response && response.message) {
+        getGradesData();
+        showSnackbar({
+          title: "✅ Success",
+          description: `${response.message}`,
+          status: "success"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
+
+  //edit topic by lesson
+  const editTopic = async (data: any) => {
+    try {
+      const payload = {
+        class_section_id: Number(classId),
+        subject_id: Number(subjectId),
+        school_id: Number(schoolId),
+        school_board_id: Number(boardId),
+        chapter_id: Number(chapterId),
+        sub_topic_id: data.sub_topic_id,
+        sub_topic: data.sub_topic
+      };
+      const response = await editTopicByLesson(payload);
+      if (response && response.message) {
+        getGradesData();
+        showSnackbar({
+          title: "✅ Success",
+          description: `${response.message}`,
+          status: "success"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
+
+  //save prerequiste by lesson
+  const savePrerequisteData = async (data: any) => {
+    try {
+      const payload = {
+        class_section_id: Number(classId),
+        subject_id: Number(subjectId),
+        school_id: Number(schoolId),
+        school_board_id: Number(boardId),
+        chapter_id: Number(chapterId),
+        topic: data.topic,
+        explanation: data.explanation
+      };
+      const response = await savePrerequisite(payload);
+      if (response && response.message) {
+        getGradesData();
+        showSnackbar({
+          title: "✅ Success",
+          description: `${response.message}`,
+          status: "success"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
+  //edit prerequisite by lesson
+  const editPrerequisite = async (data: any) => {
+    try {
+      const payload = {
+        class_section_id: Number(classId),
+        subject_id: Number(subjectId),
+        school_id: Number(schoolId),
+        school_board_id: Number(boardId),
+        chapter_id: Number(chapterId),
+        prerequisite_id: data.prerequisite_id,
+        topic: data.topic,
+        explanation: data.explanation
+      };
+      const response = await editPrerequisiteByLesson(payload);
+      if (response && response.message) {
+        getGradesData();
+        showSnackbar({
+          title: "✅ Success",
+          description: `${response.message}`,
+          status: "success"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
+
   useEffect(() => {
+    getGradesData();
     setTopics(sampleTopics);
     setPrerequisites(samplePrerequisites);
     setLessonPlan(sampleLessonPlan);
@@ -131,11 +305,12 @@ const ChapterDetails: React.FC = () => {
   const handleAddTopic = () => {
     if (newTopicTitle.trim()) {
       const newTopic: Topic = {
-        id: Math.max(...topics.map(t => t.id)) + 1,
-        title: newTopicTitle.trim(),
+        sub_topic_id: Math.max(...topics.map(t => t.sub_topic_id)) + 1,
+        sub_topic: newTopicTitle.trim(),
         completed: false
       };
-      setTopics([...topics, newTopic]);
+      saveTopic(newTopic);
+      //setTopics([...topics, newTopic]);
       setNewTopicTitle('');
       setShowAddTopic(false);
     }
@@ -143,14 +318,12 @@ const ChapterDetails: React.FC = () => {
 
   const handleEditTopic = (topic: Topic) => {
     setEditingTopic(topic);
-    setNewTopicTitle(topic.title);
+    setNewTopicTitle(topic.sub_topic);
   };
 
   const handleSaveTopicEdit = () => {
     if (editingTopic && newTopicTitle.trim()) {
-      setTopics(topics.map(t =>
-        t.id === editingTopic.id ? { ...t, title: newTopicTitle.trim() } : t
-      ));
+      editTopic({sub_topic_id: editingTopic.sub_topic_id, sub_topic: newTopicTitle.trim()});
       setEditingTopic(null);
       setNewTopicTitle('');
     }
@@ -158,12 +331,12 @@ const ChapterDetails: React.FC = () => {
 
   const handleAddPrerequisite = () => {
     if (newPrerequisiteTitle.trim() && newPrerequisiteExplanation.trim()) {
-      const newPrerequisite: Prerequisite = {
-        id: Math.max(...prerequisites.map(p => p.id)) + 1,
+      const newPrerequisite: any = {
         topic: newPrerequisiteTitle.trim(),
         explanation: newPrerequisiteExplanation.trim()
       };
-      setPrerequisites([...prerequisites, newPrerequisite]);
+      savePrerequisteData(newPrerequisite);
+      //setPrerequisites([...prerequisites, newPrerequisite]);
       setNewPrerequisiteTitle('');
       setNewPrerequisiteExplanation('');
       setShowAddPrerequisite(false);
@@ -178,11 +351,12 @@ const ChapterDetails: React.FC = () => {
 
   const handleSavePrerequisiteEdit = () => {
     if (editingPrerequisite && newPrerequisiteTitle.trim() && newPrerequisiteExplanation.trim()) {
-      setPrerequisites(prerequisites.map(p =>
-        p.id === editingPrerequisite.id
-          ? { ...p, topic: newPrerequisiteTitle.trim(), explanation: newPrerequisiteExplanation.trim() }
-          : p
-      ));
+      // setPrerequisites(prerequisites.map(p =>
+      //   p.prerequisite_id === editingPrerequisite.prerequisite_id
+      //     ? { ...p, topic: newPrerequisiteTitle.trim(), explanation: newPrerequisiteExplanation.trim() }
+      //     : p
+      // ));
+      editPrerequisite({prerequisite_id: editingPrerequisite.prerequisite_id, topic: newPrerequisiteTitle.trim(), explanation: newPrerequisiteExplanation.trim()});
       setEditingPrerequisite(null);
       setNewPrerequisiteTitle('');
       setNewPrerequisiteExplanation('');
@@ -226,8 +400,8 @@ const ChapterDetails: React.FC = () => {
         </div> */}
 
         {/* Tabs */}
-        <Tabs defaultValue="topics" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 bg-gray-100">
+        <Tabs defaultValue={tab && tab.length>0 ?  tab : `topics`} className="space-y-6">
+          <TabsList className="grid w-[30%] grid-cols-3 bg-gray-100">
             <TabsTrigger value="topics" className="flex items-center gap-2">
               <BookOpen className="w-4 h-4" />
               Topics
@@ -289,9 +463,55 @@ const ChapterDetails: React.FC = () => {
               </Dialog>
             </div>
 
+            {/* Inline topic edit card */}
+            {editingTopic && (
+              <Card className="border-blue-200 bg-blue-50">
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium text-gray-900">Edit Topic</h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setEditingTopic(null);
+                        setNewTopicTitle('');
+                      }}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Topic Title
+                    </label>
+                    <Input
+                      value={newTopicTitle}
+                      onChange={(e) => setNewTopicTitle(e.target.value)}
+                      placeholder="Enter topic title..."
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setEditingTopic(null);
+                        setNewTopicTitle('');
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button onClick={handleSaveTopicEdit} className="bg-blue-600 hover:bg-blue-700">
+                      <Save className="w-4 h-4 mr-2" />
+                      Save
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <div className="space-y-4">
               {topics.map((topic, index) => (
-                <Card key={topic.id} className="hover:shadow-md transition-shadow">
+                <Card key={topic.sub_topic_id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
@@ -299,61 +519,21 @@ const ChapterDetails: React.FC = () => {
                           <span className="text-sm font-bold text-blue-600">{index + 1}</span>
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold text-gray-900">{topic.title}</h3>
+                          <h3 className="text-lg font-semibold text-gray-900">{topic.sub_topic}</h3>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        {topic.completed && (
+                        {/* {topic.completed && (
                           <CheckCircle2 className="w-5 h-5 text-green-600" />
-                        )}
-                        <Dialog open={editingTopic?.id === topic.id} onOpenChange={(open) => {
-                          if (!open) {
-                            setEditingTopic(null);
-                            setNewTopicTitle('');
-                          }
-                        }}>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-blue-600 hover:text-blue-700"
-                              onClick={() => handleEditTopic(topic)}
-                            >
-                              <Edit3 className="w-4 h-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Edit Topic</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4">
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Topic Title
-                                </label>
-                                <Input
-                                  value={newTopicTitle}
-                                  onChange={(e) => setNewTopicTitle(e.target.value)}
-                                  placeholder="Enter topic title..."
-                                />
-                              </div>
-                              <div className="flex justify-end gap-2">
-                                <Button
-                                  variant="outline"
-                                  onClick={() => {
-                                    setEditingTopic(null);
-                                    setNewTopicTitle('');
-                                  }}
-                                >
-                                  Cancel
-                                </Button>
-                                <Button onClick={handleSaveTopicEdit} className="bg-blue-600 hover:bg-blue-700">
-                                  Save Changes
-                                </Button>
-                              </div>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
+                        )} */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-blue-600 hover:text-blue-700"
+                          onClick={() => handleEditTopic(topic)}
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -368,60 +548,80 @@ const ChapterDetails: React.FC = () => {
                 <h2 className="text-2xl font-bold text-gray-900">Lesson Plan</h2>
                 <p className="text-gray-600">Create and manage lesson plans for this chapter</p>
               </div>
-              {lessonPlan ? (
-                <Link to={`/grades/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`}>
-                  <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
-                    <RefreshCw className="w-4 h-4" />
-                    Re-generate Lesson Plan
+              <div className='flex gap-2'>
+                {lessonPlan && lessonPlan.length > 0 ? (
+                  <Link to={`/grades/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}&${pathData}`}>
+                    <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
+                      <RefreshCw className="w-4 h-4" />
+                      Re-generate Lesson Plan
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link to={`/grades/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}&${pathData}`}>
+                    <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
+                      <Plus className="w-4 h-4" />
+                      Generate Lesson Plan
+                    </Button>
+                  </Link>
+                )}
+                <Link
+                  to={`/grades/lesson-plan/customize/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}&${pathData}`}
+                >
+                  <Button className="bg-purple-600 hover:bg-purple-700">
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Customize Lesson Plan
                   </Button>
                 </Link>
-              ) : (
-                <Link to={`/grades/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`}>
-                  <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
-                    <Plus className="w-4 h-4" />
-                    Generate Lesson Plan
-                  </Button>
-                </Link>
-              )}
+              </div>
             </div>
 
-            {lessonPlan ? (
+            {lessonPlan && lessonPlan.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {lessonPlan.days.map((day) => (
-                  <Card key={day.day} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="space-y-3">
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900">Day {day.day}</h3>
-                          <p className="text-sm text-gray-500">{day.status}</p>
-                          {day.date && <p className="text-xs text-gray-400">{day.date}</p>}
-                        </div>
+                {lessonPlan.map((day) => {
+                  const StatusIcon = getStatusIcon(day.status);
+                  const statusColor = getStatusColor(day.status);
+                  return (
+                    <Card key={day.lesson_plan_day_id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="space-y-3">
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">Day {day.day}</h3>
+                            {/* <p className="text-sm text-gray-500">{day.status}</p> */}
+                            <div className='flex gap-1 items-center'>
+                              <StatusIcon className={`w-4 h-4 ${statusColor}`} />
+                              <span className={`text-xs font-medium ${statusColor}`}>
+                                {day.status === 'completed' ? 'Completed' : day.status === 'pending' ? 'Pending' : 'Not Started'}
+                              </span>
+                            </div>
+                          </div>
 
-                        <div className="space-y-2">
-                          <Link
-                            to={`/grades/lesson-plan/day/${chapterId}/${lessonPlan.id}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}&day=${day.day}`}
-                            className="w-full"
-                          >
-                            <Button variant="outline" className="w-full flex items-center gap-2 text-blue-600 border-blue-200 hover:bg-blue-50">
-                              <Eye className="w-4 h-4" />
-                              View
-                            </Button>
-                          </Link>
+                          <div className="flex flex-col gap-1 space-y-2">
+                            <Link
+                              to={`/grades/lesson-plan/day/${chapterId}/${day.lesson_plan_day_id}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}&day=${day.day}&${pathData}`}
+                              className="w-full"
+                            >
+                              <Button variant="outline" className="w-full flex items-center gap-2 text-blue-600 border-blue-200 hover:bg-blue-50">
+                                <Eye className="w-4 h-4" />
+                                View
+                              </Button>
+                            </Link>
 
-                          <Link
-                            to={`/grades/lesson-plan/ai-chat/${chapterId}/${day.day}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`}
-                            className="w-full"
-                          >
-                            <Button className="w-full flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white">
-                              <MessageSquare className="w-4 h-4" />
-                              Chat with AI Assistant
-                            </Button>
-                          </Link>
+                            <Link
+                              to={`/grades/lesson-plan/ai-chat/${chapterId}/${day.day}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}&${pathData}`}
+                              className="w-full"
+                            >
+                              <Button className="w-full flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white">
+                                <MessageSquare className="w-4 h-4" />
+                                Chat with AI Assistant
+                              </Button>
+                            </Link>
+                          </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  )
+                })
+                }
               </div>
             ) : (
               <Card>
@@ -562,7 +762,7 @@ const ChapterDetails: React.FC = () => {
             <div className="space-y-4">
               <Accordion type="multiple" className="space-y-4">
                 {prerequisites.map((prerequisite) => (
-                  <AccordionItem key={prerequisite.id} value={`prerequisite-${prerequisite.id}`} className="border rounded-lg">
+                  <AccordionItem key={prerequisite.prerequisite_id} value={`prerequisite-${prerequisite.prerequisite_id}`} className="border rounded-lg">
                     <AccordionTrigger className="px-4 py-3 hover:no-underline">
                       <div className="flex items-center justify-between w-full">
                         <div className="flex items-center gap-3">
@@ -583,8 +783,13 @@ const ChapterDetails: React.FC = () => {
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="px-4 pb-4">
-                      <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                      {/* <p className="text-gray-700 leading-relaxed whitespace-pre-line">
                         {prerequisite.explanation}
+                      </p> */}
+                      <p className="text-sm leading-relaxed">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                           {prerequisite.explanation}
+                        </ReactMarkdown>
                       </p>
                     </AccordionContent>
                   </AccordionItem>

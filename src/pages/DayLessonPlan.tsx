@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
@@ -45,7 +46,7 @@ const DayLessonPlan: React.FC = () => {
   const subject = searchParams.get('subject') || '';
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
-  const classId = searchParams.get('classId') || '';
+  const classId = searchParams.get('class_id') || '';
   const subjectId = searchParams.get('subjectId') || '';
   const schoolId = searchParams.get('schoolId') || '';
   const boardId = searchParams.get('boardId') || '';
@@ -97,39 +98,39 @@ const DayLessonPlan: React.FC = () => {
   useEffect(() => {
     // Sample data for lesson plan day
     getLessonData();
-    const sampleActivities: LessonPlanDay = {
-      "lesson_plan_day_id": 31,
-      "day": 1,
-      "learning_outcomes": "Students will be able to define the division algorithm, apply Euclid's algorithm to find the HCF of two positive integers, and use the division algorithm to prove basic properties of integers related to their form (even/odd, squares, cubes).",
-      "real_world_applications": "The division algorithm is fundamental to cryptography and computer science. Euclid's algorithm is used in various computational tasks, such as simplifying fractions and in computer graphics. The bee puzzle demonstrates its use in solving real-world problems involving remainders.",
-      "taxonomy_alignment": "Understanding (Division Algorithm, Euclid's Algorithm), Applying (finding HCF, proving integer properties), Analyzing (interpreting results of the algorithm).",
-      "status": "not_started",
-      "topics": [
-        {
-          "topic_id": 94,
-          "title": "Introduction to Real Numbers & Division Algorithm",
-          "summary": "Begin with a real-world puzzle (bees and flowers) to introduce the concept of remainders in division. Generalize this to the Division Algorithm: for positive integers 'a' and 'b', there exist unique whole numbers 'q' and 'r' such that a = bq + r, where 0 ≤ r < b.",
-          "time_minutes": 20
-        },
-        {
-          "topic_id": 95,
-          "title": "Euclid's Division Algorithm",
-          "summary": "Introduce Theorem 1.1 (Euclid's Division Algorithm) as a technique to compute the Highest Common Factor (HCF) of two positive integers. Demonstrate the algorithm using an activity (paper strips) and an example (HCF of 60 and 100). Emphasize that HCF(c, d) = HCF(d, r).",
-          "time_minutes": 30
-        },
-        {
-          "topic_id": 96,
-          "title": "Applications of Division Algorithm",
-          "summary": "Apply the division algorithm to prove properties of integers. Examples include showing that every positive even integer is of the form 2q and every positive odd integer is of the form 2q + 1. Further examples involve proving that positive odd integers are of the form 4q + 1 or 4q + 3, and exploring squares/cubes of integers (3p, 3p+1, 9m, 9m+1, 9m+8).",
-          "time_minutes": 40
-        }
-      ]
-    };
+    // const sampleActivities: LessonPlanDay = {
+    //   "lesson_plan_day_id": 31,
+    //   "day": 1,
+    //   "learning_outcomes": "Students will be able to define the division algorithm, apply Euclid's algorithm to find the HCF of two positive integers, and use the division algorithm to prove basic properties of integers related to their form (even/odd, squares, cubes).",
+    //   "real_world_applications": "The division algorithm is fundamental to cryptography and computer science. Euclid's algorithm is used in various computational tasks, such as simplifying fractions and in computer graphics. The bee puzzle demonstrates its use in solving real-world problems involving remainders.",
+    //   "taxonomy_alignment": "Understanding (Division Algorithm, Euclid's Algorithm), Applying (finding HCF, proving integer properties), Analyzing (interpreting results of the algorithm).",
+    //   "status": "not_started",
+    //   "topics": [
+    //     {
+    //       "topic_id": 94,
+    //       "title": "Introduction to Real Numbers & Division Algorithm",
+    //       "summary": "Begin with a real-world puzzle (bees and flowers) to introduce the concept of remainders in division. Generalize this to the Division Algorithm: for positive integers 'a' and 'b', there exist unique whole numbers 'q' and 'r' such that a = bq + r, where 0 ≤ r < b.",
+    //       "time_minutes": 20
+    //     },
+    //     {
+    //       "topic_id": 95,
+    //       "title": "Euclid's Division Algorithm",
+    //       "summary": "Introduce Theorem 1.1 (Euclid's Division Algorithm) as a technique to compute the Highest Common Factor (HCF) of two positive integers. Demonstrate the algorithm using an activity (paper strips) and an example (HCF of 60 and 100). Emphasize that HCF(c, d) = HCF(d, r).",
+    //       "time_minutes": 30
+    //     },
+    //     {
+    //       "topic_id": 96,
+    //       "title": "Applications of Division Algorithm",
+    //       "summary": "Apply the division algorithm to prove properties of integers. Examples include showing that every positive even integer is of the form 2q and every positive odd integer is of the form 2q + 1. Further examples involve proving that positive odd integers are of the form 4q + 1 or 4q + 3, and exploring squares/cubes of integers (3p, 3p+1, 9m, 9m+1, 9m+8).",
+    //       "time_minutes": 40
+    //     }
+    //   ]
+    // };
     // setLessonData(sampleActivities);
   }, []);
 
   const handleStartTeaching = () => {
-    navigate(`/grades/lesson-plan/whiteboard/${chapterId}/${day}?subject=${subject}&subjectId=${pathData}&chapterName=${encodeURIComponent(chapterName)}`);
+    navigate(`/grades/lesson-plan/whiteboard/${chapterId}/${day}?subject=${subject}&subjectId=${pathData}&chapterName=${encodeURIComponent(chapterName)}&${pathData}`);
   };
 
   const getTotalTime = () => {
@@ -150,7 +151,14 @@ const DayLessonPlan: React.FC = () => {
   return (
     <MainLayout pageTitle={`Chapter ${chapterId}: ${chapterName} - Day ${lessonData.day}`}>
       <div className="space-y-8">
-        <Breadcrumb items={breadcrumbItems} />
+        {/* <Breadcrumb items={breadcrumbItems} /> */}
+        <Link
+          to={`/grades/chapter/${chapterId}?${pathData}&tab=lesson-plan`}
+          className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span className="font-medium">Back</span>
+        </Link>
 
         {/* <div className="flex items-center justify-between">subject
           <div className="flex items-center gap-4">

@@ -69,6 +69,20 @@ const ViewLessonPlan: React.FC = () => {
               <span className="font-medium">Back to Syllabus</span>
             </Link>
           </div>
+          <div className="flex gap-3">
+            <Button variant="outline" className="text-blue-600 hover:text-blue-700 border-blue-300">
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Re-generate Lesson Plan
+            </Button>
+            <Link
+              to={`/grades/lesson-plan/customize/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`}
+            >
+              <Button className="bg-purple-600 hover:bg-purple-700">
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Customize Lesson Plan
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <div className="flex items-center gap-4">

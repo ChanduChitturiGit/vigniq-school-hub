@@ -62,7 +62,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
   const schoolName = userData?.school_name ?? '';
 
   // Check if we're in a subject-specific context
-  const isInSubjectContext = location.pathname.includes('/grades/syllabus') || location.pathname.includes('/grades/progress/')  || location.pathname.includes('/grades/lesson-plan') || location.pathname.includes('/grades/exams');
+  const isInSubjectContext = location.pathname.includes('/grades/syllabus') || location.pathname.includes('/grades/progress/')  || location.pathname.includes('/grades/lesson-plan') || location.pathname.includes('/grades/exams')
+  || location.pathname.includes('/grades/lesson-plan/create') || location.pathname.includes('/grades/lesson-plan/customize') || location.pathname.includes('/grades/lesson-plan/day') || location.pathname.includes('/grades/chapter');
 
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
@@ -177,7 +178,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
       helpSubItems.push({ path: '/requests', label: 'Responses', icon: MessageSquare });
     } else {
       helpSubItems.push({ path: '/support', label: 'Support', icon: HelpCircle });
-      // helpSubItems.push({ path: '/requests', label: 'Responses', icon: MessageSquare });
+      helpSubItems.push({ path: '/requests', label: 'Responses', icon: MessageSquare });
 
       // if (user?.role !== 'student') {
       //   helpSubItems.push({ path: '/requests', label: 'Responses', icon: FileText });

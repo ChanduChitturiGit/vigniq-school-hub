@@ -3,13 +3,23 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { WhiteboardCanvas } from '../components/whiteboard/WhiteboardCanvas';
 import { 
   ArrowLeft, 
   Maximize2, 
   Minimize2,
+  Pen,
+  Eraser,
+  Square,
+  Circle,
+  Type,
+  Palette,
+  RotateCcw,
   Save
 } from 'lucide-react';
+import { getLessonPlanDataByDay } from '../services/grades';
+import { useSnackbar } from '../components/snackbar/SnackbarContext';
+
+
 
 interface LessonActivity {
   serialNumber: number;
@@ -17,23 +27,49 @@ interface LessonActivity {
   description: string;
 }
 
+interface Topic {
+  topic_id: number;
+  title: string;
+  summary: string;
+  time_minutes: number;
+}
+
+interface LessonPlanDay {
+  lesson_plan_day_id: number;
+  day: number;
+  learning_outcomes: string;
+  real_world_applications: string;
+  taxonomy_alignment: string;
+  status: string;
+  topics: Topic[];
+}
+
+
 const WhiteboardTeaching: React.FC = () => {
+  const { showSnackbar } = useSnackbar();
   const { chapterId, day } = useParams();
   const [searchParams] = useSearchParams();
   
-  const subject = searchParams.get('subject') || '';
+   const subject = searchParams.get('subject') || '';
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
-  const classId = searchParams.get('classId') || '';
+  const classId = searchParams.get('class_id') || '';
   const subjectId = searchParams.get('subjectId') || '';
   const schoolId = searchParams.get('schoolId') || '';
   const boardId = searchParams.get('boardId') || '';
   const chapterName = searchParams.get('chapterName') || '';
   const pathData = `class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
 
+
+
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [currentTool, setCurrentTool] = useState<'pen' | 'eraser' | 'rectangle' | 'circle' | 'text'>('pen');
+  const [currentColor, setCurrentColor] = useState('#000000');
+  const [brushSize, setBrushSize] = useState(3);
   const [currentActivity, setCurrentActivity] = useState(1);
-  const [fabricCanvas, setFabricCanvas] = useState<any>(null);
+  const [lessonData, setLessonData] = useState<any>([]);
 
   const [activities] = useState<LessonActivity[]>([
     {
@@ -63,17 +99,124 @@ const WhiteboardTeaching: React.FC = () => {
     }
   ]);
 
-  const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
+  const colors = ['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500'];
+
+   const getLessonData = async () => {
+      try {
+        const data = {
+          chapter_id: chapterId,
+          lesson_plan_day_id: day,
+          subject: subject,
+          class: className,
+          section: section,
+          school_id: schoolId,
+          board_id: boardId,
+          subject_id: subjectId,
+          class_id: classId
+        };
+        const response = await getLessonPlanDataByDay(data);
+        if (response && response.data) {
+          setLessonData(response.data);
+        } else {
+          showSnackbar({
+            title: 'Error',
+            description: response.message || 'Failed to fetch lesson plan data.',
+            status: 'error'
+          });
+        }
+      } catch (error) {
+        showSnackbar({
+          title: 'Error',
+          description: 'An unexpected error occurred while fetching lesson plan data.',
+          status: 'error'
+        });
+      }
+    }
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Set canvas size
+    const updateCanvasSize = () => {
+      const container = canvas.parentElement;
+      if (container) {
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+    };
+
+    updateCanvasSize();
+    window.addEventListener('resize', updateCanvasSize);
+
+    return () => window.removeEventListener('resize', updateCanvasSize);
+  }, [isFullscreen]);
+
+  useEffect(() => {
+    getLessonData();
+  } , []);
+
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    setIsDrawing(true);
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!ctx || !canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    ctx.beginPath();
+    ctx.moveTo(x, y);
   };
 
-  const handleSave = () => {
-    if (fabricCanvas) {
-      const canvasData = JSON.stringify(fabricCanvas.toJSON());
-      localStorage.setItem(`whiteboard-${chapterId}-${day}`, canvasData);
-      // Here you would typically send this data to your backend
-      console.log('Saving whiteboard data:', canvasData);
+  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDrawing) return;
+    
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!ctx || !canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    if (currentTool === 'pen') {
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = currentColor;
+      ctx.lineWidth = brushSize;
+      ctx.lineCap = 'round';
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    } else if (currentTool === 'eraser') {
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.lineWidth = brushSize * 2;
+      ctx.lineTo(x, y);
+      ctx.stroke();
     }
+  };
+
+  const stopDrawing = () => {
+    setIsDrawing(false);
+  };
+
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!ctx || !canvas) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  };
+
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
   };
 
   const containerClass = isFullscreen 
@@ -89,13 +232,13 @@ const WhiteboardTeaching: React.FC = () => {
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <Link
-                to={`/grades/lesson-plan/day/${chapterId}/${day}?${pathData}&chapterName=${encodeURIComponent(chapterName)}`}
+                to={`/grades/lesson-plan/day/${chapterId}/${day}?${pathData}&chapterName=${encodeURIComponent(chapterName)}&${pathData}`}
                 className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span className="text-sm font-medium">Back</span>
               </Link>
-              <Button 
+              {/* <Button 
                 onClick={toggleFullscreen}
                 variant="outline" 
                 size="sm"
@@ -103,7 +246,7 @@ const WhiteboardTeaching: React.FC = () => {
               >
                 {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                 {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
-              </Button>
+              </Button> */}
             </div>
             <div>
               <h1 className="text-lg font-bold text-gray-900">Chapter {chapterId}: {chapterName}</h1>
@@ -115,31 +258,31 @@ const WhiteboardTeaching: React.FC = () => {
           <div className="flex-1 overflow-y-auto p-4">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Lesson Activities</h2>
             <div className="space-y-3">
-              {activities.map((activity) => (
+              {lessonData && lessonData.topics && lessonData.topics.map((activity) => (
                 <Card 
-                  key={activity.serialNumber} 
+                  key={activity.topic_id} 
                   className={`cursor-pointer transition-colors ${
-                    currentActivity === activity.serialNumber 
+                    currentActivity === activity.topic_id 
                       ? 'border-blue-500 bg-blue-50' 
                       : 'hover:bg-gray-50'
                   }`}
-                  onClick={() => setCurrentActivity(activity.serialNumber)}
+                  onClick={() => setCurrentActivity(activity.topic_id)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                        currentActivity === activity.serialNumber
+                        currentActivity === activity.topic_id
                           ? 'bg-blue-600 text-white'
                           : 'bg-gray-200 text-gray-600'
                       }`}>
-                        {activity.serialNumber}
+                        {activity.topic_id}
                       </div>
                       <div className="flex-1">
                         <h3 className="font-semibold text-gray-900 text-sm mb-1">
                           {activity.title}
                         </h3>
                         <p className="text-xs text-gray-600 leading-relaxed">
-                          {activity.description}
+                          {activity.summary}
                         </p>
                       </div>
                     </div>
@@ -148,22 +291,93 @@ const WhiteboardTeaching: React.FC = () => {
               ))}
             </div>
           </div>
-
-          {/* Save Button */}
-          <div className="p-4 border-t border-gray-200">
-            <Button onClick={handleSave} className="w-full">
-              <Save className="w-4 h-4 mr-2" />
-              Save Progress
-            </Button>
-          </div>
         </div>
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col">
+          {/* Toolbar */}
+          <div className="bg-white border-b border-gray-200 p-4">
+            <div className="flex items-center gap-4 flex-wrap">
+              {/* Drawing Tools */}
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => setCurrentTool('pen')}
+                  variant={currentTool === 'pen' ? 'default' : 'outline'}
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <Pen className="w-4 h-4" />
+                  Pen
+                </Button>
+                <Button
+                  onClick={() => setCurrentTool('eraser')}
+                  variant={currentTool === 'eraser' ? 'default' : 'outline'}
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <Eraser className="w-4 h-4" />
+                  Eraser
+                </Button>
+              </div>
+
+              {/* Colors */}
+              <div className="flex items-center gap-2">
+                <Palette className="w-4 h-4 text-gray-600" />
+                <div className="flex gap-1">
+                  {colors.map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => setCurrentColor(color)}
+                      className={`w-6 h-6 rounded border-2 ${
+                        currentColor === color ? 'border-gray-800' : 'border-gray-300'
+                      }`}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Brush Size */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Size:</span>
+                <input
+                  type="range"
+                  min="1"
+                  max="20"
+                  value={brushSize}
+                  onChange={(e) => setBrushSize(parseInt(e.target.value))}
+                  className="w-20"
+                />
+                <span className="text-sm text-gray-600 w-6">{brushSize}</span>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-2 ml-auto">
+                <Button onClick={clearCanvas} variant="outline" size="sm">
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Clear
+                </Button>
+                <Button variant="outline" size="sm">
+                  <Save className="w-4 h-4 mr-2" />
+                  Save
+                </Button>
+              </div>
+            </div>
+          </div>
+
           {/* Canvas Area */}
           <div className="flex-1 bg-gray-100 p-4">
-            <div className="h-full">
-              <WhiteboardCanvas onCanvasChange={setFabricCanvas} />
+            <div className="h-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <canvas
+                ref={canvasRef}
+                onMouseDown={startDrawing}
+                onMouseMove={draw}
+                onMouseUp={stopDrawing}
+                onMouseLeave={stopDrawing}
+                className="w-full h-full cursor-crosshair"
+                style={{ touchAction: 'none' }}
+              />
+              
             </div>
           </div>
         </div>

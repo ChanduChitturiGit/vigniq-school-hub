@@ -8,7 +8,7 @@ import { getTicketById, respondToTicket, updateTicketStatus, markMessageAsRead }
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { format, subMonths, isWithinInterval, parseISO, isToday, isYesterday } from 'date-fns';
+import { format, subMonths, isWithinInterval, parseISO, isToday, isYesterday, differenceInHours, differenceInMinutes, differenceInSeconds } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 
 interface SupportRequest {
@@ -93,49 +93,49 @@ const SupportDetails: React.FC = () => {
 
     useEffect(() => {
         // Load request data (sample data for now)
-        const sampleRequest: SupportRequest = {
-            ticket_id: 'VIGYS-1734567890',
-            title: 'Unable to mark attendance for Class 8A',
-            issue_type_name: 'attendance',
-            related_section_name: 'others',
-            priority: 'High',
-            status: 'Resolved',
-            created_at: 'Aug 28, 2025, 04:44 PM',
-            updated_at: 'Aug 28, 2025, 04:44 PM',
-            user_name: 'bhanu g',
-            description: 'I am experiencing issues when trying to mark attendance for Class 8A. The system shows an error message "Failed to save attendance" every time I try to submit.',
-            responses: [
-                {
-                    sender: 'You',
-                    message: 'I am experiencing issues when trying to mark attendance for Class 8A. The system shows an error message "Failed to save attendance" every time I try to submit.',
-                    created_at: 'Aug 28, 2025, 04:44 PM'
-                },
-                {
-                    sender: 'Support Team',
-                    message: 'Hello! Thank you for reaching out. I can see there was a server issue affecting attendance submission. Our technical team has resolved this issue. Could you please try marking attendance again and let me know if you still face any problems?',
-                    created_at: 'Aug 29, 2025, 04:44 PM',
-                    file_attachment: [
-                        { name: 'server-fix-documentation.pdf', size: 2048 },
-                        { name: 'troubleshooting-steps.docx', size: 1536 }
-                    ]
-                },
-                {
-                    sender: 'You',
-                    message: 'Great! It\'s working perfectly now. Thank you for the quick resolution.',
-                    created_at: 'Aug 30, 2025, 04:44 PM',
-                    file_attachment: [
-                        { name: 'working-attendance-screenshot.png', size: 1024 }
-                    ]
-                },
-                {
-                    sender: 'Support Team',
-                    message: 'Wonderful! I\'m glad everything is working smoothly now. I\'ll mark this issue as resolved. Please don\'t hesitate to reach out if you need any further assistance.',
-                    created_at: 'Aug 30, 2025, 04:44 PM'
-                }
-            ]
-        };
+        // const sampleRequest: SupportRequest = {
+        //     ticket_id: 'VIGYS-1734567890',
+        //     title: 'Unable to mark attendance for Class 8A',
+        //     issue_type_name: 'attendance',
+        //     related_section_name: 'others',
+        //     priority: 'High',
+        //     status: 'Resolved',
+        //     created_at: 'Aug 28, 2025, 04:44 PM',
+        //     updated_at: 'Aug 28, 2025, 04:44 PM',
+        //     user_name: 'bhanu g',
+        //     description: 'I am experiencing issues when trying to mark attendance for Class 8A. The system shows an error message "Failed to save attendance" every time I try to submit.',
+        //     responses: [
+        //         {
+        //             sender: 'You',
+        //             message: 'I am experiencing issues when trying to mark attendance for Class 8A. The system shows an error message "Failed to save attendance" every time I try to submit.',
+        //             created_at: 'Aug 28, 2025, 04:44 PM'
+        //         },
+        //         {
+        //             sender: 'Support Team',
+        //             message: 'Hello! Thank you for reaching out. I can see there was a server issue affecting attendance submission. Our technical team has resolved this issue. Could you please try marking attendance again and let me know if you still face any problems?',
+        //             created_at: 'Aug 29, 2025, 04:44 PM',
+        //             file_attachment: [
+        //                 { name: 'server-fix-documentation.pdf', size: 2048 },
+        //                 { name: 'troubleshooting-steps.docx', size: 1536 }
+        //             ]
+        //         },
+        //         {
+        //             sender: 'You',
+        //             message: 'Great! It\'s working perfectly now. Thank you for the quick resolution.',
+        //             created_at: 'Aug 30, 2025, 04:44 PM',
+        //             file_attachment: [
+        //                 { name: 'working-attendance-screenshot.png', size: 1024 }
+        //             ]
+        //         },
+        //         {
+        //             sender: 'Support Team',
+        //             message: 'Wonderful! I\'m glad everything is working smoothly now. I\'ll mark this issue as resolved. Please don\'t hesitate to reach out if you need any further assistance.',
+        //             created_at: 'Aug 30, 2025, 04:44 PM'
+        //         }
+        //     ]
+        // };
 
-        setRequest(sampleRequest);
+        // setRequest(sampleRequest);
 
         getTicketData();
         markMessageAsReadData();
@@ -447,7 +447,21 @@ const SupportDetails: React.FC = () => {
 
     const formatChatDate = (date: Date | string) => {
         const d = typeof date === "string" ? new Date(date) : date;
+        const now = new Date();
 
+        const diffSeconds = differenceInSeconds(now, d);
+        const diffMinutes = differenceInMinutes(now, d);
+        const diffHours = differenceInHours(now, d);
+
+        if (diffSeconds < 60) {
+            return `${diffSeconds} seconds ago`;
+        }
+        if (diffMinutes < 60) {
+            return `${diffMinutes} minutes ago`;
+        }
+        if (diffHours < 2) {
+            return `${diffHours} hours ago`;
+        }
         if (isToday(d)) {
             return `Today, ${format(d, "hh:mm a")}`;
         }
@@ -455,7 +469,7 @@ const SupportDetails: React.FC = () => {
             return `Yesterday, ${format(d, "hh:mm a")}`;
         }
         return format(d, "dd-MM-yyyy, hh:mm a");
-    }
+    };
 
 
 
