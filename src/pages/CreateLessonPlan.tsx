@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Input } from '../components/ui/input';
@@ -44,11 +44,12 @@ const CreateLessonPlan: React.FC = () => {
   const subject = searchParams.get('subject') || '';
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
-  const classId = Number(searchParams.get('classId')) || '';
+  const classId = Number(searchParams.get('class_id')) || '';
   const chapterName = decodeURIComponent(searchParams.get('chapterName') || '');
   const schoolId = Number(searchParams.get('school_id')) || userData.school_id || '';
   const subjectId = Number(searchParams.get('subjectId')) || '';
   const boardId = Number(searchParams.get('school_board_id')) || '';
+  
 
   const pathData = `${subjectId}?class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
   let payload = {
@@ -59,12 +60,14 @@ const CreateLessonPlan: React.FC = () => {
     chapter_id: chapterId,
     num_days: null,
     time_period: null,
+    instructions : ''
   }
 
   const [formData, setFormData] = useState({
     numberOfDays: '',
     classesPerDay: '',
-    minutesPerClass: ''
+    minutesPerClass: '',
+    instructions : ''
   });
 
   const [showPreview, setShowPreview] = useState(false);
@@ -89,7 +92,12 @@ const CreateLessonPlan: React.FC = () => {
   const generateLesson = async () => {
     try {
       setLoader(true);
-      payload = { ...payload, num_days: parseInt(formData.numberOfDays), time_period: parseInt(formData.minutesPerClass) * parseInt(formData.classesPerDay) };
+      payload = { 
+        ...payload, 
+        num_days: parseInt(formData.numberOfDays), 
+        time_period: parseInt(formData.minutesPerClass) * parseInt(formData.classesPerDay),
+        instructions : formData.instructions
+      };
       const response = await generateLessonData(payload);
       if (response && response.data) {
         //console.log('Generated Lesson Plan:', response.data);
@@ -144,14 +152,17 @@ const CreateLessonPlan: React.FC = () => {
 
   const handleGenerateWithAI = async () => {
     if (!formData.numberOfDays || !formData.classesPerDay || !formData.minutesPerClass) {
-      alert('Please fill in all fields');
+       showSnackbar({
+        title: "⛔ Error",
+        description: "Please fill in all fields",
+        status: "error"
+      });
       return;
     }
 
     setIsGenerating(true);
     generateLesson();
 
-    // Using the new sample data structure
     // setTimeout(() => {
     //   const samplePlan: GeneratedLessonPlan = {
     //     "chapter_number": "2",
@@ -293,7 +304,14 @@ const CreateLessonPlan: React.FC = () => {
     return (
       <MainLayout pageTitle="AI Generated Lesson Plan Breakdown">
         <div className="space-y-8">
-          <Breadcrumb items={breadcrumbItems} />
+          {/* <Breadcrumb items={breadcrumbItems} /> */}
+          <Link
+            to={`/grades/syllabus/${chapterId}?${pathData}`}
+            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="font-medium">Back to Subject</span>
+          </Link>
 
           <div className="max-w-6xl mx-auto">
             <div className="flex flex-col md:flex-row items-center justify-between mb-8">
@@ -433,15 +451,21 @@ const CreateLessonPlan: React.FC = () => {
     <>
       <MainLayout pageTitle="Create Lesson Plan">
         <div className="space-y-8">
-          <Breadcrumb items={breadcrumbItems} />
+          <Link
+            to={`/grades/chapter/${chapterId}?${pathData}&tab=lesson-plan`}
+            className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="font-medium">Back</span>
+          </Link>
 
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Lesson Plan</h1>
+              {/* <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Lesson Plan</h1> */}
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
-                <p className="text-lg font-medium text-gray-700">Class: {subject} - {className}</p>
+                <p className="text-lg font-medium text-gray-700">Class: {className} - {section}</p>
                 <p className="text-base text-gray-600">Subject: {subject}</p>
-                <p className="text-base text-gray-600">Chapter: Chapter {chapterId}: {chapterName}</p>
+                <p className="text-base text-gray-600">Chapter {chapterId}: {chapterName}</p>
               </div>
             </div>
 
@@ -494,6 +518,18 @@ const CreateLessonPlan: React.FC = () => {
                       className="text-base py-3 border-2 border-gray-200 focus:border-blue-500"
                     />
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Instructions for AI (optional):
+                  </label>
+                  <Textarea
+                    value={formData.instructions}
+                    onChange={(e) => handleInputChange('instructions', e.target.value)}
+                    placeholder="Enter detailed Instructions..."
+                    rows={4}
+                  />
                 </div>
 
                 <div className="pt-6 border-t border-gray-200">

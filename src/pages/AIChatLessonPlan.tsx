@@ -18,7 +18,7 @@ import { useSnackbar } from '../components/snackbar/SnackbarContext';
 import { getLessonPlanDataByDay } from '../services/grades';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '../components/ui/accordion';
 import { sendMessage as sendMessageApi, getChat as getChatApi } from '../services/aiChat'
-import { format, isToday, isYesterday } from "date-fns";
+import { differenceInHours, differenceInMinutes, differenceInSeconds, format, isToday, isYesterday } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -37,6 +37,33 @@ interface ChatMessage {
 }
 
 function ChatMessage({ message, condition }) {
+
+  const formatChatDate = (date: Date | string) => {
+    const d = typeof date === "string" ? new Date(date) : date;
+    const now = new Date();
+
+    const diffSeconds = differenceInSeconds(now, d);
+    const diffMinutes = differenceInMinutes(now, d);
+    const diffHours = differenceInHours(now, d);
+
+    if (diffSeconds < 60) {
+      return `${diffSeconds} seconds ago`;
+    }
+    if (diffMinutes < 60) {
+      return `${diffMinutes} minutes ago`;
+    }
+    if (diffHours < 2) {
+      return `${diffHours} hours ago`;
+    }
+    if (isToday(d)) {
+      return `Today, ${format(d, "hh:mm a")}`;
+    }
+    if (isYesterday(d)) {
+      return `Yesterday, ${format(d, "hh:mm a")}`;
+    }
+    return format(d, "dd-MM-yyyy, hh:mm a");
+  };
+
   if (condition == 'loader') {
     return (
       <div
@@ -72,19 +99,24 @@ function ChatMessage({ message, condition }) {
           </div>
         )}
 
-        <div
-          className={`max-w-[80%] p-4 rounded-lg ${message.role === "user"
-            ? "bg-blue-600 text-white rounded-br-sm"
-            : "bg-gray-100 text-gray-900 rounded-bl-sm"
-            }`}
-        >
-          <p
-            className="text-sm leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: message.content }}
-          />
-          <span className="text-xs opacity-70 mt-2 block">
-            {format(message.created_at, "dd-MM-yyyy")}
-          </span>
+        <div>
+          <div
+            className={`max-w-[80%] p-4 rounded-lg ${message.role === "user"
+              ? "bg-blue-600 text-white rounded-br-sm"
+              : "bg-gray-100 text-gray-900 rounded-bl-sm"
+              }`}
+          >
+            <p
+              className="text-sm leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: message.content }}
+            />
+            {/* <span className="text-xs opacity-70 mt-2 block">
+              {format(message.created_at, "dd-MM-yyyy")}
+            </span> */}
+          </div>
+          {/* <span className="text-xs opacity-70 mt-2 block">
+            {format(message.created_at)}
+          </span> */}
         </div>
 
         {message.role === "user" && (
@@ -93,6 +125,7 @@ function ChatMessage({ message, condition }) {
           </div>
         )}
       </div>
+
     );
   }
 }
@@ -106,7 +139,7 @@ const AIChatLessonPlan: React.FC = () => {
   const subject = searchParams.get('subject') || '';
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
-  const classId = searchParams.get('classId') || '';
+  const classId = searchParams.get('class_id') || '';
   const subjectId = searchParams.get('subjectId') || '';
   const schoolId = searchParams.get('schoolId') || '';
   const boardId = searchParams.get('boardId') || '';
@@ -292,7 +325,21 @@ const AIChatLessonPlan: React.FC = () => {
 
   const formatChatDate = (date: Date | string) => {
     const d = typeof date === "string" ? new Date(date) : date;
+    const now = new Date();
 
+    const diffSeconds = differenceInSeconds(now, d);
+    const diffMinutes = differenceInMinutes(now, d);
+    const diffHours = differenceInHours(now, d);
+
+    if (diffSeconds < 60) {
+      return `${diffSeconds} seconds ago`;
+    }
+    if (diffMinutes < 60) {
+      return `${diffMinutes} minutes ago`;
+    }
+    if (diffHours < 2) {
+      return `${diffHours} hours ago`;
+    }
     if (isToday(d)) {
       return `Today, ${format(d, "hh:mm a")}`;
     }
@@ -300,12 +347,19 @@ const AIChatLessonPlan: React.FC = () => {
       return `Yesterday, ${format(d, "hh:mm a")}`;
     }
     return format(d, "dd-MM-yyyy, hh:mm a");
-  }
+  };
 
   return (
     <MainLayout pageTitle={`AI Chat - Chapter ${chapterId}: ${chapterName} - Day ${dayCount}`}>
-      <div className="space-y-8">
-        <Breadcrumb items={breadcrumbItems} />
+      <div className="">
+        {/* <Breadcrumb items={breadcrumbItems} /> */}
+        <Link
+          to={`/grades/chapter/${chapterId}?${pathData}&tab=lesson-plan`}
+          className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 mb-2 rounded-lg transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span className="font-medium">Back</span>
+        </Link>
 
         {/* <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -408,23 +462,28 @@ const AIChatLessonPlan: React.FC = () => {
                             </div>
                           )}
                           {message?.content.length > 0 && (
-                            <div
-                              className={`max-w-[80%] p-4 rounded-lg ${message.role === 'user'
-                                ? 'bg-blue-600 text-white rounded-br-sm'
-                                : 'bg-gray-100 text-gray-900 rounded-bl-sm'
-                                }`}
-                            >
-                              {/* <p className="text-sm leading-relaxed">{message.content}</p> */}
-                              <>
-                                <p className="text-sm leading-relaxed">
-                                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                    {message.content}
-                                  </ReactMarkdown>
-                                </p>
-                                <span className="text-xs opacity-70 mt-2 block">
+                            <div>
+                              <div
+                                className={`max-w-[80%] p-4 rounded-lg ${message.role === 'user'
+                                  ? 'bg-blue-100 text-gray-800 rounded-br-sm'
+                                  : 'bg-gray-100 text-gray-900 rounded-bl-sm'
+                                  }`}
+                              >
+                                {/* <p className="text-sm leading-relaxed">{message.content}</p> */}
+                                <>
+                                  <p className="text-sm leading-relaxed">
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                      {message.content}
+                                    </ReactMarkdown>
+                                  </p>
+                                  {/* <span className="text-xs opacity-70 mt-2 block">
                                   {formatChatDate(message.created_at)}
-                                </span>
-                              </>
+                                </span> */}
+                                </>
+                              </div>
+                              <span className="text-xs opacity-70 mt-2 block">
+                                {formatChatDate(message.created_at)}
+                              </span>
                             </div>
                           )}
                           {message.role === 'user' && (
