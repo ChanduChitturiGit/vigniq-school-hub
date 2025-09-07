@@ -65,7 +65,7 @@ class StudentAttendanceData(models.Model):
                                 related_name="attendances")
     
     is_present = models.BooleanField(default=True)
-    
+    remarks = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
     
