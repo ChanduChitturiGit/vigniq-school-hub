@@ -43,6 +43,12 @@ export const getLessonPlanDataByDay = async (data : any) => {
   return response.data;
 }
 
+//getChapterDetailsById
+export const getChapterDetailsById = async (data : any) => {
+  const response = await api.get(baseurl+suburl+'/getChapterDetailsById',{params : {...data}});
+  return response.data;
+}
+
  
 //generate lesson plan
 export const generateLessonData = async (data: any): Promise<any> => {

@@ -583,11 +583,10 @@ const CreateSchool: React.FC = () => {
     <>
       <MainLayout pageTitle="Create School">
         <div className="max-w-4xl mx-auto">
-          <Breadcrumb items={breadcrumbItems} />
+          {/* <Breadcrumb items={breadcrumbItems} /> */}
 
           <div className="bg-card p-8 rounded-lg shadow-sm border border-border">
-            <h1 className="text-2xl font-bold text-foreground mb-8">Create School</h1>
-
+            {/* <h1 className="text-2xl font-bold text-foreground mb-8">Create School</h1> */}
             {/* Step Indicator */}
             <div className="flex items-center justify-center mb-8">
               {steps.map((step, index) => (
