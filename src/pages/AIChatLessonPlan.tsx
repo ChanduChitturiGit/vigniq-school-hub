@@ -291,16 +291,16 @@ const AIChatLessonPlan: React.FC = () => {
   };
 
   const formatChatDate = (date: Date | string) => {
-  const d = typeof date === "string" ? new Date(date) : date;
+    const d = typeof date === "string" ? new Date(date) : date;
 
-  if (isToday(d)) {
-    return `Today, ${format(d, "hh:mm a")}`;
+    if (isToday(d)) {
+      return `Today, ${format(d, "hh:mm a")}`;
+    }
+    if (isYesterday(d)) {
+      return `Yesterday, ${format(d, "hh:mm a")}`;
+    }
+    return format(d, "dd-MM-yyyy, hh:mm a");
   }
-  if (isYesterday(d)) {
-    return `Yesterday, ${format(d, "hh:mm a")}`;
-  }
-  return format(d, "dd-MM-yyyy, hh:mm a");
-}
 
   return (
     <MainLayout pageTitle={`AI Chat - Chapter ${chapterId}: ${chapterName} - Day ${dayCount}`}>

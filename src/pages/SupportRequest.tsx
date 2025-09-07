@@ -4,11 +4,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import { ArrowLeft, Send, Paperclip, Download, FileText, Upload, Eye, AlertCircle, CheckCircle, Clock, Save, Edit } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
-import { getTicketById, respondToTicket, updateTicketStatus } from '../services/support'
+import { getTicketById, respondToTicket, updateTicketStatus, markMessageAsRead } from '../services/support'
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { format, subMonths, isWithinInterval, parseISO } from 'date-fns';
+import { format, subMonths, isWithinInterval, parseISO, isToday, isYesterday } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 
 interface SupportRequest {
@@ -78,7 +78,7 @@ const SupportDetails: React.FC = () => {
                 setRequest(response.data);
                 setFormData((prev) => ({
                     ...prev,
-                    status_name : getStatusName(response.data.status)
+                    status_name: getStatusName(response.data.status)
                 }))
             }
         } catch (error) {
@@ -138,6 +138,7 @@ const SupportDetails: React.FC = () => {
         setRequest(sampleRequest);
 
         getTicketData();
+        markMessageAsReadData();
     }, [requestId]);
 
     useEffect(() => {
@@ -224,6 +225,34 @@ const SupportDetails: React.FC = () => {
             });
         }
     };
+
+    const sendStatusUpdateMessage = (status) => {
+        let message = '';
+        switch (status) {
+            case 'open':
+                message = 'Your ticket has been re-opened and is now in our system. Our team will review it soon.';
+                break;
+            case 'in_progress':
+                message = 'Good news! Your ticket is now in progress. Our team is actively working on it.';
+                break;
+            case 'resolved':
+                message = 'Your ticket has been resolved. Please check and confirm if everything is working as expected.';
+                break;
+            case 'closed':
+                message = 'Your ticket has been closed. Thank you for reaching out to us!';
+                break;
+            default:
+                message = '';
+        }
+        const payload = {
+            ticket_id: requestId,
+            message: message,
+            file_attachment: []
+        }
+
+        respondToTicketData(payload);
+
+    }
 
 
     const handleSendMessage = (e: React.FormEvent) => {
@@ -354,7 +383,7 @@ const SupportDetails: React.FC = () => {
     const handleStatusChange = (value: string) => {
         setFormData((prev) => ({
             ...prev,
-            status_name : value,
+            status_name: value,
             status: getStatusId(value)
         }))
     }
@@ -366,6 +395,7 @@ const SupportDetails: React.FC = () => {
         try {
             const response = await updateTicketStatus(formData);
             if (response && response.message) {
+                sendStatusUpdateMessage(formData.status);
                 showSnackbar({
                     title: "Success",
                     description: `${response.message} ✅`,
@@ -386,6 +416,45 @@ const SupportDetails: React.FC = () => {
             });
         }
         getTicketData();
+    }
+
+    //markMessageAsRead
+    const markMessageAsReadData = async () => {
+        try {
+            const response = await markMessageAsRead({ ticket_id: Number(requestId) });
+            console.log("respomse", response);
+            if (response && response.message) {
+                // showSnackbar({
+                //     title: "Success",
+                //     description: `${response.message} ✅`,
+                //     status: "success"
+                // });
+            } else {
+                showSnackbar({
+                    title: "⛔ Error",
+                    description: "Something went wrong",
+                    status: "error"
+                });
+            }
+        } catch (error) {
+            showSnackbar({
+                title: "⛔ Error",
+                description: error?.response?.data?.error || "Something went wrong",
+                status: "error"
+            });
+        }
+    }
+
+    const formatChatDate = (date: Date | string) => {
+        const d = typeof date === "string" ? new Date(date) : date;
+
+        if (isToday(d)) {
+            return `Today, ${format(d, "hh:mm a")}`;
+        }
+        if (isYesterday(d)) {
+            return `Yesterday, ${format(d, "hh:mm a")}`;
+        }
+        return format(d, "dd-MM-yyyy, hh:mm a");
     }
 
 
@@ -503,58 +572,60 @@ const SupportDetails: React.FC = () => {
                                 key={index}
                                 className={`flex ${(message.responder_first_name + message.responder_last_name) === (userData.first_name + userData.last_name) ? 'justify-end' : 'justify-start'}`}
                             >
-                                <div className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${(message.responder_first_name + message.responder_last_name) === (userData.first_name + userData.last_name)
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-gray-100 text-gray-800'
-                                    }`}>
+                                <div className='flex flex-col'>
                                     <div className="flex items-center gap-2 mb-2">
-                                        <span className={`text-xs font-semibold ${(message.responder_first_name + message.responder_last_name) === (userData.first_name + userData.last_name) ? 'text-blue-100' : 'text-gray-600'
+                                        <span className={`text-xs font-semibold 'text-gray-600'
                                             }`}>
-                                            {message.sender}
+                                            {(message.responder_first_name + message.responder_last_name) === (userData.first_name + userData.last_name) ? 'You' : `${message.responder_first_name} ${message.responder_last_name}`}
                                         </span>
-                                        <span className={`text-xs ${(message.responder_first_name + message.responder_last_name) === (userData.first_name + userData.last_name) ? 'text-blue-100' : 'text-gray-500'
+                                        <span className={`text-xs 'text-gray-500'
                                             }`}>
-                                            {message.created_at}
+                                            {formatChatDate(message.created_at)}
                                         </span>
                                     </div>
-                                    <p className="text-sm leading-relaxed">
-                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                            {message.message}
-                                        </ReactMarkdown>
-                                    </p>
+                                    <div className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${(message.responder_first_name + message.responder_last_name) === (userData.first_name + userData.last_name)
+                                        ? 'bg-blue-100 text-gray-800'
+                                        : 'bg-gray-100 text-gray-800'
+                                        }`}>
+                                        <p className="text-sm leading-relaxed">
+                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                {message.message}
+                                            </ReactMarkdown>
+                                        </p>
 
-                                    {message.file_attachment && message.file_attachment.length > 0 && (
-                                        <div className="mt-3 space-y-2">
-                                            {message.file_attachment.map((attachment, attIndex) => (
-                                                <div
-                                                    key={attIndex}
-                                                    className={`flex items-center justify-between p-2 rounded ${(message.responder_first_name + message.responder_last_name) === (userData.first_name + userData.last_name)
-                                                        ? 'bg-blue-500 bg-opacity-50'
-                                                        : 'bg-white border'
-                                                        }`}
-                                                >
-                                                    <div className="flex items-center gap-2">
-                                                        <FileText className="w-4 h-4" />
-                                                        <span className="text-xs">{attachment?.name || `attachment ${attIndex + 1}`}</span>
+                                        {message.file_attachment && message.file_attachment.length > 0 && (
+                                            <div className="mt-3 space-y-2">
+                                                {message.file_attachment.map((attachment, attIndex) => (
+                                                    <div
+                                                        key={attIndex}
+                                                        className={`flex items-center justify-between p-2 rounded ${(message.responder_first_name + message.responder_last_name) === (userData.first_name + userData.last_name)
+                                                            ? 'bg-blue-300 text-gray-800 bg-opacity-50'
+                                                            : 'bg-white border'
+                                                            }`}
+                                                    >
+                                                        <div className="flex items-center gap-2">
+                                                            <FileText className="w-4 h-4" />
+                                                            <span className="text-xs">{attachment?.name || `attachment ${attIndex + 1}`}</span>
+                                                        </div>
+                                                        <div className='ms-2'>
+                                                            <button className="text-xs hover:underline mr-2"
+                                                                onClick={() => {
+                                                                    handleView(attachment, attIndex);
+                                                                }}>
+                                                                <Eye className="w-3 h-3" />
+                                                            </button>
+                                                            <button className="text-xs hover:underline"
+                                                                onClick={() => {
+                                                                    handleDownload(attachment, attIndex);
+                                                                }}>
+                                                                <Download className="w-3 h-3" />
+                                                            </button>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <button className="text-xs hover:underline mr-2"
-                                                            onClick={() => {
-                                                                handleView(attachment, attIndex);
-                                                            }}>
-                                                            <Eye className="w-3 h-3" />
-                                                        </button>
-                                                        <button className="text-xs hover:underline"
-                                                            onClick={() => {
-                                                                handleDownload(attachment, attIndex);
-                                                            }}>
-                                                            <Download className="w-3 h-3" />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         ))}
