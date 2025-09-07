@@ -1,0 +1,35 @@
+[
+    {   
+        "model": "subscriptions.package",
+        "pk": 1,
+        "fields": {
+            "name": "Basic",
+            "description": "A basic plan for small schools.",
+            "is_active": true,
+            "created_at": "2024-10-01T00:00:00Z",
+            "updated_at": "2024-10-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "subscriptions.package",
+        "pk": 2,
+        "fields": {
+            "name": "Standard",
+            "description": "A standard plan for larger schools.",
+            "is_active": true,
+            "created_at": "2024-10-01T00:00:00Z",
+            "updated_at": "2024-10-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "subscriptions.package",
+        "pk": 3,
+        "fields": {
+            "name": "Premium",
+            "description": "A premium plan for very large schools.",
+            "is_active": true,
+            "created_at": "2024-10-01T00:00:00Z",
+            "updated_at": "2024-10-01T00:00:00Z"
+        }
+    }
+]

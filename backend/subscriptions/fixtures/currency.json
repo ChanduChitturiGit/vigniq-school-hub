@@ -1,0 +1,65 @@
+[
+  {
+    "model": "subscriptions.Currency",
+    "pk": 1,
+    "fields": {
+      "code": "USD",
+      "name": "US Dollar",
+      "symbol": "$"
+    }
+  },
+  {
+    "model": "subscriptions.Currency",
+    "pk": 2,
+    "fields": {
+      "code": "INR",
+      "name": "Indian Rupee",
+      "symbol": "₹"
+    }
+  },
+  {
+    "model": "subscriptions.Currency",
+    "pk": 3,
+    "fields": {
+      "code": "EUR",
+      "name": "Euro",
+      "symbol": "€"
+    }
+  },
+  {
+    "model": "subscriptions.Currency",
+    "pk": 4,
+    "fields": {
+      "code": "GBP",
+      "name": "British Pound",
+      "symbol": "£"
+    }
+  },
+  {
+    "model": "subscriptions.Currency",
+    "pk": 5,
+    "fields": {
+      "code": "JPY",
+      "name": "Japanese Yen",
+      "symbol": "¥"
+    }
+  },
+  {
+    "model": "subscriptions.Currency",
+    "pk": 6,
+    "fields": {
+      "code": "AUD",
+      "name": "Australian Dollar",
+      "symbol": "A$"
+    }
+  },
+  {
+    "model": "subscriptions.Currency",
+    "pk": 7,
+    "fields": {
+      "code": "CAD",
+      "name": "Canadian Dollar",
+      "symbol": "C$"
+    }
+  }
+]

@@ -34,33 +34,34 @@ class LangchainQueries(Enum):
         Textbook text: {input}
         """
     GENERATE_LESSON_PLAN = """
-            You are a curriculum designer. Based on the input chapter text, break it down into a detailed lesson plan.
+        You are a curriculum designer. Based on the input chapter text, break it down into a detailed lesson plan.
 
-            ### Input
-            Chapter Number: {chapter_number}
-            Chapter Title: {chapter_title}
-            Total Number of Days: {num_days}
-            Time for each day in minutes: {time_period}
-            Chapter Text:
-            {text}
+        ### Input
+        Chapter Number: {chapter_number}
+        Chapter Title: {chapter_title}
+        Total Number of Days: {num_days}
+        Time for each day in minutes: {time_period}
+        Additional instructions from teacher: {teacher_instructions}
+        Syllabus Text:
+        {text}
 
-            ### Instructions
-            Create a structured lesson plan that spans the specified number of days. The plan must be divided **by day**, and for each day:
-            - Include 3 to 4 topics
-                - For each topic:
-                    - Provide a title
-                    - Allocate time in minutes
-                    - Write a short summary of the topic
-            - Add the following per day:
-                - **Learning Outcomes**: A concise bullet-style summary of what students should understand or be able to do by the end of the day.
-                - **Real-World Applications**: Examples or explanations of how the day's topics relate to real-world scenarios or practical use cases.
-                - **Taxonomy Alignment**: Align the topics and outcomes with Bloom's Taxonomy or another recognized educational taxonomy (e.g., "Applying", "Analyzing", "Creating").
-                
-            - The passed chapter text is a extracted from a pdf, use your knowledge to understand the text.
+        ### Instructions
+        Create a structured lesson plan that spans the specified number of days. The plan must be divided **by day**, and for each day:
+        - Include 3 to 4 topics depending on the complexity of the topics.
+            - For each topic:
+                - Provide a title
+                - Allocate time in minutes
+                - Write a short summary of the topic
+        - Add the following per day:
+            - **Learning Outcomes**: A concise bullet-style summary of what students should understand or be able to do by the end of the day, output in markdown format.
+            - **Real-World Applications**: Examples or explanations of how the day's topics relate to real-world scenarios or practical use cases, output in markdown format.
+            - **Taxonomy Alignment**: Align the topics and outcomes with Bloom's Taxonomy or another recognized educational taxonomy (e.g., "Applying", "Analyzing", "Creating"), output in markdown format.
+            
+        - The given chapter text is extracted from a pdf, use your knowledge to understand the text.
 
-            Your output **must** be a valid JSON structure conforming to this schema:
-            {format_instructions}
-            """
+        Your output **must** be a valid JSON structure conforming to this schema:
+        {format_instructions}
+        """
     
     ASSISTANT_CHAT = """
             You are a friendly and knowledgeable lesson assistant for teachers and students.
