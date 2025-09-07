@@ -39,7 +39,9 @@ const CreateSchool: React.FC = () => {
     academic_start_year: new Date().getFullYear().toString(),
     academic_end_year: (new Date().getFullYear() + 1).toString(),
     accountType: '',
-    trialDuration: ''
+    selectPackage: '',
+    amount: '',
+    paymentType: ''
   });
   const [boardInput, setBoardInput] = useState('');
   const [showBoardSuggestions, setShowBoardSuggestions] = useState(false);
@@ -58,7 +60,9 @@ const CreateSchool: React.FC = () => {
     academic_start_year: '',
     academic_end_year: '',
     accountType: '',
-    trialDuration: ''
+    selectPackage: '',
+    amount: '',
+    paymentType: ''
   });
   const boardSuggestions = [
     { boardId: 1, boardName: 'SSC' },
@@ -143,8 +147,14 @@ const CreateSchool: React.FC = () => {
       case 'accountType':
         if (!value) error = 'Account Type is required';
         break;
-      case 'trialDuration':
-        if (!value) error = 'Trial Duration is required';
+      case 'selectPackage':
+        if (!value) error = 'Package selection is required';
+        break;
+      case 'amount':
+        if (!value) error = 'Amount is required';
+        break;
+      case 'paymentType':
+        if (!value) error = 'Payment Type is required';
         break;
       default:
         break;
@@ -216,7 +226,7 @@ const CreateSchool: React.FC = () => {
     if (currentStep === 1) {
       fieldsToValidate = ['schoolName', 'selectedBoards', 'academic_start_year', 'academic_end_year', 'address', 'phone', 'email'];
     } else if (currentStep === 2) {
-      fieldsToValidate = ['accountType', 'trialDuration'];
+      fieldsToValidate = ['accountType', 'selectPackage', 'amount', 'paymentType'];
     }
 
     let valid = true;
@@ -248,9 +258,20 @@ const CreateSchool: React.FC = () => {
     setErrors(prev => ({ ...prev, accountType: '' }));
   };
 
-  const handleTrialDurationChange = (value: string) => {
-    setFormData(prev => ({ ...prev, trialDuration: value }));
-    setErrors(prev => ({ ...prev, trialDuration: '' }));
+  const handleSelectPackageChange = (value: string) => {
+    setFormData(prev => ({ ...prev, selectPackage: value }));
+    setErrors(prev => ({ ...prev, selectPackage: '' }));
+  };
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    setFormData(prev => ({ ...prev, amount: value }));
+    setErrors(prev => ({ ...prev, amount: '' }));
+  };
+
+  const handlePaymentTypeChange = (value: string) => {
+    setFormData(prev => ({ ...prev, paymentType: value }));
+    setErrors(prev => ({ ...prev, paymentType: '' }));
   };
 
   // On submit, validate all fields
@@ -258,11 +279,11 @@ const CreateSchool: React.FC = () => {
     e.preventDefault();
     setLoader(true);
 
-        // Validate all fields
+    // Validate all fields
     const fieldsToValidate = [
       'schoolName', 'address', 'phone', 'email',
       'adminFirstName', 'adminLastName', 'adminUserName', 'adminEmail', 'adminPassword', 'adminPhone',
-      'selectedBoards', 'academic_start_year', 'academic_end_year', 'accountType', 'trialDuration'
+      'selectedBoards', 'academic_start_year', 'academic_end_year', 'accountType', 'selectPackage', 'amount', 'paymentType'
     ];
     let valid = true;
     fieldsToValidate.forEach(field => {
@@ -304,7 +325,9 @@ const CreateSchool: React.FC = () => {
         academic_start_year: Number(formData.academic_start_year),
         academic_end_year: Number(formData.academic_end_year),
         account_type: formData.accountType,
-        trial_duration: formData.trialDuration
+        select_package: formData.selectPackage,
+        amount: formData.amount,
+        payment_type: formData.paymentType
       };
 
       try {
@@ -451,13 +474,25 @@ const CreateSchool: React.FC = () => {
       case 2:
         return (
           <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-foreground">Account Type</h2>
-            
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">Type of Account *</label>
               <UISelect value={formData.accountType} onValueChange={handleAccountTypeChange}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select Account Type" />
+                  <SelectValue placeholder="Paid" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="free">Free</SelectItem>
+                </SelectContent>
+              </UISelect>
+              {errors.accountType && <p className="text-destructive text-sm mt-1">{errors.accountType}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Select Package *</label>
+              <UISelect value={formData.selectPackage} onValueChange={handleSelectPackageChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Premium" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="premium">Premium</SelectItem>
@@ -465,22 +500,36 @@ const CreateSchool: React.FC = () => {
                   <SelectItem value="basic">Basic</SelectItem>
                 </SelectContent>
               </UISelect>
-              {errors.accountType && <p className="text-destructive text-sm mt-1">{errors.accountType}</p>}
+              {errors.selectPackage && <p className="text-destructive text-sm mt-1">{errors.selectPackage}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Free Trial Duration *</label>
-              <UISelect value={formData.trialDuration} onValueChange={handleTrialDurationChange}>
+              <label className="block text-sm font-medium text-foreground mb-2">Amount *</label>
+              <input
+                type="number"
+                name="amount"
+                value={formData.amount}
+                onChange={handleAmountChange}
+                placeholder="Enter amount"
+                className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring bg-background text-foreground"
+              />
+              {errors.amount && <p className="text-destructive text-sm mt-1">{errors.amount}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Payment Type *</label>
+              <UISelect value={formData.paymentType} onValueChange={handlePaymentTypeChange}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select Trial Duration" />
+                  <SelectValue placeholder="Select Payment Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="7">7 Days</SelectItem>
-                  <SelectItem value="14">14 Days</SelectItem>
-                  <SelectItem value="30">30 Days</SelectItem>
+                  <SelectItem value="credit_card">Credit Card</SelectItem>
+                  <SelectItem value="debit_card">Debit Card</SelectItem>
+                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                  <SelectItem value="paypal">PayPal</SelectItem>
                 </SelectContent>
               </UISelect>
-              {errors.trialDuration && <p className="text-destructive text-sm mt-1">{errors.trialDuration}</p>}
+              {errors.paymentType && <p className="text-destructive text-sm mt-1">{errors.paymentType}</p>}
             </div>
           </div>
         );
@@ -588,33 +637,41 @@ const CreateSchool: React.FC = () => {
           <div className="bg-card p-8 rounded-lg shadow-sm border border-border">
             {/* <h1 className="text-2xl font-bold text-foreground mb-8">Create School</h1> */}
             {/* Step Indicator */}
-            <div className="flex items-center justify-center mb-8">
+            <div className="flex items-center justify-between mb-12 px-4 md:px-8">
               {steps.map((step, index) => (
-                <div key={step.number} className="flex items-center">
-                  <div className="flex flex-col items-center">
+                <React.Fragment key={step.number}>
+                  <div className="flex flex-col items-center min-w-0 flex-1">
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium ${
+                      className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-semibold border-2 transition-all duration-200 ${
                         step.completed
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-blue-600 text-white border-blue-600'
                           : step.number === currentStep
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-muted text-muted-foreground'
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-background text-muted-foreground border-muted'
                       }`}
                     >
-                      {step.completed ? <Check size={16} /> : step.number}
+                      {step.completed ? <Check size={18} /> : step.number}
                     </div>
-                    <span className="text-xs mt-2 text-center text-muted-foreground max-w-20">
+                    <span className={`text-sm mt-3 text-center font-medium max-w-24 ${
+                      step.number === currentStep 
+                        ? 'text-blue-600' 
+                        : step.completed 
+                        ? 'text-foreground'
+                        : 'text-muted-foreground'
+                    }`}>
                       {step.title}
                     </span>
                   </div>
                   {index < steps.length - 1 && (
-                    <div
-                      className={`w-16 h-0.5 mx-4 ${
-                        step.completed ? 'bg-blue-600' : 'bg-muted'
-                      }`}
-                    />
+                    <div className="flex-1 mx-4">
+                      <div
+                        className={`h-0.5 w-full transition-all duration-200 ${
+                          step.completed ? 'bg-blue-600' : 'bg-muted'
+                        }`}
+                      />
+                    </div>
                   )}
-                </div>
+                </React.Fragment>
               ))}
             </div>
 
