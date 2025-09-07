@@ -11,20 +11,23 @@ class LangchainQueries(Enum):
         Task 1:
         - Extract the chapter name and chapter's sub topics from the provided textbook pdf extracted text.
         - Use your knowledge to correctly understand the extracted text from pdf.
-        - Keep the sub topic names short and simple. 
+        - Keep the sub topic names short and simple.
+        - Keep the chapter names and topic names in Title Case.
+        - Select only main chapters mentioned in the textbook, ignore any additional context like appendix, index, preface etc.
         
         Task 2:
         - Identify the pre-requisites needed to learn before starting a particular chapter.
         - Use your knowledge and understanding to provide these pre-requisites.
         - Along with the pre-requisite topic, explan the topic in detail with an example.
         - Explanation should be easy to understand for a beginner student.
+        - Explanation should be point wise in markdown format.
         
         - Output format: 
         [
             {{
-                "chapter_number": "1", 
-                "chapter_name": "name", 
-                "sub_topics": ["topics"], 
+                "chapter_number": "1" (number in string format), 
+                "chapter_name": "Name", 
+                "sub_topics": ["Topics"], 
                 "pre_requisites": ["topic": "pre-requisite name", "explanation": "topic explanation"]
             }}
         ]

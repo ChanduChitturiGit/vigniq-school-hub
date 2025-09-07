@@ -129,6 +129,12 @@ class WhiteboardView(APIView):
             return WhiteboardService().create_whiteboard_session(request)
         return Response({"error": f"POST request not found for action: {action}"}, status=400)
 
+    def put(self, request, action=None):
+        """Handle PUT requests for whiteboard actions."""
+        if action == 'updateLessonPlanDayStatus':
+            return WhiteboardService().update_lesson_plan_day_status(request)
+        return Response({"error": f"PUT request not found for action: {action}"}, status=400)
+
     def delete(self, request, action=None):
         """Handle DELETE requests for whiteboard actions."""
         if action == 'deleteWhiteboardSession':

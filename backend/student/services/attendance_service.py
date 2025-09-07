@@ -73,6 +73,7 @@ class AttendanceService:
             for data in attendance_data:
                 student_id = data.get('student_id')
                 is_present = data.get('is_present')
+                remarks = data.get('remarks', None)
 
                 if not student_id:
                     logger.error("Missing student_id in attendance data.")
@@ -83,6 +84,7 @@ class AttendanceService:
                     student_id=student_id,
                     defaults={
                         "is_present": is_present,
+                        "remarks": remarks
                     }
                 )
             return Response({"message": "Attendance marked/updated successfully."},
@@ -159,6 +161,7 @@ class AttendanceService:
                             "roll_number": student_roll_map.get(student_id),
                             "student_name": user_map.get(student_id, "Unknown"),
                             "is_present": record.is_present if record else None,
+                            "remarks": record.remarks if record else None
                         })
             output = {
                 "session": session,
@@ -234,8 +237,10 @@ class AttendanceService:
 
                     if session == 'M':
                         student_record['morning'] = record.is_present
+                        student_record['morning_remarks'] = record.remarks if record else None
                     else:
                         student_record['afternoon'] = record.is_present
+                        student_record['afternoon_remarks'] = record.remarks if record else None
 
                     output[record.student_id] = student_record
             

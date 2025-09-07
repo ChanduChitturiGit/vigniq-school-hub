@@ -8,7 +8,7 @@ from django.db.models import Prefetch
 from rest_framework.response import Response
 from rest_framework import status
 
-from syllabus.models import WhiteboardSession,Topic, WhiteboardDataChunk
+from syllabus.models import WhiteboardSession,SchoolLessonPlanDay, WhiteboardDataChunk
 from core.common_modules.common_functions import CommonFunctions
 
 logger = logging.getLogger(__name__)
@@ -21,30 +21,30 @@ class WhiteboardService:
         """Create a new whiteboard session."""
         try:
             school_id = request.GET.get('school_id') or getattr(request.user, 'school_id', None)
-            topic_id = request.GET.get('topic_id')
+            lesson_plan_day_id = request.GET.get('lesson_plan_day_id')
 
             if not school_id:
                 return Response({"error": "Missing school_id"}, status=status.HTTP_400_BAD_REQUEST)
-            if not topic_id:
-                return Response({"error": "Missing topic_id"}, status=status.HTTP_400_BAD_REQUEST)
+            if not lesson_plan_day_id:
+                return Response({"error": "Missing lesson_plan_day_id"}, status=status.HTTP_400_BAD_REQUEST)
             
             school_db_name = CommonFunctions.get_school_db_name(school_id)
 
             try:
-                topic = Topic.objects.using(school_db_name).get(id=topic_id)
+                lesson_plan_day = SchoolLessonPlanDay.objects.using(school_db_name).get(id=lesson_plan_day_id)
             except ObjectDoesNotExist:
-                return Response({"error": f"Topic with id {topic_id} not found"},
+                return Response({"error": f"LessonPlanDay with id {lesson_plan_day_id} not found"},
                                 status=status.HTTP_404_NOT_FOUND)
 
             session_id = self.generate_unique_session_id(school_db_name)
 
             session = WhiteboardSession.objects.using(school_db_name).create(
                 session_id=session_id,
-                topic=topic
+                lesson_plan_day=lesson_plan_day
             )
 
             logger.info("Whiteboard session created with session_id: %s", session_id)
-            return Response({"data": {"session_id":session.session_id}},
+            return Response({"data": {"session_id": session.session_id}},
                             status=status.HTTP_201_CREATED)
 
         except Exception as e:
@@ -79,21 +79,21 @@ class WhiteboardService:
             sessions = WhiteboardSession.objects.using(school_name).filter(
                 topic__lesson_plan_day__chapter_id=chapter_id,
                 is_active=True,
-                topic__lesson_plan_day__class_section_id=class_section_id,
-                topic__lesson_plan_day__chapter__academic_year_id=acadamic_year_id
-            ).select_related('topic').order_by('-created_at')
+                lesson_plan_day__class_section_id=class_section_id,
+                lesson_plan_day__chapter__academic_year_id=acadamic_year_id
+            ).select_related('lesson_plan_day').order_by('-created_at')
 
             session_data = []
             for session in sessions:
                 session_data.append({
                     "session_id": session.session_id,
-                    "topic": session.topic.title,
+                    "lesson_plan_day_id": session.lesson_plan_day.id,
+                    "lesson_plan_day": session.lesson_plan_day.day,
                     "created_at": session.created_at.isoformat(),
                     "updated_at": session.updated_at.isoformat(),
                 })
-            
 
-            return Response({"data":session_data}, status=status.HTTP_200_OK)
+            return Response({"data": session_data}, status=status.HTTP_200_OK)
 
         except Exception as e:
             logger.exception("Unexpected error fetching whiteboard sessions")
@@ -171,4 +171,36 @@ class WhiteboardService:
         except Exception as e:
             logger.exception("Unexpected error deleting whiteboard session")
             return Response({"error": "Failed to delete whiteboard session"},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def update_lesson_plan_day_status(self, request):
+        """Update the status of a lesson plan day."""
+        try:
+            school_id = request.data.get('school_id') or getattr(request.user, 'school_id', None)
+            lesson_plan_day_id = request.data.get('lesson_plan_day_id')
+            lesson_status = request.data.get('status', 'started')
+            if not lesson_plan_day_id:
+                return Response({"error": "Missing lesson_plan_day_id"}, status=status.HTTP_400_BAD_REQUEST)
+            if not school_id:
+                return Response({"error": "Missing school_id"}, status=status.HTTP_400_BAD_REQUEST)
+
+            school_name = CommonFunctions.get_school_db_name(school_id)
+
+            school_lesson_plan_day = SchoolLessonPlanDay.objects.using(school_name).filter(
+                id=lesson_plan_day_id
+            ).first()
+            if not school_lesson_plan_day:
+                return Response({"error": f"Whiteboard session with id {lesson_plan_day_id} not found"},
+                                status=status.HTTP_404_NOT_FOUND)
+
+            school_lesson_plan_day.status = lesson_status
+            school_lesson_plan_day.save(using=school_name)
+
+            logger.info("Whiteboard session status updated with lesson_plan_day_id: %s", lesson_plan_day_id)
+            return Response({"message": "Whiteboard session status updated successfully"},
+                            status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.exception("Unexpected error updating whiteboard session status")
+            return Response({"error": "Failed to update whiteboard session status"},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
