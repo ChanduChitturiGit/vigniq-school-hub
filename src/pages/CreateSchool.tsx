@@ -44,7 +44,8 @@ const CreateSchool: React.FC = () => {
     amount: '',
     paymentType: '',
     transactionId: '',
-    freeTrailPeriod : ''
+    freetrialPeriod : '',
+    package_id : null
   });
   const [boardInput, setBoardInput] = useState('');
   const [showBoardSuggestions, setShowBoardSuggestions] = useState(false);
@@ -68,7 +69,7 @@ const CreateSchool: React.FC = () => {
     amount: '',
     paymentType: '',
     transactionId: '',
-    freeTrailPeriod : ''
+    freetrialPeriod : ''
   });
 
 
@@ -287,9 +288,9 @@ const CreateSchool: React.FC = () => {
   const handleAccountTypeChange = (value: string) => {
     setFormData(prev => ({ ...prev, accountType: value }));
     setErrors(prev => ({ ...prev, accountType: '' }));
-    if (value === 'free') {
-      setFormData(prev => ({ ...prev, selectPackage: 'Premium', amount: '', paymentType: '', transactionId: '', freeTrailPeriod : '12 Months' }));
-      setErrors(prev => ({ ...prev, selectPackage: '', amount: '', paymentType: '', transactionId: '', freeTrailPeriod : '' }));
+    if (value === 'trial') {
+      setFormData(prev => ({ ...prev, selectPackage: 'Premium', amount: '', paymentType: '', transactionId: '', freetrialPeriod : '12 Months' }));
+      setErrors(prev => ({ ...prev, selectPackage: '', amount: '', paymentType: '', transactionId: '', freetrialPeriod : '' }));
       handleSelectPackageChange('Premium');
     }
   };
@@ -307,10 +308,10 @@ const CreateSchool: React.FC = () => {
     setErrors(prev => ({ ...prev, selectPackage: '',package_id : getPackageId(value) }));
   };
 
-  //handleFreeTrailPeriod
-  const handleFreeTrailPeriod = (value: string) => {
-    setFormData(prev => ({ ...prev, freeTrailPeriod: value }));
-    setErrors(prev => ({ ...prev, freeTrailPeriod: '' }));
+  //handleFreetrialPeriod
+  const handleFreetrialPeriod = (value: string) => {
+    setFormData(prev => ({ ...prev, freetrialPeriod: value }));
+    setErrors(prev => ({ ...prev, freetrialPeriod: '' }));
   };
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -387,6 +388,7 @@ const CreateSchool: React.FC = () => {
         academic_end_year: Number(formData.academic_end_year),
         subscription_type: formData.accountType,
         select_package: formData.selectPackage,
+        package_id : formData.package_id ?? getPackageId(formData.selectPackage),
         subscription_amount: formData.amount,
         payment_method: formData.paymentType,
         transaction_ref : formData.transactionId || '',
@@ -633,7 +635,7 @@ const CreateSchool: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="free">Free</SelectItem>
+                  <SelectItem value="trial">trial</SelectItem>
                 </SelectContent>
               </UISelect>
               {errors.accountType && <p className="text-destructive text-sm mt-1">{errors.accountType}</p>}
@@ -642,7 +644,7 @@ const CreateSchool: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">Package *</label>
               <UISelect value={formData.selectPackage} onValueChange={handleSelectPackageChange}
-                disabled={formData.accountType == 'free'}>
+                disabled={formData.accountType == 'trial'}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select the package" />
                 </SelectTrigger>
@@ -658,10 +660,10 @@ const CreateSchool: React.FC = () => {
             </div>
 
             {
-              (formData.accountType == 'free') && (
+              (formData.accountType == 'trial') && (
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Free Trail Period </label>
-                  <UISelect value={formData.freeTrailPeriod} onValueChange={handleFreeTrailPeriod}
+                  <label className="block text-sm font-medium text-foreground mb-2">Free trial Period </label>
+                  <UISelect value={formData.freetrialPeriod} onValueChange={handleFreetrialPeriod}
                     disabled={true}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select the Free trial period" />

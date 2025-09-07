@@ -189,7 +189,7 @@ const Grades: React.FC = () => {
   };
 
   return (
-    <MainLayout pageTitle="Grades">
+    <MainLayout pageTitle="Subjects">
       <div className=" bg-gray-50 p-6 py-0">
         {/* <Breadcrumb items={breadcrumbItems} /> */}
 

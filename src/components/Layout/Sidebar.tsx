@@ -89,7 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
     const examsPath = `/grades/exams/${pathData}`;
 
     return [
-      { path: '/grades', icon: Award, label: 'Grades', roles: ['teacher'] },
+      { path: '/grades', icon: Award, label: 'Subjects', roles: ['teacher'] },
       { path: baseSubjectPath, icon: BookOpen, label: 'Syllabus', roles: ['teacher'] },
       { path: progressPath, icon: TrendingUp, label: 'Progress', roles: ['teacher'] },
        { path: examsPath, icon: FileCheck, label: 'Exams', roles: ['teacher'] },
@@ -148,7 +148,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
         { path: '/view-ebooks', icon: BookOpen, label: 'E-Books', roles: ['admin'] }
       ],
       'teacher': [
-        { path: '/grades', icon: Award, label: 'Grades', roles: ['teacher'] },
+        { path: '/grades', icon: Award, label: 'Subjects', roles: ['teacher'] },
         { path: '/attendance', icon: ClipboardCheck, label: 'Attendance', roles: ['teacher'] },
         {
           key: 'school-management',
