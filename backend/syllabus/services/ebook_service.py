@@ -279,6 +279,7 @@ class EbookService:
 
         lang_chain_service = LangChainService()
         chapters_obj,pdf_text = lang_chain_service.get_topics_and_prerequisites(pdf_file)
+        print(chapters_obj)
         with transaction.atomic():
             Chapter.objects.filter(ebook_id=previously_uploaded_ebook_id).delete()
             for chapter_item in chapters_obj:
