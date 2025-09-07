@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Progress } from '../components/ui/progress';
@@ -36,6 +36,7 @@ interface StudentPerformance {
 const GradesProgress: React.FC = () => {
   const { showSnackbar } = useSnackbar();
   //const { subjectId } = useParams();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
@@ -46,7 +47,12 @@ const GradesProgress: React.FC = () => {
   const boardId = searchParams.get('school_board_id') || '';
   const pathData = `${subjectId}?class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
 
-  const payload = JSON.parse(localStorage.getItem('gradesData') || '{}');
+  const payload = {
+    class_number_id: Number(classId),
+    subject_id: Number(subjectId),
+    school_id: Number(schoolId),
+    school_board_id: Number(boardId)
+  };
 
   const [chaptersProgress, setChaptersProgress] = useState<ChapterProgress[]>([]);
   const [studentPerformance, setStudentPerformance] = useState<StudentPerformance[]>([]);
@@ -58,12 +64,12 @@ const GradesProgress: React.FC = () => {
   ];
 
   const sampleChaptersProgress: ChapterProgress[] = [
-    { chapter_id: 1, chapter_number : 1,chapter_name: 'Knowing Our Numbers', progress: 75 },
-    { chapter_id: 2, chapter_number : 2,chapter_name: 'Whole Numbers', progress: 45 },
-    { chapter_id: 3, chapter_number : 3,chapter_name: 'Playing with Numbers', progress: 90 },
-    { chapter_id: 4, chapter_number : 4,chapter_name: 'Basic Geometrical chapter_ideas', progress: 30 },
-    { chapter_id: 5, chapter_number : 5,chapter_name: 'Understanding Elementary Shapes', progress: 60 },
-    { chapter_id: 6, chapter_number : 6,chapter_name: 'Integers', progress: 25 }
+    { chapter_id: 1, chapter_number: 1, chapter_name: 'Knowing Our Numbers', progress: 75 },
+    { chapter_id: 2, chapter_number: 2, chapter_name: 'Whole Numbers', progress: 45 },
+    { chapter_id: 3, chapter_number: 3, chapter_name: 'Playing with Numbers', progress: 90 },
+    { chapter_id: 4, chapter_number: 4, chapter_name: 'Basic Geometrical chapter_ideas', progress: 30 },
+    { chapter_id: 5, chapter_number: 5, chapter_name: 'Understanding Elementary Shapes', progress: 60 },
+    { chapter_id: 6, chapter_number: 6, chapter_name: 'Integers', progress: 25 }
   ];
 
   const sampleStudentPerformance: StudentPerformance[] = [
@@ -74,7 +80,7 @@ const GradesProgress: React.FC = () => {
 
   const progressData = async () => {
     try {
-      payload.class_number_id = payload?.class_id;
+      payload.class_number_id = Number(classId);
       const response = await getProgressBySubject(payload);
       if (response && response.data) {
         //console.log("topics", response);
@@ -117,7 +123,17 @@ const GradesProgress: React.FC = () => {
   return (
     <MainLayout pageTitle={`Progress - ${subject} - ${className} ${section}`}>
       <div className="space-y-8">
-        <Breadcrumb items={breadcrumbItems} />
+        {/* <Breadcrumb items={breadcrumbItems} /> */}
+
+        <div className="flex items-center gap-4">
+          <Link
+            to="/grades"
+            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="font-medium">Back</span>
+          </Link>
+        </div>
 
         {/* <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -184,12 +200,17 @@ const GradesProgress: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {chaptersProgress.map((chapter) => (
-              <Card key={''+chapter.chapter_id} className="shadow-md hover:shadow-lg transition-shadow border-0 bg-gradient-to-br from-white to-gray-50">
-                <CardContent className="p-6">
+              <Card key={'' + chapter.chapter_id} className="shadow-md hover:shadow-lg transition-shadow border-0 bg-gradient-to-br from-white to-gray-50">
+                <CardContent className="p-6"
+                  onClick={() => {
+                    // Navigate to chapter details page
+                    navigate(`/grades/chapter/${chapter.chapter_id}?${pathData}&tab=lesson-plan`);
+                  }
+                  }>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex-1">
                       <h3 className="text-l font-semibold text-gray-900 mb-1">
-                        Chapter {''+chapter.chapter_number}
+                        Chapter {'' + chapter.chapter_number}
                       </h3>
                       <p className="text-m text-gray-600">
                         {chapter.chapter_name}
@@ -212,8 +233,8 @@ const GradesProgress: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-500">Progress Status</span>
                     <span className={`text-sm font-medium px-3 py-1 rounded-full ${chapter.progress >= 70 ? 'bg-blue-100 text-blue-800' :
-                        chapter.progress >= 40 ? 'bg-blue-100 text-blue-700' :
-                          'bg-blue-100 text-blue-600'
+                      chapter.progress >= 40 ? 'bg-blue-100 text-blue-700' :
+                        'bg-blue-100 text-blue-600'
                       }`}>
                       {chapter.progress >= 70 ? 'Excellent' :
                         chapter.progress >= 40 ? 'Good' : 'Needs Attention'}

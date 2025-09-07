@@ -12,7 +12,10 @@ import {
   MessageSquare,
   Bot,
   User,
-  LoaderCircle
+  LoaderCircle,
+  CheckCircle,
+  CircleDot,
+  Target
 } from 'lucide-react';
 import { useSnackbar } from '../components/snackbar/SnackbarContext';
 import { getLessonPlanDataByDay } from '../services/grades';
@@ -140,9 +143,9 @@ const AIChatLessonPlan: React.FC = () => {
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
   const classId = searchParams.get('class_id') || '';
-  const subjectId = searchParams.get('subjectId') || '';
-  const schoolId = searchParams.get('schoolId') || '';
-  const boardId = searchParams.get('boardId') || '';
+  const subjectId = searchParams.get('subject_id') || '';
+  const schoolId = searchParams.get('school_id') || '';
+  const boardId = searchParams.get('school_board_id') || '';
   const chapterName = searchParams.get('chapterName') || '';
   const dayCount = searchParams.get('dayCount') || '';
   const pathData = `${subjectId}?class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
@@ -159,6 +162,7 @@ const AIChatLessonPlan: React.FC = () => {
     created_at: new Date()
   });
   const [loader, setLoader] = useState(false);
+  const [lessonOutcomes, setLessonOutcomes] = useState<string[]>([]);
 
   const breadcrumbItems = [
     { label: 'Grades', path: '/grades' },
@@ -173,19 +177,20 @@ const AIChatLessonPlan: React.FC = () => {
   const getLessonData = async () => {
     try {
       const data = {
-        chapter_id: chapterId,
-        lesson_plan_day_id: day,
+        chapter_id: Number(chapterId),
+        lesson_plan_day_id: Number(day),
         subject: subject,
         class: className,
         section: section,
         school_id: schoolId ? schoolId : userData.school_id,
         board_id: boardId,
-        subject_id: subjectId,
-        class_id: classId
+        subject_id: Number(subjectId),
+        class_id: Number(classId)
       };
       const response = await getLessonPlanDataByDay(data);
       if (response && response.data) {
         setActivities(response.data.topics);
+        setLessonOutcomes(response?.data?.learning_outcomes.split(',') || []);
       } else {
         showSnackbar({
           title: 'Error',
@@ -205,12 +210,12 @@ const AIChatLessonPlan: React.FC = () => {
   const getChatApiData = async () => {
     try {
       const data = {
-        chapter_id: chapterId,
-        lesson_plan_day_id: day,
+        chapter_id: Number(chapterId),
+        lesson_plan_day_id: Number(day),
         // subject: subject,
         // class: className,
         // section: section,
-        school_id: schoolId ? schoolId : userData.school_id,
+        school_id: schoolId ? Number(schoolId) : Number(userData.school_id),
         // board_id: boardId,
         // subject_id: subjectId,
         // class_id: classId
@@ -224,14 +229,14 @@ const AIChatLessonPlan: React.FC = () => {
       } else {
         showSnackbar({
           title: 'Error',
-          description: response.message || 'Failed to fetch lesson plan data.',
+          description: response.message || 'Failed to fetch chat history.',
           status: 'error'
         });
       }
     } catch (error) {
       showSnackbar({
         title: 'Error',
-        description: 'An unexpected error occurred while fetching lesson plan data.',
+        description: 'Something went wrong while fetching chat history.',
         status: 'error'
       });
     }
@@ -401,25 +406,46 @@ const AIChatLessonPlan: React.FC = () => {
                   <CardContent className="flex-1 p-0 min-h-0">
                     <ScrollArea className="h-full">
                       <div className="p-6 space-y-4">
-                        {activities.map((activity, index) => (
-                          <div key={activity.serialNumber} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                            <div className="flex items-start gap-3">
-                              <div className="flex-shrink-0">
-                                <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm">
-                                  {index + 1}
+                        {/* Lesson Outcomes Section */}
+                        <div className="mb-6">
+                          <div className="flex items-center gap-2 mb-2">
+                            <CircleDot className="text-blue-600" size={20} />
+                            <span className="font-semibold text-gray-900 text-base">Learning Objectives</span>
+                          </div>
+                          <ul className="space-y-2 ml-1">
+                            {lessonOutcomes.map((outcome, idx) => (
+                              <li key={idx} className="flex items-center gap-2 text-green-700 text-sm">
+                                <CheckCircle className="w-4 h-4 text-green-500" />
+                                <span>{outcome}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        {/* Topics Section */}
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="font-semibold text-gray-900 text-base">Topics ({activities.length})</span>
+                          </div>
+                          {activities.map((activity, index) => (
+                            <div key={activity.serialNumber} className="p-4 bg-gray-50 rounded-lg border border-gray-200 mb-2">
+                              <div className="flex items-start gap-3">
+                                <div className="flex-shrink-0">
+                                  <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm">
+                                    {index + 1}
+                                  </div>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="text-sm font-semibold text-gray-900 mb-2">
+                                    {activity.title}
+                                  </h3>
+                                  {/* <p className="text-xs text-gray-600 leading-relaxed">
+                                    {activity.summary || activity.description}
+                                  </p> */}
                                 </div>
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="text-sm font-semibold text-gray-900 mb-2">
-                                  {activity.title}
-                                </h3>
-                                <p className="text-xs text-gray-600 leading-relaxed">
-                                  {activity.summary || activity.description}
-                                </p>
-                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
                     </ScrollArea>
                   </CardContent>
@@ -462,7 +488,7 @@ const AIChatLessonPlan: React.FC = () => {
                             </div>
                           )}
                           {message?.content.length > 0 && (
-                            <div>
+                            <div className={`${ message.role === 'user' ? 'flex flex-col items-end' : ''}`}>
                               <div
                                 className={`max-w-[80%] p-4 rounded-lg ${message.role === 'user'
                                   ? 'bg-blue-100 text-gray-800 rounded-br-sm'
@@ -481,7 +507,7 @@ const AIChatLessonPlan: React.FC = () => {
                                 </span> */}
                                 </>
                               </div>
-                              <span className="text-xs opacity-70 mt-2 block">
+                              <span className="text-xs opacity-70 mt-2 max-w-[80%]">
                                 {formatChatDate(message.created_at)}
                               </span>
                             </div>
@@ -505,7 +531,7 @@ const AIChatLessonPlan: React.FC = () => {
 
                 {/* Input Area */}
                 <div className="flex-shrink-0 border-t p-6">
-                  <div className="flex items-center justify-center gap-3">
+                  <div className="flex items-center justify-center gap-2">
                     <textarea
                       value={inputMessage}
                       onChange={(e) => setInputMessage(e.target.value)}
@@ -537,25 +563,46 @@ const AIChatLessonPlan: React.FC = () => {
               <CardContent className="flex-1 p-0 min-h-0">
                 <ScrollArea className="h-full">
                   <div className="p-6 space-y-4">
-                    {activities.map((activity, index) => (
-                      <div key={activity.serialNumber} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                        <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0">
-                            <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm">
-                              {index + 1}
+                    {/* Lesson Outcomes Section */}
+                    <div className="mb-6">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Target className="text-blue-600" size={20} />
+                        <span className="font-semibold text-gray-900 text-base">Learning Objectives</span>
+                      </div>
+                      <ul className="space-y-2 ml-1">
+                        {lessonOutcomes.map((outcome, idx) => (
+                          <li key={idx} className="flex items-center gap-2 text-green-700 text-sm">
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                            <span>{outcome}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    {/* Topics Section */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="font-semibold text-gray-900 text-base">Topics ({activities.length})</span>
+                      </div>
+                      {activities.map((activity, index) => (
+                        <div key={activity.serialNumber} className="p-4 bg-gray-50 rounded-lg border border-gray-200 mb-2">
+                          <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0">
+                              <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm">
+                                {index + 1}
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-sm font-semibold text-gray-900 mb-2">
+                                {activity.title}
+                              </h3>
+                              {/* <p className="text-xs text-gray-600 leading-relaxed">
+                                {activity.summary || activity.description}
+                              </p> */}
                             </div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-sm font-semibold text-gray-900 mb-2">
-                              {activity.title}
-                            </h3>
-                            <p className="text-xs text-gray-600 leading-relaxed">
-                              {activity.summary || activity.description}
-                            </p>
-                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </ScrollArea>
               </CardContent>

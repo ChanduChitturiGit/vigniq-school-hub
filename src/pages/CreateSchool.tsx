@@ -635,7 +635,7 @@ const CreateSchool: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="trial">trial</SelectItem>
+                  <SelectItem value="trial">Trial</SelectItem>
                 </SelectContent>
               </UISelect>
               {errors.accountType && <p className="text-destructive text-sm mt-1">{errors.accountType}</p>}
