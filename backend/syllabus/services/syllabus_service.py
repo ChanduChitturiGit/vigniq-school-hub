@@ -683,6 +683,7 @@ class SyllabusService:
             chapter_id = request.data.get("chapter_id")
             num_days = request.data.get("num_days")
             time_period = request.data.get("time_period")
+            teacher_instructions = request.data.get("teacher_instructions", "")
 
             if not all([school_id, chapter_id, num_days, time_period]):
                 logger.error("Missing required parameters for generating lesson plan.")
@@ -729,6 +730,7 @@ class SyllabusService:
                 chapter_title=chapter.chapter_name,
                 num_days=num_days,
                 time_period=time_period,
+                teacher_instructions=teacher_instructions,
                 pdf_file_content=pdf_content
             )
 

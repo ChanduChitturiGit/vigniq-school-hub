@@ -53,11 +53,13 @@ class LangChainService:
 
         return parsed.model_dump()['result'], pdf_text
 
-    def generate_lesson_plan(self, chapter_number, chapter_title, num_days, time_period, pdf_file_content):
+    def generate_lesson_plan(self, chapter_number, chapter_title, num_days, time_period,
+                             teacher_instructions, pdf_file_content):
         lesson_plan_parser = PydanticOutputParser(pydantic_object=LessonPlan)
         prompt = PromptTemplate(
             template=LangchainQueries.GENERATE_LESSON_PLAN.value,
-            input_variables=["chapter_number", "chapter_title", "num_days", "text", "time_period"],
+            input_variables=["chapter_number", "chapter_title", "num_days",
+                             "text", "time_period", "teacher_instructions"],
             partial_variables={"format_instructions": lesson_plan_parser.get_format_instructions()}
         )
 
@@ -73,6 +75,7 @@ class LangChainService:
         "chapter_title": chapter_title,
         "num_days": num_days,
         "time_period": time_period,
+        "teacher_instructions": teacher_instructions,
         "text": pdf_text
         })
         parsed = lesson_plan_parser.parse(response)
@@ -95,7 +98,7 @@ class LangChainService:
             session=session
         ).order_by("created_at")
 
-        for msg in chat_messages:
+        for msg in chat_messages[-10:]:
             if msg.role == "user":
                 memory.chat_memory.add_user_message(msg.content)
             else:

@@ -372,10 +372,10 @@ const ChapterDetails: React.FC = () => {
         {/* <Breadcrumb items={breadcrumbItems} /> */}
 
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center justify-between">
           <Link
             to={`/grades/syllabus/${chapterId}?${pathData}`}
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+            className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             <span className="font-medium">Back to Subject</span>
@@ -401,23 +401,23 @@ const ChapterDetails: React.FC = () => {
 
         {/* Tabs */}
         <Tabs defaultValue={tab && tab.length>0 ?  tab : `topics`} className="space-y-6">
-          <TabsList className="grid w-[30%] grid-cols-3 bg-gray-100">
-            <TabsTrigger value="topics" className="flex items-center gap-2">
+          <TabsList className="grid md:w-[60%] xl:w-[40%] grid-cols-3 bg-gray-100">
+            <TabsTrigger value="topics" className="flex items-center gap-1 md:gap-2">
               <BookOpen className="w-4 h-4" />
               Topics
             </TabsTrigger>
-            <TabsTrigger value="lesson-plan" className="flex items-center gap-2">
+            <TabsTrigger value="lesson-plan" className="flex items-center gap-1 md:gap-2">
               <FileText className="w-4 h-4" />
               Lesson Plan
             </TabsTrigger>
-            <TabsTrigger value="prerequisites" className="flex items-center gap-2">
+            <TabsTrigger value="prerequisites" className="flex items-center gap-1 md:gap-2">
               <Lightbulb className="w-4 h-4" />
               Prerequisites
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="topics" className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">Chapter Topics</h2>
                 <p className="text-gray-600">Manage topics for this chapter</p>
@@ -543,12 +543,12 @@ const ChapterDetails: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="lesson-plan" className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">Lesson Plan</h2>
                 <p className="text-gray-600">Create and manage lesson plans for this chapter</p>
               </div>
-              <div className='flex gap-2'>
+              <div className='flex flex-col md:flex-row gap-2'>
                 {lessonPlan && lessonPlan.length > 0 ? (
                   <Link to={`/grades/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}&${pathData}`}>
                     <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
@@ -564,14 +564,14 @@ const ChapterDetails: React.FC = () => {
                     </Button>
                   </Link>
                 )}
-                <Link
+                {/* <Link
                   to={`/grades/lesson-plan/customize/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}&${pathData}`}
                 >
                   <Button className="bg-purple-600 hover:bg-purple-700">
                     <MessageSquare className="w-4 h-4 mr-2" />
                     Customize Lesson Plan
                   </Button>
-                </Link>
+                </Link> */}
               </div>
             </div>
 
@@ -642,7 +642,7 @@ const ChapterDetails: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="prerequisites" className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">Prerequisites</h2>
                 <p className="text-gray-600">Define prerequisites for this chapter</p>

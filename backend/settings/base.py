@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'teacher',
     'classes',
     'academics',
-    'syllabus'
+    'syllabus',
+    'subscriptions'
 ]
 
 MIDDLEWARE = [
@@ -98,7 +99,7 @@ REST_FRAMEWORK = {
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
 
 CHANNEL_LAYERS = {

@@ -3,17 +3,21 @@
 from core.middleware import get_current_db
 
 class DatabaseRouter:
+    """ A router to control all database operations on models for different databases.
+    """
+
+    apps_using_default_db = ('core', 'auth', 'contenttypes', 'admin', 'sessions','school','subscriptions')
     def db_for_read(self, model, **hints):
         from core.middleware import get_current_db
         db = get_current_db()
-        if model._meta.app_label in ('core', 'auth', 'contenttypes', 'admin', 'sessions','school'):
+        if model._meta.app_label in self.apps_using_default_db:
             return 'default'
         return db or 'default'
 
     def db_for_write(self, model, **hints):
         from core.middleware import get_current_db
         db = get_current_db()
-        if model._meta.app_label in ('core', 'auth', 'contenttypes', 'admin', 'sessions','school'):
+        if model._meta.app_label in self.apps_using_default_db:
             return 'default'
         return db or 'default'
 
@@ -24,7 +28,7 @@ class DatabaseRouter:
 
     def allow_migrate(self, db, app_label, model_name=None, **hints):
         # Only allow `core` app on default DB
-        if app_label in ('core', 'auth', 'contenttypes', 'admin', 'sessions','school'):
+        if app_label in self.apps_using_default_db:
             return db == 'default'
         
         # All other apps should be allowed only on school DBs (i.e., not 'default')

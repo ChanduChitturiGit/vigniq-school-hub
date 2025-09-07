@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { getGradeByChapter } from '../services/grades';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
+import { SpinnerOverlay } from '../pages/SpinnerOverlay';
 
 interface Chapter {
   chapter_id: number;
@@ -51,6 +52,8 @@ const Syllabus: React.FC = () => {
 
   const [chapters, setChapters] = useState<Chapter[]>([]);
 
+  const [loader, setLoader] = useState(true);
+
   const breadcrumbItems = [
     { label: 'Grades', path: '/grades' },
     { label: `${subject} - ${className}` }
@@ -73,7 +76,7 @@ const Syllabus: React.FC = () => {
         school_id: schoolId,
         board_id: boardId
       };
-      
+
       const response = await getGradeByChapter(payload);
       if (response && response.data) {
         const processedChapters = response.data.map((chapter: any, index: number) => ({
@@ -85,12 +88,14 @@ const Syllabus: React.FC = () => {
           status: !chapter.has_lesson_plan ? 'pending' : 'ready'
         }));
         setChapters(processedChapters);
+        setLoader(false);
       } else {
         showSnackbar({
-        title: "⛔ Error",
-        description:  "Something went wrong",
-        status: "error"
-      });
+          title: "⛔ Error",
+          description: "Something went wrong",
+          status: "error"
+        });
+        setLoader(false);
       }
     } catch (error) {
       showSnackbar({
@@ -98,6 +103,7 @@ const Syllabus: React.FC = () => {
         description: error?.response?.data?.error || "Something went wrong",
         status: "error"
       });
+      setLoader(false);
     }
   };
 
@@ -141,29 +147,30 @@ const Syllabus: React.FC = () => {
   const SubjectIcon = getSubjectIcon(subject);
 
   return (
-    <MainLayout pageTitle={`${subject} - ${className} - ${section}`}>
-      <div className="space-y-8">
-        {/* <Breadcrumb items={breadcrumbItems} /> */}
+    <>
+      <MainLayout pageTitle={`${subject} - ${className} - ${section}`}>
+        <div className="space-y-8">
+          {/* <Breadcrumb items={breadcrumbItems} /> */}
 
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link
-              to="/grades"
-              className="flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span className="font-medium">Back</span>
-            </Link>
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Link
+                to="/grades"
+                className="flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                <span className="font-medium">Back</span>
+              </Link>
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-gray-500">Overall Progress</div>
+              <div className="text-2xl font-bold text-gray-900">{Math.round(overallProgress)}% Complete</div>
+            </div>
           </div>
-          <div className="text-right">
-            <div className="text-sm text-gray-500">Overall Progress</div>
-            <div className="text-2xl font-bold text-gray-900">{Math.round(overallProgress)}% Complete</div>
-          </div>
-        </div>
 
-        {/* Subject Header */}
-        {/* <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6">
+          {/* Subject Header */}
+          {/* <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-white rounded-xl shadow-md flex items-center justify-center">
               <SubjectIcon className="w-8 h-8 text-blue-600" />
@@ -175,91 +182,97 @@ const Syllabus: React.FC = () => {
           </div>
         </div> */}
 
-        {/* Chapters Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {chapters.map((chapter) => {
-            const StatusIcon = getStatusIcon(chapter.status);
-            const statusColor = getStatusColor(chapter.status);
-            
-            return (
-              <Link
-                key={chapter.chapter_id}
-                to={`/grades/chapter/${chapter.chapter_id}?${pathData}&chapter_name=${encodeURIComponent(chapter.chapter_name)}&chapter_number=${chapter.chapter_number}&progress=${chapter.progress}`}
-                className="group"
-              >
-                <Card className="hover:shadow-lg transition-all duration-300 group-hover:-translate-y-1 overflow-hidden">
-                  {/* Gradient Header */}
-                  <div className="h-2 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500"></div>
-                  
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <span className="text-lg font-bold text-blue-600">{chapter.chapter_number}</span>
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">
-                            {chapter.chapter_name}
-                          </h3>
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <BookOpen className="w-4 h-4" />
-                            <span>{chapter.topics_count} topics</span>
+          {/* Chapters Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {chapters.map((chapter) => {
+              const StatusIcon = getStatusIcon(chapter.status);
+              const statusColor = getStatusColor(chapter.status);
+
+              return (
+                <Link
+                  key={chapter.chapter_id}
+                  to={`/grades/chapter/${chapter.chapter_id}?${pathData}&chapter_name=${encodeURIComponent(chapter.chapter_name)}&chapter_number=${chapter.chapter_number}&progress=${chapter.progress}`}
+                  className="group"
+                >
+                  <Card className="hover:shadow-lg transition-all duration-300 group-hover:-translate-y-1 overflow-hidden">
+                    {/* Gradient Header */}
+                    <div className="h-2 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500"></div>
+
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <span className="text-lg font-bold text-blue-600">{chapter.chapter_number}</span>
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">
+                              {chapter.chapter_name}
+                            </h3>
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <BookOpen className="w-4 h-4" />
+                              <span>{chapter.topics_count} topics</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Progress</span>
-                        <span className="text-lg font-bold text-gray-900">{chapter.progress}%</span>
-                      </div>
-                      
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-blue-500 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${chapter.progress}%` }}
-                        />
+                        <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
                       </div>
 
-                      <div className="flex items-center justify-between pt-2">
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-gray-500" />
-                          <span className="text-sm text-gray-600">Lesson Plan</span>
-                          <StatusIcon className={`w-4 h-4 ${statusColor}`} />
-                          <span className={`text-xs font-medium ${statusColor}`}>
-                            {chapter.status === 'ready' ? 'Ready' : 'Pending'}
-                          </span>
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Progress</span>
+                          <span className="text-lg font-bold text-gray-900">{chapter.progress}%</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Eye className="w-4 h-4 text-blue-500" />
-                          <span className="text-xs text-blue-600 font-medium">Quick Access</span>
+
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                            style={{ width: `${chapter.progress}%` }}
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between pt-2">
+                          <div className="flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-gray-500" />
+                            <span className="text-sm text-gray-600">Lesson Plan</span>
+                            <StatusIcon className={`w-4 h-4 ${statusColor}`} />
+                            <span className={`text-xs font-medium ${statusColor}`}>
+                              {chapter.status === 'ready' ? 'Ready' : 'Pending'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Eye className="w-4 h-4 text-blue-500" />
+                            <span className="text-xs text-blue-600 font-medium">Quick Access</span>
+                          </div>
+                        </div>
+
+                        <div className="text-center pt-2">
+                          <span className="text-xs text-gray-500">Click to explore chapter</span>
                         </div>
                       </div>
-
-                      <div className="text-center pt-2">
-                        <span className="text-xs text-gray-500">Click to explore chapter</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
-
-        {chapters.length === 0 && (
-          <div className="text-center py-12">
-            <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Chapters Available</h3>
-            <p className="text-gray-500">
-              No chapters found for this subject. Contact your administrator.
-            </p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
           </div>
-        )}
-      </div>
-    </MainLayout>
+
+          {chapters.length === 0 && (
+            <div className="text-center py-12">
+              <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Chapters Available</h3>
+              <p className="text-gray-500">
+                No chapters found for this subject. Contact your administrator.
+              </p>
+            </div>
+          )}
+        </div>
+      </MainLayout>
+      {
+        loader && (
+          <SpinnerOverlay />
+        )
+      }
+    </>
   );
 };
 
