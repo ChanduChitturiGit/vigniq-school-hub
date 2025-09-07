@@ -57,9 +57,14 @@ class SchoolService:
             payment_method = request.data.get('payment_method')
             transaction_ref = request.data.get('transaction_ref')
 
-            if subscription_type not in Subscription.PLAN_TYPES:
+
+            valid_plan_types = [choice[0] for choice in Subscription.PLAN_TYPES]
+
+            valid_payment_types = [choice[0] for choice in Transaction.PAYMENT_METHODS]
+
+            if subscription_type not in valid_plan_types:
                 return Response({"error": "Invalid subscription type."}, status=status.HTTP_400_BAD_REQUEST)
-            if payment_method not in Transaction.PAYMENT_METHODS:
+            if payment_method not in valid_payment_types and subscription_type != "free":
                 return Response({"error": "Invalid payment method."}, status=status.HTTP_400_BAD_REQUEST)
             if subscription_duration not in (12,):
                 return Response({"error": "Invalid subscription duration."}, status=status.HTTP_400_BAD_REQUEST)
