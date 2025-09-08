@@ -70,7 +70,7 @@ class SchoolLessonPlanDay(models.Model):
     day = models.IntegerField()
     learning_outcomes = models.TextField()
     real_world_applications = models.TextField()
-    taxonomy_alignment = models.CharField(max_length=255)
+    taxonomy_alignment = models.TextField()
     
     status = models.CharField(
         max_length=20,
