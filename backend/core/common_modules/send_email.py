@@ -73,7 +73,7 @@ class EmailService:
             tuple: Subject and HTML content for the email.
         """
         if email_type == 'welcome':
-            subject = "Welcome to Vigniq"
+            subject = "Welcome to VIGYS AI"
             html_path = "email/welcome_email.html"
         elif email_type == 'password_reset':
             subject = "Password Reset Request"
