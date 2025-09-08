@@ -183,8 +183,8 @@ const Attendance: React.FC = () => {
           // Transform API data to match Student interface if necessary
           const fetchedStudents = response.data.attendance_data.map((student: any) => ({
             ...student,
-            morningPresent: response.data?.session == 'M' || session == 'M' ? student.is_present : student?.morning_present || false,
-            afternoonPresent: response.data?.session == 'A' || session == 'A' ? student.is_present : student?.afternoon_present || false
+            morningPresent: response.data?.session == 'M' || session == 'M' ? student.is_present : student?.morning_present || null,
+            afternoonPresent: response.data?.session == 'A' || session == 'A' ? student.is_present : student?.afternoon_present || null
           }));
           // setStudents(fetchedStudents);
           setStudents(fetchedStudents);
@@ -395,7 +395,10 @@ const Attendance: React.FC = () => {
     const presentStudents = students?.filter(s =>
       activeSession === 'morning' ? s.morningPresent : s.afternoonPresent
     ).length;
-    const absentStudents = totalStudents - presentStudents;
+    const absentStudents = students?.filter(s =>
+      activeSession === 'morning' ? (s.morningPresent == false) : (s.afternoonPresent == false)
+    ).length;
+   // const absentStudents = totalStudents - presentStudents;
     const remainingStudents = totalStudents - (presentStudents + absentStudents);
 
     return { totalStudents, presentStudents, absentStudents, remainingStudents };
@@ -817,7 +820,7 @@ const Attendance: React.FC = () => {
             <>
               {/* Stats Cards */}
               {selectedClass && (!isPastDate || allowTakeAttendence || editingSession || !(isMorningHoliday && isAfternoonHoliday) && !(sampleAttendanceRecords.length == 0 && selectedClass && isPastDate)) && !isSunday && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <Card>
                     <CardContent className="p-4">
                       <div className="flex items-center gap-2">
@@ -854,7 +857,7 @@ const Attendance: React.FC = () => {
                     </CardContent>
                   </Card>
 
-                  {/* <Card>
+                  <Card>
                       <CardContent className="p-4">
                         <div className="flex items-center gap-2">
                           <AlertCircle className="w-5 h-5 text-orange-500" />
@@ -864,7 +867,7 @@ const Attendance: React.FC = () => {
                           </div>
                         </div>
                       </CardContent>
-                    </Card> */}
+                    </Card>
                 </div>
               )}
 
@@ -1077,7 +1080,7 @@ const Attendance: React.FC = () => {
                                     </Button>
                                     <Button
                                       size="sm"
-                                      variant={!student.morningPresent ? "destructive" : "outline"}
+                                      variant={student.morningPresent == false ? "destructive" : "outline"}
                                       onClick={() => toggleAttendance(student.student_id, false)}
                                     >
                                       Absent
@@ -1137,7 +1140,7 @@ const Attendance: React.FC = () => {
                                       </Button>
                                       <Button
                                         size="sm"
-                                        variant={!student.afternoonPresent ? "destructive" : "outline"}
+                                        variant={student.afternoonPresent == false ? "destructive" : "outline"}
                                         onClick={() => toggleAttendance(student.student_id, false)}
                                       >
                                         Absent
