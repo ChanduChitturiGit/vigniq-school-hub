@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0008_availablemodules_is_active'),
+        ('core', '0006_availablemodules_is_active'),
         ('school', '0004_populate_classes'),
         ('subscriptions', '0001_initial'),
     ]
