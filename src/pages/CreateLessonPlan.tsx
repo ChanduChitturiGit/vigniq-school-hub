@@ -283,7 +283,6 @@ const CreateLessonPlan: React.FC = () => {
   };
 
   const handleSaveLessonPlan = () => {
-    console.log('Saving lesson plan:', generatedPlan);
     saveLessonPlan();
   };
 
@@ -309,7 +308,7 @@ const CreateLessonPlan: React.FC = () => {
           {/* <Breadcrumb items={breadcrumbItems} /> */}
           <Link
             to={`/grades/syllabus/${chapterId}?${pathData}&$tab=lesson-plan`}
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+            className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             <span className="font-medium">Back to Subject</span>
@@ -454,7 +453,7 @@ const CreateLessonPlan: React.FC = () => {
       <MainLayout pageTitle="Create Lesson Plan">
         <div className="space-y-8">
           <Link
-            to={`/grades/chapter/${chapterId}?${pathData}&tab=lesson-plan`}
+            to={`/grades/chapter/${chapterId}?chapter_name=${chapterName}&${pathData}&tab=lesson-plan`}
             className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />

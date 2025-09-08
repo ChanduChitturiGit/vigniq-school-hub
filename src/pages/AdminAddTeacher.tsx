@@ -297,6 +297,15 @@ const AdminAddTeacher: React.FC = () => {
     setLoader(false);
   };
 
+  React.useEffect(() => {
+    if (formData.permanent_address === formData.current_address && formData.current_address !== "") {
+      setFormData(prev => ({
+        ...prev,
+        permanent_address: prev.current_address
+      }));
+    }
+  }, [formData.current_address]);
+
   return (
     <MainLayout pageTitle="Add Teacher">
       <div className="space-y-6">
@@ -333,6 +342,7 @@ const AdminAddTeacher: React.FC = () => {
                 {errors.last_name && <p className="text-red-500 text-xs mt-1">{errors.last_name}</p>}
               </div>
 
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">User Name *</label>
                 <input
@@ -341,6 +351,7 @@ const AdminAddTeacher: React.FC = () => {
                   value={formData.user_name}
                   onChange={handleInputChange}
                   onBlur={handleBlur}
+                  autoComplete="off"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 {errors.user_name && <p className="text-red-500 text-xs mt-1">{errors.user_name}</p>}
@@ -362,6 +373,7 @@ const AdminAddTeacher: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Password *</label>
                 <PasswordInput
+                  name='password'
                   value={password}
                   onChange={handlePasswordChange}
                   placeholder="Enter password"
@@ -398,14 +410,14 @@ const AdminAddTeacher: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Experience</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Experience(in years)</label>
                 <input
-                  type="text"
+                  type="number"
                   name="experience"
                   value={formData.experience}
                   onChange={handleInputChange}
                   onBlur={handleBlur}
-                  placeholder="e.g., 5 years"
+                  placeholder="e.g., 5 "
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 {/* Experience is optional, so no error display */}
@@ -552,6 +564,32 @@ const AdminAddTeacher: React.FC = () => {
               {/* current_address is optional, so no error display */}
             </div>
 
+            {/* Checkbox for address sync */}
+            <div className="flex items-center mb-2">
+              <input
+                type="checkbox"
+                id="sameAddress"
+                checked={formData.permanent_address === formData.current_address && formData.current_address !== ""}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setFormData(prev => ({
+                      ...prev,
+                      permanent_address: prev.current_address
+                    }));
+                  } else {
+                    setFormData(prev => ({
+                      ...prev,
+                      permanent_address: ""
+                    }));
+                  }
+                }}
+                className="mr-2"
+              />
+              <label htmlFor="sameAddress" className="text-sm text-gray-700">
+                Permanent address is same as current address
+              </label>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Permanent address</label>
               <textarea
@@ -561,8 +599,14 @@ const AdminAddTeacher: React.FC = () => {
                 onBlur={handleBlur}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={formData.permanent_address === formData.current_address && formData.current_address !== ""}
               />
-              {/* current_address is optional, so no error display */}
+              {/* permanent_address is optional, so no error display */}
+            </div>
+
+            <div>
+              <input type="text" name="fake_username" autoComplete="username" className="hidden" />
+              <input type="password" name="fake_password" autoComplete="new-password" className="hidden" />
             </div>
 
             <div className="flex gap-4 pt-4">
