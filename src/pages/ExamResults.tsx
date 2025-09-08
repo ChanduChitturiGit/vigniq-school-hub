@@ -448,7 +448,7 @@ const ExamResults: React.FC = () => {
                                     student.percentage >= 60 ? 'text-blue-600 font-medium' :
                                       student.percentage >= 40 ? 'text-yellow-600 font-medium' :
                                         'text-red-600 font-medium'}>
-                                    {student.percentage}%
+                                    {Number(student.percentage).toFixed(2)}%
                                   </span>
                                 </>
                               )

@@ -53,7 +53,8 @@ const AddStudent: React.FC = () => {
     parent_name: '',
     parent_phone: '',
     admission_date: '',
-    password: ''
+    password: '',
+    email : ''
   });
   const genderList = ["Male", "Female", "Others"];
 
@@ -133,6 +134,9 @@ const AddStudent: React.FC = () => {
       case 'gender':
         if (!value) error = 'Gender is required';
         break;
+      case 'email':
+        if (!value) error = 'Email is required';
+        break;
       case 'parent_name':
         if (!value) error = 'Parent/Guardian Name is required';
         break;
@@ -176,7 +180,7 @@ const AddStudent: React.FC = () => {
 
     const fieldsToValidate = [
       'first_name', 'last_name', 'user_name', 'class', 'roll_number',
-      'date_of_birth', 'gender', 'parent_name', 'parent_phone', 'admission_date', 'password'
+      'date_of_birth', 'gender', 'parent_name', 'parent_phone', 'admission_date', 'password','email'
     ];
 
     // Validate all fields using validateField
@@ -296,7 +300,7 @@ const AddStudent: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
                 <input
                   type="email"
                   name="email"
@@ -305,6 +309,7 @@ const AddStudent: React.FC = () => {
                   onBlur={handleBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
               </div>
 
               <div>

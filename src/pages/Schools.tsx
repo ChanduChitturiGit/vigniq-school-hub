@@ -17,6 +17,7 @@ const Schools: React.FC = () => {
   const [schools, setschools] = useState([]);
   const [loader, setLoader] = useState(true);
   const [boards, setBoards] = useState([]);
+  
 
   const fetchSchools = async () => {
     setLoader(true);
