@@ -48,11 +48,14 @@ class EmailService:
 
             html_content = render_to_string(html_path, context)
 
+            if isinstance(to_email, str):
+                to_email = [to_email]
+
             msg = EmailMultiAlternatives(
                 subject=subject, 
                 body='',
                 from_email=from_email,
-                to = [to_email]
+                to=to_email
             )
             msg.attach_alternative(html_content, "text/html")
             msg.send()

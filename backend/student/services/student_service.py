@@ -14,6 +14,7 @@ from student.models import Student,StudentClassAssignment
 from classes.models import SchoolSection
 from academics.models import SchoolAcademicYear
 
+from core.common_modules.send_email import EmailService
 from core.common_modules.common_functions import CommonFunctions
 from core.models import User,Role
 
@@ -108,6 +109,18 @@ class StudentService:
                     student = student,
                     class_instance = class_section_instance,
                     academic_year = acadamic_year
+                )
+                to_emails = [email]
+                if parent_email:
+                    to_emails.append(parent_email)
+                send_email = EmailService()
+                send_email.send_email(
+                    to_email=to_emails,
+                    email_type='welcome',
+                    user_name=username,
+                    name=f"{first_name} {last_name}",
+                    password=password,
+                    login_url=CommonFunctions().get_login_uri(request)
                 )
 
             return JsonResponse({"message": "Student created successfully.",
