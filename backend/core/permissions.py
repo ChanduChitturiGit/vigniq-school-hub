@@ -1,4 +1,4 @@
-"""This file contains permission classes for the Vigniq School Hub backend."""
+"""This file contains permission classes for the VIGYS AI School Hub backend."""
 
 from rest_framework.permissions import BasePermission
 
