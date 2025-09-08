@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
@@ -119,6 +119,8 @@ const CreateLessonPlan: React.FC = () => {
     }
   }
 
+
+
   const saveLessonPlan = async () => {
     if (!generatedPlan) return;
 
@@ -126,10 +128,10 @@ const CreateLessonPlan: React.FC = () => {
       setLoader(true);
       const response = await saveLessonData({
         lesson_plan_data: generatedPlan,
-        school_id: schoolId,
-        board_id: boardId,
-        class_section_id: classId,
-        subject_id: subjectId,
+        school_id: userData.school_id ?? schoolId,
+        board_id: Number(boardId),
+        class_section_id: Number(classId),
+        subject_id: Number(subjectId),
         chapter_id: Number(chapterId)
       });
       if (response && response.message) {
@@ -138,7 +140,7 @@ const CreateLessonPlan: React.FC = () => {
           description: `${response.message} ✅ `,
           status: "success"
         });
-        navigate(`/grades/syllabus/${pathData}`);
+        navigate(`/grades/chapter/${chapterId}?${pathData}&tab=lesson-plan`);
       }
     } catch (error) {
       //console.error('Error saving lesson plan:', error);
