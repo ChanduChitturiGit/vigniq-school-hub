@@ -50,7 +50,7 @@ function ChatMessage({ message, condition }) {
     const diffHours = differenceInHours(now, d);
 
     if (diffSeconds < 60) {
-      return `${diffSeconds} seconds ago`;
+      return diffSeconds > 0 ? `${diffSeconds} seconds ago` : 'Just now';
     }
     if (diffMinutes < 60) {
       return `${diffMinutes} minutes ago`;
@@ -337,7 +337,7 @@ const AIChatLessonPlan: React.FC = () => {
     const diffHours = differenceInHours(now, d);
 
     if (diffSeconds < 60) {
-      return `${diffSeconds} seconds ago`;
+      return diffSeconds > 0 ? `${diffSeconds} seconds ago` : 'Just now';
     }
     if (diffMinutes < 60) {
       return `${diffMinutes} minutes ago`;
