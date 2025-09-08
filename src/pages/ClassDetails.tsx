@@ -188,7 +188,9 @@ const ClassDetails: React.FC = () => {
   const deleteStudent = async (studentId: string) => {
     setLoader(true);
     try {
-      const response = await deleteStudentById({ student_id: studentId, school_id: userData.school_id });
+      const response = await deleteStudentById({
+         student_id: studentId, school_id: userData.role == 'superadmin' ? schoolId : userData.school_id 
+        });
       if (response && response.message) {
         // setStudents(students.filter(student => student.student_id !== studentId));
         showSnackbar({

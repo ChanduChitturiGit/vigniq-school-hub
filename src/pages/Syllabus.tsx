@@ -165,7 +165,7 @@ const Syllabus: React.FC = () => {
             </div>
             <div className="text-right">
               <div className="text-sm text-gray-500">Overall Progress</div>
-              <div className="text-2xl font-bold text-gray-900">{Math.round(overallProgress)}% Complete</div>
+              <div className="text-xl font-bold text-gray-900">{Math.round(overallProgress)}% Complete</div>
             </div>
           </div>
 
@@ -205,7 +205,7 @@ const Syllabus: React.FC = () => {
                             <span className="text-lg font-bold text-blue-600">{chapter.chapter_number}</span>
                           </div>
                           <div className="flex-1">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-2 h-[3rem] leading-snug"  title={chapter.chapter_name}>
                               {chapter.chapter_name}
                             </h3>
                             <div className="flex items-center gap-2 text-sm text-gray-600">

@@ -620,6 +620,11 @@ const CreateSchool: React.FC = () => {
                 />
                 {errors.adminPassword && <p className="text-destructive text-sm mt-1">{errors.adminPassword}</p>}
               </div>
+
+              <div>
+              <input type="text" name="fake_username" autoComplete="username" className="hidden" />
+              <input type="password" name="fake_password" autoComplete="new-password" className="hidden" />
+            </div>
             </div>
           </div>
         );

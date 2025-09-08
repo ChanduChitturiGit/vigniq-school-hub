@@ -237,6 +237,15 @@ const AddStudent: React.FC = () => {
     setLoader(false);
   };
 
+  React.useEffect(() => {
+    if (formData.permanent_address === formData.current_address && formData.current_address !== "") {
+      setFormData(prev => ({
+        ...prev,
+        permanent_address: prev.current_address
+      }));
+    }
+  }, [formData.current_address]);
+
   return (
     <MainLayout pageTitle="Add Student">
       <div className="space-y-6">
@@ -472,6 +481,33 @@ const AddStudent: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+
+            {/* Checkbox for address sync */}
+            <div className="flex items-center mb-2">
+              <input
+                type="checkbox"
+                id="sameAddress"
+                checked={formData.permanent_address === formData.current_address && formData.current_address !== ""}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setFormData(prev => ({
+                      ...prev,
+                      permanent_address: prev.current_address
+                    }));
+                  } else {
+                    setFormData(prev => ({
+                      ...prev,
+                      permanent_address: ""
+                    }));
+                  }
+                }}
+                className="mr-2"
+              />
+              <label htmlFor="sameAddress" className="text-sm text-gray-700">
+                Permanent address is same as current address
+              </label>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Permanent Address</label>
               <textarea
@@ -481,7 +517,13 @@ const AddStudent: React.FC = () => {
                 onBlur={handleBlur}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={formData.permanent_address === formData.current_address && formData.current_address !== ""}
               />
+            </div>
+
+            <div>
+              <input type="text" name="fake_username" autoComplete="username" className="hidden" />
+              <input type="password" name="fake_password" autoComplete="new-password" className="hidden" />
             </div>
 
             {!loader && (

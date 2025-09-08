@@ -550,14 +550,14 @@ const ChapterDetails: React.FC = () => {
               </div>
               <div className='flex flex-col md:flex-row gap-2'>
                 {lessonPlan && lessonPlan.length > 0 ? (
-                  <Link to={`/grades/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}&${pathData}`}>
+                  <Link to={`/grades/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`}>
                     <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
                       <RefreshCw className="w-4 h-4" />
                       Re-generate Lesson Plan
                     </Button>
                   </Link>
                 ) : (
-                  <Link to={`/grades/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}&${pathData}`}>
+                  <Link to={`/grades/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`}>
                     <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
                       <Plus className="w-4 h-4" />
                       Generate Lesson Plan
