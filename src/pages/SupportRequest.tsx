@@ -454,7 +454,7 @@ const SupportDetails: React.FC = () => {
         const diffHours = differenceInHours(now, d);
 
         if (diffSeconds < 60) {
-            return `${diffSeconds} seconds ago`;
+            return diffSeconds > 0 ? `${diffSeconds} seconds ago` : 'Just now';
         }
         if (diffMinutes < 60) {
             return `${diffMinutes} minutes ago`;
@@ -587,7 +587,7 @@ const SupportDetails: React.FC = () => {
                                 className={`flex ${(message.responder_first_name + message.responder_last_name) === (userData.first_name + userData.last_name) ? 'justify-end' : 'justify-start'}`}
                             >
                                 <div className='flex flex-col'>
-                                    <div className="flex items-center gap-2 mb-2">
+                                    <div className={`flex items-center gap-2 mb-2 ${(message.responder_first_name + message.responder_last_name) === (userData.first_name + userData.last_name) ? 'justify-end' : 'justify-start'}`}>
                                         <span className={`text-xs font-semibold 'text-gray-600'
                                             }`}>
                                             {(message.responder_first_name + message.responder_last_name) === (userData.first_name + userData.last_name) ? 'You' : `${message.responder_first_name} ${message.responder_last_name}`}
