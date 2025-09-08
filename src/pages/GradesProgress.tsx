@@ -45,7 +45,7 @@ const GradesProgress: React.FC = () => {
   const subjectId = searchParams.get('subject_id') || '';
   const schoolId = searchParams.get('school_id') || '';
   const boardId = searchParams.get('school_board_id') || '';
-  const pathData = `${subjectId}?class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
+  const pathData = `class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
 
   const payload = {
     class_number_id: Number(classId),
@@ -204,7 +204,7 @@ const GradesProgress: React.FC = () => {
                 <CardContent className="p-6"
                   onClick={() => {
                     // Navigate to chapter details page
-                    navigate(`/grades/chapter/${chapter.chapter_id}?${pathData}&tab=lesson-plan`);
+                    navigate(`/grades/chapter/${chapter.chapter_id}?${pathData}&chapter_name=${chapter.chapter_name}&class=${className}&tab=lesson-plan`);
                   }
                   }>
                   <div className="flex items-center justify-between mb-4">

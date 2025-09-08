@@ -160,7 +160,7 @@ const Syllabus: React.FC = () => {
                 className="flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
               >
                 <ArrowLeft className="w-5 h-5" />
-                <span className="font-medium">Back</span>
+                <span className="font-medium">Back to Home</span>
               </Link>
             </div>
             <div className="text-right">
