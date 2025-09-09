@@ -138,18 +138,20 @@ const AIChatLessonPlan: React.FC = () => {
   const { chapterId, day } = useParams();
   const [searchParams] = useSearchParams();
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
+  const dayCount = searchParams.get('dayCount') || '';
 
-  const subject = searchParams.get('subject') || '';
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
+  const subject = searchParams.get('subject') || '';
+  const chapterName = searchParams.get('chapter_name') || '';
+  const chapterNumber = searchParams.get('chapter_number') || '';
+  const progress = parseInt(searchParams.get('progress') || '0');
   const classId = searchParams.get('class_id') || '';
   const subjectId = searchParams.get('subject_id') || '';
   const schoolId = searchParams.get('school_id') || '';
   const boardId = searchParams.get('school_board_id') || '';
-  const chapterName = searchParams.get('chapterName') || '';
-  const dayCount = searchParams.get('dayCount') || '';
-  const pathData = `${subjectId}?class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
-
+  const tab = searchParams.get('tab') || '';
+  const pathData = `class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}&chapter_number=${chapterNumber}&chapter_name=${chapterName}&progress=${progress}&tab=${'lesson-plan'}`;
 
   const [activities, setActivities] = useState<LessonActivity[]>([]);
   const [messages, setMessages] = useState<any>([]);
@@ -162,13 +164,13 @@ const AIChatLessonPlan: React.FC = () => {
     created_at: new Date()
   });
   const [loader, setLoader] = useState(false);
-  const [lessonOutcomes, setLessonOutcomes] = useState<string[]>([]);
+  const [lessonOutcomes, setLessonOutcomes] = useState('');
 
-  const breadcrumbItems = [
-    { label: 'Grades', path: '/grades' },
-    { label: `${subject} - ${className} ${section}`, path: `/grades/syllabus/${pathData}` },
-    { label: 'AI Chat Assistant' }
-  ];
+  // const breadcrumbItems = [
+  //   { label: 'Grades', path: '/grades' },
+  //   { label: `${subject} - ${className} ${section}`, path: `/grades/syllabus/${pathData}` },
+  //   { label: 'AI Chat Assistant' }
+  // ];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -190,7 +192,7 @@ const AIChatLessonPlan: React.FC = () => {
       const response = await getLessonPlanDataByDay(data);
       if (response && response.data) {
         setActivities(response.data.topics);
-        setLessonOutcomes(response?.data?.learning_outcomes.split(',') || []);
+        setLessonOutcomes(response?.data?.learning_outcomes || '');
       } else {
         showSnackbar({
           title: 'Error',
@@ -412,14 +414,19 @@ const AIChatLessonPlan: React.FC = () => {
                             <CircleDot className="text-blue-600" size={20} />
                             <span className="font-semibold text-gray-900 text-base">Learning Objectives</span>
                           </div>
-                          <ul className="space-y-2 ml-1">
-                            {lessonOutcomes.map((outcome, idx) => (
-                              <li key={idx} className="flex items-center gap-2 text-green-700 text-sm">
-                                <CheckCircle className="w-4 h-4 text-green-500" />
-                                <span>{outcome}</span>
-                              </li>
-                            ))}
-                          </ul>
+                          <div className="space-y-2 ml-1">
+                            {/* {lessonOutcomes.map((outcome, idx) => ( */}
+                            {/* <li key={idx} className="flex items-center gap-2 text-green-700 text-sm"> */}
+                            {/* <CheckCircle className="w-4 h-4 text-green-500" /> */}
+                            {/* <span>{outcome}</span> */}
+                            <p className="text-green-700 text-sm leading-relaxed">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {lessonOutcomes}
+                              </ReactMarkdown>
+                            </p>
+                            {/* </li> */}
+                            {/* ))} */}
+                          </div>
                         </div>
                         {/* Topics Section */}
                         <div>
@@ -488,7 +495,7 @@ const AIChatLessonPlan: React.FC = () => {
                             </div>
                           )}
                           {message?.content.length > 0 && (
-                            <div className={`${ message.role === 'user' ? 'flex flex-col items-end' : ''}`}>
+                            <div className={`${message.role === 'user' ? 'flex flex-col items-end' : ''}`}>
                               <div
                                 className={`max-w-[80%] p-4 rounded-lg ${message.role === 'user'
                                   ? 'bg-blue-100 text-gray-800 rounded-br-sm'
@@ -537,7 +544,7 @@ const AIChatLessonPlan: React.FC = () => {
                       onChange={(e) => setInputMessage(e.target.value)}
                       onKeyPress={handleKeyPress}
                       placeholder="Type your message here..."
-                      className="flex-1 resize-none rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[60px] max-h-[120px]"
+                      className="flex-1 resize-none rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[3.2rem]"
                       rows={2}
                     />
                     <Button
@@ -569,14 +576,19 @@ const AIChatLessonPlan: React.FC = () => {
                         <Target className="text-blue-600" size={20} />
                         <span className="font-semibold text-gray-900 text-base">Learning Objectives</span>
                       </div>
-                      <ul className="space-y-2 ml-1">
-                        {lessonOutcomes.map((outcome, idx) => (
-                          <li key={idx} className="flex items-center gap-2 text-green-700 text-sm">
-                            <CheckCircle className="w-4 h-4 text-green-500" />
-                            <span>{outcome}</span>
-                          </li>
-                        ))}
-                      </ul>
+                      <div className="space-y-2 ml-1">
+                        {/* {lessonOutcomes.map((outcome, idx) => ( */}
+                        {/* <li key={idx} className="flex items-center gap-2 text-green-700 text-sm"> */}
+                        {/* <CheckCircle className="w-4 h-4 text-green-500" /> */}
+                        {/* <span>{outcome}</span> */}
+                        <p className="text-green-700 text-sm leading-relaxed">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {lessonOutcomes}
+                          </ReactMarkdown>
+                        </p>
+                        {/* </li> */}
+                        {/* ))} */}
+                      </div>
                     </div>
                     {/* Topics Section */}
                     <div>

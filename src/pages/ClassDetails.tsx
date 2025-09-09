@@ -382,10 +382,10 @@ const ClassDetails: React.FC = () => {
                 </div>
               </div>
 
-              <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between ">
-                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+              <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-end ">
+                {/* <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                   {student.status || 'active'}
-                </span>
+                </span> */}
                 {(
                   <button
                     onClick={(e) => {

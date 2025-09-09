@@ -145,10 +145,10 @@ const Teachers: React.FC = () => {
 
           </div>
 
-          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-end">
+            {/* <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
               {teacher.status || 'Active'}
-            </span>
+            </span> */}
             {(user?.role === 'admin' || user?.role === 'superadmin') && (
               <button
                 onClick={(e) => {
@@ -177,7 +177,7 @@ const Teachers: React.FC = () => {
               <TableHead className="font-medium">Subject</TableHead>
               <TableHead className="font-medium">Email</TableHead>
               <TableHead className="font-medium">Phone</TableHead>
-              <TableHead className="font-medium">Status</TableHead>
+              {/* <TableHead className="font-medium">Status</TableHead> */}
               <TableHead className="font-medium text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -197,11 +197,11 @@ const Teachers: React.FC = () => {
                 <TableCell>{teacher.subject}</TableCell>
                 <TableCell className="max-w-xs truncate">{teacher.email}</TableCell>
                 <TableCell>{teacher.phone_number}</TableCell>
-                <TableCell>
+                {/* <TableCell>
                   <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                     {teacher.status || 'Active'}
                   </span>
-                </TableCell>
+                </TableCell> */}
                 <TableCell>
                   <div className="flex items-center justify-center gap-2">
                     <Link

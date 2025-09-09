@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import { useSnackbar } from '../components/snackbar/SnackbarContext';
 import { getLessonPlanDataByDay } from '../services/grades';
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface Topic {
   topic_id: number;
@@ -43,15 +45,18 @@ const DayLessonPlan: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const subject = searchParams.get('subject') || '';
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
+  const subject = searchParams.get('subject') || '';
+  const chapterName = searchParams.get('chapter_name') || '';
+  const chapterNumber = searchParams.get('chapter_number') || '';
+  const progress = parseInt(searchParams.get('progress') || '0');
   const classId = searchParams.get('class_id') || '';
-  const subjectId = searchParams.get('subjectId') || '';
-  const schoolId = searchParams.get('schoolId') || '';
-  const boardId = searchParams.get('boardId') || '';
-  const chapterName = searchParams.get('chapterName') || '';
-  const pathData = `${subjectId}?class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
+  const subjectId = searchParams.get('subject_id') || '';
+  const schoolId = searchParams.get('school_id') || '';
+  const boardId = searchParams.get('school_board_id') || '';
+  const tab = searchParams.get('tab') || '';
+  const pathData = `class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}&chapter_number=${chapterNumber}&chapter_name=${chapterName}&progress=${progress}&tab=${'lesson-plan'}`;
 
 
   const [lessonData, setLessonData] = useState<LessonPlanDay | null>(null);
@@ -130,7 +135,7 @@ const DayLessonPlan: React.FC = () => {
   }, []);
 
   const handleStartTeaching = () => {
-    navigate(`/grades/lesson-plan/whiteboard/${chapterId}/${day}?subject=${subject}&subjectId=${pathData}&chapterName=${encodeURIComponent(chapterName)}&${pathData}`);
+    navigate(`/grades/lesson-plan/whiteboard/${chapterId}/${day}?subject=${subject}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`);
   };
 
   const getTotalTime = () => {
@@ -233,7 +238,7 @@ const DayLessonPlan: React.FC = () => {
                 <Button className="bg-blue-600 hover:bg-blue-700"
                   onClick={handleStartTeaching}>
                   <Play className="w-4 h-4 mr-2" />
-                  Start
+                  Open White Board
                 </Button>
               </div>
             </CardTitle>
@@ -280,7 +285,12 @@ const DayLessonPlan: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-green-700 text-sm leading-relaxed">{lessonData.learning_outcomes}</p>
+              {/* <p className="text-green-700 text-sm leading-relaxed">{lessonData.learning_outcomes}</p> */}
+              <p className="text-green-700 text-sm leading-relaxed">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {lessonData.learning_outcomes}
+                </ReactMarkdown>
+              </p>
             </CardContent>
           </Card>
 
@@ -292,7 +302,12 @@ const DayLessonPlan: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-purple-700 text-sm leading-relaxed">{lessonData.real_world_applications}</p>
+              {/* <p className="text-purple-700 text-sm leading-relaxed">{lessonData.real_world_applications}</p> */}
+              <p className="text-purple-700 text-sm leading-relaxed">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {lessonData.real_world_applications}
+                </ReactMarkdown>
+              </p>
             </CardContent>
           </Card>
 
@@ -304,7 +319,12 @@ const DayLessonPlan: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-orange-700 text-sm leading-relaxed">{lessonData.taxonomy_alignment}</p>
+              {/* <p className="text-orange-700 text-sm leading-relaxed">{lessonData.taxonomy_alignment}</p> */}
+              <p className="text-orange-700 text-sm leading-relaxed">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {lessonData.taxonomy_alignment}
+                </ReactMarkdown>
+              </p>
             </CardContent>
           </Card>
         </div>
