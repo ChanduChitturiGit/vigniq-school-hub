@@ -262,14 +262,14 @@ const Grades: React.FC = () => {
                                   <div className="flex items-center justify-between text-sm">
                                     <span className="text-gray-600">Course Progress:</span>
                                     <span className="font-medium text-gray-900">
-                                      {Math.round(classItem.progress * 100)}%
+                                      {Number(classItem.progress).toFixed(2)}%
                                     </span>
                                   </div>
                                   <div className="w-full bg-gray-200 rounded-full h-2">
                                     <div
                                       className={`bg-gradient-to-r ${colorGradient} h-2 rounded-full transition-all duration-500`}
                                       style={{
-                                        width: `${classItem.progress * 100}%`
+                                        width: `${Number(classItem.progress)}%`
                                       }}
                                     />
                                   </div>
