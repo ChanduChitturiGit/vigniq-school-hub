@@ -256,19 +256,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
   };
 
   return (
-    <div className={`bg-gradient-to-b from-blue-400 to-blue-500 text-white h-screen transition-all duration-500 ease-in-out ${isCollapsed && window.innerWidth >= 768 ? 'w-16' : 'w-64'
-      } flex flex-col`}>
+    <div className={`bg-slate-50 text-gray-700 h-screen transition-all duration-500 ease-in-out ${isCollapsed && window.innerWidth >= 768 ? 'w-16' : 'w-64'
+      } flex flex-col border-r border-gray-200`}>
       {/* Logo Section */}
-      <div className="p-4 border-b border-blue-300">
+      <div className="p-4 bg-white border-b border-gray-200">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
+          <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center">
             <img src="/assets/logo.png" alt="Logo" className="w-6 h-6 object-contain" />
           </div>
           {(!isCollapsed || window.innerWidth < 768) && (
             <div className="transition-opacity duration-500 ease-in-out w-[70%]">
-              <span className="text-xl font-bold">VIGYS AI</span>
-               <div className={`text-xs text-blue-100 mt-1 truncate `} title={schoolName}>
-                  {schoolName}
+              <span className="text-xl font-bold text-blue-600">VIGYS AI</span>
+               <div className={`text-xs text-gray-500 mt-1 truncate `} title={schoolName}>
+                  {schoolName || 'School Name here'}
                 </div>
             </div>
           )}
@@ -276,8 +276,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
       </div>
 
       {/* Navigation Menu */}
-      <nav className="flex-1 py-4">
-        <ul className="space-y-1">
+      <nav className="flex-1 py-4 px-3">
+        <ul className="space-y-2">
           {getMenuItems().map((item) => {
             if (item.roles && item.roles.includes(user?.role || '')) {
               const Icon = item.icon;
@@ -296,15 +296,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                           toggleMenu(item.key);
                         }
                       }}
-                      className={`w-full flex items-center justify-between gap-3 px-4 py-3 me-2 rounded-lg transition-all duration-300 ease-in-out ${isDropdownHighlighted
-                        ? 'bg-white/20 text-white'
-                        : 'text-white/80 hover:bg-white/10 hover:text-white'
+                      className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-all duration-200 ease-in-out ${isDropdownHighlighted
+                        ? 'bg-blue-500 text-white shadow-sm'
+                        : 'text-gray-700 hover:bg-gray-100'
                         }`}
                     >
                       <div className="flex items-center gap-3">
                         <Icon className="w-5 h-5 flex-shrink-0" />
                         {(!isCollapsed || window.innerWidth < 768) && (
-                          <span className="truncate transition-opacity duration-500 ease-in-out">{item.label}</span>
+                          <span className="truncate transition-opacity duration-500 ease-in-out font-medium">{item.label}</span>
                         )}
                       </div>
                       {(!isCollapsed || window.innerWidth < 768) && (
@@ -322,9 +322,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                               <Link
                                 to={subItem.path}
                                 onClick={handleLinkClick}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ease-in-out ${isActive(subItem.path)
-                                  ? 'bg-white/20 text-white font-medium'
-                                  : 'text-white/70 hover:bg-white/10 hover:text-white'
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ease-in-out ${isActive(subItem.path)
+                                  ? 'bg-blue-500 text-white shadow-sm font-medium'
+                                  : 'text-gray-600 hover:bg-gray-100'
                                   }`}
                               >
                                 {SubIcon && <SubIcon className="w-4 h-4" />}
@@ -351,14 +351,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                           handleLinkClick();
                         }
                       }}
-                      className={`flex items-center gap-3 px-4 py-3 me-2 rounded-lg transition-all duration-300 ease-in-out ${isActive(regularItem.path)
-                        ? 'bg-white/20 text-white font-medium'
-                        : 'text-white/80 hover:bg-white/10 hover:text-white'
+                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ease-in-out ${isActive(regularItem.path)
+                        ? 'bg-blue-500 text-white shadow-sm font-medium'
+                        : 'text-gray-700 hover:bg-gray-100'
                         }`}
                     >
                       <Icon className="w-5 h-5 flex-shrink-0" />
                       {(!isCollapsed || window.innerWidth < 768) && (
-                        <span className="truncate transition-opacity duration-500 ease-in-out">{regularItem.label}</span>
+                        <span className="truncate transition-opacity duration-500 ease-in-out font-medium">{regularItem.label}</span>
                       )}
                     </Link>
                   </li>
