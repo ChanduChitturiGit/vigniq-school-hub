@@ -2,10 +2,11 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 from django.utils.timezone import now
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate,get_user_model
 from school.models import School
 from subscriptions.models import Subscription
 
+User = get_user_model()
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     username_field = 'user_name'
 
@@ -16,16 +17,31 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         self.fields.pop('username', None)
 
     def validate(self, attrs):
+
+        username = attrs.get('user_name')
+        password = attrs.get('password')
+
+        # Check if the user exists first
+        try:
+            user_obj = User.objects.get(user_name=username)
+        except User.DoesNotExist:
+            raise AuthenticationFailed("Invalid username or password. Please try again.")
+
+        # Check active status before authenticating
+        if not user_obj.is_active:
+            raise AuthenticationFailed("Your account is inactive. Contact admin.")
+        if user_obj.role and user_obj.role_id ==4:  # Student
+            raise AuthenticationFailed("Students features are under development.")
+
+        # Now authenticate credentials
         user = authenticate(
             request=self.context.get('request'),
-            username=attrs.get('user_name'),
-            password=attrs.get('password')
+            username=username,
+            password=password
         )
 
         if not user:
             raise AuthenticationFailed("Invalid username or password. Please try again.")
-        elif user and not user.is_active:
-            raise AuthenticationFailed("Your account is inactive. Contact admin.")
         
         if not user.is_superuser:
             school_id = user.school_id

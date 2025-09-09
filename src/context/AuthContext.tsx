@@ -16,7 +16,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (username: string, password: string) => Promise<boolean>;
+  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   register: (userData: Omit<User, 'id'> & { password: string }) => Promise<boolean>;
   isAuthenticated: boolean;
@@ -92,7 +92,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  const login = async (username: string, password: string): Promise<boolean> => {
+  const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }>  => {
     try {
       const res = await loginApi({ user_name: username, password });
 
@@ -105,13 +105,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (foundUser) {
         setUser(foundUser);
         setIsAuthenticated(true);
-        return true;
+        return { success: true };
       }
 
-      return false;
+      return { success: false, error: 'User not found' };
     } catch (error) {
       console.error('Login error:', error);
-      return false; // don't crash, just return failure
+
+      let errorMsg = 'Login failed. Please try again.';
+      if (error.response && error.response.data) {
+        errorMsg =
+          error.response.data.detail || // Django REST default
+          error.response.data.error ||  // Common custom key
+          JSON.stringify(error.response.data);
+      }
+
+      return { success: false, error: errorMsg };
     }
   };
 
