@@ -14,10 +14,10 @@ class Student(models.Model):
 
     class Meta:
         db_table = 'student'
-        constraints = [
-            models.UniqueConstraint(fields=['student_id', 'roll_number'],
-                                    name='unique_student_id_roll_number')
-        ]
+        # constraints = [
+        #     models.UniqueConstraint(fields=['student_id', 'roll_number'],
+        #                             name='unique_student_id_roll_number')
+        # ]
 
 class StudentClassAssignment(models.Model):
     student = models.ForeignKey(Student, to_field='student_id', on_delete=models.CASCADE)
