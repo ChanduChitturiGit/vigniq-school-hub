@@ -579,13 +579,13 @@ const StudentDetails: React.FC = () => {
         </div>
 
         {/* Status */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        {/* <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Status</h2>
           <div className="flex items-center gap-4">
             <span className="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-green-100 text-green-800">
               {studentData.status || 'Active'}
             </span>
-            {/* {isEditing && (
+            {isEditing && (
               <select
                 value={studentData.status}
                 onChange={(e) => handleInputChange('status', e.target.value)}
@@ -596,9 +596,9 @@ const StudentDetails: React.FC = () => {
                 <option value="Suspended">Suspended</option>
                 <option value="Graduated">Graduated</option>
               </select>
-            )} */}
+            )}
           </div>
-        </div>
+        </div> */}
       </div>
     </MainLayout>
   );

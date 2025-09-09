@@ -321,9 +321,9 @@ const CreateLessonPlan: React.FC = () => {
               <div>
                 {/* <h1 className="text-3xl font-bold text-gray-900 mb-2">AI Generated Lesson Plan Breakdown</h1> */}
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
-                  <p className="text-md md:text-lg font-medium text-gray-700">Class: {subject} - {className}</p>
+                  <p className="text-md md:text-lg font-medium text-gray-700">{className} - {section}</p>
                   <p className="text-base text-gray-600">Subject: {subject}</p>
-                  <p className="text-base text-gray-600">Chapter: Chapter {generatedPlan.chapter_number}: {generatedPlan.chapter_title}</p>
+                  <p className="text-base text-gray-600">Chapter: {generatedPlan.chapter_number}: {generatedPlan.chapter_title}</p>
                   <p className="text-base text-gray-600">Total Days: {generatedPlan.total_days}</p>
                 </div>
               </div>
@@ -466,7 +466,7 @@ const CreateLessonPlan: React.FC = () => {
             <div className="text-center mb-8">
               {/* <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Lesson Plan</h1> */}
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
-                <p className="text-lg font-medium text-gray-700">Class: {className} - {section}</p>
+                <p className="text-lg font-medium text-gray-700">{className} - {section}</p>
                 <p className="text-base text-gray-600">Subject: {subject}</p>
                 <p className="text-base text-gray-600">Chapter {chapterId}: {chapterName}</p>
               </div>

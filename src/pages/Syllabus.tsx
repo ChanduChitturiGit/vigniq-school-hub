@@ -194,7 +194,7 @@ const Syllabus: React.FC = () => {
                   to={`/grades/chapter/${chapter.chapter_id}?${pathData}&chapter_name=${encodeURIComponent(chapter.chapter_name)}&chapter_number=${chapter.chapter_number}&progress=${chapter.progress}`}
                   className="group"
                 >
-                  <Card className="hover:shadow-lg transition-all duration-300 group-hover:-translate-y-1 overflow-hidden">
+                  <Card className="h-[19rem] hover:shadow-lg transition-all duration-300 group-hover:-translate-y-1 overflow-hidden">
                     {/* Gradient Header */}
                     <div className="h-2 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500"></div>
 
@@ -230,10 +230,12 @@ const Syllabus: React.FC = () => {
                           />
                         </div>
 
-                        <div className="flex items-center justify-between pt-2">
+                        <div className="flex items-center justify-between pt-2 gap-1">
                           <div className="flex items-center gap-2">
                             <FileText className="w-4 h-4 text-gray-500" />
                             <span className="text-sm text-gray-600">Lesson Plan</span>
+                          </div>
+                          <div className='flex items-center gap-2'>
                             <StatusIcon className={`w-4 h-4 ${statusColor}`} />
                             <span className={`text-xs font-medium ${statusColor}`}>
                               {chapter.status === 'ready' ? 'Ready' : 'Pending'}

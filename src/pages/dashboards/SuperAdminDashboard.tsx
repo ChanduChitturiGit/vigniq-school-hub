@@ -25,11 +25,11 @@ const SuperAdminDashboard: React.FC = () => {
     total_schools: 0,
     total_active_users: 0,
     total_ebooks: 0,
-    totalAdmins: 35,
-    activeSchools: 23,
-    pendingRequests: 8,
-    completedRequests: 156,
-    inProgressRequests: 12
+    totalAdmins: 0,
+    activeSchools: 0,
+    pendingRequests: 0,
+    completedRequests: 0,
+    inProgressRequests: 0
   });
 
   const recentActivities = [
