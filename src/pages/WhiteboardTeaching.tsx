@@ -50,15 +50,18 @@ const WhiteboardTeaching: React.FC = () => {
   const { chapterId, day } = useParams();
   const [searchParams] = useSearchParams();
   
-   const subject = searchParams.get('subject') || '';
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
+  const subject = searchParams.get('subject') || '';
+  const chapterName = searchParams.get('chapter_name') || '';
+  const chapterNumber = searchParams.get('chapter_number') || '';
+  const progress = parseInt(searchParams.get('progress') || '0');
   const classId = searchParams.get('class_id') || '';
-  const subjectId = searchParams.get('subjectId') || '';
-  const schoolId = searchParams.get('schoolId') || '';
-  const boardId = searchParams.get('boardId') || '';
-  const chapterName = searchParams.get('chapterName') || '';
-  const pathData = `class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
+  const subjectId = searchParams.get('subject_id') || '';
+  const schoolId = searchParams.get('school_id') || '';
+  const boardId = searchParams.get('school_board_id') || '';
+  const tab = searchParams.get('tab') || '';
+  const pathData = `class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}&chapter_number=${chapterNumber}&chapter_name=${chapterName}&progress=${progress}&tab=${tab}`;
 
 
 
@@ -232,7 +235,7 @@ const WhiteboardTeaching: React.FC = () => {
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <Link
-                to={`/grades/lesson-plan/day/${chapterId}/${day}?${pathData}&chapterName=${encodeURIComponent(chapterName)}&${pathData}`}
+                to={`/grades/lesson-plan/day/${chapterId}/${day}?${pathData}`}
                 className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
               >
                 <ArrowLeft className="w-4 h-4" />
