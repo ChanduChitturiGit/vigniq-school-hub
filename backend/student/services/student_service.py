@@ -383,6 +383,7 @@ class StudentService:
                 "roll_number": student.roll_number,
                 "parent_name": student.parent_name,
                 "parent_phone": student.parent_phone,
+                'parent_email': student.parent_email,
                 "is_active": student.is_active,
                 "class_number": class_instance.class_instance_id,
                 "class_id": class_instance.id,
