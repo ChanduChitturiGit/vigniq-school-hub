@@ -70,7 +70,7 @@ class SchoolLessonPlanDay(models.Model):
     day = models.IntegerField()
     learning_outcomes = models.TextField()
     real_world_applications = models.TextField()
-    taxonomy_alignment = models.CharField(max_length=255)
+    taxonomy_alignment = models.TextField()
     
     status = models.CharField(
         max_length=20,
@@ -145,8 +145,9 @@ class ChatMessage(models.Model):
 
 class WhiteboardSession(models.Model):
     session_id = models.CharField(max_length=100, unique=True,primary_key=True)
-    topic = models.ForeignKey(
-        Topic, on_delete=models.CASCADE, related_name="whiteboard_sessions"
+    lesson_plan_day = models.ForeignKey(
+        SchoolLessonPlanDay, on_delete=models.CASCADE, related_name="whiteboard_sessions",
+        null=True, blank=True
     )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -156,7 +157,7 @@ class WhiteboardSession(models.Model):
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=['session_id']),
-            models.Index(fields=['topic']),
+            models.Index(fields=['lesson_plan_day']),
         ]
 
 class WhiteboardDataChunk(models.Model):

@@ -4,6 +4,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from django.utils.timezone import now
 from django.contrib.auth import authenticate
 from school.models import School
+from subscriptions.models import Subscription
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     username_field = 'user_name'
@@ -25,6 +26,18 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             raise AuthenticationFailed("Invalid username or password. Please try again.")
         elif user and not user.is_active:
             raise AuthenticationFailed("Your account is inactive. Contact admin.")
+        
+        if not user.is_superuser:
+            school_id = user.school_id
+            if not school_id:
+                raise AuthenticationFailed("User is not associated with any school. Please contact support.")
+            
+            subscription = Subscription.objects.filter(school_id=school_id, is_active=True)
+            if not subscription.exists():
+                raise AuthenticationFailed("Your school is not associated with any subscription. Please contact support or your school admin.")
+            expiry_date = subscription.first().expiry_date
+            if expiry_date < now().date():
+                raise AuthenticationFailed("Your subscription has expired. Please contact support or your school admin.")
 
         data = super().validate(attrs)
         school_name = School.objects.get(id=user.school_id).name if user.school_id else None

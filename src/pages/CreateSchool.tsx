@@ -10,6 +10,7 @@ import { createSchool as createSchoolApi, getBoardsList } from '../services/scho
 import { SpinnerOverlay } from '../pages/SpinnerOverlay';
 import Select, { ActionMeta, MultiValue } from 'react-select';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
+import { getPackages } from "../services/payment";
 
 type OptionType = {
   label: string;
@@ -41,10 +42,14 @@ const CreateSchool: React.FC = () => {
     accountType: '',
     selectPackage: '',
     amount: '',
-    paymentType: ''
+    paymentType: '',
+    transactionId: '',
+    freetrialPeriod : '',
+    package_id : null
   });
   const [boardInput, setBoardInput] = useState('');
   const [showBoardSuggestions, setShowBoardSuggestions] = useState(false);
+  const [packages, setPackages] = useState([]);
   const [errors, setErrors] = useState({
     schoolName: '',
     address: '',
@@ -62,8 +67,13 @@ const CreateSchool: React.FC = () => {
     accountType: '',
     selectPackage: '',
     amount: '',
-    paymentType: ''
+    paymentType: '',
+    transactionId: '',
+    freetrialPeriod : ''
   });
+
+
+
   const boardSuggestions = [
     { boardId: 1, boardName: 'SSC' },
     { boardId: 2, boardName: 'CBSE' },
@@ -92,8 +102,18 @@ const CreateSchool: React.FC = () => {
     }
   }
 
+  //getPackages
+  const getPlanPackages = async () => {
+    const response = await getPackages();
+    if (response && response.data) {
+      setPackages(response.data);
+    }
+  }
+
+
   useEffect(() => {
     boardsList();
+    getPlanPackages();
   }, []);
 
   // Validation function for all fields
@@ -151,10 +171,13 @@ const CreateSchool: React.FC = () => {
         if (!value) error = 'Package selection is required';
         break;
       case 'amount':
-        if (!value) error = 'Amount is required';
+        if (formData.accountType == 'paid' && !value) error = 'Amount is required';
         break;
       case 'paymentType':
-        if (!value) error = 'Payment Type is required';
+        if (formData.accountType == 'paid' && !value) error = 'Payment Type is required';
+        break;
+      case 'transactionId':
+        if (formData.accountType == 'paid' && formData.paymentType == 'online' && !value) error = 'Transaction ID is required';
         break;
       default:
         break;
@@ -215,18 +238,25 @@ const CreateSchool: React.FC = () => {
 
   const steps = [
     { number: 1, title: 'School Information', completed: currentStep > 1 },
-    { number: 2, title: 'Account Type', completed: currentStep > 2 },
-    { number: 3, title: 'Admin Information', completed: false }
+    { number: 2, title: 'Admin Information', completed: currentStep > 2 },
+    { number: 3, title: 'Account Type', completed: false },
   ];
 
   const handleNext = () => {
     // Validate current step
     let fieldsToValidate: string[] = [];
-    
+
     if (currentStep === 1) {
       fieldsToValidate = ['schoolName', 'selectedBoards', 'academic_start_year', 'academic_end_year', 'address', 'phone', 'email'];
     } else if (currentStep === 2) {
-      fieldsToValidate = ['accountType', 'selectPackage', 'amount', 'paymentType'];
+      fieldsToValidate = [
+        'adminFirstName',
+        'adminLastName',
+        'adminUserName',
+        'adminEmail',
+        'adminPassword',
+        'adminPhone'
+      ];
     }
 
     let valid = true;
@@ -253,20 +283,47 @@ const CreateSchool: React.FC = () => {
     setCurrentStep(currentStep - 1);
   };
 
+
+
   const handleAccountTypeChange = (value: string) => {
     setFormData(prev => ({ ...prev, accountType: value }));
     setErrors(prev => ({ ...prev, accountType: '' }));
+    if (value === 'trial') {
+      setFormData(prev => ({ ...prev, selectPackage: 'Premium', amount: '', paymentType: '', transactionId: '', freetrialPeriod : '12 Months' }));
+      setErrors(prev => ({ ...prev, selectPackage: '', amount: '', paymentType: '', transactionId: '', freetrialPeriod : '' }));
+      handleSelectPackageChange('Premium');
+    }
   };
 
+  const getPackageId = (name: string) => {
+    const data = packages.find((val: any) => (val.package_name) == name);
+    const id = data?.package_id ? data.package_id : 0;
+    return id;
+  }
+
   const handleSelectPackageChange = (value: string) => {
-    setFormData(prev => ({ ...prev, selectPackage: value }));
-    setErrors(prev => ({ ...prev, selectPackage: '' }));
+    setFormData(prev => ({ ...prev,
+       selectPackage: value 
+      }));
+    setErrors(prev => ({ ...prev, selectPackage: '',package_id : getPackageId(value) }));
+  };
+
+  //handleFreetrialPeriod
+  const handleFreetrialPeriod = (value: string) => {
+    setFormData(prev => ({ ...prev, freetrialPeriod: value }));
+    setErrors(prev => ({ ...prev, freetrialPeriod: '' }));
   };
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
     setFormData(prev => ({ ...prev, amount: value }));
     setErrors(prev => ({ ...prev, amount: '' }));
+  };
+
+  const handleTransactionIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    setFormData(prev => ({ ...prev, transaction_id: value, transactionId: value }));
+    setErrors(prev => ({ ...prev, transactionId: '' }));
   };
 
   const handlePaymentTypeChange = (value: string) => {
@@ -283,7 +340,7 @@ const CreateSchool: React.FC = () => {
     const fieldsToValidate = [
       'schoolName', 'address', 'phone', 'email',
       'adminFirstName', 'adminLastName', 'adminUserName', 'adminEmail', 'adminPassword', 'adminPhone',
-      'selectedBoards', 'academic_start_year', 'academic_end_year', 'accountType', 'selectPackage', 'amount', 'paymentType'
+      'selectedBoards', 'academic_start_year', 'academic_end_year', 'accountType', 'selectPackage', 'amount', 'paymentType', 'transactionId'
     ];
     let valid = true;
     fieldsToValidate.forEach(field => {
@@ -296,7 +353,7 @@ const CreateSchool: React.FC = () => {
         valid = false;
         showSnackbar({
           title: "⛔ Error",
-          description: "Something went wrong",
+          description: "Please fill all the required fields correctly",
           status: "error"
         });
         return;
@@ -305,8 +362,13 @@ const CreateSchool: React.FC = () => {
 
     // Wait for errors state to update
     setTimeout(async () => {
-      if (Object.values(errors).some(error => error)) {
+      if (!valid) {
         setLoader(false);
+        showSnackbar({
+          title: "⛔ Error",
+          description: "Something went wrong",
+          status: "error"
+        });
         return;
       }
 
@@ -324,10 +386,12 @@ const CreateSchool: React.FC = () => {
         password: formData.adminPassword,
         academic_start_year: Number(formData.academic_start_year),
         academic_end_year: Number(formData.academic_end_year),
-        account_type: formData.accountType,
+        subscription_type: formData.accountType,
         select_package: formData.selectPackage,
-        amount: formData.amount,
-        payment_type: formData.paymentType
+        package_id : formData.package_id ?? getPackageId(formData.selectPackage),
+        subscription_amount: formData.amount,
+        payment_method: formData.paymentType,
+        transaction_ref : formData.transactionId || '',
       };
 
       try {
@@ -355,7 +419,7 @@ const CreateSchool: React.FC = () => {
         });
       }
       setLoader(false);
-    }, 0);
+    }, 10);
   };
 
   const renderStepContent = () => {
@@ -364,7 +428,7 @@ const CreateSchool: React.FC = () => {
         return (
           <div className="space-y-6">
             <h2 className="text-xl font-semibold text-foreground">School Information</h2>
-            
+
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">School Name *</label>
               <input
@@ -474,69 +538,6 @@ const CreateSchool: React.FC = () => {
       case 2:
         return (
           <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Type of Account *</label>
-              <UISelect value={formData.accountType} onValueChange={handleAccountTypeChange}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Paid" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="free">Free</SelectItem>
-                </SelectContent>
-              </UISelect>
-              {errors.accountType && <p className="text-destructive text-sm mt-1">{errors.accountType}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Select Package *</label>
-              <UISelect value={formData.selectPackage} onValueChange={handleSelectPackageChange}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Premium" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="premium">Premium</SelectItem>
-                  <SelectItem value="standard">Standard</SelectItem>
-                  <SelectItem value="basic">Basic</SelectItem>
-                </SelectContent>
-              </UISelect>
-              {errors.selectPackage && <p className="text-destructive text-sm mt-1">{errors.selectPackage}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Amount *</label>
-              <input
-                type="number"
-                name="amount"
-                value={formData.amount}
-                onChange={handleAmountChange}
-                placeholder="Enter amount"
-                className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring bg-background text-foreground"
-              />
-              {errors.amount && <p className="text-destructive text-sm mt-1">{errors.amount}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Payment Type *</label>
-              <UISelect value={formData.paymentType} onValueChange={handlePaymentTypeChange}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select Payment Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="credit_card">Credit Card</SelectItem>
-                  <SelectItem value="debit_card">Debit Card</SelectItem>
-                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                  <SelectItem value="paypal">PayPal</SelectItem>
-                </SelectContent>
-              </UISelect>
-              {errors.paymentType && <p className="text-destructive text-sm mt-1">{errors.paymentType}</p>}
-            </div>
-          </div>
-        );
-
-      case 3:
-        return (
-          <div className="space-y-6">
             <h2 className="text-xl font-semibold text-foreground">Admin Information</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -619,7 +620,119 @@ const CreateSchool: React.FC = () => {
                 />
                 {errors.adminPassword && <p className="text-destructive text-sm mt-1">{errors.adminPassword}</p>}
               </div>
+
+              <div>
+              <input type="text" name="fake_username" autoComplete="username" className="hidden" />
+              <input type="password" name="fake_password" autoComplete="new-password" className="hidden" />
             </div>
+            </div>
+          </div>
+        );
+
+      case 3:
+        return (
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Type of Account *</label>
+              <UISelect value={formData.accountType} onValueChange={handleAccountTypeChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Account Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="trial">Trial</SelectItem>
+                </SelectContent>
+              </UISelect>
+              {errors.accountType && <p className="text-destructive text-sm mt-1">{errors.accountType}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Package *</label>
+              <UISelect value={formData.selectPackage} onValueChange={handleSelectPackageChange}
+                disabled={formData.accountType == 'trial'}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select the package" />
+                </SelectTrigger>
+                <SelectContent>
+                  {packages.map((val, index) => (
+                    <SelectItem key={index} value={val.package_name}>
+                      {val.package_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </UISelect>
+              {errors.selectPackage && <p className="text-destructive text-sm mt-1">{errors.selectPackage}</p>}
+            </div>
+
+            {
+              (formData.accountType == 'trial') && (
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Free trial Period </label>
+                  <UISelect value={formData.freetrialPeriod} onValueChange={handleFreetrialPeriod}
+                    disabled={true}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select the Free trial period" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="3 Months">3 Months</SelectItem>
+                      <SelectItem value="12 Months">12 Months</SelectItem>
+                    </SelectContent>
+                  </UISelect>
+                  {/* {errors.selectPackage && <p className="text-destructive text-sm mt-1">{errors.selectPackage}</p>} */}
+                </div>
+              )
+            }
+
+            {
+              formData.accountType == 'paid' && (
+                <div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">Amount *</label>
+                    <input
+                      type="number"
+                      name="amount"
+                      value={formData.amount}
+                      onChange={handleAmountChange}
+                      placeholder="Enter amount"
+                      className="w-full mb-2 px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring bg-background text-foreground"
+                    />
+                    {errors.amount && <p className="text-destructive text-sm mt-1">{errors.amount}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-foreground my-2">Payment Type *</label>
+                    <UISelect value={formData.paymentType} onValueChange={handlePaymentTypeChange}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select Payment Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="online">Online</SelectItem>
+                        <SelectItem value="cash">Cash</SelectItem>
+                      </SelectContent>
+                    </UISelect>
+                    {errors.paymentType && <p className="text-destructive text-sm mt-1">{errors.paymentType}</p>}
+                  </div>
+                </div>
+              )
+            }
+
+            {
+              (formData.accountType == 'paid' && formData.paymentType == 'online') && (
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Transaction ID *</label>
+                  <input
+                    type="text"
+                    name="transactionId"
+                    value={formData.transactionId}
+                    onChange={handleTransactionIdChange}
+                    placeholder="Enter amount"
+                    className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring bg-background text-foreground"
+                  />
+                  {errors.transactionId && <p className="text-destructive text-sm mt-1">{errors.transactionId}</p>}
+                </div>
+              )
+            }
+
           </div>
         );
 
@@ -637,38 +750,35 @@ const CreateSchool: React.FC = () => {
           <div className="bg-card p-8 rounded-lg shadow-sm border border-border">
             {/* <h1 className="text-2xl font-bold text-foreground mb-8">Create School</h1> */}
             {/* Step Indicator */}
-            <div className="flex items-center justify-between mb-12 px-4 md:px-8">
+            <div className="flex items-center justify-center mb-12 w-full">
               {steps.map((step, index) => (
                 <React.Fragment key={step.number}>
-                  <div className="flex flex-col items-center min-w-0 flex-1">
+                  <div className="flex flex-col items-center">
                     <div
-                      className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-semibold border-2 transition-all duration-200 ${
-                        step.completed
-                          ? 'bg-blue-600 text-white border-blue-600'
-                          : step.number === currentStep
+                      className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-semibold border-2 transition-all duration-200 ${step.completed
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : step.number === currentStep
                           ? 'bg-blue-600 text-white border-blue-600'
                           : 'bg-background text-muted-foreground border-muted'
-                      }`}
+                        }`}
                     >
                       {step.completed ? <Check size={18} /> : step.number}
                     </div>
-                    <span className={`text-sm mt-3 text-center font-medium max-w-24 ${
-                      step.number === currentStep 
-                        ? 'text-blue-600' 
-                        : step.completed 
+                    <span className={`text-sm mt-3 text-center font-medium  max-w-24 ${step.number === currentStep
+                      ? 'text-blue-600'
+                      : step.completed
                         ? 'text-foreground'
                         : 'text-muted-foreground'
-                    }`}>
+                      }`}>
                       {step.title}
                     </span>
                   </div>
                   {index < steps.length - 1 && (
-                    <div className="flex-1 mx-4">
-                      <div
-                        className={`h-0.5 w-full transition-all duration-200 ${
-                          step.completed ? 'bg-blue-600' : 'bg-muted'
-                        }`}
-                      />
+                    <div className="flex items-center flex-1 mx-2 md:mx-6 mt-[1.5rem]">
+                      <div className="w-full h-0.5 bg-muted rounded-full" style={{
+                        backgroundColor: steps[index].completed ? '#2563eb' : '#e5e7eb',
+                        minWidth: '40px'
+                      }} />
                     </div>
                   )}
                 </React.Fragment>
@@ -684,11 +794,10 @@ const CreateSchool: React.FC = () => {
                   type="button"
                   onClick={handlePrevious}
                   disabled={currentStep === 1}
-                  className={`px-6 py-2 rounded-lg transition-colors ${
-                    currentStep === 1
-                      ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                      : 'bg-muted text-foreground hover:bg-muted/80'
-                  }`}
+                  className={`px-6 py-2 rounded-lg transition-colors ${currentStep === 1
+                    ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                    : 'bg-muted text-foreground hover:bg-muted/80'
+                    }`}
                 >
                   Previous
                 </button>

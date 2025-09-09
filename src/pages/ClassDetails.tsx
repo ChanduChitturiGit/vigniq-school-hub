@@ -188,7 +188,9 @@ const ClassDetails: React.FC = () => {
   const deleteStudent = async (studentId: string) => {
     setLoader(true);
     try {
-      const response = await deleteStudentById({ student_id: studentId, school_id: userData.school_id });
+      const response = await deleteStudentById({
+         student_id: studentId, school_id: userData.role == 'superadmin' ? schoolId : userData.school_id 
+        });
       if (response && response.message) {
         // setStudents(students.filter(student => student.student_id !== studentId));
         showSnackbar({
@@ -380,10 +382,10 @@ const ClassDetails: React.FC = () => {
                 </div>
               </div>
 
-              <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between ">
-                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+              <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-end ">
+                {/* <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                   {student.status || 'active'}
-                </span>
+                </span> */}
                 {(
                   <button
                     onClick={(e) => {

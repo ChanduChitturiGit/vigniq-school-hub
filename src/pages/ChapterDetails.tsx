@@ -90,39 +90,39 @@ const ChapterDetails: React.FC = () => {
     { label: `Chapter ${chapterNumber}: ${chapterName}` }
   ];
 
-  const sampleTopics: Topic[] = [
-    { sub_topic_id: 1, sub_topic: 'Introduction to Real Numbers', completed: true },
-    { sub_topic_id: 2, sub_topic: 'Rational and Irrational Numbers', completed: true },
-    { sub_topic_id: 3, sub_topic: 'Decimal Representation', completed: false },
-    { sub_topic_id: 4, sub_topic: 'Operations on Real Numbers', completed: false },
-    { sub_topic_id: 5, sub_topic: 'Laws of Exponents', completed: false }
-  ];
+  // const sampleTopics: Topic[] = [
+  //   { sub_topic_id: 1, sub_topic: 'Introduction to Real Numbers', completed: true },
+  //   { sub_topic_id: 2, sub_topic: 'Rational and Irrational Numbers', completed: true },
+  //   { sub_topic_id: 3, sub_topic: 'Decimal Representation', completed: false },
+  //   { sub_topic_id: 4, sub_topic: 'Operations on Real Numbers', completed: false },
+  //   { sub_topic_id: 5, sub_topic: 'Laws of Exponents', completed: false }
+  // ];
 
-  const samplePrerequisites: Prerequisite[] = [
-    {
-      prerequisite_id: 1,
-      topic: 'Basic Algebra and Squaring',
-      explanation: 'Understanding basic algebraic manipulation and the concept of squaring a number is crucial for following the proofs in this chapter. **Basic Algebra:** This involves working with variables (like \'a\' or \'b\'), performing operations (addition, subtraction, multiplication, division) with them, and solving simple equations. **Squaring:** Multiplying a number by itself. For example, \'a squared\' (a²) means a × a. Example: - If a = 5, then a² = 5 × 5 = 25. - If you have an equation like b² = 2c², you should understand that if 2 divprerequisite_ides b², it implies something about b.'
-    },
-    {
-      prerequisite_id: 2,
-      topic: 'Coprime Numbers (Relatively Prime)',
-      explanation: 'Two numbers are coprime if their greatest common divisor (GCD) is 1. This concept is fundamental in proofs involving rational numbers.'
-    },
-    {
-      prerequisite_id: 3,
-      topic: 'Highest Common Factor (HCF) and Least Common Multiple (LCM)',
-      explanation: 'Understanding HCF and LCM is essential for simplifying fractions and understanding rational number properties.'
-    }
-  ];
+  // const samplePrerequisites: Prerequisite[] = [
+  //   {
+  //     prerequisite_id: 1,
+  //     topic: 'Basic Algebra and Squaring',
+  //     explanation: 'Understanding basic algebraic manipulation and the concept of squaring a number is crucial for following the proofs in this chapter. **Basic Algebra:** This involves working with variables (like \'a\' or \'b\'), performing operations (addition, subtraction, multiplication, division) with them, and solving simple equations. **Squaring:** Multiplying a number by itself. For example, \'a squared\' (a²) means a × a. Example: - If a = 5, then a² = 5 × 5 = 25. - If you have an equation like b² = 2c², you should understand that if 2 divprerequisite_ides b², it implies something about b.'
+  //   },
+  //   {
+  //     prerequisite_id: 2,
+  //     topic: 'Coprime Numbers (Relatively Prime)',
+  //     explanation: 'Two numbers are coprime if their greatest common divisor (GCD) is 1. This concept is fundamental in proofs involving rational numbers.'
+  //   },
+  //   {
+  //     prerequisite_id: 3,
+  //     topic: 'Highest Common Factor (HCF) and Least Common Multiple (LCM)',
+  //     explanation: 'Understanding HCF and LCM is essential for simplifying fractions and understanding rational number properties.'
+  //   }
+  // ];
 
-  const sampleLessonPlan: LessonPlan = [
-    { lesson_plan_day_id: 1, day: 1, status: "not_started" },
-    { lesson_plan_day_id: 2, day: 2, status: "not_started" },
-    { lesson_plan_day_id: 3, day: 3, status: "not_started" },
-    { lesson_plan_day_id: 4, day: 4, status: "not_started" },
-    { lesson_plan_day_id: 5, day: 5, status: "not_started" }
-  ];
+  // const sampleLessonPlan: LessonPlan = [
+  //   { lesson_plan_day_id: 1, day: 1, status: "not_started" },
+  //   { lesson_plan_day_id: 2, day: 2, status: "not_started" },
+  //   { lesson_plan_day_id: 3, day: 3, status: "not_started" },
+  //   { lesson_plan_day_id: 4, day: 4, status: "not_started" },
+  //   { lesson_plan_day_id: 5, day: 5, status: "not_started" }
+  // ];
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -297,9 +297,6 @@ const ChapterDetails: React.FC = () => {
 
   useEffect(() => {
     getGradesData();
-    setTopics(sampleTopics);
-    setPrerequisites(samplePrerequisites);
-    setLessonPlan(sampleLessonPlan);
   }, []);
 
   const handleAddTopic = () => {
@@ -372,10 +369,10 @@ const ChapterDetails: React.FC = () => {
         {/* <Breadcrumb items={breadcrumbItems} /> */}
 
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center justify-between">
           <Link
             to={`/grades/syllabus/${chapterId}?${pathData}`}
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+            className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             <span className="font-medium">Back to Subject</span>
@@ -401,23 +398,23 @@ const ChapterDetails: React.FC = () => {
 
         {/* Tabs */}
         <Tabs defaultValue={tab && tab.length>0 ?  tab : `topics`} className="space-y-6">
-          <TabsList className="grid w-[30%] grid-cols-3 bg-gray-100">
-            <TabsTrigger value="topics" className="flex items-center gap-2">
+          <TabsList className="grid md:w-[60%] xl:w-[40%] grid-cols-3 bg-gray-100">
+            <TabsTrigger value="topics" className="flex items-center gap-1 md:gap-2">
               <BookOpen className="w-4 h-4" />
               Topics
             </TabsTrigger>
-            <TabsTrigger value="lesson-plan" className="flex items-center gap-2">
+            <TabsTrigger value="lesson-plan" className="flex items-center gap-1 md:gap-2">
               <FileText className="w-4 h-4" />
               Lesson Plan
             </TabsTrigger>
-            <TabsTrigger value="prerequisites" className="flex items-center gap-2">
+            <TabsTrigger value="prerequisites" className="flex items-center gap-1 md:gap-2">
               <Lightbulb className="w-4 h-4" />
               Prerequisites
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="topics" className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">Chapter Topics</h2>
                 <p className="text-gray-600">Manage topics for this chapter</p>
@@ -543,35 +540,35 @@ const ChapterDetails: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="lesson-plan" className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">Lesson Plan</h2>
                 <p className="text-gray-600">Create and manage lesson plans for this chapter</p>
               </div>
-              <div className='flex gap-2'>
+              <div className='flex flex-col md:flex-row gap-2'>
                 {lessonPlan && lessonPlan.length > 0 ? (
-                  <Link to={`/grades/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}&${pathData}`}>
+                  <Link to={`/grades/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`}>
                     <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
                       <RefreshCw className="w-4 h-4" />
                       Re-generate Lesson Plan
                     </Button>
                   </Link>
                 ) : (
-                  <Link to={`/grades/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}&${pathData}`}>
+                  <Link to={`/grades/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`}>
                     <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
                       <Plus className="w-4 h-4" />
                       Generate Lesson Plan
                     </Button>
                   </Link>
                 )}
-                <Link
+                {/* <Link
                   to={`/grades/lesson-plan/customize/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}&${pathData}`}
                 >
                   <Button className="bg-purple-600 hover:bg-purple-700">
                     <MessageSquare className="w-4 h-4 mr-2" />
                     Customize Lesson Plan
                   </Button>
-                </Link>
+                </Link> */}
               </div>
             </div>
 
@@ -597,7 +594,7 @@ const ChapterDetails: React.FC = () => {
 
                           <div className="flex flex-col gap-1 space-y-2">
                             <Link
-                              to={`/grades/lesson-plan/day/${chapterId}/${day.lesson_plan_day_id}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}&day=${day.day}&${pathData}`}
+                              to={`/grades/lesson-plan/day/${chapterId}/${day.lesson_plan_day_id}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&day=${day.day}&${pathData}`}
                               className="w-full"
                             >
                               <Button variant="outline" className="w-full flex items-center gap-2 text-blue-600 border-blue-200 hover:bg-blue-50">
@@ -607,7 +604,7 @@ const ChapterDetails: React.FC = () => {
                             </Link>
 
                             <Link
-                              to={`/grades/lesson-plan/ai-chat/${chapterId}/${day.day}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}&${pathData}`}
+                              to={`/grades/lesson-plan/ai-chat/${chapterId}/${day.day}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`}
                               className="w-full"
                             >
                               <Button className="w-full flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white">
@@ -631,7 +628,7 @@ const ChapterDetails: React.FC = () => {
                   <p className="text-gray-500 mb-4">
                     Generate a lesson plan for this chapter to get started with structured teaching.
                   </p>
-                  <Link to={`/grades/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`}>
+                  <Link to={`/grades/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`}>
                     <Button className="bg-blue-600 hover:bg-blue-700">
                       Create Lesson Plan
                     </Button>
@@ -642,7 +639,7 @@ const ChapterDetails: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="prerequisites" className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">Prerequisites</h2>
                 <p className="text-gray-600">Define prerequisites for this chapter</p>

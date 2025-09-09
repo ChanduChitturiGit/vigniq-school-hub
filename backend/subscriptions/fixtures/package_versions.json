@@ -1,0 +1,47 @@
+[   
+    {
+        "model": "subscriptions.packageversion",
+        "pk": 1,
+        "fields": {
+            "package": 1,
+            "version": 1,
+            "version_name": "Basic v1 - 12 Months",
+            "price": "49.99",
+            "currency": 1,
+            "duration_months": 12,
+            "is_active": true,
+            "created_at": "2024-10-01T00:00:00Z",
+            "updated_at": "2024-10-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "subscriptions.packageversion",
+        "pk": 2,
+        "fields": {
+            "package": 2,
+            "version": 1,
+            "version_name": "Standard v1 - 12 Months",
+            "price": "59.99",
+            "currency": 1,
+            "duration_months": 12,
+            "is_active": true,
+            "created_at": "2024-10-01T00:00:00Z",
+            "updated_at": "2024-10-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "subscriptions.packageversion",
+        "pk": 3,
+        "fields": {
+            "package": 3,
+            "version": 1,
+            "version_name": "Premium v1 - 12 Months",
+            "price": "99.99",
+            "currency": 1,
+            "duration_months": 12,
+            "is_active": true,
+            "created_at": "2024-10-01T00:00:00Z",
+            "updated_at": "2024-10-01T00:00:00Z"
+        }
+    }
+]

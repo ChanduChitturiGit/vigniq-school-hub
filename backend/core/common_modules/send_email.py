@@ -48,11 +48,14 @@ class EmailService:
 
             html_content = render_to_string(html_path, context)
 
+            if isinstance(to_email, str):
+                to_email = [to_email]
+
             msg = EmailMultiAlternatives(
                 subject=subject, 
                 body='',
                 from_email=from_email,
-                to = [to_email]
+                to=to_email
             )
             msg.attach_alternative(html_content, "text/html")
             msg.send()
@@ -73,7 +76,7 @@ class EmailService:
             tuple: Subject and HTML content for the email.
         """
         if email_type == 'welcome':
-            subject = "Welcome to Vigniq"
+            subject = "Welcome to VIGYS AI"
             html_path = "email/welcome_email.html"
         elif email_type == 'password_reset':
             subject = "Password Reset Request"

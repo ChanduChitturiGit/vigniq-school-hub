@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
@@ -41,17 +41,19 @@ const CreateLessonPlan: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const subject = searchParams.get('subject') || '';
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
-  const classId = Number(searchParams.get('class_id')) || '';
-  const chapterName = decodeURIComponent(searchParams.get('chapterName') || '');
-  const schoolId = Number(searchParams.get('school_id')) || userData.school_id || '';
-  const subjectId = Number(searchParams.get('subjectId')) || '';
-  const boardId = Number(searchParams.get('school_board_id')) || '';
-  
+  const subject = searchParams.get('subject') || '';
+  const chapterName = searchParams.get('chapter_name') || '';
+  const chapterNumber = searchParams.get('chapter_number') || '';
+  const progress = parseInt(searchParams.get('progress') || '0');
+  const classId = searchParams.get('class_id') || '';
+  const subjectId = searchParams.get('subject_id') || '';
+  const schoolId = searchParams.get('school_id') || '';
+  const boardId = searchParams.get('school_board_id') || '';
+  const tab = searchParams.get('tab') || '';
+  const pathData = `class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
 
-  const pathData = `${subjectId}?class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
   let payload = {
     school_id: schoolId,
     board_id: boardId,
@@ -117,6 +119,8 @@ const CreateLessonPlan: React.FC = () => {
     }
   }
 
+
+
   const saveLessonPlan = async () => {
     if (!generatedPlan) return;
 
@@ -124,10 +128,10 @@ const CreateLessonPlan: React.FC = () => {
       setLoader(true);
       const response = await saveLessonData({
         lesson_plan_data: generatedPlan,
-        school_id: schoolId,
-        board_id: boardId,
-        class_section_id: classId,
-        subject_id: subjectId,
+        school_id: userData.school_id ?? schoolId,
+        board_id: Number(boardId),
+        class_section_id: Number(classId),
+        subject_id: Number(subjectId),
         chapter_id: Number(chapterId)
       });
       if (response && response.message) {
@@ -136,7 +140,7 @@ const CreateLessonPlan: React.FC = () => {
           description: `${response.message} ✅ `,
           status: "success"
         });
-        navigate(`/grades/syllabus/${pathData}`);
+        navigate(`/grades/chapter/${chapterId}?${pathData}&tab=lesson-plan`);
       }
     } catch (error) {
       //console.error('Error saving lesson plan:', error);
@@ -281,7 +285,6 @@ const CreateLessonPlan: React.FC = () => {
   };
 
   const handleSaveLessonPlan = () => {
-    console.log('Saving lesson plan:', generatedPlan);
     saveLessonPlan();
   };
 
@@ -306,8 +309,8 @@ const CreateLessonPlan: React.FC = () => {
         <div className="space-y-8">
           {/* <Breadcrumb items={breadcrumbItems} /> */}
           <Link
-            to={`/grades/syllabus/${chapterId}?${pathData}`}
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+            to={`/grades/syllabus/${chapterId}?${pathData}&$tab=lesson-plan`}
+            className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             <span className="font-medium">Back to Subject</span>
@@ -318,9 +321,9 @@ const CreateLessonPlan: React.FC = () => {
               <div>
                 {/* <h1 className="text-3xl font-bold text-gray-900 mb-2">AI Generated Lesson Plan Breakdown</h1> */}
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
-                  <p className="text-md md:text-lg font-medium text-gray-700">Class: {subject} - {className}</p>
+                  <p className="text-md md:text-lg font-medium text-gray-700">{className} - {section}</p>
                   <p className="text-base text-gray-600">Subject: {subject}</p>
-                  <p className="text-base text-gray-600">Chapter: Chapter {generatedPlan.chapter_number}: {generatedPlan.chapter_title}</p>
+                  <p className="text-base text-gray-600">Chapter: {generatedPlan.chapter_number}: {generatedPlan.chapter_title}</p>
                   <p className="text-base text-gray-600">Total Days: {generatedPlan.total_days}</p>
                 </div>
               </div>
@@ -452,7 +455,7 @@ const CreateLessonPlan: React.FC = () => {
       <MainLayout pageTitle="Create Lesson Plan">
         <div className="space-y-8">
           <Link
-            to={`/grades/chapter/${chapterId}?${pathData}&tab=lesson-plan`}
+            to={`/grades/chapter/${chapterId}?chapter_name=${chapterName}&${pathData}&tab=lesson-plan`}
             className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -463,7 +466,7 @@ const CreateLessonPlan: React.FC = () => {
             <div className="text-center mb-8">
               {/* <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Lesson Plan</h1> */}
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
-                <p className="text-lg font-medium text-gray-700">Class: {className} - {section}</p>
+                <p className="text-lg font-medium text-gray-700">{className} - {section}</p>
                 <p className="text-base text-gray-600">Subject: {subject}</p>
                 <p className="text-base text-gray-600">Chapter {chapterId}: {chapterName}</p>
               </div>

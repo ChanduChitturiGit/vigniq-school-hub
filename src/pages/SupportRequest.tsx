@@ -454,7 +454,7 @@ const SupportDetails: React.FC = () => {
         const diffHours = differenceInHours(now, d);
 
         if (diffSeconds < 60) {
-            return `${diffSeconds} seconds ago`;
+            return diffSeconds > 0 ? `${diffSeconds} seconds ago` : 'Just now';
         }
         if (diffMinutes < 60) {
             return `${diffMinutes} minutes ago`;
@@ -587,7 +587,7 @@ const SupportDetails: React.FC = () => {
                                 className={`flex ${(message.responder_first_name + message.responder_last_name) === (userData.first_name + userData.last_name) ? 'justify-end' : 'justify-start'}`}
                             >
                                 <div className='flex flex-col'>
-                                    <div className="flex items-center gap-2 mb-2">
+                                    <div className={`flex items-center gap-2 mb-2 ${(message.responder_first_name + message.responder_last_name) === (userData.first_name + userData.last_name) ? 'justify-end' : 'justify-start'}`}>
                                         <span className={`text-xs font-semibold 'text-gray-600'
                                             }`}>
                                             {(message.responder_first_name + message.responder_last_name) === (userData.first_name + userData.last_name) ? 'You' : `${message.responder_first_name} ${message.responder_last_name}`}
@@ -668,14 +668,14 @@ const SupportDetails: React.FC = () => {
                             </div>
                         )}
 
-                        <form onSubmit={handleSendMessage} className="flex flex-col md:flex-row items-center justify-between gap-2">
+                        <form onSubmit={handleSendMessage} className="flex flex-col md:flex-row items-start justify-between gap-2">
                             <div className="flex-1">
                                 <textarea
                                     value={newMessage}
                                     onChange={(e) => setNewMessage(e.target.value)}
                                     onKeyDown={handleKeyDown}
                                     placeholder="Type your message here..."
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                    className="w-full h-[3.5rem] px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                                     rows={2}
                                 />
                                 <div className="text-xs text-gray-500 mt-1">
@@ -683,7 +683,7 @@ const SupportDetails: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-center gap-2">
+                            <div className="flex items-center justify-center gap-2 mt-2">
                                 <input
                                     type="file"
                                     ref={fileInputRef}

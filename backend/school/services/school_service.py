@@ -1,6 +1,8 @@
 """create school service"""
 import logging
 import psycopg2
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 import redis
 from django.db import transaction,IntegrityError,connections
@@ -26,6 +28,8 @@ from academics.models import SchoolAcademicYear
 
 from syllabus.services.ebook_service import EbookService
 
+from subscriptions.models import Subscription,Transaction,PackageVersion
+
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +50,25 @@ class SchoolService:
         try:
             is_school_db_created = False
             db_name = None
+            package_id = request.data.get('package_id')
+            subscription_type = request.data.get('subscription_type')
+            subscription_duration = request.data.get('subscription_duration',12)
+            subscription_amount = request.data.get('subscription_amount')
+            payment_method = request.data.get('payment_method')
+            transaction_ref = request.data.get('transaction_ref', None)
+
+
+            valid_plan_types = [choice[0] for choice in Subscription.PLAN_TYPES]
+
+            valid_payment_types = [choice[0] for choice in Transaction.PAYMENT_METHODS]
+
+            if subscription_type not in valid_plan_types:
+                return Response({"error": "Invalid subscription type."}, status=status.HTTP_400_BAD_REQUEST)
+            if payment_method not in valid_payment_types and subscription_type != "trial":
+                return Response({"error": "Invalid payment method."}, status=status.HTTP_400_BAD_REQUEST)
+            if subscription_duration not in (12,):
+                return Response({"error": "Invalid subscription duration."}, status=status.HTTP_400_BAD_REQUEST)
+
             with transaction.atomic():
                 data = request.data
 
@@ -89,6 +112,32 @@ class SchoolService:
 
                 admin_user.school_id = school.pk
                 admin_user.save()
+                package_version = PackageVersion.objects.get(package_id=package_id, is_active=True,
+                                                            duration_months=subscription_duration)
+                if not package_version:
+                    logger.error("Package version not found.")
+                    return Response({"error": "Package version not found."}, status=status.HTTP_404_NOT_FOUND)
+                subscription = Subscription.objects.create(
+                    school = school,
+                    version = package_version,
+                    plan_type = subscription_type,
+                    start_date = datetime.now(),
+                    expiry_date = datetime.now() + relativedelta(months=subscription_duration),
+                )
+                
+                transaction_data = {
+                    "subscription": subscription,
+                    "status": "success",
+                }
+                if subscription_type == "paid":
+                    transaction_data["amount"] = subscription_amount
+                    transaction_data["paid_at"] = datetime.now()
+                    transaction_data['transaction_ref'] = transaction_ref
+                    transaction_data['payment_method'] = payment_method
+                else:
+                    transaction_data['payment_method'] = "trial"
+                Transaction.objects.create(**transaction_data)
+
 
                 school_db_metadata = SchoolDbMetadata.objects.create(
                     school = school,

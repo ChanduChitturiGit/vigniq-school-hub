@@ -60,19 +60,22 @@ const ExamResults: React.FC = () => {
   const highestScore = Math.max(...studentResults.map(s => Number(s.marks_obtained)));
   const lowestScore = Math.min(...studentResults.map(s => Number(s.marks_obtained)));
 
-  const handleMarksChange = (studentId: string, newMarks: string) => {
+  const handleMarksChange = (studentId, newMarks) => {
     const marks = Number(newMarks) || 0;
     const percentage = Math.round((marks / examDetails.max_marks) * 100);
     const result = marks >= examDetails.pass_marks ? 'PASS' : 'FAIL';
 
     setStudentResults(prev =>
-      prev.map(student =>
-        student.student_id === studentId
-          ? { ...student, marks, percentage, result }
-          : student
-      )
+      prev.map(student => {
+        const id = Number(student.student_id);   
+        const targetId = Number(studentId);      
+        return id === targetId
+          ? { ...student, marks, marks_obtained : `${marks}`, percentage, result }
+          : student;
+      })
     );
   };
+
 
   const handleEditToggle = () => {
     setIsEditing(!isEditing);
@@ -81,6 +84,7 @@ const ExamResults: React.FC = () => {
 
   const handleCancel = () => {
     setIsEditing(!isEditing);
+    getExamData();
   }
 
   // Check if edit=true in query params to enable editing by default
@@ -448,7 +452,7 @@ const ExamResults: React.FC = () => {
                                     student.percentage >= 60 ? 'text-blue-600 font-medium' :
                                       student.percentage >= 40 ? 'text-yellow-600 font-medium' :
                                         'text-red-600 font-medium'}>
-                                    {student.percentage}%
+                                    {Number(student.percentage).toFixed(2)}%
                                   </span>
                                 </>
                               )
