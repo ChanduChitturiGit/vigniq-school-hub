@@ -48,6 +48,7 @@ const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
   }, []);
 
     return (
+      // bg-gray-50  bg-[#f1f8fd]
       <div className="flex h-screen bg-gray-50 relative">
         {/* Mobile Overlay */}
         {isMobileMenuOpen && (

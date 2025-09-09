@@ -259,10 +259,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
     <div className={`bg-slate-50 text-gray-700 h-screen transition-all duration-500 ease-in-out ${isCollapsed && window.innerWidth >= 768 ? 'w-16' : 'w-64'
       } flex flex-col border-r border-gray-200`}>
       {/* Logo Section */}
-      <div className="p-4 bg-white border-b border-gray-200">
+      {/* bg-white */}
+      <div className="p-4 bg-[#E0F2FE] border-b border-gray-200">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center">
-            <img src="/assets/logo.png" alt="Logo" className="w-6 h-6 object-contain" />
+          <div className="rounded flex items-center justify-center">
+            <img src="/assets/logo.png" alt="Logo" className="w-[2rem] h-[2rem] bg-white rounded-[0.6rem] object-contain" />
           </div>
           {(!isCollapsed || window.innerWidth < 768) && (
             <div className="transition-opacity duration-500 ease-in-out w-[70%]">
@@ -276,7 +277,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
       </div>
 
       {/* Navigation Menu */}
-      <nav className="flex-1 py-4 px-3">
+      <nav className="bg-[#E0F2FE] flex-1 py-4 px-3">
         <ul className="space-y-2">
           {getMenuItems().map((item) => {
             if (item.roles && item.roles.includes(user?.role || '')) {
@@ -296,9 +297,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                           toggleMenu(item.key);
                         }
                       }}
-                      className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-all duration-200 ease-in-out ${isDropdownHighlighted
+                      className={`w-full flex items-center justify-between gap-3 ${isCollapsed ? 'px-1' : 'px-4'} py-3 rounded-lg transition-all duration-200 ease-in-out ${isDropdownHighlighted
                         ? 'bg-blue-500 text-white shadow-sm'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        : 'text-gray-700 hover:bg-[#BAE6FD]'
                         }`}
                     >
                       <div className="flex items-center gap-3">
@@ -324,7 +325,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                                 onClick={handleLinkClick}
                                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ease-in-out ${isActive(subItem.path)
                                   ? 'bg-blue-500 text-white shadow-sm font-medium'
-                                  : 'text-gray-600 hover:bg-gray-100'
+                                  : 'text-gray-600 hover:bg-[#BAE6FD]'
                                   }`}
                               >
                                 {SubIcon && <SubIcon className="w-4 h-4" />}
@@ -351,9 +352,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                           handleLinkClick();
                         }
                       }}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ease-in-out ${isActive(regularItem.path)
+                      className={`flex items-center gap-3 px-[0.5rem] py-3 rounded-lg transition-all duration-200 ease-in-out ${isActive(regularItem.path)
                         ? 'bg-blue-500 text-white shadow-sm font-medium'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        : 'text-gray-700 hover:bg-[#BAE6FD]'
                         }`}
                     >
                       <Icon className="w-5 h-5 flex-shrink-0" />
