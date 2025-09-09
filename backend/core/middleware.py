@@ -2,6 +2,8 @@
 import threading
 import logging
 
+from django.urls import resolve, Resolver404
+from django.shortcuts import redirect
 from django.conf import settings
 from django.http import JsonResponse
 
@@ -77,6 +79,11 @@ class AuthenticationMiddleware:
 
         if self.is_exempt(path):
             return self.get_response(request)
+        
+        try:
+            resolve(path)
+        except Resolver404:
+            return redirect(f"{request.build_absolute_uri('/')}#/unauthorized")
 
         jwt_auth = JWTAuthentication()
         try:
