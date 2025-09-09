@@ -458,8 +458,13 @@ class SyllabusService:
                 for topic_data in topics_data:
                     topic_id = topic_data.get('topic_id')
                     if not topic_id:
+                        Topic.objects.using(school_db_name).create(
+                            lesson_plan_day=lesson_plan_day,
+                            title=topic_data.get('title', ''),
+                            summary=topic_data.get('summary', ''),
+                            time_minutes=topic_data.get('time_minutes', 0)
+                        )
                         continue
-
                     topic = Topic.objects.using(school_db_name).filter(id=topic_id).first()
                     if not topic:
                         continue
@@ -780,8 +785,8 @@ class SyllabusService:
             school_lesson_plan_day = SchoolLessonPlanDay.objects.using(school_db_name).filter(
                 chapter=chapter,
                 class_section=class_section
-            ).first()
-            if school_lesson_plan_day:
+            )
+            if school_lesson_plan_day.exists():
                 school_lesson_plan_day.delete(using=school_db_name)
 
             for day in lesson_plan_data['lesson_plan']:
