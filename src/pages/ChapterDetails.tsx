@@ -27,7 +27,8 @@ import {
   Circle,
   Loader2Icon,
   LoaderCircleIcon,
-  TimerIcon
+  TimerIcon,
+  FileCheck
 } from 'lucide-react';
 import { getGradeByChapter, saveTopicByLesson, editTopicByLesson, savePrerequisite, editPrerequisiteByLesson, getChapterDetailsById } from '../services/grades'
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
@@ -565,7 +566,7 @@ const ChapterDetails: React.FC = () => {
                   to={`/grades/lesson-plan/customize/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}&${pathData}`}
                 >
                   <Button className="bg-purple-600 hover:bg-purple-700">
-                    <MessageSquare className="w-4 h-4 mr-2" />
+                    <FileCheck className="w-4 h-4 mr-2" />
                     Customize Lesson Plan
                   </Button>
                 </Link> */}

@@ -542,7 +542,7 @@ const StudentDetails: React.FC = () => {
               )}
             </div>
 
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Emergency Contact</label>
               {isEditing ? (
                 <input
@@ -557,7 +557,7 @@ const StudentDetails: React.FC = () => {
                   <p className="text-gray-900">{studentData.emergency_contact}</p>
                 </div>
               )}
-            </div>
+            </div> */}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Parent Email</label>
