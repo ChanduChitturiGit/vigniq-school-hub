@@ -128,7 +128,7 @@ const CreateSchool: React.FC = () => {
         break;
       case 'phone':
         if (!value) error = 'Phone is required';
-        else if (!/^\d{10,15}$/.test(value)) error = 'Phone must be 10-15 digits';
+        else if (!/^\d{10,15}$/.test(value)) error = 'Phone must be 10 digits';
         break;
       case 'email':
         if (!value) error = 'Email is required';
