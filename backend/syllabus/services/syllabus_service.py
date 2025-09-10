@@ -24,7 +24,7 @@ from teacher.models import TeacherSubjectAssignment
 
 from classes.models import SchoolSection
 
-from school.models import SchoolSyllabusEbooks
+from school.models import SchoolSyllabusEbooks, SchoolBoard
 
 logger = logging.getLogger(__name__)
 
@@ -116,6 +116,8 @@ class SyllabusService:
                           'school_class__section', 'subject_id','subject__name',
                           'school_class__board_id')
 
+            boards= dict(SchoolBoard.objects.all().values_list("id", "board_name"))
+
             data = {}
             for assignment in teacher_assignment_obj:
                 progress, chapters_count = self.get_subject_progress_and_chapters_count(
@@ -131,6 +133,7 @@ class SyllabusService:
                     "subject_id": assignment["subject_id"],
                     "subject_name": assignment["subject__name"],
                     "board_id": assignment["school_class__board_id"],
+                    "board_name": boards.get(assignment["school_class__board_id"],""),
                     "progress": round(progress, 2),
                     "chapters_count": chapters_count
                 }
