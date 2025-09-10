@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
@@ -82,12 +81,13 @@ const WhiteboardTeaching: React.FC = () => {
   const [brushSize, setBrushSize] = useState(3);
   const [currentActivity, setCurrentActivity] = useState(1);
   const [lessonData, setLessonData] = useState<any>([]);
-  const [isLeftSidebarCollapsed, setIsLeftSidebarCollapsed] = useState(false);
+  const [isLeftSidebarCollapsed, setIsLeftSidebarCollapsed] = useState(true);
   const [isToolbarVisible, setIsToolbarVisible] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(1);
   const [totalSlides, setTotalSlides] = useState(1);
   const [drawingHistory, setDrawingHistory] = useState<ImageData[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [slideImages, setSlideImages] = useState<(ImageData | null)[]>([null]);
 
   const [activities] = useState<LessonActivity[]>([
     {
@@ -199,6 +199,8 @@ const WhiteboardTeaching: React.FC = () => {
 
   useEffect(() => {
     getLessonData();
+    setIsFullscreen(true);
+    toggleFullscreen();
   } , []);
 
   const getCoordinates = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -265,14 +267,45 @@ const WhiteboardTeaching: React.FC = () => {
     setIsDrawing(false);
   };
 
+  // Helper to save current canvas to slideImages
+  const saveCurrentSlideImage = () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!ctx || !canvas) return;
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    setSlideImages((prev) => {
+      const updated = [...prev];
+      updated[currentSlide - 1] = imageData;
+      return updated;
+    });
+  };
+
+  // Helper to load image data for a slide
+  const loadSlideImage = (slideNum: number) => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!ctx || !canvas) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const imageData = slideImages[slideNum - 1];
+    if (imageData) {
+      ctx.putImageData(imageData, 0, 0);
+    }
+  };
+
   const clearCanvas = () => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (!ctx || !canvas) return;
-
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    setSlideImages((prev) => {
+      const updated = [...prev];
+      updated[currentSlide - 1] = null;
+      return updated;
+    });
   };
 
   const toggleFullscreen = () => {
@@ -295,6 +328,7 @@ const WhiteboardTeaching: React.FC = () => {
     if (isFullscreen) {
       // If in fullscreen, first exit fullscreen
       toggleFullscreen();
+      window.history.back();
     } else {
       // Navigate back normally
       window.history.back();
@@ -352,25 +386,39 @@ const WhiteboardTeaching: React.FC = () => {
     }
   };
 
+  // Update addSlide to add a new blank slide
   const addSlide = () => {
-    setTotalSlides(totalSlides + 1);
-    setCurrentSlide(totalSlides + 1);
-    clearCanvas();
+    saveCurrentSlideImage(); // Save current slide's drawing
+    setTotalSlides((prev) => prev + 1);
+    setSlideImages((prev) => [...prev, null]);
+    setCurrentSlide(totalSlides + 1); // Move to new slide
   };
 
   const removeSlide = () => {
     if (totalSlides > 1) {
+      saveCurrentSlideImage();
       setTotalSlides(totalSlides - 1);
+      setSlideImages((prev) => prev.slice(0, -1));
       if (currentSlide > totalSlides - 1) {
         setCurrentSlide(totalSlides - 1);
+        setTimeout(() => loadSlideImage(totalSlides - 1), 0);
       }
     }
   };
 
   const goToSlide = (slideNumber: number) => {
-    setCurrentSlide(slideNumber);
-    clearCanvas();
+    saveCurrentSlideImage(); // Save current slide's drawing
+    setCurrentSlide(slideNumber); // Switch slide
   };
+
+  // Load slide image whenever currentSlide changes
+  useEffect(() => {
+    loadSlideImage(currentSlide);
+    // Optionally reset drawing history for each slide if needed
+    setDrawingHistory([]);
+    setHistoryIndex(-1);
+    // eslint-disable-next-line
+  }, [currentSlide]);
 
   const containerClass = isFullscreen 
     ? "fixed inset-0 z-50 bg-background"
@@ -383,7 +431,7 @@ const WhiteboardTeaching: React.FC = () => {
         <div className={`${isLeftSidebarCollapsed ? 'translate-x-[-100%] w-0' : 'translate-x-0'} ${isFullscreen ? 'w-80' : 'w-96'} bg-background/95 backdrop-blur-sm border-r border-border flex flex-col transition-all duration-300 ease-in-out absolute left-0 top-0 h-full z-30 shadow-lg`}>
           {/* Header */}
           <div className="p-4 border-b border-border">
-            <div className="flex items-center justify-between mb-4">
+            <div className="w-full flex items-center justify-end my-3">
               <button
                 onClick={handleBackNavigation}
                 className="flex items-center gap-2 text-primary hover:text-primary/80"
