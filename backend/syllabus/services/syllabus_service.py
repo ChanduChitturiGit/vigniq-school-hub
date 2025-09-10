@@ -116,7 +116,7 @@ class SyllabusService:
                           'school_class__section', 'subject_id','subject__name',
                           'school_class__board_id')
 
-            boards= dict(SchoolBoard.objects.all().values_list("id", "board_name"))
+            boards= CommonFunctions().get_boards_dict()
 
             data = {}
             for assignment in teacher_assignment_obj:

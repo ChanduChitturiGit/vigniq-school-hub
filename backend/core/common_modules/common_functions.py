@@ -4,7 +4,7 @@ import logging
 
 import PyPDF2
 
-from school.models import SchoolDbMetadata
+from school.models import SchoolDbMetadata, SchoolBoard
 
 logger = logging.getLogger(__name__)
 
@@ -56,3 +56,7 @@ class CommonFunctions:
         uri = request.build_absolute_uri('/')
         logger.info(f"Absolute URI: {uri}")
         return uri
+    
+    def get_boards_dict(self):
+        boards= dict(SchoolBoard.objects.all().values_list("id", "board_name"))
+        return boards
