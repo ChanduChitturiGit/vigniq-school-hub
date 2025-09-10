@@ -367,6 +367,11 @@ const WhiteboardTeaching: React.FC = () => {
     }
   };
 
+  const goToSlide = (slideNumber: number) => {
+    setCurrentSlide(slideNumber);
+    clearCanvas();
+  };
+
   const containerClass = isFullscreen 
     ? "fixed inset-0 z-50 bg-background"
     : "h-screen bg-muted/30";
@@ -606,18 +611,56 @@ const WhiteboardTeaching: React.FC = () => {
 
             {/* Slide Controls (Bottom Right) */}
             <div className="absolute bottom-4 right-4 flex items-center gap-2 z-20">
+              {/* Minus Button */}
               <Button
                 onClick={removeSlide}
                 variant="outline"
                 size="sm"
                 className="bg-background/90 backdrop-blur-sm"
-                disabled={totalSlides <= 1}
+                disabled={currentSlide === 1}
               >
                 <Minus className="w-4 h-4" />
               </Button>
-              <span className="text-sm font-medium bg-background/90 backdrop-blur-sm px-3 py-1 rounded border">
-                {currentSlide} / {totalSlides}
-              </span>
+
+              {/* Slide Navigation */}
+              <div className="flex items-center gap-1 bg-background/90 backdrop-blur-sm px-3 py-1 rounded border">
+                {/* Previous Arrow */}
+                {currentSlide > 1 && (
+                  <button
+                    onClick={() => goToSlide(currentSlide - 1)}
+                    className="text-muted-foreground hover:text-foreground px-1"
+                  >
+                    &lt;
+                  </button>
+                )}
+                
+                {/* Slide Numbers */}
+                {Array.from({ length: totalSlides }, (_, i) => i + 1).map((slideNum) => (
+                  <button
+                    key={slideNum}
+                    onClick={() => goToSlide(slideNum)}
+                    className={`px-2 py-1 text-sm font-medium rounded transition-colors ${
+                      currentSlide === slideNum
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    }`}
+                  >
+                    {slideNum}
+                  </button>
+                ))}
+                
+                {/* Next Arrow */}
+                {currentSlide < totalSlides && (
+                  <button
+                    onClick={() => goToSlide(currentSlide + 1)}
+                    className="text-muted-foreground hover:text-foreground px-1"
+                  >
+                    &gt;
+                  </button>
+                )}
+              </div>
+
+              {/* Plus Button */}
               <Button
                 onClick={addSlide}
                 variant="outline"
