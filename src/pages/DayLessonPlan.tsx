@@ -211,13 +211,13 @@ const DayLessonPlan: React.FC = () => {
                 <span className="text-lg md:text-2xl font-bold text-gray-900">Lesson Plan Activities</span>
                 <div className="flex items-center gap-4 mt-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-32 h-3 bg-gray-200 rounded-full overflow-hidden">
+                    {/* <div className="w-32 h-3 bg-gray-200 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-blue-500 transition-all duration-500"
                         style={{ width: `${overallProgress}%` }}
                       />
                     </div>
-                    <span className="text-sm font-bold text-gray-900">{overallProgress}%</span>
+                    <span className="text-sm font-bold text-gray-900">{overallProgress}%</span> */}
                   </div>
                   <div className="flex items-center gap-2 text-gray-600">
                     <Clock className="w-4 h-4" />
