@@ -145,10 +145,7 @@ class OfflineExamsService:
 
                 for item in student_marks:
                     student_id = item.get("student_id")
-                    marks = item.get("marks")
-
-                    if not student_id or marks is None:
-                        continue
+                    marks = item.get("marks", 0)
 
                     if student_id in existing:
                         obj = existing[student_id]
@@ -259,7 +256,7 @@ class OfflineExamsService:
                 subject_id=subject_id,
                 academic_year_id=academic_year_id,
                 is_active=True
-            ).select_related('exam_category')
+            ).select_related('exam_category').order_by('-created_at')
 
             if not exams.exists():
                 return JsonResponse({"data": []}, status=200)
