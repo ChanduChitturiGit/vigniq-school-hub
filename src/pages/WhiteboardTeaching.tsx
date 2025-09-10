@@ -14,7 +14,16 @@ import {
   Type,
   Palette,
   RotateCcw,
-  Save
+  Save,
+  Menu,
+  X,
+  Plus,
+  Minus,
+  Undo,
+  Redo,
+  Triangle,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 import { getLessonPlanDataByDay } from '../services/grades';
 import { useSnackbar } from '../components/snackbar/SnackbarContext';
@@ -68,11 +77,17 @@ const WhiteboardTeaching: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [currentTool, setCurrentTool] = useState<'pen' | 'eraser' | 'rectangle' | 'circle' | 'text'>('pen');
+  const [currentTool, setCurrentTool] = useState<'pen' | 'eraser' | 'rectangle' | 'circle' | 'triangle' | 'text'>('pen');
   const [currentColor, setCurrentColor] = useState('#000000');
   const [brushSize, setBrushSize] = useState(3);
   const [currentActivity, setCurrentActivity] = useState(1);
   const [lessonData, setLessonData] = useState<any>([]);
+  const [isLeftSidebarCollapsed, setIsLeftSidebarCollapsed] = useState(false);
+  const [isToolbarVisible, setIsToolbarVisible] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(1);
+  const [totalSlides, setTotalSlides] = useState(1);
+  const [drawingHistory, setDrawingHistory] = useState<ImageData[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
 
   const [activities] = useState<LessonActivity[]>([
     {
@@ -143,26 +158,66 @@ const WhiteboardTeaching: React.FC = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Set canvas size
+    // Set canvas size with improved smoothing
     const updateCanvasSize = () => {
       const container = canvas.parentElement;
       if (container) {
-        canvas.width = container.clientWidth;
-        canvas.height = container.clientHeight;
+        const devicePixelRatio = window.devicePixelRatio || 1;
+        const rect = container.getBoundingClientRect();
+        
+        canvas.width = rect.width * devicePixelRatio;
+        canvas.height = rect.height * devicePixelRatio;
+        
+        canvas.style.width = rect.width + 'px';
+        canvas.style.height = rect.height + 'px';
+        
+        ctx.scale(devicePixelRatio, devicePixelRatio);
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Enable smoothing for better drawing quality
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
       }
     };
 
     updateCanvasSize();
     window.addEventListener('resize', updateCanvasSize);
 
-    return () => window.removeEventListener('resize', updateCanvasSize);
+    // Handle fullscreen changes
+    const handleFullscreenChange = () => {
+      setTimeout(updateCanvasSize, 100);
+    };
+    
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+    return () => {
+      window.removeEventListener('resize', updateCanvasSize);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
   }, [isFullscreen]);
 
   useEffect(() => {
     getLessonData();
   } , []);
+
+  const getCoordinates = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    let x = (e.clientX - rect.left) * scaleX;
+    let y = (e.clientY - rect.top) * scaleY;
+    
+    // Pixel alignment for smooth writing
+    x = Math.round(x * 2) / 2;
+    y = Math.round(y * 2) / 2;
+    
+    return { x, y };
+  };
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     setIsDrawing(true);
@@ -170,10 +225,11 @@ const WhiteboardTeaching: React.FC = () => {
     const ctx = canvas?.getContext('2d');
     if (!ctx || !canvas) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
+    const { x, y } = getCoordinates(e);
+    
+    // Save current state to history
+    saveToHistory();
+    
     ctx.beginPath();
     ctx.moveTo(x, y);
   };
@@ -185,20 +241,21 @@ const WhiteboardTeaching: React.FC = () => {
     const ctx = canvas?.getContext('2d');
     if (!ctx || !canvas) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const { x, y } = getCoordinates(e);
 
     if (currentTool === 'pen') {
       ctx.globalCompositeOperation = 'source-over';
       ctx.strokeStyle = currentColor;
       ctx.lineWidth = brushSize;
       ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
       ctx.lineTo(x, y);
       ctx.stroke();
     } else if (currentTool === 'eraser') {
       ctx.globalCompositeOperation = 'destination-out';
       ctx.lineWidth = brushSize * 2;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
       ctx.lineTo(x, y);
       ctx.stroke();
     }
@@ -219,55 +276,134 @@ const WhiteboardTeaching: React.FC = () => {
   };
 
   const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
+    if (!isFullscreen) {
+      // Enter fullscreen
+      setIsFullscreen(true);
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen();
+      }
+    } else {
+      // First exit fullscreen mode, then handle navigation
+      setIsFullscreen(false);
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  };
+
+  const handleBackNavigation = () => {
+    if (isFullscreen) {
+      // If in fullscreen, first exit fullscreen
+      toggleFullscreen();
+    } else {
+      // Navigate back normally
+      window.history.back();
+    }
+  };
+
+  const toggleLeftSidebar = () => {
+    setIsLeftSidebarCollapsed(!isLeftSidebarCollapsed);
+  };
+
+  const toggleToolbar = () => {
+    setIsToolbarVisible(!isToolbarVisible);
+  };
+
+  const saveToHistory = () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!ctx || !canvas) return;
+
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const newHistory = drawingHistory.slice(0, historyIndex + 1);
+    newHistory.push(imageData);
+    
+    // Limit history to 50 steps for performance
+    if (newHistory.length > 50) {
+      newHistory.shift();
+    } else {
+      setHistoryIndex(historyIndex + 1);
+    }
+    
+    setDrawingHistory(newHistory);
+  };
+
+  const undo = () => {
+    if (historyIndex > 0) {
+      const canvas = canvasRef.current;
+      const ctx = canvas?.getContext('2d');
+      if (!ctx || !canvas) return;
+
+      const prevImageData = drawingHistory[historyIndex - 1];
+      ctx.putImageData(prevImageData, 0, 0);
+      setHistoryIndex(historyIndex - 1);
+    }
+  };
+
+  const redo = () => {
+    if (historyIndex < drawingHistory.length - 1) {
+      const canvas = canvasRef.current;
+      const ctx = canvas?.getContext('2d');
+      if (!ctx || !canvas) return;
+
+      const nextImageData = drawingHistory[historyIndex + 1];
+      ctx.putImageData(nextImageData, 0, 0);
+      setHistoryIndex(historyIndex + 1);
+    }
+  };
+
+  const addSlide = () => {
+    setTotalSlides(totalSlides + 1);
+    setCurrentSlide(totalSlides + 1);
+    clearCanvas();
+  };
+
+  const removeSlide = () => {
+    if (totalSlides > 1) {
+      setTotalSlides(totalSlides - 1);
+      if (currentSlide > totalSlides - 1) {
+        setCurrentSlide(totalSlides - 1);
+      }
+    }
   };
 
   const containerClass = isFullscreen 
-    ? "fixed inset-0 z-50 bg-white"
-    : "h-screen bg-gray-50";
+    ? "fixed inset-0 z-50 bg-background"
+    : "h-screen bg-muted/30";
 
   return (
     <div className={containerClass}>
-      <div className="flex h-full">
-        {/* Sidebar */}
-        <div className={`${isFullscreen ? 'w-80' : 'w-96'} bg-white border-r border-gray-200 flex flex-col`}>
+      <div className="flex h-full relative">
+        {/* Overlay Left Sidebar */}
+        <div className={`${isLeftSidebarCollapsed ? 'translate-x-[-100%] w-0' : 'translate-x-0'} ${isFullscreen ? 'w-80' : 'w-96'} bg-background/95 backdrop-blur-sm border-r border-border flex flex-col transition-all duration-300 ease-in-out absolute left-0 top-0 h-full z-30 shadow-lg`}>
           {/* Header */}
-          <div className="p-4 border-b border-gray-200">
+          <div className="p-4 border-b border-border">
             <div className="flex items-center justify-between mb-4">
-              <Link
-                to={`/grades/lesson-plan/day/${chapterId}/${day}?${pathData}`}
-                className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
+              <button
+                onClick={handleBackNavigation}
+                className="flex items-center gap-2 text-primary hover:text-primary/80"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span className="text-sm font-medium">Back</span>
-              </Link>
-              {/* <Button 
-                onClick={toggleFullscreen}
-                variant="outline" 
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-                {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
-              </Button> */}
+              </button>
             </div>
             <div>
-              <h1 className="text-lg font-bold text-gray-900">Chapter {chapterId}: {chapterName}</h1>
-              <p className="text-sm text-blue-600 font-medium">Day {day} - Teaching Mode</p>
+              <h1 className="text-lg font-bold text-foreground">Chapter {chapterId}: {chapterName}</h1>
+              <p className="text-sm text-primary font-medium">Day {day} - Teaching Mode</p>
             </div>
           </div>
 
           {/* Lesson Activities */}
           <div className="flex-1 overflow-y-auto p-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Lesson Activities</h2>
+            <h2 className="text-lg font-semibold text-foreground mb-4">Lesson Activities</h2>
             <div className="space-y-3">
               {lessonData && lessonData.topics && lessonData.topics.map((activity) => (
                 <Card 
                   key={activity.topic_id} 
                   className={`cursor-pointer transition-colors ${
                     currentActivity === activity.topic_id 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'hover:bg-gray-50'
+                      ? 'border-primary bg-primary/5' 
+                      : 'hover:bg-muted/50'
                   }`}
                   onClick={() => setCurrentActivity(activity.topic_id)}
                 >
@@ -275,16 +411,16 @@ const WhiteboardTeaching: React.FC = () => {
                     <div className="flex items-start gap-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
                         currentActivity === activity.topic_id
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-200 text-gray-600'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground'
                       }`}>
                         {activity.topic_id}
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 text-sm mb-1">
+                        <h3 className="font-semibold text-foreground text-sm mb-1">
                           {activity.title}
                         </h3>
-                        <p className="text-xs text-gray-600 leading-relaxed">
+                        <p className="text-xs text-muted-foreground leading-relaxed">
                           {activity.summary}
                         </p>
                       </div>
@@ -297,93 +433,210 @@ const WhiteboardTeaching: React.FC = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col">
-          {/* Toolbar */}
-          <div className="bg-white border-b border-gray-200 p-4">
-            <div className="flex items-center gap-4 flex-wrap">
-              {/* Drawing Tools */}
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={() => setCurrentTool('pen')}
-                  variant={currentTool === 'pen' ? 'default' : 'outline'}
-                  size="sm"
-                  className="flex items-center gap-2"
-                >
-                  <Pen className="w-4 h-4" />
-                  Pen
-                </Button>
-                <Button
-                  onClick={() => setCurrentTool('eraser')}
-                  variant={currentTool === 'eraser' ? 'default' : 'outline'}
-                  size="sm"
-                  className="flex items-center gap-2"
-                >
-                  <Eraser className="w-4 h-4" />
-                  Eraser
-                </Button>
-              </div>
+        <div className="flex-1 flex flex-col relative">
+          {/* Canvas Area */}
+          <div className="flex-1 bg-muted/30 relative">
+            {/* Hamburger Menu for Sidebar Toggle */}
+            <Button
+              onClick={toggleLeftSidebar}
+              variant="outline"
+              size="sm"
+              className="absolute top-4 left-4 z-40 bg-background/90 backdrop-blur-sm"
+            >
+              <Menu className="w-4 h-4" />
+            </Button>
 
-              {/* Colors */}
-              <div className="flex items-center gap-2">
-                <Palette className="w-4 h-4 text-gray-600" />
-                <div className="flex gap-1">
-                  {colors.map((color) => (
-                    <button
-                      key={color}
-                      onClick={() => setCurrentColor(color)}
-                      className={`w-6 h-6 rounded border-2 ${
-                        currentColor === color ? 'border-gray-800' : 'border-gray-300'
-                      }`}
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
+            {/* Fullscreen Toggle */}
+            <Button
+              onClick={toggleFullscreen}
+              variant="outline"
+              size="sm"
+              className="absolute top-4 right-4 z-40 bg-background/90 backdrop-blur-sm"
+            >
+              {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            </Button>
+
+            {/* Right-to-Left Sliding Toolbar */}
+            <div className={`absolute top-4 right-20 z-30 bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg transition-transform duration-300 ${
+              isToolbarVisible ? 'translate-x-0' : 'translate-x-[calc(100%+1rem)]'
+            }`}>
+              <div className="p-3">
+                <div className="flex flex-col gap-3">
+                  {/* Drawing Tools */}
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      onClick={() => {setCurrentTool('pen'); setIsToolbarVisible(false);}}
+                      variant={currentTool === 'pen' ? 'default' : 'outline'}
+                      size="sm"
+                      className="justify-start"
+                    >
+                      <Pen className="w-4 h-4 mr-2" />
+                      Pen
+                    </Button>
+                    <Button
+                      onClick={() => {setCurrentTool('eraser'); setIsToolbarVisible(false);}}
+                      variant={currentTool === 'eraser' ? 'default' : 'outline'}
+                      size="sm"
+                      className="justify-start"
+                    >
+                      <Eraser className="w-4 h-4 mr-2" />
+                      Eraser
+                    </Button>
+                    <Button
+                      onClick={() => {setCurrentTool('rectangle'); setIsToolbarVisible(false);}}
+                      variant={currentTool === 'rectangle' ? 'default' : 'outline'}
+                      size="sm"
+                      className="justify-start"
+                    >
+                      <Square className="w-4 h-4 mr-2" />
+                      Rectangle
+                    </Button>
+                    <Button
+                      onClick={() => {setCurrentTool('circle'); setIsToolbarVisible(false);}}
+                      variant={currentTool === 'circle' ? 'default' : 'outline'}
+                      size="sm"
+                      className="justify-start"
+                    >
+                      <Circle className="w-4 h-4 mr-2" />
+                      Circle
+                    </Button>
+                    <Button
+                      onClick={() => {setCurrentTool('triangle'); setIsToolbarVisible(false);}}
+                      variant={currentTool === 'triangle' ? 'default' : 'outline'}
+                      size="sm"
+                      className="justify-start"
+                    >
+                      <Triangle className="w-4 h-4 mr-2" />
+                      Triangle
+                    </Button>
+                    
+                    {/* Colors */}
+                    <div className="border-t pt-2">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Palette className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">Colors</span>
+                      </div>
+                      <div className="grid grid-cols-4 gap-1">
+                        {colors.map((color) => (
+                          <button
+                            key={color}
+                            onClick={() => setCurrentColor(color)}
+                            className={`w-6 h-6 rounded border-2 ${
+                              currentColor === color ? 'border-foreground' : 'border-border'
+                            }`}
+                            style={{ backgroundColor: color }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Brush Size */}
+                    <div className="border-t pt-2">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-sm text-muted-foreground">Size: {brushSize}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="1"
+                        max="20"
+                        value={brushSize}
+                        onChange={(e) => setBrushSize(parseInt(e.target.value))}
+                        className="w-full"
+                      />
+                    </div>
+
+                    {/* Actions */}
+                    <div className="border-t pt-2 space-y-2">
+                      <Button onClick={clearCanvas} variant="outline" size="sm" className="w-full justify-start">
+                        <RotateCcw className="w-4 h-4 mr-2" />
+                        Clear
+                      </Button>
+                      <Button variant="outline" size="sm" className="w-full justify-start">
+                        <Save className="w-4 h-4 mr-2" />
+                        Save
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              {/* Brush Size */}
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">Size:</span>
-                <input
-                  type="range"
-                  min="1"
-                  max="20"
-                  value={brushSize}
-                  onChange={(e) => setBrushSize(parseInt(e.target.value))}
-                  className="w-20"
-                />
-                <span className="text-sm text-gray-600 w-6">{brushSize}</span>
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-2 ml-auto">
-                <Button onClick={clearCanvas} variant="outline" size="sm">
-                  <RotateCcw className="w-4 h-4 mr-2" />
-                  Clear
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Save className="w-4 h-4 mr-2" />
-                  Save
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Canvas Area */}
-          <div className="flex-1 bg-gray-100 p-4">
-            <div className="h-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-              <canvas
-                ref={canvasRef}
-                onMouseDown={startDrawing}
-                onMouseMove={draw}
-                onMouseUp={stopDrawing}
-                onMouseLeave={stopDrawing}
-                className="w-full h-full cursor-crosshair"
-                style={{ touchAction: 'none' }}
-              />
               
+              {/* Toolbar Toggle Button */}
+              <Button
+                onClick={toggleToolbar}
+                variant="outline"
+                size="sm"
+                className="absolute -left-10 top-2 bg-background/90 backdrop-blur-sm"
+              >
+                {isToolbarVisible ? '→' : '←'}
+              </Button>
+            </div>
+
+            {/* Canvas */}
+            <canvas
+              ref={canvasRef}
+              onMouseDown={startDrawing}
+              onMouseMove={draw}
+              onMouseUp={stopDrawing}
+              onMouseLeave={stopDrawing}
+              className="w-full h-full cursor-crosshair bg-white"
+              style={{ touchAction: 'none' }}
+            />
+
+            {/* Undo/Redo Controls (Bottom Left) */}
+            <div className="absolute bottom-4 left-4 flex gap-2 z-20">
+              <Button
+                onClick={undo}
+                variant="outline"
+                size="sm"
+                className="bg-background/90 backdrop-blur-sm"
+                disabled={historyIndex <= 0}
+              >
+                <Undo className="w-4 h-4" />
+              </Button>
+              <Button
+                onClick={redo}
+                variant="outline"
+                size="sm"
+                className="bg-background/90 backdrop-blur-sm"
+                disabled={historyIndex >= drawingHistory.length - 1}
+              >
+                <Redo className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {/* Slide Controls (Bottom Right) */}
+            <div className="absolute bottom-4 right-4 flex items-center gap-2 z-20">
+              <Button
+                onClick={removeSlide}
+                variant="outline"
+                size="sm"
+                className="bg-background/90 backdrop-blur-sm"
+                disabled={totalSlides <= 1}
+              >
+                <Minus className="w-4 h-4" />
+              </Button>
+              <span className="text-sm font-medium bg-background/90 backdrop-blur-sm px-3 py-1 rounded border">
+                {currentSlide} / {totalSlides}
+              </span>
+              <Button
+                onClick={addSlide}
+                variant="outline"
+                size="sm"
+                className="bg-background/90 backdrop-blur-sm"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
             </div>
           </div>
         </div>
+
+        {/* Overlay backdrop when sidebar is open */}
+        {!isLeftSidebarCollapsed && (
+          <div 
+            className="fixed inset-0 bg-black/20 z-20" 
+            onClick={toggleLeftSidebar}
+          />
+        )}
       </div>
     </div>
   );
