@@ -149,7 +149,7 @@ class OfflineExamsService:
 
                     if student_id in existing:
                         obj = existing[student_id]
-                        obj.marks = marks
+                        obj.marks_obtained = marks
                         obj.updated_by_teacher_id = self.user.id
                         to_update.append(obj)
                     else:
@@ -168,7 +168,7 @@ class OfflineExamsService:
 
                 if to_update:
                     ExamResult.objects.using(self.school_db_name).bulk_update(
-                        to_update, ["marks", "updated_by_teacher"]
+                        to_update, ["marks_obtained", "updated_by_teacher"]
                     )
 
             logger.info("Marks assigned successfully for exam ID %s", exam.id)
