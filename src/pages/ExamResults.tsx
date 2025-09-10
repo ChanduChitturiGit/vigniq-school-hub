@@ -12,6 +12,7 @@ import { getClassesById, editClass } from '../services/class'
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { SpinnerOverlay } from '../pages/SpinnerOverlay';
+import { set } from 'date-fns';
 
 interface StudentResult {
   id: string;
@@ -52,6 +53,9 @@ const ExamResults: React.FC = () => {
   const [examDetails, setExamDetails] = useState<any>({});
   const [studentResults, setStudentResults] = useState<any>([]);
   const [isSubmited, setIsSubmited] = useState(true);
+  const [isDisabled, setIsDisabled] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [fieldndex, setFieldIndex] = useState([]);
 
   const totalStudents = studentResults.length;
   const studentsPasssed = studentResults.filter(s => s.result === 'PASS').length;
@@ -60,20 +64,29 @@ const ExamResults: React.FC = () => {
   const highestScore = Math.max(...studentResults.map(s => Number(s.marks_obtained)));
   const lowestScore = Math.min(...studentResults.map(s => Number(s.marks_obtained)));
 
-  const handleMarksChange = (studentId, newMarks) => {
+  const handleMarksChange = (studentId, newMarks, max_marks) => {
     const marks = Number(newMarks) || 0;
     const percentage = Math.round((marks / examDetails.max_marks) * 100);
     const result = marks >= examDetails.pass_marks ? 'PASS' : 'FAIL';
 
     setStudentResults(prev =>
       prev.map(student => {
-        const id = Number(student.student_id);   
-        const targetId = Number(studentId);      
+        const id = Number(student.student_id);
+        const targetId = Number(studentId);
         return id === targetId
-          ? { ...student, marks, marks_obtained : `${marks}`, percentage, result }
+          ? { ...student, marks, marks_obtained: `${marks}`, percentage, result }
           : student;
       })
     );
+
+    if (Number(newMarks) > Number(max_marks)) {
+      setIsDisabled(true);
+      setErrorMessage(`Marks should not exceed ${max_marks}`);
+      setFieldIndex(prev => [...prev, studentId]);
+    } else {
+      setIsDisabled(false);
+      setFieldIndex(prev => prev.filter(id => id !== studentId));
+    }
   };
 
 
@@ -115,6 +128,8 @@ const ExamResults: React.FC = () => {
           calculateResult(response.data.marks, response.data);
         }
         setLoader(false);
+        setFieldIndex([]);
+        setIsDisabled(false);
       }
     } catch (error) {
       setLoader(false);
@@ -164,7 +179,7 @@ const ExamResults: React.FC = () => {
           return {
             student_id: val.student_id,
             student_name: val.student_name,
-            marks: val.marks
+            marks: val?.marks ?? Number(val?.marks_obtained)
           }
         })
       };
@@ -291,6 +306,7 @@ const ExamResults: React.FC = () => {
                 onClick={isEditing ? submitMarksData : handleEditToggle}
                 variant={isEditing ? "default" : "outline"}
                 className="flex items-center gap-2"
+                disabled={isEditing && (isDisabled || fieldndex.length > 0)}
               >
                 <Edit className="w-4 h-4" />
                 {isEditing ? 'Save Changes' : 'Edit Marks'}
@@ -428,17 +444,24 @@ const ExamResults: React.FC = () => {
                           </TableCell>
                           <TableCell>
                             {isEditing ? (
-                              <div className="flex items-center gap-2">
-                                <Input
-                                  type="number"
-                                  value={(student.marks_obtained)}
-                                  onChange={(e) => handleMarksChange(student.student_id, e.target.value)}
-                                  className={`w-20`}
-                                  min="0"
-                                  max={examDetails.max_marks}
-                                  autoFocus={index === 0}
-                                />
-                                <span className="text-sm text-gray-500">/ {Number(examDetails.max_marks).toFixed(0)}</span>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <Input
+                                    type="number"
+                                    value={(student.marks_obtained)}
+                                    onChange={(e) => handleMarksChange(student.student_id, e.target.value, Number(examDetails.max_marks).toFixed(0))}
+                                    className={`w-20`}
+                                    min="0"
+                                    max={examDetails.max_marks}
+                                    autoFocus={index === 0}
+                                  />
+                                  <span className="text-sm text-gray-500">/ {Number(examDetails.max_marks).toFixed(0)}</span>
+                                </div>
+                                <div>
+                                  {isDisabled && (fieldndex.includes(student.student_id)) && (
+                                    <span className="text-xs text-red-600">{errorMessage}</span>
+                                  )}
+                                </div>
                               </div>
                             ) : (
                               <span>{Number(student.marks_obtained)} / {Number(examDetails.max_marks).toFixed(0)}</span>

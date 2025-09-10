@@ -7,7 +7,7 @@ interface MainLayoutProps {
   pageTitle: string;
 }
 
-// 👇 use forwardRef here
+//  use forwardRef here
 const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
   ({ children, pageTitle }, ref) => {
   // Default to expanded for screens 1024px and above (like 1440px behavior)
@@ -48,7 +48,8 @@ const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
   }, []);
 
     return (
-      <div className="flex h-screen bg-gray-50 relative">
+      // bg-gray-50  bg-[#f1f8fd]
+      <div className="flex h-screen bg-gray-50 relative overflow-hidden">
         {/* Mobile Overlay */}
         {isMobileMenuOpen && (
           <div 
@@ -79,7 +80,7 @@ const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
             toggleSidebar={toggleSidebar} 
             pageTitle={pageTitle} 
           />
-          {/* 👇 forward the ref here */}
+          {/* forward the ref here */}
           <main ref={ref} className="flex-1 overflow-y-auto p-6">
             <div className="max-w-full mb-[1rem]">
               {children}

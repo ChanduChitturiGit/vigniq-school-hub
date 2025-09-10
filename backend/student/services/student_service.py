@@ -71,57 +71,71 @@ class StudentService:
                                     status=status.HTTP_404_NOT_FOUND)
 
             with transaction.atomic():
-                role = Role.objects.get(name='student')
-                user = User.objects.create_user(
-                    user_name=username,
-                    first_name=first_name,
-                    last_name=last_name,
-                    email=email,
-                    password=password,
-                    phone_number=phone,
-                    school_id=school_id,
-                    gender=gender,
-                    current_address=current_address,
-                    permanent_address=permanent_address,
-                    role=role,
-                    date_of_birth=date_of_birth,
-                )
-                class_section_instance = SchoolSection.objects.using(school_db_name).get(
-                    id = class_id)
-                if not class_section_instance:
-                    return JsonResponse({"error": "Class not found."},
-                                        status=status.HTTP_404_NOT_FOUND)
-                
-                student = Student.objects.using(school_db_name).create(
-                    student_id=user.id,
-                    roll_number=roll_number,
-                    admission_date=addmission_date,
-                    parent_name=parent_name,
-                    parent_phone=parent_phone,
-                    parent_email=parent_email
-                )
+                with transaction.atomic(using=school_db_name):
+                    class_section_instance = SchoolSection.objects.using(school_db_name).get(
+                        id = class_id)
+                    if not class_section_instance:
+                        return JsonResponse({"error": "Class not found."},
+                                            status=status.HTTP_404_NOT_FOUND)
+                    acadamic_year = SchoolAcademicYear.objects.using(school_db_name).get(id=acadamic_year_id)
 
-                acadamic_year = SchoolAcademicYear.objects.using(school_db_name).get(id=acadamic_year_id)
+                    exixsting_roll_number = StudentClassAssignment.objects.using(
+                        school_db_name
+                    ).select_for_update().filter(
+                        class_instance = class_section_instance,
+                        academic_year = acadamic_year,
+                        student__roll_number = roll_number
+                    ).exists()
+                    if exixsting_roll_number:
+                        raise ValueError("Roll number already exists in this class for the current academic year.")
 
-                student_class_assignment = StudentClassAssignment.objects.using(
-                    school_db_name
-                ).create(
-                    student = student,
-                    class_instance = class_section_instance,
-                    academic_year = acadamic_year
-                )
-                to_emails = [email]
-                if parent_email:
-                    to_emails.append(parent_email)
-                send_email = EmailService()
-                send_email.send_email(
-                    to_email=to_emails,
-                    email_type='welcome',
-                    user_name=username,
-                    name=f"{first_name} {last_name}",
-                    password=password,
-                    login_url=CommonFunctions().get_login_uri(request)
-                )
+                    role = Role.objects.get(name='student')
+                    user = User.objects.create_user(
+                        user_name=username,
+                        first_name=first_name,
+                        last_name=last_name,
+                        email=email,
+                        password=password,
+                        phone_number=phone,
+                        school_id=school_id,
+                        gender=gender,
+                        current_address=current_address,
+                        permanent_address=permanent_address,
+                        role=role,
+                        date_of_birth=date_of_birth,
+                    )
+                    
+                    
+
+                    student = Student.objects.using(school_db_name).create(
+                        student_id=user.id,
+                        roll_number=roll_number,
+                        admission_date=addmission_date,
+                        parent_name=parent_name,
+                        parent_phone=parent_phone,
+                        parent_email=parent_email
+                    )
+
+
+                    student_class_assignment = StudentClassAssignment.objects.using(
+                        school_db_name
+                    ).create(
+                        student = student,
+                        class_instance = class_section_instance,
+                        academic_year = acadamic_year
+                    )
+                    to_emails = [email]
+                    if parent_email:
+                        to_emails.append(parent_email)
+                    send_email = EmailService()
+                    send_email.send_email(
+                        to_email=to_emails,
+                        email_type='welcome',
+                        user_name=username,
+                        name=f"{first_name} {last_name}",
+                        password=password,
+                        login_url=CommonFunctions().get_login_uri(request)
+                    )
 
             return JsonResponse({"message": "Student created successfully.",
                                  "student_id": student.student_id}, status=status.HTTP_201_CREATED)
@@ -137,6 +151,10 @@ class StudentService:
         except User.DoesNotExist:
             return JsonResponse({"error": "User creation failed."},
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except ValueError as ve:
+            logger.error(f"Value error: {ve}")
+            return JsonResponse({"error": str(ve)},
+                                status=status.HTTP_400_BAD_REQUEST)
         except IntegrityError as e:
             logger.error(f"Integrity error: {e}")
             if 'unique_student_id_roll_number' in str(e):
@@ -150,6 +168,8 @@ class StudentService:
                                     status=status.HTTP_400_BAD_REQUEST)
             elif 'unique constraint' in str(e).lower():
                 return JsonResponse({'error':"Username already exists."}, status=400)
+            return JsonResponse({"error": "Failed to create student."},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
         except Exception as e:
             logger.error(f"Error creating student: {e}")
@@ -363,6 +383,7 @@ class StudentService:
                 "roll_number": student.roll_number,
                 "parent_name": student.parent_name,
                 "parent_phone": student.parent_phone,
+                'parent_email': student.parent_email,
                 "is_active": student.is_active,
                 "class_number": class_instance.class_instance_id,
                 "class_id": class_instance.id,
