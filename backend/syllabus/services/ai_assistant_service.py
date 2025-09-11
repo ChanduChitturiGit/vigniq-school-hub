@@ -1,8 +1,10 @@
 """Ai assistant service"""
 
+
 import logging
 import json
-from asgiref.sync import sync_to_async
+from asgiref.sync import sync_to_async,async_to_sync
+import asyncio
 
 from django.http import JsonResponse, StreamingHttpResponse
 from django.db.models import Count
@@ -124,7 +126,14 @@ class AiAssistantService:
 
                         yield json.dumps({"status": "success"}) + "\n"
 
-                return StreamingHttpResponse(streaming_chat(), content_type='text/event-stream')
+                    async def _consume():
+                        async for chunk in streaming_chat():
+                            pass
+
+                    async_to_sync(_consume)()
+
+                return JsonResponse({"data": response }, status=200)
+                # return StreamingHttpResponse(streaming_chat(), content_type='text/event-stream')
             except Exception as e:
                 logger.error("Error processing user message: %s", e)
                 return JsonResponse({"error": "Unable to process your request at the moment"}, status=500)
