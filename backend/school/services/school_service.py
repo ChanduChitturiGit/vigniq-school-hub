@@ -294,8 +294,8 @@ class SchoolService:
             if not school_id:
                 return Response({"error": "School id is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-            school = School.objects.get(pk=school_id)
-
+            school = School.objects.select_related('school_admin').get(pk=school_id)
+            boards = SchoolBoardMapping.objects.filter(school=school).select_related('board')
             school_data = {
                 "school_id": school.id,
                 "school_name": school.name,
@@ -306,6 +306,7 @@ class SchoolService:
                 "school_admin_email": school.school_admin.email if school.school_admin else None,
                 "school_admin_full_name" : f"{school.school_admin.first_name} {school.school_admin.last_name}" if school.school_admin else None,
                 "school_admin_phone_number": school.school_admin.phone_number if school.school_admin else None,
+                "boards": [{"id": board.id, "name": board.board.board_name} for board in boards],
             }
             return Response({"school": school_data}, status=status.HTTP_200_OK)
         except School.DoesNotExist:
