@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Mail, Phone, Calendar, GraduationCap, BookOpen, Plus, X, User, Home } from 'lucide-react';
+import { Edit, Mail, Phone, Calendar, GraduationCap, BookOpen, Plus, X, User, Home, ArrowLeft } from 'lucide-react';
 import { getTeachersById, editTeacher } from '../services/teacher';
 import ClassSectionSubjectInput, { ClassSectionSubjectData } from '../components/ui/class-section-subject-input';
 import { getSubjectsBySchoolId } from '../services/subject';
@@ -300,7 +300,14 @@ const TeacherDetails: React.FC = () => {
   return (
     <MainLayout pageTitle={`Teacher Details`}>
       <div className="space-y-6">
-        <Breadcrumb items={breadcrumbItems} />
+        {/* <Breadcrumb items={breadcrumbItems} /> */}
+        <div
+          onClick={() => window.history.back()}
+          className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span className="font-medium">Back</span>
+        </div>
 
         {/* Teacher Profile Section */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

@@ -4,7 +4,7 @@ import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import PasswordInput from '../components/ui/password-input';
 import ClassSectionSubjectInput, { ClassSectionSubjectData } from '../components/ui/class-section-subject-input';
-import { Loader2, Plus } from 'lucide-react';
+import { ArrowLeft, Loader2, Plus } from 'lucide-react';
 import { addTeacher } from '../services/teacher';
 import { getSubjectsBySchoolId } from '../services/subject';
 import { getClassesBySchoolId, getClassesWithoutClassTeacher } from '@/services/class';
@@ -309,7 +309,14 @@ const AdminAddTeacher: React.FC = () => {
   return (
     <MainLayout pageTitle="Add Teacher">
       <div className="space-y-6">
-        <Breadcrumb items={breadcrumbItems} />
+        {/* <Breadcrumb items={breadcrumbItems} /> */}
+        <div
+          onClick={() => window.history.back()}
+          className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span className="font-medium">Back</span>
+        </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h1 className="text-2xl font-bold text-gray-800 mb-6">Add New Teacher</h1>

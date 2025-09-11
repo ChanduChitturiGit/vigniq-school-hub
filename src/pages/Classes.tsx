@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { getClasses } from '../data/classes';
-import { Users, Plus, Search, BookOpen, LoaderCircle, Grid, List, Eye, Trash2 } from 'lucide-react';
+import { Users, Plus, Search, BookOpen, LoaderCircle, Grid, List, Eye, Trash2, ArrowLeft } from 'lucide-react';
 import { getClassesBySchoolId } from '@/services/class';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
@@ -23,7 +23,7 @@ const Classes: React.FC = () => {
   const filteredClasses = classes.filter(classItem =>
     (classItem.class_number && classItem.class_number.toString().toLowerCase().includes(searchTerm.toLowerCase())) ||
     (classItem.section && classItem.section.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (classItem.class_number && classItem.section && ('Class '+classItem.class_number + ' - ' + classItem.section).toLowerCase().includes(searchTerm.toLowerCase()))
+    (classItem.class_number && classItem.section && ('Class ' + classItem.class_number + ' - ' + classItem.section).toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const breadcrumbItems = user?.role === 'admin'
@@ -32,7 +32,7 @@ const Classes: React.FC = () => {
       { label: 'Classes' }
     ]
     : [
-       { label: userData.role == 'teacher' ? 'Home' : 'My School', path: (userData.role == 'superadmin' ? `/school-details/${schoolId}` : userData.role == 'admin' ? '/admin-school' : '/dashboard') },
+      { label: userData.role == 'teacher' ? 'Home' : 'My School', path: (userData.role == 'superadmin' ? `/school-details/${schoolId}` : userData.role == 'admin' ? '/admin-school' : '/dashboard') },
       { label: 'Classes' }
     ];
 
@@ -65,7 +65,7 @@ const Classes: React.FC = () => {
           <div className="flex items-start justify-between mb-4">
             <div>
               <h3 className="text-lg font-semibold text-gray-800">
-                {'Class '+classItem.class_number} - {classItem.section}
+                {'Class ' + classItem.class_number} - {classItem.section}
               </h3>
               <p className="text-sm text-gray-500">{classItem.academicYear || null}</p>
             </div>
@@ -159,27 +159,32 @@ const Classes: React.FC = () => {
 
         <div className="flex items-center justify-between">
           {/* <h1 className="text-2xl font-bold text-gray-800">Classes</h1> */}
-          <Breadcrumb items={breadcrumbItems} />
+          {/* <Breadcrumb items={breadcrumbItems} /> */}
+          <div
+            onClick={() => window.history.back()}
+            className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="font-medium">Back</span>
+          </div>
           <div className="flex items-center gap-2">
             <div className="flex items-center bg-gray-100 rounded-lg p-1">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-md transition-colors ${
-                  viewMode === 'grid' 
-                    ? 'bg-white text-blue-600 shadow-sm' 
+                className={`p-2 rounded-md transition-colors ${viewMode === 'grid'
+                    ? 'bg-white text-blue-600 shadow-sm'
                     : 'text-gray-600 hover:text-gray-800'
-                }`}
+                  }`}
                 title="Grid View"
               >
                 <Grid className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('table')}
-                className={`p-2 rounded-md transition-colors ${
-                  viewMode === 'table' 
-                    ? 'bg-white text-blue-600 shadow-sm' 
+                className={`p-2 rounded-md transition-colors ${viewMode === 'table'
+                    ? 'bg-white text-blue-600 shadow-sm'
                     : 'text-gray-600 hover:text-gray-800'
-                }`}
+                  }`}
                 title="Table View"
               >
                 <List className="w-4 h-4" />
@@ -217,8 +222,8 @@ const Classes: React.FC = () => {
             <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Classes found</h3>
             <p className="text-gray-500">
-              {searchTerm 
-                ? 'Try adjusting your search terms' 
+              {searchTerm
+                ? 'Try adjusting your search terms'
                 : 'No classes have been added yet.'}
             </p>
           </div>
