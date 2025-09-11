@@ -102,3 +102,9 @@ export const updateLessonPlanDayStatus = async (data: any): Promise<any> => {
   const response = await api.put<any>(baseurl+socketurl+'/updateLessonPlanDayStatus', data);
   return response.data;
 }
+
+//getWhiteboardData
+export const getWhiteboardData = async (data: any): Promise<any> => {
+  const response = await api.get<any>(baseurl+socketurl+'/getWhiteboardData',{params : data});
+  return response.data;
+} 
