@@ -20,7 +20,7 @@ import {
   BadgeCheck
 } from 'lucide-react';
 import { useSnackbar } from '../components/snackbar/SnackbarContext';
-import { getLessonPlanDataByDay, updateLessonPlanDayStatus } from '../services/grades';
+import { getLessonPlanDataByDay, updateLessonPlanDayStatus, createWhiteboardSession } from '../services/grades';
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
@@ -34,6 +34,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '../components/ui/alert-dialog';
+
 
 interface Topic {
   topic_id: number;
@@ -76,6 +77,8 @@ const DayLessonPlan: React.FC = () => {
   const [lessonData, setLessonData] = useState<LessonPlanDay | null>(null);
   const [overallProgress] = useState(0);
 
+  const [sessionToken, setSessionToken] = useState<string>('');
+
   const breadcrumbItems = [
     { label: 'Grades', path: '/grades' },
     { label: `${subject} - ${className} ${section}`, path: `/grades/syllabus/${pathData}` },
@@ -98,6 +101,11 @@ const DayLessonPlan: React.FC = () => {
       const response = await getLessonPlanDataByDay(data);
       if (response && response.data) {
         setLessonData(response.data);
+        if(response.data.session_id){
+          setSessionToken(response.data.session_id);
+        }else{
+          generateSession();
+        }
       } else {
         showSnackbar({
           title: 'Error',
@@ -114,9 +122,48 @@ const DayLessonPlan: React.FC = () => {
     }
   }
 
+  const generateSession = async () => {
+    try {
+      const data = {
+        // chapter_id: chapterId,
+        // lesson_plan_day_id: day,
+        // subject: subject,
+        // class: className,
+        // section: section,
+        school_id: Number(schoolId),
+        // board_id: boardId,
+        // subject_id: subjectId,
+        // class_id: classId,
+        lesson_plan_day_id: Number(day)
+      };
+      const response = await createWhiteboardSession(data);
+      console.log('white', response);
+      if (response && response.data) {
+        setSessionToken(response.data.session_id);
+      } else {
+        showSnackbar({
+          title: 'Error',
+          description: response.message || 'Failed to create whiteboard session.',
+          status: 'error'
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: 'Error',
+        description: 'An unexpected error occurred while creating whiteboard session.',
+        status: 'error'
+      });
+    }
+  }
+
+
   useEffect(() => {
     getLessonData();
   }, []);
+
+  useEffect(() => {
+    sessionStorage.setItem('sessionId',sessionToken)
+  },[sessionToken])
 
   const handleMarkAsCompleted = async () => {
     try {
