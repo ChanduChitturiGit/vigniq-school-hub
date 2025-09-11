@@ -69,9 +69,8 @@ const WhiteboardTeaching: React.FC = () => {
   const schoolId = searchParams.get('school_id') || '';
   const boardId = searchParams.get('school_board_id') || '';
   const tab = searchParams.get('tab') || '';
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const pathData = `class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}&chapter_number=${chapterNumber}&chapter_name=${chapterName}&progress=${progress}&tab=${tab}`;
-
-
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -275,13 +274,26 @@ const WhiteboardTeaching: React.FC = () => {
     ctx.moveTo(x, y);
   };
 
+  const wsRef = useRef<WebSocket | null>(null);
+  const drawBufferRef = useRef<any[]>([]);
+
+  // WebSocket setup
+  useEffect(() => {
+    wsRef.current = new WebSocket(`ws://localhost:8000/ws/whiteboard/91a7d54afd3c4ed6957d1e83656ef1c5/?token=${sessionStorage.getItem('access_token')}&school_id=${userData.school_id}`);
+    wsRef.current.onopen = () => console.log('WebSocket connected');
+    wsRef.current.onclose = () => console.log('WebSocket disconnected');
+    return () => {
+      wsRef.current?.close();
+    };
+  }, []);
+
+  // Drawing event: buffer coordinates
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (!ctx || !canvas) return;
-
     const { x, y } = getCoordinates(e);
 
     if (currentTool === 'pen') {
@@ -300,7 +312,44 @@ const WhiteboardTeaching: React.FC = () => {
       ctx.lineTo(x, y);
       ctx.stroke();
     }
+
+    // Buffer the event
+    drawBufferRef.current.push({
+      x, y,
+      tool: currentTool,
+      color: currentColor,
+      size: brushSize,
+      slide: currentSlide,
+      timestamp: Date.now()
+    });
+
+    // Send chunk if buffer size >= 10
+    if (drawBufferRef.current.length >= 20) {
+      sendDrawChunk();
+    }
+    console.log(drawBufferRef.current.length);
   };
+
+  // Send chunk via WebSocket
+  const sendDrawChunk = () => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: 'draw',
+        data: drawBufferRef.current
+      }));
+      drawBufferRef.current = []; // Clear buffer after send
+    }
+  };
+
+  // Optionally, send remaining buffer every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (drawBufferRef.current.length > 0) {
+        sendDrawChunk();
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const stopDrawing = () => {
     setIsDrawing(false);
