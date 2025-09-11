@@ -24,9 +24,10 @@ import {
   ChevronUp,
   ChevronDown
 } from 'lucide-react';
-import { getLessonPlanDataByDay, createWhiteboardSession } from '../services/grades';
+import { getLessonPlanDataByDay, getWhiteboardData } from '../services/grades';
 import { useSnackbar } from '../components/snackbar/SnackbarContext';
 import { environment } from '@/environment';
+
 
 
 
@@ -90,6 +91,7 @@ const WhiteboardTeaching: React.FC = () => {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [slideImages, setSlideImages] = useState<(ImageData | null)[]>([null]);
   const [sessionToken, setSessionToken] = useState<string>('');
+  const [savedData, setSavedData] = useState<any>(null);
 
   const [activities] = useState<LessonActivity[]>([
     {
@@ -153,7 +155,40 @@ const WhiteboardTeaching: React.FC = () => {
     }
   }
 
+  //getWhiteboardData
+  const getWhiteboardSavedData = async () => {
+    try {
+      const data = {
+        // chapter_id: chapterId,
+        // lesson_plan_day_id: day,
+        // subject: subject,
+        // class: className,
+        // section: section,
+        school_id: schoolId,
+        // board_id: boardId,
+        // subject_id: subjectId,
+        // class_id: classId,
+        session_id : sessionToken
 
+      };
+      const response = await getWhiteboardData(data);
+      if (response && response.data) {
+        setSavedData(response.data);
+      } else {
+        showSnackbar({
+          title: 'Error',
+          description: response.message || 'Failed to fetch lesson plan data.',
+          status: 'error'
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: 'Error',
+        description: 'An unexpected error occurred while fetching lesson plan data.',
+        status: 'error'
+      });
+    }
+  }
 
   useEffect(() => {
     const sessionId = sessionStorage.getItem('sessionId');
@@ -272,6 +307,8 @@ const WhiteboardTeaching: React.FC = () => {
   // WebSocket setup
   useEffect(() => {
     if (sessionToken && sessionToken != '') {
+      getWhiteboardSavedData();
+      
       wsRef.current = new WebSocket(`${baseurl}/ws/whiteboard/${sessionStorage.getItem('sessionId')}/?token=${sessionStorage.getItem('access_token')}&school_id=${userData.school_id}`);
       wsRef.current.onopen = () => console.log('WebSocket connected');
       wsRef.current.onclose = () => console.log('WebSocket disconnected');
@@ -547,6 +584,69 @@ const WhiteboardTeaching: React.FC = () => {
   const containerClass = isFullscreen
     ? "fixed inset-0 z-50 bg-background"
     : "h-screen bg-muted/30";
+
+  const replaySavedData = (slideNum: number) => {
+    if (!savedData || !Array.isArray(savedData)) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!ctx || !canvas) return;
+
+    // Clear canvas before replaying
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Filter data for the current slide
+    const slideData = savedData.filter((d) => d.slide === slideNum);
+
+    if (slideData.length === 0) return;
+
+    ctx.save();
+    for (let i = 1; i < slideData.length; i++) {
+      const prev = slideData[i - 1];
+      const curr = slideData[i];
+
+      ctx.beginPath();
+      ctx.lineWidth = curr.size;
+      ctx.strokeStyle = curr.color;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      if (curr.tool === 'pen') {
+        ctx.globalCompositeOperation = 'source-over';
+      } else if (curr.tool === 'eraser') {
+        ctx.globalCompositeOperation = 'destination-out';
+      }
+
+      ctx.moveTo(prev.x, prev.y);
+      ctx.lineTo(curr.x, curr.y);
+      ctx.stroke();
+    }
+    ctx.restore();
+  };
+
+  useEffect(() => {
+    if (savedData) {
+      replaySavedData(currentSlide);
+    }
+    // eslint-disable-next-line
+  }, [savedData, currentSlide]);
+
+  useEffect(() => {
+    if (savedData && Array.isArray(savedData)) {
+      // Find the max slide number in savedData
+      const maxSlide = Math.max(...savedData.map((d) => d.slide));
+      if (maxSlide > 1) {
+        setTotalSlides(maxSlide);
+        // Ensure slideImages array is long enough
+        setSlideImages((prev) => {
+          const updated = [...prev];
+          while (updated.length < maxSlide) updated.push(null);
+          return updated;
+        });
+      }
+    }
+  }, [savedData]);
 
   return (
     <div className={containerClass}>
