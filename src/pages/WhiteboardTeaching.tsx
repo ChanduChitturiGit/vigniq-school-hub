@@ -27,6 +27,8 @@ import {
 import { getLessonPlanDataByDay, getWhiteboardData } from '../services/grades';
 import { useSnackbar } from '../components/snackbar/SnackbarContext';
 import { environment } from '@/environment';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 
 
@@ -648,6 +650,43 @@ const WhiteboardTeaching: React.FC = () => {
     }
   }, [savedData]);
 
+  const handleSaveAsPDF = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const pdf = new jsPDF({
+      orientation: 'landscape',
+      unit: 'px',
+      format: [canvas.width, canvas.height]
+    });
+
+    for (let i = 0; i < totalSlides; i++) {
+      // Load each slide image
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw slide image if exists
+      const imageData = slideImages[i];
+      if (imageData) {
+        ctx.putImageData(imageData, 0, 0);
+      } else {
+        // Optionally replay savedData for this slide if imageData is missing
+        replaySavedData(i + 1);
+      }
+
+      // Convert canvas to image
+      const imgData = canvas.toDataURL('image/png');
+
+      if (i > 0) pdf.addPage([canvas.width, canvas.height], 'landscape');
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+    }
+
+    pdf.save('whiteboard.pdf');
+    handleSaveData();
+  };
+
   return (
     <div className={containerClass}>
       <div className="flex h-full relative">
@@ -828,6 +867,15 @@ const WhiteboardTeaching: React.FC = () => {
                         onClick={handleSaveData}>
                         <Save className="w-4 h-4 mr-2" />
                         Save
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start mt-2"
+                        onClick={handleSaveAsPDF}
+                      >
+                        <Save className="w-4 h-4 mr-2" />
+                        Save as PDF
                       </Button>
                     </div>
                   </div>
