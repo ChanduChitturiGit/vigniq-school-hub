@@ -496,32 +496,51 @@ class StudentService:
             return JsonResponse({"error": "Failed to delete student."},
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def get_students_data(self,students,academic_year_id):
-        """Helper method to format student data."""
+    def get_students_data(self, students, academic_year_id):
+        """Helper method to format student data with optimized DB calls."""
         try:
             students_data = []
-            
+            boards = CommonFunctions().get_boards_dict()
+
+            # Get academic year (single query)
             academic_year = SchoolAcademicYear.objects.using(self.school_db_name).get(id=academic_year_id)
+
+            student_ids = [s.student_id for s in students]
+
+            # Fetch all users in bulk
+            users_map = {
+                u.id: u for u in User.objects.filter(id__in=student_ids)
+            }
+
+            # Fetch all class assignments in bulk
+            assignments_map = {
+                a.student_id: a
+                for a in StudentClassAssignment.objects.using(self.school_db_name)
+                .filter(student__in=students, academic_year=academic_year)
+            }
+
+            # Fetch all related sections in bulk
+            section_ids = [a.class_instance_id for a in assignments_map.values()]
+            sections_map = {
+                s.id: s for s in SchoolSection.objects.using(self.school_db_name).filter(id__in=section_ids)
+            }
+
+            # Now iterate without hitting DB
             for student in students:
-                try:
-                    user = User.objects.get(id=student.student_id)
-                    class_assignment = StudentClassAssignment.objects.using(
-                        self.school_db_name
-                    ).get(
-                        student=student,
-                        academic_year = academic_year
-                    )
-                    class_instance = SchoolSection.objects.using(self.school_db_name).get(
-                        id=class_assignment.class_instance_id)
-                except User.DoesNotExist:
+                user = users_map.get(student.student_id)
+                assignment = assignments_map.get(student.student_id)
+                class_instance = sections_map.get(assignment.class_instance_id) if assignment else None
+
+                if not user:
                     logger.warning(f"User with ID {student.student_id} not found.")
                     continue
-                except StudentClassAssignment.DoesNotExist:
+                if not assignment:
                     logger.warning(f"Class assignment for student ID {student.student_id} not found.")
                     continue
-                except SchoolSection.DoesNotExist:
-                    logger.warning(f"Class with ID {class_assignment.class_instance.id} not found.")
+                if not class_instance:
+                    logger.warning(f"Class with ID {assignment.class_instance_id} not found.")
                     continue
+
                 students_data.append({
                     "student_id": student.student_id,
                     "student_name": user.full_name(),
@@ -532,9 +551,13 @@ class StudentService:
                     "class_number": class_instance.class_instance_id,
                     "class_id": class_instance.id,
                     "section": class_instance.section,
+                    "board_id": class_instance.board_id,
+                    "board_name": boards.get(class_instance.board_id, None),
                     "email": user.email,
                 })
+
             return students_data
+
         except SchoolAcademicYear.DoesNotExist:
             raise ValueError("Academic year not found.")
         except Exception as e:
