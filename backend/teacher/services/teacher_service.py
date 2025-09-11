@@ -360,16 +360,19 @@ class TeacherService:
                 academic_year = acadamic_year
             ).values(
                 'subject__id', 'subject__name', 'school_class__id', 'school_class__class_instance__class_number',
-                'school_class__section'
+                'school_class__section','school_class__board_id'
             ).distinct()
 
+            boards = CommonFunctions().get_boards_dict()
             renamed_assignments = [
                 {
                     'subject_id': item['subject__id'], 
                     'subject_name': item['subject__name'],
                     'class_id': item['school_class__id'],
                     'class_number': item['school_class__class_instance__class_number'],
-                    'section': item['school_class__section']
+                    'section': item['school_class__section'],
+                    'board_id': item['school_class__board_id'],
+                    'board_name': boards.get(item['school_class__board_id'], 'Unknown')
                 }
                 for item in subject_assignments
             ]
