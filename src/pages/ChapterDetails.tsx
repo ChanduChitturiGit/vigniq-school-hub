@@ -595,7 +595,7 @@ const ChapterDetails: React.FC = () => {
 
                           <div className="flex flex-col gap-1 space-y-2">
                             <Link
-                              to={`/grades/lesson-plan/day/${chapterId}/${day.lesson_plan_day_id}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&day=${day.day}&${pathData}`}
+                              to={`/grades/lesson-plan/day/${chapterId}/${day.lesson_plan_day_id}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&day=${day.day}&${pathData}&status=${day.status}`}
                               className="w-full"
                             >
                               <Button variant="outline" className="w-full flex items-center gap-2 text-blue-600 border-blue-200 hover:bg-blue-50">
