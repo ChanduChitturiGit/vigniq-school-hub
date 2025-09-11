@@ -2,9 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { 
-  ArrowLeft, 
-  Maximize2, 
+import {
+  ArrowLeft,
+  Maximize2,
   Minimize2,
   Pen,
   Eraser,
@@ -24,7 +24,7 @@ import {
   ChevronUp,
   ChevronDown
 } from 'lucide-react';
-import { getLessonPlanDataByDay } from '../services/grades';
+import { getLessonPlanDataByDay, createWhiteboardSession } from '../services/grades';
 import { useSnackbar } from '../components/snackbar/SnackbarContext';
 
 
@@ -57,7 +57,7 @@ const WhiteboardTeaching: React.FC = () => {
   const { showSnackbar } = useSnackbar();
   const { chapterId, day } = useParams();
   const [searchParams] = useSearchParams();
-  
+
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
   const subject = searchParams.get('subject') || '';
@@ -88,6 +88,7 @@ const WhiteboardTeaching: React.FC = () => {
   const [drawingHistory, setDrawingHistory] = useState<ImageData[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [slideImages, setSlideImages] = useState<(ImageData | null)[]>([null]);
+  const [sessionToken, setSessionToken] = useState<string>('');
 
   const [activities] = useState<LessonActivity[]>([
     {
@@ -119,37 +120,75 @@ const WhiteboardTeaching: React.FC = () => {
 
   const colors = ['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500'];
 
-   const getLessonData = async () => {
-      try {
-        const data = {
-          chapter_id: chapterId,
-          lesson_plan_day_id: day,
-          subject: subject,
-          class: className,
-          section: section,
-          school_id: schoolId,
-          board_id: boardId,
-          subject_id: subjectId,
-          class_id: classId
-        };
-        const response = await getLessonPlanDataByDay(data);
-        if (response && response.data) {
-          setLessonData(response.data);
-        } else {
-          showSnackbar({
-            title: 'Error',
-            description: response.message || 'Failed to fetch lesson plan data.',
-            status: 'error'
-          });
-        }
-      } catch (error) {
+  const getLessonData = async () => {
+    try {
+      const data = {
+        chapter_id: chapterId,
+        lesson_plan_day_id: day,
+        subject: subject,
+        class: className,
+        section: section,
+        school_id: schoolId,
+        board_id: boardId,
+        subject_id: subjectId,
+        class_id: classId
+      };
+      const response = await getLessonPlanDataByDay(data);
+      if (response && response.data) {
+        setLessonData(response.data);
+      } else {
         showSnackbar({
           title: 'Error',
-          description: 'An unexpected error occurred while fetching lesson plan data.',
+          description: response.message || 'Failed to fetch lesson plan data.',
           status: 'error'
         });
       }
+    } catch (error) {
+      showSnackbar({
+        title: 'Error',
+        description: 'An unexpected error occurred while fetching lesson plan data.',
+        status: 'error'
+      });
     }
+  }
+
+  const generateSession = async () => {
+    try {
+      const data = {
+        // chapter_id: chapterId,
+        // lesson_plan_day_id: day,
+        // subject: subject,
+        // class: className,
+        // section: section,
+        school_id: Number(schoolId),
+        // board_id: boardId,
+        // subject_id: subjectId,
+        // class_id: classId,
+        lesson_plan_day_id : Number(day)
+      };
+      const response = await createWhiteboardSession(data);
+      console.log('white',response);
+      if (response && response.data) {
+        setSessionToken(response.data.session_token);
+      } else {
+        showSnackbar({
+          title: 'Error',
+          description: response.message || 'Failed to create whiteboard session.',
+          status: 'error'
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: 'Error',
+        description: 'An unexpected error occurred while creating whiteboard session.',
+        status: 'error'
+      });
+    }
+  }
+
+  useEffect(() => {
+    generateSession();
+  },[])
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -164,17 +203,17 @@ const WhiteboardTeaching: React.FC = () => {
       if (container) {
         const devicePixelRatio = window.devicePixelRatio || 1;
         const rect = container.getBoundingClientRect();
-        
+
         canvas.width = rect.width * devicePixelRatio;
         canvas.height = rect.height * devicePixelRatio;
-        
+
         canvas.style.width = rect.width + 'px';
         canvas.style.height = rect.height + 'px';
-        
+
         ctx.scale(devicePixelRatio, devicePixelRatio);
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
+
         // Enable smoothing for better drawing quality
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
@@ -188,7 +227,7 @@ const WhiteboardTeaching: React.FC = () => {
     const handleFullscreenChange = () => {
       setTimeout(updateCanvasSize, 100);
     };
-    
+
     document.addEventListener('fullscreenchange', handleFullscreenChange);
 
     return () => {
@@ -201,7 +240,7 @@ const WhiteboardTeaching: React.FC = () => {
     getLessonData();
     setIsFullscreen(true);
     toggleFullscreen();
-  } , []);
+  }, []);
 
   const getCoordinates = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -210,14 +249,14 @@ const WhiteboardTeaching: React.FC = () => {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    
+
     let x = (e.clientX - rect.left) * scaleX;
     let y = (e.clientY - rect.top) * scaleY;
-    
+
     // Pixel alignment for smooth writing
     x = Math.round(x * 2) / 2;
     y = Math.round(y * 2) / 2;
-    
+
     return { x, y };
   };
 
@@ -228,17 +267,17 @@ const WhiteboardTeaching: React.FC = () => {
     if (!ctx || !canvas) return;
 
     const { x, y } = getCoordinates(e);
-    
+
     // Save current state to history
     saveToHistory();
-    
+
     ctx.beginPath();
     ctx.moveTo(x, y);
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing) return;
-    
+
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (!ctx || !canvas) return;
@@ -351,14 +390,14 @@ const WhiteboardTeaching: React.FC = () => {
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const newHistory = drawingHistory.slice(0, historyIndex + 1);
     newHistory.push(imageData);
-    
+
     // Limit history to 50 steps for performance
     if (newHistory.length > 50) {
       newHistory.shift();
     } else {
       setHistoryIndex(historyIndex + 1);
     }
-    
+
     setDrawingHistory(newHistory);
   };
 
@@ -420,7 +459,7 @@ const WhiteboardTeaching: React.FC = () => {
     // eslint-disable-next-line
   }, [currentSlide]);
 
-  const containerClass = isFullscreen 
+  const containerClass = isFullscreen
     ? "fixed inset-0 z-50 bg-background"
     : "h-screen bg-muted/30";
 
@@ -451,22 +490,20 @@ const WhiteboardTeaching: React.FC = () => {
             <h2 className="text-lg font-semibold text-foreground mb-4">Lesson Activities</h2>
             <div className="space-y-3">
               {lessonData && lessonData.topics && lessonData.topics.map((activity) => (
-                <Card 
-                  key={activity.topic_id} 
-                  className={`cursor-pointer transition-colors ${
-                    currentActivity === activity.topic_id 
-                      ? 'border-primary bg-primary/5' 
+                <Card
+                  key={activity.topic_id}
+                  className={`cursor-pointer transition-colors ${currentActivity === activity.topic_id
+                      ? 'border-primary bg-primary/5'
                       : 'hover:bg-muted/50'
-                  }`}
+                    }`}
                   onClick={() => setCurrentActivity(activity.topic_id)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                        currentActivity === activity.topic_id
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${currentActivity === activity.topic_id
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-muted text-muted-foreground'
-                      }`}>
+                        }`}>
                         {activity.topic_id}
                       </div>
                       <div className="flex-1">
@@ -510,15 +547,14 @@ const WhiteboardTeaching: React.FC = () => {
             </Button>
 
             {/* Right-to-Left Sliding Toolbar */}
-            <div className={`absolute top-4 right-20 z-30 bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg transition-transform duration-300 ${
-              isToolbarVisible ? 'translate-x-0' : 'translate-x-[calc(100%+1rem)]'
-            }`}>
+            <div className={`absolute top-4 right-20 z-30 bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg transition-transform duration-300 ${isToolbarVisible ? 'translate-x-0' : 'translate-x-[calc(100%+1rem)]'
+              }`}>
               <div className="p-3">
                 <div className="flex flex-col gap-3">
                   {/* Drawing Tools */}
                   <div className="flex flex-col gap-2">
                     <Button
-                      onClick={() => {setCurrentTool('pen'); setIsToolbarVisible(false);}}
+                      onClick={() => { setCurrentTool('pen'); setIsToolbarVisible(false); }}
                       variant={currentTool === 'pen' ? 'default' : 'outline'}
                       size="sm"
                       className="justify-start"
@@ -527,7 +563,7 @@ const WhiteboardTeaching: React.FC = () => {
                       Pen
                     </Button>
                     <Button
-                      onClick={() => {setCurrentTool('eraser'); setIsToolbarVisible(false);}}
+                      onClick={() => { setCurrentTool('eraser'); setIsToolbarVisible(false); }}
                       variant={currentTool === 'eraser' ? 'default' : 'outline'}
                       size="sm"
                       className="justify-start"
@@ -536,7 +572,7 @@ const WhiteboardTeaching: React.FC = () => {
                       Eraser
                     </Button>
                     <Button
-                      onClick={() => {setCurrentTool('rectangle'); setIsToolbarVisible(false);}}
+                      onClick={() => { setCurrentTool('rectangle'); setIsToolbarVisible(false); }}
                       variant={currentTool === 'rectangle' ? 'default' : 'outline'}
                       size="sm"
                       className="justify-start"
@@ -545,7 +581,7 @@ const WhiteboardTeaching: React.FC = () => {
                       Rectangle
                     </Button>
                     <Button
-                      onClick={() => {setCurrentTool('circle'); setIsToolbarVisible(false);}}
+                      onClick={() => { setCurrentTool('circle'); setIsToolbarVisible(false); }}
                       variant={currentTool === 'circle' ? 'default' : 'outline'}
                       size="sm"
                       className="justify-start"
@@ -554,7 +590,7 @@ const WhiteboardTeaching: React.FC = () => {
                       Circle
                     </Button>
                     <Button
-                      onClick={() => {setCurrentTool('triangle'); setIsToolbarVisible(false);}}
+                      onClick={() => { setCurrentTool('triangle'); setIsToolbarVisible(false); }}
                       variant={currentTool === 'triangle' ? 'default' : 'outline'}
                       size="sm"
                       className="justify-start"
@@ -562,7 +598,7 @@ const WhiteboardTeaching: React.FC = () => {
                       <Triangle className="w-4 h-4 mr-2" />
                       Triangle
                     </Button>
-                    
+
                     {/* Colors */}
                     <div className="border-t pt-2">
                       <div className="flex items-center gap-2 mb-2">
@@ -574,9 +610,8 @@ const WhiteboardTeaching: React.FC = () => {
                           <button
                             key={color}
                             onClick={() => setCurrentColor(color)}
-                            className={`w-6 h-6 rounded border-2 ${
-                              currentColor === color ? 'border-foreground' : 'border-border'
-                            }`}
+                            className={`w-6 h-6 rounded border-2 ${currentColor === color ? 'border-foreground' : 'border-border'
+                              }`}
                             style={{ backgroundColor: color }}
                           />
                         ))}
@@ -612,7 +647,7 @@ const WhiteboardTeaching: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               {/* Toolbar Toggle Button */}
               <Button
                 onClick={toggleToolbar}
@@ -681,22 +716,21 @@ const WhiteboardTeaching: React.FC = () => {
                     &lt;
                   </button>
                 )}
-                
+
                 {/* Slide Numbers */}
                 {Array.from({ length: totalSlides }, (_, i) => i + 1).map((slideNum) => (
                   <button
                     key={slideNum}
                     onClick={() => goToSlide(slideNum)}
-                    className={`px-2 py-1 text-sm font-medium rounded transition-colors ${
-                      currentSlide === slideNum
+                    className={`px-2 py-1 text-sm font-medium rounded transition-colors ${currentSlide === slideNum
                         ? 'bg-primary text-primary-foreground'
                         : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                    }`}
+                      }`}
                   >
                     {slideNum}
                   </button>
                 ))}
-                
+
                 {/* Next Arrow */}
                 {currentSlide < totalSlides && (
                   <button
@@ -723,8 +757,8 @@ const WhiteboardTeaching: React.FC = () => {
 
         {/* Overlay backdrop when sidebar is open */}
         {!isLeftSidebarCollapsed && (
-          <div 
-            className="fixed inset-0 bg-black/20 z-20" 
+          <div
+            className="fixed inset-0 bg-black/20 z-20"
             onClick={toggleLeftSidebar}
           />
         )}

@@ -25,11 +25,7 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ isCollapsed, toggleSidebar, pageT
   const notificationMenuRef = React.useRef<HTMLDivElement>(null);
 
   // Mock notifications
-  const [notifications, setNotifications] = useState([
-    { ticket_id: 1, latest_message: "New message from Admin", latest_message_time: "2 min ago" },
-    { ticket_id: 2, latest_message: "Your report is ready", latest_message_time: "10 min ago" },
-    { ticket_id: 3, latest_message: "System update scheduled", latest_message_time: "1 hr ago" },
-  ]);
+  const [notifications, setNotifications] = useState([]);
 
   const handleLogout = () => {
     logout();
