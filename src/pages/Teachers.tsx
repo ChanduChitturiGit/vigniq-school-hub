@@ -1,14 +1,25 @@
 
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Plus, Mail, Phone, Search, Users as UsersIcon, LoaderCircle, Grid, List, Eye, Trash2 } from 'lucide-react';
+import { Edit, Plus, Mail, Phone, Search, Users as UsersIcon, LoaderCircle, Grid, List, Eye, Trash2, Trash, ArrowLeft } from 'lucide-react';
 import { getTeachersBySchoolId, deleteTeacherById } from '../services/teacher';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import { SpinnerOverlay } from '../pages/SpinnerOverlay';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../components/ui/alert-dialog';
 
 const Teachers: React.FC = () => {
   const { showSnackbar } = useSnackbar();
@@ -19,6 +30,7 @@ const Teachers: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const schoolId = JSON.parse(localStorage.getItem("current_school_id"));
+  const navigate = useNavigate();
 
 
   const getTeachersList = async () => {
@@ -29,7 +41,7 @@ const Teachers: React.FC = () => {
         setLoader(false);
         setTeachers(response.teachers);
       }
-    }catch(error) {
+    } catch (error) {
       setLoader(false);
       console.error('Error fetching teachers:', error);
       showSnackbar({
@@ -57,7 +69,7 @@ const Teachers: React.FC = () => {
       { label: 'Teachers' }
     ]
     : [
-     { label: userData.role == 'teacher' ? 'Home' : 'My School', path: (userData.role == 'superadmin' ? `/school-details/${schoolId}` : userData.role == 'admin' ? '/admin-school' : '/dashboard') },
+      { label: userData.role == 'teacher' ? 'Home' : 'My School', path: (userData.role == 'superadmin' ? `/school-details/${schoolId}` : userData.role == 'admin' ? '/admin-school' : '/dashboard') },
       { label: 'Teachers' }
     ];
 
@@ -85,7 +97,7 @@ const Teachers: React.FC = () => {
         description: error?.response?.data?.error || "Something went wrong",
         status: "error"
       });
-    }finally {
+    } finally {
       setLoader(false);
       getTeachersList();
     }
@@ -96,40 +108,73 @@ const Teachers: React.FC = () => {
     handleTeacherDelete(Number(teacherId));
   };
 
+
+  const deleteModal = (teacher: any) => {
+    return (
+      <>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button className="flex items-center gap-2 text-red-500 hover:text-red-600 transition-colors">
+              <Trash2 className="w-4 h-4" />
+              {/* Reset Password */}
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Teacher</AlertDialogTitle>
+              <AlertDialogDescription className='text-gray-700'>
+                <p>Are you sure you want to delete teacher <span className='font-bold'>{teacher.teacher_first_name} {teacher.teacher_last_name}</span>?</p>
+                This action cannot be undone
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => handleDelete(teacher.teacher_id)} className="bg-red-600 hover:bg-red-700">
+                Confirm Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
+    )
+  }
+
+
   const renderGridView = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {filteredTeachers.map((teacher) => (
-        <Link
+        <div
           key={teacher.teacher_id}
-          to={`/teacher-details/${teacher.teacher_id}`}
+          onClick={() => { navigate(`/teacher-details/${teacher.teacher_id}`) }}
           className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
         >
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-semibold">
-                  {teacher.teacher_first_name.charAt(0)}
-                </span>
+          <div >
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                  <span className="text-white font-semibold">
+                    {teacher.teacher_first_name.charAt(0)}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">{teacher.teacher_first_name + " " + teacher.teacher_last_name}</h3>
+                  {/* <p className="text-sm text-gray-500">{teacher.subject}</p> */}
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800">{teacher.teacher_first_name + " " + teacher.teacher_last_name}</h3>
-                <p className="text-sm text-gray-500">{teacher.subject}</p>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-gray-400" />
+                <p className="text-sm text-gray-600">{teacher.email}</p>
               </div>
-            </div>
-          </div>
 
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Mail className="w-4 h-4 text-gray-400" />
-              <p className="text-sm text-gray-600">{teacher.email}</p>
-            </div>
+              <div className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-gray-400" />
+                <p className="text-sm text-gray-600">{teacher.phone_number}</p>
+              </div>
 
-            <div className="flex items-center gap-2">
-              <Phone className="w-4 h-4 text-gray-400" />
-              <p className="text-sm text-gray-600">{teacher.phone_number}</p>
-            </div>
-
-            {/* <div>
+              {/* <div>
               <p className="text-sm text-gray-500 mb-1">Classes:</p>
               <div className="flex flex-wrap gap-1">
                 {teacher.classes && teacher.classes.map((className, index) => (
@@ -143,26 +188,19 @@ const Teachers: React.FC = () => {
               </div>
             </div> */}
 
+            </div>
           </div>
 
-          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-end">
+          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-end"
+            onClick={(e) => e.stopPropagation()} >
             {/* <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
               {teacher.status || 'Active'}
             </span> */}
-            {(user?.role === 'admin' || user?.role === 'superadmin') && (
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleDelete(teacher.teacher_id);
-                }}
-                className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                title="Delete Teacher"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            )}
+            {(user?.role === 'admin' || user?.role === 'superadmin') &&
+              deleteModal(teacher)
+            }
           </div>
-        </Link>
+        </div>
       ))}
     </div>
   );
@@ -174,7 +212,7 @@ const Teachers: React.FC = () => {
           <TableHeader>
             <TableRow>
               <TableHead className="font-medium">Name</TableHead>
-              <TableHead className="font-medium">Subject</TableHead>
+              {/* <TableHead className="font-medium">Subject</TableHead> */}
               <TableHead className="font-medium">Email</TableHead>
               <TableHead className="font-medium">Phone</TableHead>
               {/* <TableHead className="font-medium">Status</TableHead> */}
@@ -194,7 +232,7 @@ const Teachers: React.FC = () => {
                     <span className="font-medium">{teacher.teacher_first_name + " " + teacher.teacher_last_name}</span>
                   </div>
                 </TableCell>
-                <TableCell>{teacher.subject}</TableCell>
+                {/* <TableCell>{teacher.subject}</TableCell> */}
                 <TableCell className="max-w-xs truncate">{teacher.email}</TableCell>
                 <TableCell>{teacher.phone_number}</TableCell>
                 {/* <TableCell>
@@ -211,18 +249,9 @@ const Teachers: React.FC = () => {
                     >
                       <Eye className="w-4 h-4" />
                     </Link>
-                    {(user?.role === 'admin' || user?.role === 'superadmin') && (
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleDelete(teacher.teacher_id);
-                        }}
-                        className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Delete Teacher"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
+                    {(user?.role === 'admin' || user?.role === 'superadmin') &&
+                      deleteModal(teacher)
+                    }
                   </div>
                 </TableCell>
               </TableRow>
@@ -244,7 +273,13 @@ const Teachers: React.FC = () => {
               <UsersIcon className="w-6 h-6 text-green-600" />
             </div> */}
             {/* <h1 className="text-xl md:text-2xl font-bold text-gray-800">Teachers</h1> */}
-            <Breadcrumb items={breadcrumbItems} />
+            <div
+              onClick={() => window.history.back()}
+              className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="font-medium">Back</span>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <div className="flex items-center bg-gray-100 rounded-lg p-1">
