@@ -196,6 +196,16 @@ const WhiteboardTeaching: React.FC = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Save current canvas image before resizing
+    let savedImageData: ImageData | null = null;
+    if (canvas.width > 0 && canvas.height > 0) {
+      try {
+        savedImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      } catch (err) {
+        savedImageData = null;
+      }
+    }
+
     // Set canvas size with improved smoothing
     const updateCanvasSize = () => {
       const container = canvas.parentElement;
@@ -209,6 +219,7 @@ const WhiteboardTeaching: React.FC = () => {
         canvas.style.width = rect.width + 'px';
         canvas.style.height = rect.height + 'px';
 
+        ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform before scaling
         ctx.scale(devicePixelRatio, devicePixelRatio);
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -216,6 +227,15 @@ const WhiteboardTeaching: React.FC = () => {
         // Enable smoothing for better drawing quality
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
+
+        // Restore saved image data after resizing
+        if (savedImageData) {
+          try {
+            ctx.putImageData(savedImageData, 0, 0);
+          } catch (err) {
+            // Ignore if putImageData fails
+          }
+        }
       }
     };
 
@@ -276,6 +296,7 @@ const WhiteboardTeaching: React.FC = () => {
 
   const wsRef = useRef<WebSocket | null>(null);
   const drawBufferRef = useRef<any[]>([]);
+  const pointsRef = useRef<{ x: number, y: number }[]>([]);
 
   // WebSocket setup
   useEffect(() => {
@@ -287,7 +308,8 @@ const WhiteboardTeaching: React.FC = () => {
     };
   }, []);
 
-  // Drawing event: buffer coordinates
+  const lastPointRef = useRef<{ x: number, y: number } | null>(null);
+
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing) return;
 
@@ -302,15 +324,46 @@ const WhiteboardTeaching: React.FC = () => {
       ctx.lineWidth = brushSize;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      ctx.lineTo(x, y);
-      ctx.stroke();
+
+      // Add current point to buffer
+      pointsRef.current.push({ x, y });
+
+      // Only draw if we have enough points for a curve
+      if (pointsRef.current.length >= 4) {
+        const [p0, p1, p2, p3] = pointsRef.current.slice(-4);
+        ctx.beginPath();
+        ctx.moveTo(p0.x, p0.y);
+        ctx.bezierCurveTo(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+        ctx.stroke();
+      } else if (pointsRef.current.length >= 2) {
+        // For first few points, just draw a line
+        const [p0, p1] = pointsRef.current.slice(-2);
+        ctx.beginPath();
+        ctx.moveTo(p0.x, p0.y);
+        ctx.lineTo(p1.x, p1.y);
+        ctx.stroke();
+      }
     } else if (currentTool === 'eraser') {
       ctx.globalCompositeOperation = 'destination-out';
       ctx.lineWidth = brushSize * 2;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      ctx.lineTo(x, y);
-      ctx.stroke();
+
+      pointsRef.current.push({ x, y });
+
+      if (pointsRef.current.length >= 4) {
+        const [p0, p1, p2, p3] = pointsRef.current.slice(-4);
+        ctx.beginPath();
+        ctx.moveTo(p0.x, p0.y);
+        ctx.bezierCurveTo(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+        ctx.stroke();
+      } else if (pointsRef.current.length >= 2) {
+        const [p0, p1] = pointsRef.current.slice(-2);
+        ctx.beginPath();
+        ctx.moveTo(p0.x, p0.y);
+        ctx.lineTo(p1.x, p1.y);
+        ctx.stroke();
+      }
     }
 
     // Buffer the event
@@ -323,11 +376,9 @@ const WhiteboardTeaching: React.FC = () => {
       timestamp: Date.now()
     });
 
-    // Send chunk if buffer size >= 10
     if (drawBufferRef.current.length >= 20) {
       sendDrawChunk();
     }
-    console.log(drawBufferRef.current.length);
   };
 
   // Send chunk via WebSocket
@@ -353,6 +404,8 @@ const WhiteboardTeaching: React.FC = () => {
 
   const stopDrawing = () => {
     setIsDrawing(false);
+    lastPointRef.current = null; // Reset for next stroke
+    pointsRef.current = [];      // Clear Bezier buffer
   };
 
   // Helper to save current canvas to slideImages
