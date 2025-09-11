@@ -129,10 +129,8 @@ class WhiteboardService:
 
             data = []
             for chunk in data_chunks:
-                data.append({
-                    "chunk_index": chunk.chunk_index,
-                    "data": chunk.data
-                })
+                for sub_chunk in chunk.data:
+                    data.extend(sub_chunk)
 
             return Response({"data": data}, status=status.HTTP_200_OK)
 
