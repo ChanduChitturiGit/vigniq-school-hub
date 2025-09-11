@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { getLessonPlanDataByDay, createWhiteboardSession } from '../services/grades';
 import { useSnackbar } from '../components/snackbar/SnackbarContext';
+import { environment } from '@/environment';
 
 
 
@@ -57,6 +58,7 @@ const WhiteboardTeaching: React.FC = () => {
   const { showSnackbar } = useSnackbar();
   const { chapterId, day } = useParams();
   const [searchParams] = useSearchParams();
+  const baseurl = environment.baseurl;
 
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
@@ -151,43 +153,12 @@ const WhiteboardTeaching: React.FC = () => {
     }
   }
 
-  const generateSession = async () => {
-    try {
-      const data = {
-        // chapter_id: chapterId,
-        // lesson_plan_day_id: day,
-        // subject: subject,
-        // class: className,
-        // section: section,
-        school_id: Number(schoolId),
-        // board_id: boardId,
-        // subject_id: subjectId,
-        // class_id: classId,
-        lesson_plan_day_id : Number(day)
-      };
-      const response = await createWhiteboardSession(data);
-      console.log('white',response);
-      if (response && response.data) {
-        setSessionToken(response.data.session_token);
-      } else {
-        showSnackbar({
-          title: 'Error',
-          description: response.message || 'Failed to create whiteboard session.',
-          status: 'error'
-        });
-      }
-    } catch (error) {
-      showSnackbar({
-        title: 'Error',
-        description: 'An unexpected error occurred while creating whiteboard session.',
-        status: 'error'
-      });
-    }
-  }
+
 
   useEffect(() => {
-    generateSession();
-  },[])
+    const sessionId = sessionStorage.getItem('sessionId');
+    setSessionToken(sessionId);
+  }, [])
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -300,13 +271,16 @@ const WhiteboardTeaching: React.FC = () => {
 
   // WebSocket setup
   useEffect(() => {
-    wsRef.current = new WebSocket(`ws://localhost:8000/ws/whiteboard/91a7d54afd3c4ed6957d1e83656ef1c5/?token=${sessionStorage.getItem('access_token')}&school_id=${userData.school_id}`);
-    wsRef.current.onopen = () => console.log('WebSocket connected');
-    wsRef.current.onclose = () => console.log('WebSocket disconnected');
+    if (sessionToken && sessionToken != '') {
+      wsRef.current = new WebSocket(`${baseurl}/ws/whiteboard/${sessionStorage.getItem('sessionId')}/?token=${sessionStorage.getItem('access_token')}&school_id=${userData.school_id}`);
+      wsRef.current.onopen = () => console.log('WebSocket connected');
+      wsRef.current.onclose = () => console.log('WebSocket disconnected');
+    }
     return () => {
+      sendDrawChunk();
       wsRef.current?.close();
     };
-  }, []);
+  }, [sessionToken]);
 
   const lastPointRef = useRef<{ x: number, y: number } | null>(null);
 
@@ -383,7 +357,7 @@ const WhiteboardTeaching: React.FC = () => {
 
   // Send chunk via WebSocket
   const sendDrawChunk = () => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && drawBufferRef.current && drawBufferRef.current.length > 0) {
       wsRef.current.send(JSON.stringify({
         type: 'draw',
         data: drawBufferRef.current
@@ -399,7 +373,9 @@ const WhiteboardTeaching: React.FC = () => {
         sendDrawChunk();
       }
     }, 5000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+    }
   }, []);
 
   const stopDrawing = () => {
@@ -561,6 +537,13 @@ const WhiteboardTeaching: React.FC = () => {
     // eslint-disable-next-line
   }, [currentSlide]);
 
+
+  const handleSaveData = async () => {
+    sendDrawChunk();
+    wsRef.current?.close();
+    handleBackNavigation();
+  }
+
   const containerClass = isFullscreen
     ? "fixed inset-0 z-50 bg-background"
     : "h-screen bg-muted/30";
@@ -595,16 +578,16 @@ const WhiteboardTeaching: React.FC = () => {
                 <Card
                   key={activity.topic_id}
                   className={`cursor-pointer transition-colors ${currentActivity === activity.topic_id
-                      ? 'border-primary bg-primary/5'
-                      : 'hover:bg-muted/50'
+                    ? 'border-primary bg-primary/5'
+                    : 'hover:bg-muted/50'
                     }`}
                   onClick={() => setCurrentActivity(activity.topic_id)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${currentActivity === activity.topic_id
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-muted-foreground'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground'
                         }`}>
                         {activity.topic_id}
                       </div>
@@ -639,17 +622,17 @@ const WhiteboardTeaching: React.FC = () => {
             </Button>
 
             {/* Fullscreen Toggle */}
-            <Button
+            {/* <Button
               onClick={toggleFullscreen}
               variant="outline"
               size="sm"
               className="absolute top-4 right-4 z-40 bg-background/90 backdrop-blur-sm"
             >
               {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-            </Button>
+            </Button> */}
 
             {/* Right-to-Left Sliding Toolbar */}
-            <div className={`absolute top-4 right-20 z-30 bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg transition-transform duration-300 ${isToolbarVisible ? 'translate-x-0' : 'translate-x-[calc(100%+1rem)]'
+            <div className={`absolute top-4 right-5 z-30  bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg transition-transform duration-300 ${isToolbarVisible ? 'translate-x-0' : 'translate-x-[calc(100%+1rem)]'
               }`}>
               <div className="p-3">
                 <div className="flex flex-col gap-3">
@@ -673,7 +656,7 @@ const WhiteboardTeaching: React.FC = () => {
                       <Eraser className="w-4 h-4 mr-2" />
                       Eraser
                     </Button>
-                    <Button
+                    {/* <Button
                       onClick={() => { setCurrentTool('rectangle'); setIsToolbarVisible(false); }}
                       variant={currentTool === 'rectangle' ? 'default' : 'outline'}
                       size="sm"
@@ -699,7 +682,7 @@ const WhiteboardTeaching: React.FC = () => {
                     >
                       <Triangle className="w-4 h-4 mr-2" />
                       Triangle
-                    </Button>
+                    </Button> */}
 
                     {/* Colors */}
                     <div className="border-t pt-2">
@@ -737,11 +720,12 @@ const WhiteboardTeaching: React.FC = () => {
 
                     {/* Actions */}
                     <div className="border-t pt-2 space-y-2">
-                      <Button onClick={clearCanvas} variant="outline" size="sm" className="w-full justify-start">
+                      {/* <Button onClick={clearCanvas} variant="outline" size="sm" className="w-full justify-start">
                         <RotateCcw className="w-4 h-4 mr-2" />
                         Clear
-                      </Button>
-                      <Button variant="outline" size="sm" className="w-full justify-start">
+                      </Button> */}
+                      <Button variant="outline" size="sm" className="w-full justify-start"
+                        onClick={handleSaveData}>
                         <Save className="w-4 h-4 mr-2" />
                         Save
                       </Button>
@@ -825,8 +809,8 @@ const WhiteboardTeaching: React.FC = () => {
                     key={slideNum}
                     onClick={() => goToSlide(slideNum)}
                     className={`px-2 py-1 text-sm font-medium rounded transition-colors ${currentSlide === slideNum
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                       }`}
                   >
                     {slideNum}
