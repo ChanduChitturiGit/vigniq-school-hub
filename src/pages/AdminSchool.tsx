@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Search, Plus, BookOpen, Users, LoaderCircle, ExternalLink,Expand } from 'lucide-react';
+import { Edit, Search, Plus, BookOpen, Users, LoaderCircle, ExternalLink, Expand, ArrowLeft } from 'lucide-react';
 import { getSchoolById, editSchool } from '../services/school';
 import { getTeachersBySchoolId } from '../services/teacher';
 import { getClassesBySchoolId } from '../services/class';
@@ -181,7 +181,14 @@ const AdminSchool: React.FC = () => {
   return (
     <MainLayout pageTitle={`My School - ${schoolData.school_name}`}>
       <div className="space-y-6">
-        <Breadcrumb items={breadcrumbItems} />
+        {/* <Breadcrumb items={breadcrumbItems} /> */}
+        <div
+          onClick={() =>  window.history.back()}
+          className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span className="font-medium">Back</span>
+        </div>
 
         {/* School Details Section */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
