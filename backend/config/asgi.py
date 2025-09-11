@@ -8,13 +8,15 @@ https://docs.djangoproject.com/en/5.2/howto/deployment/asgi/
 """
 
 import os
-
+from dotenv import load_dotenv
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 from . import routing
 
-environment = os.environ.get('ENVIRONMENT', 'dev')
+load_dotenv(dotenv_path='../.env')
+
+environment = os.getenv('ENVIRONMENT', 'dev')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', f'settings.{environment}')
 
 

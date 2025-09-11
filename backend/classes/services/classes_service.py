@@ -111,10 +111,8 @@ class ClassesService:
                             ).full_name()
                     except Teacher.DoesNotExist:
                         logger.error(f"Teacher with ID {class_instance.class_teacher_id} does not exist.")
-                        continue
                     except User.DoesNotExist:
                         logger.error(f"Teacher with ID {teacher.teacher_id} does not exist.")
-                        continue
 
                     academic_year_obj = SchoolAcademicYear.objects.using(school_db_name).get(
                         pk=class_instance.academic_year_id)
@@ -183,6 +181,7 @@ class ClassesService:
             ).first()
             teacher = None
             teacher_name = None
+            print(class_instance.class_teacher_id)
             if class_instance and class_instance.class_teacher_id:
                 teacher = Teacher.objects.using(school_db_name).get(
                     teacher_id=class_instance.class_teacher_id

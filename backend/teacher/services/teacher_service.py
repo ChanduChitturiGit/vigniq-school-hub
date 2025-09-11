@@ -493,7 +493,7 @@ class TeacherService:
         try:
             teacher_id = request.GET.get("teacher_id") or getattr(request.user, 'teacher_id', None) or request.data.get('teacher_id', None)
             school_id = request.GET.get("school_id") or request.data.get("school_id") or getattr(request.user, 'school_id', None)
-
+            academic_year_id = request.GET.get('academic_year_id', 1)
             if not teacher_id:
                 logger.error("Teacher ID is required to delete a teacher.")
                 return JsonResponse({"error": "Teacher ID is required."}, status=400)
@@ -519,6 +519,11 @@ class TeacherService:
                     if not user.exists():
                         logger.error(f"User with ID {teacher_id} does not exist.")
                         return JsonResponse({"error": "User not found."}, status=404)
+                    
+                    ClassAssignment.objects.using(school_db_name).filter(
+                        class_teacher_id=teacher_id,
+                        academic_year_id=academic_year_id
+                    ).update(class_teacher=None)
 
                     # deactivate the teacher record
                     teacher.is_active = False
