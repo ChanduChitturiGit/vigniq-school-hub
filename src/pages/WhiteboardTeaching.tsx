@@ -170,7 +170,7 @@ const WhiteboardTeaching: React.FC = () => {
         // board_id: boardId,
         // subject_id: subjectId,
         // class_id: classId,
-        session_id : sessionToken
+        session_id: sessionToken
 
       };
       const response = await getWhiteboardData(data);
@@ -310,7 +310,7 @@ const WhiteboardTeaching: React.FC = () => {
   useEffect(() => {
     if (sessionToken && sessionToken != '') {
       getWhiteboardSavedData();
-      
+
       wsRef.current = new WebSocket(`${baseurl}/ws/whiteboard/${sessionStorage.getItem('sessionId')}/?token=${sessionStorage.getItem('access_token')}&school_id=${userData.school_id}`);
       wsRef.current.onopen = () => console.log('WebSocket connected');
       wsRef.current.onclose = () => console.log('WebSocket disconnected');
@@ -419,8 +419,9 @@ const WhiteboardTeaching: React.FC = () => {
 
   const stopDrawing = () => {
     setIsDrawing(false);
-    lastPointRef.current = null; // Reset for next stroke
-    pointsRef.current = [];      // Clear Bezier buffer
+    lastPointRef.current = null;
+    pointsRef.current = [];
+    saveCurrentSlideImage(); // <-- Add this line
   };
 
   // Helper to save current canvas to slideImages
@@ -640,10 +641,36 @@ const WhiteboardTeaching: React.FC = () => {
       const maxSlide = Math.max(...savedData.map((d) => d.slide));
       if (maxSlide > 1) {
         setTotalSlides(maxSlide);
-        // Ensure slideImages array is long enough
+        setCurrentSlide(maxSlide);
+        // Preload all slide images from savedData
         setSlideImages((prev) => {
           const updated = [...prev];
-          while (updated.length < maxSlide) updated.push(null);
+          for (let i = 0; i < maxSlide; i++) {
+            // Create a temporary canvas to replay and get image data
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvasRef.current?.width || 800;
+            tempCanvas.height = canvasRef.current?.height || 600;
+            const tempCtx = tempCanvas.getContext('2d');
+            if (tempCtx) {
+              tempCtx.fillStyle = 'white';
+              tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+              const slideData = savedData.filter((d) => d.slide === i + 1);
+              for (let j = 1; j < slideData.length; j++) {
+                const prev = slideData[j - 1];
+                const curr = slideData[j];
+                tempCtx.beginPath();
+                tempCtx.lineWidth = curr.size;
+                tempCtx.strokeStyle = curr.color;
+                tempCtx.lineCap = 'round';
+                tempCtx.lineJoin = 'round';
+                tempCtx.globalCompositeOperation = curr.tool === 'pen' ? 'source-over' : 'destination-out';
+                tempCtx.moveTo(prev.x, prev.y);
+                tempCtx.lineTo(curr.x, curr.y);
+                tempCtx.stroke();
+              }
+              updated[i] = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+            }
+          }
           return updated;
         });
       }
@@ -651,6 +678,9 @@ const WhiteboardTeaching: React.FC = () => {
   }, [savedData]);
 
   const handleSaveAsPDF = async () => {
+    // Save the current slide's image before PDF generation
+    saveCurrentSlideImage();
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -661,22 +691,16 @@ const WhiteboardTeaching: React.FC = () => {
     });
 
     for (let i = 0; i < totalSlides; i++) {
+      // Load the image for this slide into the canvas
       const ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      if (i === currentSlide - 1) {
-        // Use the live canvas for the current slide (latest drawing)
-        // Do nothing, canvas already has the latest drawing
+      if (slideImages[i]) {
+        ctx.putImageData(slideImages[i], 0, 0);
       } else {
-        // For other slides, use slideImages or replaySavedData
-        const imageData = slideImages[i];
-        if (imageData) {
-          ctx.putImageData(imageData, 0, 0);
-        } else {
-          replaySavedData(i + 1);
-        }
+        replaySavedData(i + 1);
       }
 
       const imgData = canvas.toDataURL('image/png');
@@ -685,7 +709,6 @@ const WhiteboardTeaching: React.FC = () => {
     }
 
     pdf.save('whiteboard.pdf');
-
     handleSaveData();
   };
 
@@ -730,7 +753,7 @@ const WhiteboardTeaching: React.FC = () => {
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-muted text-muted-foreground'
                         }`}>
-                        {index+1}
+                        {index + 1}
                       </div>
                       <div className="flex-1">
                         <h3 className="font-semibold text-foreground text-sm mb-1">
@@ -931,7 +954,7 @@ const WhiteboardTeaching: React.FC = () => {
             {/* Slide Controls (Bottom Right) */}
             <div className="absolute bottom-4 right-4 flex items-center gap-2 z-20">
               {/* Minus Button */}
-              <Button
+              {/* <Button
                 onClick={removeSlide}
                 variant="outline"
                 size="sm"
@@ -939,7 +962,7 @@ const WhiteboardTeaching: React.FC = () => {
                 disabled={currentSlide === 1}
               >
                 <Minus className="w-4 h-4" />
-              </Button>
+              </Button> */}
 
               {/* Slide Navigation */}
               <div className="flex items-center gap-1 bg-blue-100 backdrop-blur-sm px-3 py-1 rounded border">
