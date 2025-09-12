@@ -163,6 +163,10 @@ const Students: React.FC = () => {
               <span className="font-medium text-gray-800">{'Class ' + student.class_number + ' - ' + student.section}</span>
             </div>
             <div className="flex justify-between text-sm">
+              <span className="text-gray-500">Board:</span>
+              <span className="font-medium text-gray-800">{student.board_name}</span>
+            </div>
+            <div className="flex justify-between text-sm">
               <span className="text-gray-500">Roll Number:</span>
               <span className="font-medium text-gray-800">{student.roll_number}</span>
             </div>
@@ -196,6 +200,7 @@ const Students: React.FC = () => {
             <TableRow>
               <TableHead className="font-medium">Student</TableHead>
               <TableHead className="font-medium">Class</TableHead>
+              <TableHead className="font-medium">Board</TableHead>
               <TableHead className="font-medium">Roll No.</TableHead>
               <TableHead className="font-medium">Parent</TableHead>
               <TableHead className="font-medium">Phone</TableHead>
@@ -217,6 +222,7 @@ const Students: React.FC = () => {
                   </div>
                 </TableCell>
                 <TableCell>{'Class ' + student.class_number + ' - ' + student.section}</TableCell>
+                 <TableCell>{student.board_name}</TableCell>
                 <TableCell>{student.roll_number}</TableCell>
                 <TableCell>{student.parent_name}</TableCell>
                 <TableCell>{student.parent_phone}</TableCell>

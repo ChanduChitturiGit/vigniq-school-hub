@@ -76,6 +76,10 @@ const Classes: React.FC = () => {
 
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
+              <span className="text-gray-500">Board:</span>
+              <span className="font-medium text-gray-800">{classItem.school_board_name}</span>
+            </div>
+            <div className="flex justify-between text-sm">
               <span className="text-gray-500">Students:</span>
               <span className="font-medium text-gray-800">{classItem.student_count}</span>
             </div>
@@ -103,6 +107,7 @@ const Classes: React.FC = () => {
             <TableRow>
               <TableHead className="font-medium">Class</TableHead>
               <TableHead className="font-medium">Section</TableHead>
+              <TableHead className="font-medium">Board</TableHead>
               <TableHead className="font-medium">Students</TableHead>
               <TableHead className="font-medium">Teacher</TableHead>
               {/* <TableHead className="font-medium">Status</TableHead> */}
@@ -114,6 +119,7 @@ const Classes: React.FC = () => {
               <TableRow key={classItem.class_id} className="hover:bg-gray-50">
                 <TableCell className="font-medium">Class {classItem.class_number}</TableCell>
                 <TableCell>{classItem.section}</TableCell>
+                <TableCell>{classItem.school_board_name}</TableCell>
                 <TableCell>{classItem.student_count}</TableCell>
                 <TableCell>{classItem.teacher_name || 'N/A'}</TableCell>
                 {/* <TableCell>

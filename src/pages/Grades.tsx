@@ -47,7 +47,7 @@ const Grades: React.FC = () => {
   const [teacherClasses, setTeacherClasses] = useState([]);
   const [subjectGroups, setSubjectGroups] = useState<SubjectGroup[]>([]);
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user") || '{}');
-  const [loader,setLoader] = useState(true);
+  const [loader, setLoader] = useState(true);
 
   const breadcrumbItems = [
     { label: 'Grades' }
@@ -232,12 +232,14 @@ const Grades: React.FC = () => {
                         >
                           <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-200 hover:border-blue-300">
                             {/* Class Header */}
-                            <div className="p-6 border-b border-gray-100">
+                            <div className="p-4 border-b border-gray-100">
                               <div className="flex items-center justify-between">
-                                <div className='flex items-center justyify-center gap-2'>
-                                  <GraduationCap className="w-5 h-5 text-blue-800" />
-                                  <h3 className="text-xl font-semibold text-gray-900 ">Class {classItem.class_number} - {classItem.section}</h3>
-                                  {/* <p className="text-blue-600 font-medium">Section {classItem.section}</p> */}
+                                <div className='flex flex-col items-center justyify-center gap-1'>
+                                  <div className='flex items-center gap-2'>
+                                    <GraduationCap className="w-5 h-5 text-blue-800" />
+                                    <h3 className="text-xl font-semibold text-gray-900 ">Class {classItem.class_number} - {classItem.section}</h3>
+                                  </div>
+                                  <p className="text-gray-600 flex items-center text-sm">{classItem.board_name}</p>
                                 </div>
                                 <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
                               </div>
