@@ -31,6 +31,7 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ isCollapsed, toggleSidebar, pageT
     logout();
     setShowUserMenu(false);
     localStorage.clear();
+    sessionStorage.clear();
     navigate('/');
 
   };
