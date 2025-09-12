@@ -661,29 +661,31 @@ const WhiteboardTeaching: React.FC = () => {
     });
 
     for (let i = 0; i < totalSlides; i++) {
-      // Load each slide image
       const ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Draw slide image if exists
-      const imageData = slideImages[i];
-      if (imageData) {
-        ctx.putImageData(imageData, 0, 0);
+      if (i === currentSlide - 1) {
+        // Use the live canvas for the current slide (latest drawing)
+        // Do nothing, canvas already has the latest drawing
       } else {
-        // Optionally replay savedData for this slide if imageData is missing
-        replaySavedData(i + 1);
+        // For other slides, use slideImages or replaySavedData
+        const imageData = slideImages[i];
+        if (imageData) {
+          ctx.putImageData(imageData, 0, 0);
+        } else {
+          replaySavedData(i + 1);
+        }
       }
 
-      // Convert canvas to image
       const imgData = canvas.toDataURL('image/png');
-
       if (i > 0) pdf.addPage([canvas.width, canvas.height], 'landscape');
       pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
     }
 
     pdf.save('whiteboard.pdf');
+
     handleSaveData();
   };
 
@@ -705,7 +707,7 @@ const WhiteboardTeaching: React.FC = () => {
             </div>
             <div>
               <h1 className="text-lg font-bold text-foreground">Chapter {chapterId}: {chapterName}</h1>
-              <p className="text-sm text-primary font-medium">Day {day} - Teaching Mode</p>
+              <p className="text-sm text-primary font-medium">Day {lessonData.day} - Teaching Mode</p>
             </div>
           </div>
 
@@ -713,7 +715,7 @@ const WhiteboardTeaching: React.FC = () => {
           <div className="flex-1 overflow-y-auto p-4">
             <h2 className="text-lg font-semibold text-foreground mb-4">Lesson Activities</h2>
             <div className="space-y-3">
-              {lessonData && lessonData.topics && lessonData.topics.map((activity) => (
+              {lessonData && lessonData.topics && lessonData.topics.map((activity, index) => (
                 <Card
                   key={activity.topic_id}
                   className={`cursor-pointer transition-colors ${currentActivity === activity.topic_id
@@ -728,7 +730,7 @@ const WhiteboardTeaching: React.FC = () => {
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-muted text-muted-foreground'
                         }`}>
-                        {activity.topic_id}
+                        {index+1}
                       </div>
                       <div className="flex-1">
                         <h3 className="font-semibold text-foreground text-sm mb-1">
@@ -755,7 +757,7 @@ const WhiteboardTeaching: React.FC = () => {
               onClick={toggleLeftSidebar}
               variant="outline"
               size="sm"
-              className="absolute top-4 left-4 z-40 bg-background/90 backdrop-blur-sm"
+              className="absolute top-4 left-4 z-40 bg-blue-200 backdrop-blur-sm"
             >
               <Menu className="w-4 h-4" />
             </Button>
@@ -765,7 +767,7 @@ const WhiteboardTeaching: React.FC = () => {
               onClick={toggleFullscreen}
               variant="outline"
               size="sm"
-              className="absolute top-4 right-4 z-40 bg-background/90 backdrop-blur-sm"
+              className="absolute top-4 right-4 z-40 bg-blue-100 backdrop-blur-sm"
             >
               {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
             </Button> */}
@@ -875,7 +877,7 @@ const WhiteboardTeaching: React.FC = () => {
                         onClick={handleSaveAsPDF}
                       >
                         <Save className="w-4 h-4 mr-2" />
-                        Save as PDF
+                        Download as PDF
                       </Button>
                     </div>
                   </div>
@@ -887,7 +889,7 @@ const WhiteboardTeaching: React.FC = () => {
                 onClick={toggleToolbar}
                 variant="outline"
                 size="sm"
-                className="absolute -left-10 top-2 bg-background/90 backdrop-blur-sm"
+                className="absolute -left-10 top-2 bg-blue-100 backdrop-blur-sm"
               >
                 {isToolbarVisible ? '→' : '←'}
               </Button>
@@ -910,7 +912,7 @@ const WhiteboardTeaching: React.FC = () => {
                 onClick={undo}
                 variant="outline"
                 size="sm"
-                className="bg-background/90 backdrop-blur-sm"
+                className="bg-blue-100 backdrop-blur-sm"
                 disabled={historyIndex <= 0}
               >
                 <Undo className="w-4 h-4" />
@@ -919,7 +921,7 @@ const WhiteboardTeaching: React.FC = () => {
                 onClick={redo}
                 variant="outline"
                 size="sm"
-                className="bg-background/90 backdrop-blur-sm"
+                className="bg-blue-100 backdrop-blur-sm"
                 disabled={historyIndex >= drawingHistory.length - 1}
               >
                 <Redo className="w-4 h-4" />
@@ -933,14 +935,14 @@ const WhiteboardTeaching: React.FC = () => {
                 onClick={removeSlide}
                 variant="outline"
                 size="sm"
-                className="bg-background/90 backdrop-blur-sm"
+                className="bg-blue-100 backdrop-blur-sm"
                 disabled={currentSlide === 1}
               >
                 <Minus className="w-4 h-4" />
               </Button>
 
               {/* Slide Navigation */}
-              <div className="flex items-center gap-1 bg-background/90 backdrop-blur-sm px-3 py-1 rounded border">
+              <div className="flex items-center gap-1 bg-blue-100 backdrop-blur-sm px-3 py-1 rounded border">
                 {/* Previous Arrow */}
                 {currentSlide > 1 && (
                   <button
@@ -981,7 +983,7 @@ const WhiteboardTeaching: React.FC = () => {
                 onClick={addSlide}
                 variant="outline"
                 size="sm"
-                className="bg-background/90 backdrop-blur-sm"
+                className="bg-blue-100 backdrop-blur-sm"
               >
                 <Plus className="w-4 h-4" />
               </Button>
