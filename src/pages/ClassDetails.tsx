@@ -87,6 +87,7 @@ const ClassDetails: React.FC = () => {
     section: '',
     academicYear: '',
     teacher_name: '',
+    school_board_name : '',
     studends_list: allStudents
   };
   const [classData, setClassData] = useState(sampleClassData);
@@ -275,7 +276,7 @@ const ClassDetails: React.FC = () => {
               <h1 className="text-xl md:text-2xl font-bold text-gray-800">
                 {'Class ' + classData.class_number} - {classData.section}
               </h1>
-              <p className="text-gray-600">{classData.academicYear}</p>
+              <p className="text-gray-600">{classData?.school_board_name}</p>
             </div>
             <div className="text-left md:text-right flex flex-wrap ">
               {!isEditing ? (
