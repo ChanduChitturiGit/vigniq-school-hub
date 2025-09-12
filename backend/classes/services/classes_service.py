@@ -440,6 +440,12 @@ class ClassesService:
                 class_instance = class_section_instance,
                 academic_year_id = academic_year_id
             )
+
+            ClassAssignment.objects.using(school_db_name).filter(
+                class_teacher=class_teacher,
+                academic_year_id=academic_year_id
+            ).update(class_teacher=None)
+
             if not class_assignment:
                 return JsonResponse({"error": "Class assignment not found."},
                                     status=404)

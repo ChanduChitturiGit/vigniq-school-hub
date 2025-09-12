@@ -125,7 +125,8 @@ class SyllabusService:
                     school_db_name,
                     assignment["school_class_id"],
                     assignment["school_class__class_instance_id"],
-                    assignment["subject_id"]
+                    assignment["subject_id"],
+                    assignment["school_class__board_id"]
                 )
                 assignment_data = {
                     "class_id": assignment["school_class_id"],
@@ -149,11 +150,12 @@ class SyllabusService:
             return Response({"error": "Failed to fetch grade."},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def get_subject_progress_and_chapters_count(self, school_db_name, section_id, class_id, subject_id):
+    def get_subject_progress_and_chapters_count(self, school_db_name, section_id, class_id, subject_id,board_id):
         """Calculate subject progress based on completed lesson plan days."""
         chapters = SchoolChapter.objects.using(school_db_name).filter(
             class_number_id=class_id,
-            subject_id=subject_id
+            subject_id=subject_id,
+            school_board_id=board_id
         )
 
         total_chapters = chapters.count()
