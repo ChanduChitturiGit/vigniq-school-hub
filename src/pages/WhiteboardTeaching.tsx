@@ -253,6 +253,10 @@ const WhiteboardTeaching: React.FC = () => {
     // Handle fullscreen changes
     const handleFullscreenChange = () => {
       setTimeout(updateCanvasSize, 100);
+      // If fullscreen has exited, call handleSaveData
+      if (!document.fullscreenElement) {
+        handleSaveData();
+      }
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
@@ -673,6 +677,11 @@ const WhiteboardTeaching: React.FC = () => {
           }
           return updated;
         });
+
+        // Immediately load the highest slide image onto the canvas
+        setTimeout(() => {
+          loadSlideImage(maxSlide);
+        }, 0);
       }
     }
   }, [savedData]);
@@ -709,6 +718,7 @@ const WhiteboardTeaching: React.FC = () => {
     }
 
     pdf.save('whiteboard.pdf');
+    
     handleSaveData();
   };
 
