@@ -310,6 +310,26 @@ const WhiteboardTeaching: React.FC = () => {
   const drawBufferRef = useRef<any[]>([]);
   const pointsRef = useRef<{ x: number, y: number }[]>([]);
 
+  const getCanvasCoordinates = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    let clientX = 0, clientY = 0;
+    if ('touches' in e) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY,
+    };
+  };
+
   // WebSocket setup
   useEffect(() => {
     if (sessionToken && sessionToken != '') {
@@ -329,11 +349,12 @@ const WhiteboardTeaching: React.FC = () => {
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing) return;
-
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (!ctx || !canvas) return;
-    const { x, y } = getCoordinates(e);
+
+    const { x, y } = getCanvasCoordinates(e)//getCoordinates(e);
+    pointsRef.current.push({ x, y });
 
     if (currentTool === 'pen') {
       ctx.globalCompositeOperation = 'source-over';
@@ -718,7 +739,7 @@ const WhiteboardTeaching: React.FC = () => {
     }
 
     pdf.save('whiteboard.pdf');
-    
+
     handleSaveData();
   };
 
