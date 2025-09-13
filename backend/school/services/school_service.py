@@ -21,6 +21,7 @@ from core.common_modules.password_validator import is_valid_password
 from core.common_modules.common_functions import CommonFunctions
 
 from teacher.models import Teacher
+from student.models import Student
 
 from school.models import School, SchoolDbMetadata, SchoolBoard, SchoolBoardMapping
 
@@ -267,7 +268,7 @@ class SchoolService:
                 else:
                     continue
                 teacher_count = Teacher.objects.using(school_db_name).filter(is_active=True).count()
-
+                student_count = Student.objects.using(school_db_name).filter(is_active=True).count()
                 schools_data.append({
                     "school_id": school.id,
                     "school_name": school.name,
@@ -275,6 +276,7 @@ class SchoolService:
                     "school_contact_number": school.contact_number,
                     "school_email": school.email if school.school_admin else None,
                     "teacher_count": teacher_count,
+                    "student_count": student_count,
                 })
             return Response({"schools": schools_data}, status=status.HTTP_200_OK)
         except Exception as e:

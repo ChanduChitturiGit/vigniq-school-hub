@@ -42,7 +42,8 @@ const TeacherDetails: React.FC = () => {
     class: '',
     class_assignment: {
       class_number: '',
-      section: ''
+      section: '',
+      board_name: ''
     },
   });
   const [errors, setErrors] = useState({
@@ -89,6 +90,11 @@ const TeacherDetails: React.FC = () => {
       getClasses();
       subjectsList();
       setFormData(response.data);
+       setFormData((prev) => ({
+        ...prev,
+        board_name: response.data?.class_assignment && response.data.class_assignment.board_name ? response.data.class_assignment.board_name : '',
+        class:'Class ' + response.data?.class_assignment?.class_number + ' - ' + response.data?.class_assignment?.section + ' ('+ response?.data?.class_assignment?.board_name+')'
+      }));
       setBreadCrumb();
       seTeacherAssignments(response.data.subject_assignments);
     }
@@ -486,7 +492,7 @@ const TeacherDetails: React.FC = () => {
                 ) : (
                   <div className="flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-gray-400" />
-                    <p className="text-gray-900">{formData?.class_assignment && formData.class_assignment.class_number ? 'Class ' + formData?.class_assignment?.class_number + ' ' + formData?.class_assignment?.section  : 'N/A'}</p>
+                    <p className="text-gray-900">{formData?.class_assignment && formData.class_assignment.class_number ? 'Class ' + formData?.class_assignment?.class_number + ' ' + formData?.class_assignment?.section + ' ('+formData.class_assignment.board_name+')'  : 'N/A'}</p>
                   </div>
                 )
                 }
