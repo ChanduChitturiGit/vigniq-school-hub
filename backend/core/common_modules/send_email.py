@@ -6,6 +6,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.timezone import now
+from email.utils import formataddr
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +55,7 @@ class EmailService:
             msg = EmailMultiAlternatives(
                 subject=subject, 
                 body='',
-                from_email=from_email,
+                from_email=formataddr((settings.EMAIL_CONFIG['EMAIL_HEADER'], from_email)),
                 to=to_email
             )
             msg.attach_alternative(html_content, "text/html")
