@@ -6,7 +6,7 @@ import PasswordInput from '../components/ui/password-input';
 import { getClassesBySchoolId } from '../services/class';
 import { addStudent } from '../services/student';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import { Dayjs } from "dayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -78,7 +78,7 @@ const AddStudent: React.FC = () => {
   }
 
   const getClassId = (className: string) => {
-    const classdata = classes.find((val: any) => ('Class ' + val.class_number + ' - ' + val.section) == className);
+    const classdata = classes.find((val: any) => ('Class ' + val.class_number + ' - ' + val.section+' ('+val.school_board_name+')') == className);
     const classId = classdata.class_id ? classdata.class_id : 0;
     return classId;
   }
@@ -253,7 +253,14 @@ const AddStudent: React.FC = () => {
   return (
     <MainLayout pageTitle="Add Student">
       <div className="space-y-6">
-        <Breadcrumb items={breadcrumbItems} />
+        {/* <Breadcrumb items={breadcrumbItems} /> */}
+        <div
+            onClick={() => window.history.back()}
+            className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="font-medium">Back</span>
+          </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h1 className="text-2xl font-bold text-gray-800 mb-6">Add New Student</h1>
@@ -345,8 +352,8 @@ const AddStudent: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {classes.map((classItem, index) => (
-                      <SelectItem key={index} value={'Class ' + classItem.class_number + ' - ' + classItem.section}>
-                        {'Class ' + classItem.class_number + ' - ' + classItem.section}
+                      <SelectItem key={index} value={'Class ' + classItem.class_number + ' - ' + classItem.section + ' ('+classItem.school_board_name+')'}>
+                        {'Class ' + classItem.class_number + ' - ' + classItem.section + ' ('+classItem.school_board_name+')'}
                       </SelectItem>
                     ))}
                   </SelectContent>

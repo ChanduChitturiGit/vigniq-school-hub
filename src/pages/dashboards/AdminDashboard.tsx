@@ -18,7 +18,8 @@ const AdminDashboard: React.FC = () => {
     school_name: '',
     school_email: '',
     school_contact_number: '',
-    school_address: ''
+    school_address: '',
+    boards:[]
   });
 
 
@@ -137,6 +138,12 @@ const AdminDashboard: React.FC = () => {
           <div className="flex items-center gap-2">
             <Mail className="w-4 h-4" />
             <span>{schoolData.school_email}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <GraduationCap className="w-4 h-4" />
+            <span>
+              {schoolData?.boards?.map((board: any) => board.name).join(', ')}
+            </span>
           </div>
         </div>
       </div>

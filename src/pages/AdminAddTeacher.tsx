@@ -197,7 +197,7 @@ const AdminAddTeacher: React.FC = () => {
   };
 
   const getClassId = (className: string) => {
-    const classdata = classes.find((val: any) => ('Class ' + val.class_number + ' - ' + val.section) == className);
+    const classdata = classes.find((val: any) => ('Class ' + val.class_number + ' - ' + val.section + ' ('+val.school_board_name+')') == className);
     const classId = classdata?.class_id ? classdata.class_id : 0;
     return classId;
   }
