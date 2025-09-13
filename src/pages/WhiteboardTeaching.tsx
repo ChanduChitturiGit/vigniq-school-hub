@@ -273,7 +273,7 @@ const WhiteboardTeaching: React.FC = () => {
     toggleFullscreen();
   }, []);
 
-  const getCoordinates = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const getCoordinates = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
 
@@ -291,7 +291,7 @@ const WhiteboardTeaching: React.FC = () => {
     return { x, y };
   };
 
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     setIsDrawing(true);
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
@@ -347,7 +347,7 @@ const WhiteboardTeaching: React.FC = () => {
 
   const lastPointRef = useRef<{ x: number, y: number } | null>(null);
 
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!isDrawing) return;
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
@@ -956,6 +956,10 @@ const WhiteboardTeaching: React.FC = () => {
               onMouseMove={draw}
               onMouseUp={stopDrawing}
               onMouseLeave={stopDrawing}
+              onTouchStart={startDrawing}
+              onTouchMove={draw}
+              onTouchEnd={stopDrawing}
+              onTouchCancel={stopDrawing}
               className="w-full h-full cursor-crosshair bg-white"
               style={{ touchAction: 'none' }}
             />
