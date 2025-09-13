@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { getSchools } from '../data/schools';
-import { Edit, MapPin, Mail, Phone, LoaderCircle as Loader, School } from 'lucide-react';
+import { Edit, MapPin, Mail, Phone, LoaderCircle as Loader, School, ArrowLeft } from 'lucide-react';
 import { getSchoolsList, getBoardsList } from '@/services/school';
 import { SpinnerOverlay } from '../pages/SpinnerOverlay';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
@@ -17,7 +17,7 @@ const Schools: React.FC = () => {
   const [schools, setschools] = useState([]);
   const [loader, setLoader] = useState(true);
   const [boards, setBoards] = useState([]);
-  
+
 
   const fetchSchools = async () => {
     setLoader(true);
@@ -59,10 +59,18 @@ const Schools: React.FC = () => {
     <>
       <MainLayout pageTitle="Schools">
         <div className="space-y-6">
-          <Breadcrumb items={breadcrumbItems} />
+          {/* <Breadcrumb items={breadcrumbItems} /> */}
 
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-800">Schools</h1>
+            {/* <h1 className="text-2xl font-bold text-gray-800">Schools</h1> */}
+            <div
+              onClick={() => window.history.back()}
+              className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="font-medium">Back</span>
+            </div>
+
             <Link
               to="/create-school"
               className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
@@ -80,7 +88,7 @@ const Schools: React.FC = () => {
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className='flex gap-2'>
-                    <School className='text-blue-400'/>
+                    <School className='text-blue-400' />
                     <h3 className="text-lg font-semibold text-gray-800">{school.school_name}</h3>
                   </div>
                   {/* <button
