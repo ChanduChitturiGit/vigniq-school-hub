@@ -148,7 +148,7 @@ const Attendance: React.FC = () => {
   }
 
   const getClassId = (className: string) => {
-    const classdata = classes.find((val: any) => ('Class ' + val.class_number + ' - ' + val.section) == className);
+    const classdata = classes.find((val: any) => ('Class ' + val.class_number + ' - ' + val.section + ' (' + val.school_board_name + ')') == className);
     const classId = classdata.class_id ? classdata.class_id : 0;
     return classId;
   }
@@ -195,7 +195,8 @@ const Attendance: React.FC = () => {
               setIsAfternoonSessionSubmitted(response.data?.attendance_taken || false);
             }
           }
-        } else {
+        }
+        else {
           //setStudents(sampleStudents);
           showSnackbar({
             title: "⛔ Error",
@@ -205,11 +206,13 @@ const Attendance: React.FC = () => {
         }
       }
     } catch (error) {
-      showSnackbar({
-        title: "⛔ Error",
-        description: error?.response?.data?.error || "Something went wrong",
-        status: "error"
-      });
+      if (error?.response?.data?.error) {
+        showSnackbar({
+          title: "⛔ Error",
+          description: error?.response?.data?.error || "Something went wrong",
+          status: "error"
+        });
+      }
     }
   }
 
@@ -398,7 +401,7 @@ const Attendance: React.FC = () => {
     const absentStudents = students?.filter(s =>
       activeSession === 'morning' ? (s.morningPresent == false) : (s.afternoonPresent == false)
     ).length;
-   // const absentStudents = totalStudents - presentStudents;
+    // const absentStudents = totalStudents - presentStudents;
     const remainingStudents = totalStudents - (presentStudents + absentStudents);
 
     return { totalStudents, presentStudents, absentStudents, remainingStudents };
@@ -661,8 +664,8 @@ const Attendance: React.FC = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {classes.map((cls) => (
-                        <SelectItem key={cls.class_id} value={'Class ' + cls.class_number + ' - ' + cls.section}>
-                          {'Class ' + cls.class_number + ' - ' + cls.section}
+                        <SelectItem key={cls.class_id} value={'Class ' + cls.class_number + ' - ' + cls.section + ' (' + cls.school_board_name + ')'}>
+                          {'Class ' + cls.class_number + ' - ' + cls.section + ' (' + cls.school_board_name + ')'}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -673,16 +676,16 @@ const Attendance: React.FC = () => {
             {/* Action Buttons */}
             <div className="flex gap-2 w-full md:w-auto justify-end">
               {/* {(statConditionCheck()) && selectedClass && ( */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={downloadExcel}
-                  className="flex items-center gap-2"
-                  disabled={(statConditionCheck()) && selectedClass ? false : true}
-                >
-                  <Download className="w-4 h-4" />
-                  Download Daily Report
-                </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={downloadExcel}
+                className="flex items-center gap-2"
+                disabled={(statConditionCheck()) && selectedClass ? false : true}
+              >
+                <Download className="w-4 h-4" />
+                Download Daily Report
+              </Button>
               {/* )} */}
               {/* <Button
                 variant="outline"
@@ -858,16 +861,16 @@ const Attendance: React.FC = () => {
                   </Card>
 
                   <Card>
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-2">
-                          <AlertCircle className="w-5 h-5 text-orange-500" />
-                          <div>
-                            <p className="text-2xl font-bold text-orange-600">{stats.remainingStudents}</p>
-                            <p className="text-sm text-gray-600">Remaining</p>
-                          </div>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="w-5 h-5 text-orange-500" />
+                        <div>
+                          <p className="text-2xl font-bold text-orange-600">{stats.remainingStudents}</p>
+                          <p className="text-sm text-gray-600">Remaining</p>
                         </div>
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               )}
 
