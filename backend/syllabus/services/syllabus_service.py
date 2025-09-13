@@ -801,7 +801,7 @@ class SyllabusService:
                 class_section=class_section
             )
             if school_lesson_plan_day.exists():
-                school_lesson_plan_day.delete(using=school_db_name)
+                school_lesson_plan_day.delete()
 
             for day in lesson_plan_data['lesson_plan']:
                 lesson_plan_day = SchoolLessonPlanDay.objects.using(school_db_name).create(
