@@ -381,7 +381,8 @@ class TeacherService:
                 class_teacher=teacher,
                 academic_year_id=academic_year_id
             ).values(
-                'class_instance_id', 'class_instance__class_instance__class_number', 'class_instance__section'
+                'class_instance_id', 'class_instance__class_instance__class_number',
+                'class_instance__section','class_instance__board_id'
             )
             class_section = None
             class_assignment = class_assignments.first()
@@ -389,7 +390,9 @@ class TeacherService:
                 class_section = {
                     'class_section_id': class_assignment['class_instance_id'],
                     'class_number': class_assignment['class_instance__class_instance__class_number'],
-                    'section': class_assignment['class_instance__section']
+                    'section': class_assignment['class_instance__section'],
+                    'board_id': class_assignment['class_instance__board_id'],
+                    'board_name': boards.get(class_assignment['class_instance__board_id'], 'Unknown')
                 }
 
             teacher_details = {

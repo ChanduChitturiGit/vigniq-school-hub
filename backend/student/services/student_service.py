@@ -79,14 +79,17 @@ class StudentService:
                                             status=status.HTTP_404_NOT_FOUND)
                     acadamic_year = SchoolAcademicYear.objects.using(school_db_name).get(id=acadamic_year_id)
 
-                    exixsting_roll_number = StudentClassAssignment.objects.using(
+                    if roll_number.isdigit():
+                        roll_number = int(roll_number)
+
+                    existing_roll_number = StudentClassAssignment.objects.using(
                         school_db_name
                     ).select_for_update().filter(
                         class_instance = class_section_instance,
                         academic_year = acadamic_year,
                         student__roll_number = roll_number
                     ).exists()
-                    if exixsting_roll_number:
+                    if existing_roll_number:
                         raise ValueError("Roll number already exists in this class for the current academic year.")
 
                     role = Role.objects.get(name='student')
@@ -185,7 +188,7 @@ class StudentService:
             last_name = request.data.get('last_name')
             email = request.data.get('email')
             phone = request.data.get('phone_number')
-            class_assignment_id = request.data.get('class_assignment_id')
+            # class_assignment_id = request.data.get('class_assignment_id')
             class_id = request.data.get('class_id')
             roll_number = request.data.get('roll_number')
             date_of_birth = request.data.get('date_of_birth')
@@ -234,6 +237,8 @@ class StudentService:
                 return JsonResponse({"error": "Student not found."},
                                     status=status.HTTP_404_NOT_FOUND)
             if roll_number:
+                if roll_number.isdigit():
+                    roll_number = int(roll_number)
                 student.roll_number = roll_number
             if addmission_date:
                 student.admission_date = addmission_date
@@ -248,22 +253,40 @@ class StudentService:
                 with transaction.atomic(using=school_db_name):
                     user.save()
                     student.save(using=school_db_name)
-                    if class_assignment_id and class_id and acadamic_year_id:
-                        class_assignment_instance = StudentClassAssignment.objects.using(
-                            school_db_name
-                        ).get(
-                            id=class_assignment_id
-                        )
-                        if not class_assignment_instance:
-                            raise ValueError("Class Assignment not found for the student.")
-                        class_assignment_instance.delete()
+                    if class_id and acadamic_year_id:
 
                         class_section_instance = SchoolSection.objects.using(school_db_name).get(id=class_id)
 
                         acadamic_year = SchoolAcademicYear.objects.using(school_db_name).get(id=acadamic_year_id)
+
+                        class_assignment_instance = StudentClassAssignment.objects.using(
+                            school_db_name
+                        ).get(
+                            academic_year=acadamic_year,
+                            student=student,
+                        )
+                        if not class_assignment_instance:
+                            raise ValueError("Class Assignment not found for the student.")
+                        
+                        existing_roll_number = StudentClassAssignment.objects.using(
+                            school_db_name
+                        ).select_for_update().filter(
+                            class_instance=class_section_instance,
+                            academic_year=acadamic_year,
+                            student__roll_number=roll_number,
+                        ).exclude(
+                            student__student_id=student_id
+                        ).exists()
+
+                        if existing_roll_number:
+                            raise ValueError("Roll number already exists in this class for the current academic year.")
+
+                        class_assignment_instance.delete(using=school_db_name)
+
+
                         if not acadamic_year:
                             raise ValueError("Academic year not found.")
-                        student_class_assignment = StudentClassAssignment.objects.using(
+                        StudentClassAssignment.objects.using(
                             school_db_name
                         ).create(
                             student=student,
@@ -275,7 +298,7 @@ class StudentService:
                             "student_id": student.student_id}, status=status.HTTP_200_OK)
         except ValueError as ve:
             logger.error(f"Value error: {ve}")
-            return JsonResponse({"error": ve},
+            return JsonResponse({"error": str(ve)},
                                             status=status.HTTP_404_NOT_FOUND)
         except User.DoesNotExist:
             return JsonResponse({"error": "User not found."},
