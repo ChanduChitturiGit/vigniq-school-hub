@@ -376,6 +376,8 @@ class StudentService:
                 id=class_assignment.class_instance_id
             )
 
+            boards = CommonFunctions().get_boards_dict()
+
             student_data = {
                 "student_id": student.student_id,
                 "student_first_name": user.first_name,
@@ -388,6 +390,8 @@ class StudentService:
                 "class_number": class_instance.class_instance_id,
                 "class_id": class_instance.id,
                 "section": class_instance.section,
+                'board_id': class_instance.board_id,
+                "board_name": boards.get(class_instance.board_id, None),
                 "email": user.email,
                 "current_address": user.current_address,
                 "permanent_address": user.permanent_address,
