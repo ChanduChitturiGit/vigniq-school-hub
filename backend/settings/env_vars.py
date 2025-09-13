@@ -30,7 +30,12 @@ APP_SECRET = {
 
 EMAIL_CONFIG = {
     'EMAIL_HOST_USER': os.getenv('EMAIL_HOST_USER', ''),
-    'EMAIL_HOST_PASSWORD': os.getenv('EMAIL_HOST_PASSWORD', '')
+    'EMAIL_HOST_PASSWORD': os.getenv('EMAIL_HOST_PASSWORD', ''),
+    'EMAIL_HEADER': os.getenv('EMAIL_HEADER', 'Vigys AI Team'),
+    'EMAIL_HOST': os.getenv('EMAIL_HOST', 'smtp.hostinger.com'),
+    'EMAIL_PORT': int(os.getenv('EMAIL_PORT', 465)),
+    'EMAIL_USE_SSL': os.getenv('EMAIL_USE_SSL', 'True') == 'True',
+    'EMAIL_USE_TLS': os.getenv('EMAIL_USE_TLS', 'False') == 'True'
 }
 
 

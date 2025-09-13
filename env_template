@@ -23,3 +23,8 @@ GEMINI_MODEL = 'gemini-2.5-flash'
 
 EMAIL_HOST_USER = 'sdey04973@gmail.com'
 EMAIL_HOST_PASSWORD='ikzk nchj psjh fpye'
+EMAIL_HEADER = "Vigys AI Team"
+EMAIL_HOST = 'smtp.hostinger.com'
+EMAIL_PORT = 465
+EMAIL_USE_SSL = True
+EMAIL_USE_TLS = False
