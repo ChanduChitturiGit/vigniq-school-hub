@@ -203,7 +203,7 @@ const StudentDetails: React.FC = () => {
     }
 
 
-    console.log("Student Data to be saved:", studentData);
+    //console.log("Student Data to be saved:", studentData);
 
     // Prepare data for API call
     try {
@@ -219,7 +219,7 @@ const StudentDetails: React.FC = () => {
     } catch (error) {
       showSnackbar({
         title: "⛔ Error",
-        description: "Failed to update student data. Please try again.",
+        description: error?.response?.data?.error ||  "Failed to update student data. Please try again.",
         status: "error"
       });
     } finally {
