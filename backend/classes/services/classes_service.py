@@ -260,6 +260,7 @@ class ClassesService:
 
             classes = SchoolSection.objects.using(school_db_name).all()
 
+            boards = CommonFunctions().get_boards_dict()
             data = []
             for class_obj in classes:
                 class_instance = ClassAssignment.objects.using(school_db_name).filter(
@@ -272,6 +273,7 @@ class ClassesService:
                         'class_number': class_obj.class_instance_id,
                         'section': class_obj.section,
                         'board_id': class_obj.board_id,
+                        'board_name': boards.get(class_obj.board_id, 'N/A')
                     })
             return JsonResponse({"classes": data}, status=200)
         except Exception as e:
