@@ -634,6 +634,7 @@ const TeacherDetails: React.FC = () => {
                       <h3 className="font-semibold text-gray-800">
                         {'Class ' + classItem.class_number + ' - ' + classItem.section}
                       </h3>
+                       <p className="text-sm text-gray-600">Board : {classItem.board_name}</p>
                       <p className="text-sm text-gray-600">Subject : {classItem.subject_name}</p>
                     </Link>
                   ))}
