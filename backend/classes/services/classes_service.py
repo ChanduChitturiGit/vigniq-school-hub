@@ -395,7 +395,7 @@ class ClassesService:
                 }, status=400)
             elif 'unique_class_instance_section' in str(e):
                 return JsonResponse({
-                    'error': 'A class with the same class number and section already exists.'
+                    'error': 'A class with the same class number, section and board already exists.'
                 }, status=400)
             else:
                 return JsonResponse({
