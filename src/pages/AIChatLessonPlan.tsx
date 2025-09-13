@@ -173,7 +173,14 @@ const AIChatLessonPlan: React.FC = () => {
   // ];
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    //messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollTo({
+        top: messagesEndRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
   };
 
   const getLessonData = async () => {
@@ -404,7 +411,7 @@ const AIChatLessonPlan: React.FC = () => {
                 </AccordionTrigger>
               </Card>
               <AccordionContent>
-                <Card className="shadow-lg border-0 h-[80vh] flex flex-col">
+                <Card className="shadow-lg border-0 max-h-[80vh] flex flex-col">
                   <CardContent className="flex-1 p-0 min-h-0">
                     <ScrollArea className="h-full">
                       <div className="p-6 space-y-4">
@@ -477,8 +484,8 @@ const AIChatLessonPlan: React.FC = () => {
               <CardContent className="flex-1 flex flex-col p-0 min-h-0">
                 {/* Messages Area */}
                 <div className="flex-1 overflow-hidden">
-                  <ScrollArea className="h-full">
-                    <div className="p-6 space-y-4">
+                  <div  className="h-full ">
+                    <div ref={messagesEndRef} className=" h-full p-6 space-y-4 overflow-y-auto" >
                       {/* first message */}
                       <ChatMessage message={firstMessage} condition={'initial'} />
                       {/* loader */}
@@ -531,9 +538,9 @@ const AIChatLessonPlan: React.FC = () => {
                           <ChatMessage message={firstMessage} condition={'loader'} />
                         )
                       }
-                      <div ref={messagesEndRef} />
+                      {/* <div ref={messagesEndRef} /> */}
                     </div>
-                  </ScrollArea>
+                  </div>
                 </div>
 
                 {/* Input Area */}
