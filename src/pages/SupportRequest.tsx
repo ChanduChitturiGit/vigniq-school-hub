@@ -146,7 +146,14 @@ const SupportDetails: React.FC = () => {
     }, [request?.responses]);
 
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        //messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollTo({
+                top: messagesEndRef.current.scrollHeight,
+                behavior: "smooth",
+            });
+        }
     };
 
     const getPriorityColor = (priority: string) => {
@@ -580,7 +587,7 @@ const SupportDetails: React.FC = () => {
 
                 {/* Chat Messages */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-[38rem] flex flex-col">
-                    <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                    <div ref={messagesEndRef} className="flex-1 overflow-y-auto p-6 space-y-4">
                         {request.responses.map((message, index) => (
                             <div
                                 key={index}
@@ -643,7 +650,7 @@ const SupportDetails: React.FC = () => {
                                 </div>
                             </div>
                         ))}
-                        <div ref={messagesEndRef} />
+                        {/* <div ref={messagesEndRef} /> */}
                     </div>
 
                     {/* Message Input */}
@@ -669,7 +676,7 @@ const SupportDetails: React.FC = () => {
                         )}
 
                         <form onSubmit={handleSendMessage} className="flex flex-col md:flex-row items-start justify-between gap-2">
-                            <div className="flex-1">
+                            <div className="w-full flex-1">
                                 <textarea
                                     value={newMessage}
                                     onChange={(e) => setNewMessage(e.target.value)}

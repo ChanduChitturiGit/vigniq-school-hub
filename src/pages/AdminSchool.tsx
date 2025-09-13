@@ -275,15 +275,15 @@ const AdminSchool: React.FC = () => {
                 <p className="text-gray-900">{schoolData.school_address}</p>
               )}
             </div>
-
+{/* 
             {
               !isEditing && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Board</label>
                   <p className="text-gray-900">  {schoolData?.boards?.map((board: any) => board.name).join(', ')}</p>
                 </div>
               )
-            }
+            } */}
           </div>
 
           {isEditing && (

@@ -71,7 +71,7 @@ const ChapterDetails: React.FC = () => {
   const schoolId = searchParams.get('school_id') || '';
   const boardId = searchParams.get('school_board_id') || '';
   const tab = searchParams.get('tab') || '';
-  const pathData = `class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
+  const pathData = `class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}&chapter_number=${chapterNumber}`;
 
 
   const [topics, setTopics] = useState<Topic[]>([]);
@@ -606,7 +606,7 @@ const ChapterDetails: React.FC = () => {
                             </Link>
 
                             <Link
-                              to={`/grades/lesson-plan/ai-chat/${chapterId}/${day.day}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`}
+                              to={`/grades/lesson-plan/ai-chat/${chapterId}/${day.lesson_plan_day_id}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}&dayCount=${day.day}`}
                               className="w-full"
                             >
                               <Button className="w-full flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white">

@@ -266,10 +266,12 @@ const TeacherDetails: React.FC = () => {
   };
 
   const getClassId = (className: string) => {
-    const classdata = classes.find((val: any) => ('Class ' + val.class_number + ' - ' + val.section) == className);
+    const classdata = classes.find((val: any) => ('Class ' + val.class_number + ' - ' + val.section + ' ('+val.school_board_name+')') == className);
     const classId = classdata.class_id ? classdata.class_id : 0;
     return classId;
   }
+
+
 
 
   const getSubjectId = (subjectName: string) => {
@@ -475,8 +477,8 @@ const TeacherDetails: React.FC = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {teacherClasses.map((classItem, index) => (
-                        <SelectItem key={index} value={'Class ' + classItem.class_number + ' - ' + classItem.section}>
-                          {'Class ' + classItem.class_number + ' - ' + classItem.section}
+                        <SelectItem key={index} value={'Class ' + classItem.class_number + ' - ' + classItem.section + ' ('+classItem.board_name+')'}>
+                          {'Class ' + classItem.class_number + ' - ' + classItem.section + ' ('+classItem.board_name+')'}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -484,7 +486,7 @@ const TeacherDetails: React.FC = () => {
                 ) : (
                   <div className="flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-gray-400" />
-                    <p className="text-gray-900">{formData?.class_assignment && formData.class_assignment.class_number ? 'Class ' + formData?.class_assignment?.class_number + ' ' + formData?.class_assignment?.section : 'N/A'}</p>
+                    <p className="text-gray-900">{formData?.class_assignment && formData.class_assignment.class_number ? 'Class ' + formData?.class_assignment?.class_number + ' ' + formData?.class_assignment?.section  : 'N/A'}</p>
                   </div>
                 )
                 }
