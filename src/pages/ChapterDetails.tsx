@@ -65,7 +65,7 @@ const ChapterDetails: React.FC = () => {
   const subject = searchParams.get('subject') || '';
   const chapterName = searchParams.get('chapter_name') || '';
   const chapterNumber = searchParams.get('chapter_number') || '';
-  const progress = parseInt(searchParams.get('progress') || '0');
+  const [progress,setProgress] = useState(parseInt(searchParams.get('progress') || '0'));
   const classId = searchParams.get('class_id') || '';
   const subjectId = searchParams.get('subject_id') || '';
   const schoolId = searchParams.get('school_id') || '';
@@ -162,6 +162,7 @@ const ChapterDetails: React.FC = () => {
         setTopics(response.data.sub_topics);
         setPrerequisites(response.data.prerequisites);
         setLessonPlan(response.data.lesson_plan_days);
+        setProgress(response.data.progress);
       }
     } catch (error) {
       showSnackbar({
