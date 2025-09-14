@@ -29,6 +29,7 @@ import { useSnackbar } from '../components/snackbar/SnackbarContext';
 import { environment } from '@/environment';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { SpinnerOverlay } from '../pages/SpinnerOverlay';
 
 
 
@@ -95,6 +96,8 @@ const WhiteboardTeaching: React.FC = () => {
   const [sessionToken, setSessionToken] = useState<string>('');
   const [savedData, setSavedData] = useState<any>(null);
 
+  const [loader, setLoader] = useState(true);
+
   const [slides, setSlides] = useState<any[]>([{ lines: [] }]);
   //const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -158,6 +161,7 @@ const WhiteboardTeaching: React.FC = () => {
       const response = await getWhiteboardData(data);
       if (response && response.data) {
         setSavedData(response.data);
+        setLoader(false);
       } else {
         showSnackbar({
           title: 'Error',
@@ -166,6 +170,7 @@ const WhiteboardTeaching: React.FC = () => {
         });
       }
     } catch (error) {
+      setLoader(false);
       showSnackbar({
         title: 'Error',
         description: 'An unexpected error occurred while fetching lesson plan data.',
@@ -625,6 +630,7 @@ const WhiteboardTeaching: React.FC = () => {
     : "h-screen bg-muted/30";
 
   const replaySavedData = (slideNum: number) => {
+    setLoader(true);
     if (!savedData || !Array.isArray(savedData)) return;
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
@@ -660,6 +666,10 @@ const WhiteboardTeaching: React.FC = () => {
       }
     }
     ctx.restore();
+    setTimeout(() =>
+     {
+       setLoader(false);
+     }, 500)    
   };
 
   useEffect(() => {
@@ -753,80 +763,81 @@ const WhiteboardTeaching: React.FC = () => {
   };
 
   return (
-    <div className={containerClass}>
-      <div className="flex h-full relative">
-        {/* Overlay Left Sidebar */}
-        <div className={`${isLeftSidebarCollapsed ? 'translate-x-[-100%] w-0' : 'translate-x-0'} ${isFullscreen ? 'w-80' : 'w-96'} bg-background/95 backdrop-blur-sm border-r border-border flex flex-col transition-all duration-300 ease-in-out absolute left-0 top-0 h-full z-30 shadow-lg`}>
-          {/* Header */}
-          <div className="p-4 border-b border-border">
-            <div className="w-full flex items-center justify-end my-3">
-              <button
-                onClick={handleBackNavigation}
-                className="flex items-center gap-2 text-primary hover:text-primary/80"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span className="text-sm font-medium">Back</span>
-              </button>
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-foreground">Chapter {chapterId}: {chapterName}</h1>
-              <p className="text-sm text-primary font-medium">Day {lessonData.day} - Teaching Mode</p>
-            </div>
-          </div>
-
-          {/* Lesson Activities */}
-          <div className="flex-1 overflow-y-auto p-4">
-            <h2 className="text-lg font-semibold text-foreground mb-4">Lesson Activities</h2>
-            <div className="space-y-3">
-              {lessonData && lessonData.topics && lessonData.topics.map((activity, index) => (
-                <Card
-                  key={activity.topic_id}
-                  className={`cursor-pointer transition-colors ${currentActivity === activity.topic_id
-                    ? 'border-primary bg-primary/5'
-                    : 'hover:bg-muted/50'
-                    }`}
-                  onClick={() => setCurrentActivity(activity.topic_id)}
+    <>
+      <div className={containerClass}>
+        <div className="flex h-full relative">
+          {/* Overlay Left Sidebar */}
+          <div className={`${isLeftSidebarCollapsed ? 'translate-x-[-100%] w-0' : 'translate-x-0'} ${isFullscreen ? 'w-80' : 'w-96'} bg-background/95 backdrop-blur-sm border-r border-border flex flex-col transition-all duration-300 ease-in-out absolute left-0 top-0 h-full z-30 shadow-lg`}>
+            {/* Header */}
+            <div className="p-4 border-b border-border">
+              <div className="w-full flex items-center justify-end my-3">
+                <button
+                  onClick={handleBackNavigation}
+                  className="flex items-center gap-2 text-primary hover:text-primary/80"
                 >
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${currentActivity === activity.topic_id
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted text-muted-foreground'
-                        }`}>
-                        {index + 1}
+                  <ArrowLeft className="w-4 h-4" />
+                  <span className="text-sm font-medium">Back</span>
+                </button>
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-foreground">Chapter {chapterId}: {chapterName}</h1>
+                <p className="text-sm text-primary font-medium">Day {lessonData.day} - Teaching Mode</p>
+              </div>
+            </div>
+
+            {/* Lesson Activities */}
+            <div className="flex-1 overflow-y-auto p-4">
+              <h2 className="text-lg font-semibold text-foreground mb-4">Lesson Activities</h2>
+              <div className="space-y-3">
+                {lessonData && lessonData.topics && lessonData.topics.map((activity, index) => (
+                  <Card
+                    key={activity.topic_id}
+                    className={`cursor-pointer transition-colors ${currentActivity === activity.topic_id
+                      ? 'border-primary bg-primary/5'
+                      : 'hover:bg-muted/50'
+                      }`}
+                    onClick={() => setCurrentActivity(activity.topic_id)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${currentActivity === activity.topic_id
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground'
+                          }`}>
+                          {index + 1}
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-foreground text-sm mb-1">
+                            {activity.title}
+                          </h3>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            {activity.summary}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-foreground text-sm mb-1">
-                          {activity.title}
-                        </h3>
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                          {activity.summary}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col relative">
-          {/* Canvas Area */}
-          <div className="flex-1 bg-muted/30 relative">
-            {/* Hamburger Menu for Sidebar Toggle */}
-            <Button
-              onClick={toggleLeftSidebar}
-              variant="outline"
-              size="sm"
-              className="absolute top-4 left-4 z-40 bg-blue-200 backdrop-blur-sm"
-            >
-              <Menu className="w-4 h-4" />
-            </Button>
+          {/* Main Content */}
+          <div className="flex-1 flex flex-col relative">
+            {/* Canvas Area */}
+            <div className="flex-1 bg-muted/30 relative">
+              {/* Hamburger Menu for Sidebar Toggle */}
+              <Button
+                onClick={toggleLeftSidebar}
+                variant="outline"
+                size="sm"
+                className="absolute top-4 left-4 z-40 bg-blue-200 backdrop-blur-sm"
+              >
+                <Menu className="w-4 h-4" />
+              </Button>
 
-            {/* Fullscreen Toggle */}
-            {/* <Button
+              {/* Fullscreen Toggle */}
+              {/* <Button
               onClick={toggleFullscreen}
               variant="outline"
               size="sm"
@@ -835,32 +846,32 @@ const WhiteboardTeaching: React.FC = () => {
               {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
             </Button> */}
 
-            {/* Right-to-Left Sliding Toolbar */}
-            <div className={`absolute top-4 right-5 z-30  bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg transition-transform duration-300 ${isToolbarVisible ? 'translate-x-0' : 'translate-x-[calc(100%+1rem)]'
-              }`}>
-              <div className="p-3">
-                <div className="flex flex-col gap-3">
-                  {/* Drawing Tools */}
-                  <div className="flex flex-col gap-2">
-                    <Button
-                      onClick={() => { setCurrentTool('pen'); setIsToolbarVisible(false); }}
-                      variant={currentTool === 'pen' ? 'default' : 'outline'}
-                      size="sm"
-                      className="justify-start"
-                    >
-                      <Pen className="w-4 h-4 mr-2" />
-                      Pen
-                    </Button>
-                    <Button
-                      onClick={() => { setCurrentTool('eraser'); setIsToolbarVisible(false); }}
-                      variant={currentTool === 'eraser' ? 'default' : 'outline'}
-                      size="sm"
-                      className="justify-start"
-                    >
-                      <Eraser className="w-4 h-4 mr-2" />
-                      Eraser
-                    </Button>
-                    {/* <Button
+              {/* Right-to-Left Sliding Toolbar */}
+              <div className={`absolute top-4 right-5 z-30  bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg transition-transform duration-300 ${isToolbarVisible ? 'translate-x-0' : 'translate-x-[calc(100%+1rem)]'
+                }`}>
+                <div className="p-3">
+                  <div className="flex flex-col gap-3">
+                    {/* Drawing Tools */}
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        onClick={() => { setCurrentTool('pen'); setIsToolbarVisible(false); }}
+                        variant={currentTool === 'pen' ? 'default' : 'outline'}
+                        size="sm"
+                        className="justify-start"
+                      >
+                        <Pen className="w-4 h-4 mr-2" />
+                        Pen
+                      </Button>
+                      <Button
+                        onClick={() => { setCurrentTool('eraser'); setIsToolbarVisible(false); }}
+                        variant={currentTool === 'eraser' ? 'default' : 'outline'}
+                        size="sm"
+                        className="justify-start"
+                      >
+                        <Eraser className="w-4 h-4 mr-2" />
+                        Eraser
+                      </Button>
+                      {/* <Button
                       onClick={() => { setCurrentTool('rectangle'); setIsToolbarVisible(false); }}
                       variant={currentTool === 'rectangle' ? 'default' : 'outline'}
                       size="sm"
@@ -888,117 +899,117 @@ const WhiteboardTeaching: React.FC = () => {
                       Triangle
                     </Button> */}
 
-                    {/* Colors */}
-                    <div className="border-t pt-2">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Palette className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">Colors</span>
+                      {/* Colors */}
+                      <div className="border-t pt-2">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Palette className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">Colors</span>
+                        </div>
+                        <div className="grid grid-cols-4 gap-1">
+                          {colors.map((color) => (
+                            <button
+                              key={color}
+                              onClick={() => setCurrentColor(color)}
+                              className={`w-6 h-6 rounded border-2 ${currentColor === color ? 'border-foreground' : 'border-border'
+                                }`}
+                              style={{ backgroundColor: color }}
+                            />
+                          ))}
+                        </div>
                       </div>
-                      <div className="grid grid-cols-4 gap-1">
-                        {colors.map((color) => (
-                          <button
-                            key={color}
-                            onClick={() => setCurrentColor(color)}
-                            className={`w-6 h-6 rounded border-2 ${currentColor === color ? 'border-foreground' : 'border-border'
-                              }`}
-                            style={{ backgroundColor: color }}
-                          />
-                        ))}
-                      </div>
-                    </div>
 
-                    {/* Brush Size */}
-                    <div className="border-t pt-2">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-sm text-muted-foreground">Size: {brushSize}</span>
+                      {/* Brush Size */}
+                      <div className="border-t pt-2">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-sm text-muted-foreground">Size: {brushSize}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="1"
+                          max="20"
+                          value={brushSize}
+                          onChange={(e) => setBrushSize(parseInt(e.target.value))}
+                          className="w-full"
+                        />
                       </div>
-                      <input
-                        type="range"
-                        min="1"
-                        max="20"
-                        value={brushSize}
-                        onChange={(e) => setBrushSize(parseInt(e.target.value))}
-                        className="w-full"
-                      />
-                    </div>
 
-                    {/* Actions */}
-                    <div className="border-t pt-2 space-y-2">
-                      {/* <Button onClick={clearCanvas} variant="outline" size="sm" className="w-full justify-start">
+                      {/* Actions */}
+                      <div className="border-t pt-2 space-y-2">
+                        {/* <Button onClick={clearCanvas} variant="outline" size="sm" className="w-full justify-start">
                         <RotateCcw className="w-4 h-4 mr-2" />
                         Clear
                       </Button> */}
-                      <Button variant="outline" size="sm" className="w-full justify-start"
-                        onClick={handleSaveData}>
-                        <Save className="w-4 h-4 mr-2" />
-                        Save
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full justify-start mt-2"
-                        onClick={handleSaveAsPDF}
-                      >
-                        <Save className="w-4 h-4 mr-2" />
-                        Download as PDF
-                      </Button>
+                        <Button variant="outline" size="sm" className="w-full justify-start"
+                          onClick={handleSaveData}>
+                          <Save className="w-4 h-4 mr-2" />
+                          Save
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-start mt-2"
+                          onClick={handleSaveAsPDF}
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          Download as PDF
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
+
+                {/* Toolbar Toggle Button */}
+                <Button
+                  onClick={toggleToolbar}
+                  variant="outline"
+                  size="sm"
+                  className="absolute -left-10 top-2 bg-blue-100 backdrop-blur-sm"
+                >
+                  {isToolbarVisible ? '→' : '←'}
+                </Button>
               </div>
 
-              {/* Toolbar Toggle Button */}
-              <Button
-                onClick={toggleToolbar}
-                variant="outline"
-                size="sm"
-                className="absolute -left-10 top-2 bg-blue-100 backdrop-blur-sm"
-              >
-                {isToolbarVisible ? '→' : '←'}
-              </Button>
-            </div>
+              {/* Canvas */}
+              <canvas
+                ref={canvasRef}
+                onMouseDown={startDrawing}
+                onMouseMove={draw}
+                onMouseUp={stopDrawing}
+                onMouseLeave={stopDrawing}
+                onTouchStart={startDrawing}
+                onTouchMove={draw}
+                onTouchEnd={stopDrawing}
+                onTouchCancel={stopDrawing}
+                className="w-full h-full cursor-crosshair bg-white"
+                style={{ touchAction: 'none' }}
+              />
 
-            {/* Canvas */}
-            <canvas
-              ref={canvasRef}
-              onMouseDown={startDrawing}
-              onMouseMove={draw}
-              onMouseUp={stopDrawing}
-              onMouseLeave={stopDrawing}
-              onTouchStart={startDrawing}
-              onTouchMove={draw}
-              onTouchEnd={stopDrawing}
-              onTouchCancel={stopDrawing}
-              className="w-full h-full cursor-crosshair bg-white"
-              style={{ touchAction: 'none' }}
-            />
+              {/* Undo/Redo Controls (Bottom Left) */}
+              <div className="absolute bottom-4 left-4 flex gap-2 z-20">
+                <Button
+                  onClick={undo}
+                  variant="outline"
+                  size="sm"
+                  className="bg-blue-100 backdrop-blur-sm"
+                  disabled={historyIndex <= 0}
+                >
+                  <Undo className="w-4 h-4" />
+                </Button>
+                <Button
+                  onClick={redo}
+                  variant="outline"
+                  size="sm"
+                  className="bg-blue-100 backdrop-blur-sm"
+                  disabled={historyIndex >= drawingHistory.length - 1}
+                >
+                  <Redo className="w-4 h-4" />
+                </Button>
+              </div>
 
-            {/* Undo/Redo Controls (Bottom Left) */}
-            <div className="absolute bottom-4 left-4 flex gap-2 z-20">
-              <Button
-                onClick={undo}
-                variant="outline"
-                size="sm"
-                className="bg-blue-100 backdrop-blur-sm"
-                disabled={historyIndex <= 0}
-              >
-                <Undo className="w-4 h-4" />
-              </Button>
-              <Button
-                onClick={redo}
-                variant="outline"
-                size="sm"
-                className="bg-blue-100 backdrop-blur-sm"
-                disabled={historyIndex >= drawingHistory.length - 1}
-              >
-                <Redo className="w-4 h-4" />
-              </Button>
-            </div>
-
-            {/* Slide Controls (Bottom Right) */}
-            <div className="absolute bottom-4 right-4 flex items-center gap-2 z-20">
-              {/* Minus Button */}
-              {/* <Button
+              {/* Slide Controls (Bottom Right) */}
+              <div className="absolute bottom-4 right-4 flex items-center gap-2 z-20">
+                {/* Minus Button */}
+                {/* <Button
                 onClick={removeSlide}
                 variant="outline"
                 size="sm"
@@ -1008,65 +1019,71 @@ const WhiteboardTeaching: React.FC = () => {
                 <Minus className="w-4 h-4" />
               </Button> */}
 
-              {/* Slide Navigation */}
-              <div className="flex items-center gap-1 bg-blue-100 backdrop-blur-sm px-3 py-1 rounded border">
-                {/* Previous Arrow */}
-                {currentSlide > 1 && (
-                  <button
-                    onClick={() => goToSlide(currentSlide - 1)}
-                    className="text-muted-foreground hover:text-foreground px-1"
-                  >
-                    &lt;
-                  </button>
-                )}
+                {/* Slide Navigation */}
+                <div className="flex items-center gap-1 bg-blue-100 backdrop-blur-sm px-3 py-1 rounded border">
+                  {/* Previous Arrow */}
+                  {currentSlide > 1 && (
+                    <button
+                      onClick={() => goToSlide(currentSlide - 1)}
+                      className="text-muted-foreground hover:text-foreground px-1"
+                    >
+                      &lt;
+                    </button>
+                  )}
 
-                {/* Slide Numbers */}
-                {Array.from({ length: totalSlides }, (_, i) => i + 1).map((slideNum) => (
-                  <button
-                    key={slideNum}
-                    onClick={() => goToSlide(slideNum)}
-                    className={`px-2 py-1 text-sm font-medium rounded transition-colors ${currentSlide === slideNum
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                      }`}
-                  >
-                    {slideNum}
-                  </button>
-                ))}
+                  {/* Slide Numbers */}
+                  {Array.from({ length: totalSlides }, (_, i) => i + 1).map((slideNum) => (
+                    <button
+                      key={slideNum}
+                      onClick={() => goToSlide(slideNum)}
+                      className={`px-2 py-1 text-sm font-medium rounded transition-colors ${currentSlide === slideNum
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                        }`}
+                    >
+                      {slideNum}
+                    </button>
+                  ))}
 
-                {/* Next Arrow */}
-                {currentSlide < totalSlides && (
-                  <button
-                    onClick={() => goToSlide(currentSlide + 1)}
-                    className="text-muted-foreground hover:text-foreground px-1"
-                  >
-                    &gt;
-                  </button>
-                )}
+                  {/* Next Arrow */}
+                  {currentSlide < totalSlides && (
+                    <button
+                      onClick={() => goToSlide(currentSlide + 1)}
+                      className="text-muted-foreground hover:text-foreground px-1"
+                    >
+                      &gt;
+                    </button>
+                  )}
+                </div>
+
+                {/* Plus Button */}
+                <Button
+                  onClick={addSlide}
+                  variant="outline"
+                  size="sm"
+                  className="bg-blue-100 backdrop-blur-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
               </div>
-
-              {/* Plus Button */}
-              <Button
-                onClick={addSlide}
-                variant="outline"
-                size="sm"
-                className="bg-blue-100 backdrop-blur-sm"
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
             </div>
           </div>
-        </div>
 
-        {/* Overlay backdrop when sidebar is open */}
-        {!isLeftSidebarCollapsed && (
-          <div
-            className="fixed inset-0 bg-black/20 z-20"
-            onClick={toggleLeftSidebar}
-          />
-        )}
+          {/* Overlay backdrop when sidebar is open */}
+          {!isLeftSidebarCollapsed && (
+            <div
+              className="fixed inset-0 bg-black/20 z-20"
+              onClick={toggleLeftSidebar}
+            />
+          )}
+        </div>
       </div>
-    </div>
+      {
+        loader && (
+          <SpinnerOverlay />
+        )
+      }
+    </>
   );
 };
 
