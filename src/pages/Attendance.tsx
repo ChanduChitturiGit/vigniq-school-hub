@@ -218,7 +218,8 @@ const Attendance: React.FC = () => {
 
   const getPastAttendenceDataList = async () => {
     try {
-      const currentClassId = classId || (classes[0] ? getClassId('Class ' + classes[0].class_id + ' - ' + classes[0].section) : '');
+      // || (classes[0] ? getClassId('Class ' + classes[0].class_id + ' - ' + classes[0].section) : '')
+      const currentClassId = classId ;
       const date = format(selectedDate, 'yyyy-MM-dd');
 
       const requestData = {
@@ -293,7 +294,7 @@ const Attendance: React.FC = () => {
     } catch (error) {
       showSnackbar({
         title: "⛔ Error",
-        description: error?.response?.data?.error || "Something went wrong",
+        description: error?.response?.data?.error || "Something went wrong sub",
         status: "error"
       });
     }
