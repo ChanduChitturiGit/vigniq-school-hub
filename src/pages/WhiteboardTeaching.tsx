@@ -95,35 +95,17 @@ const WhiteboardTeaching: React.FC = () => {
   const [sessionToken, setSessionToken] = useState<string>('');
   const [savedData, setSavedData] = useState<any>(null);
 
-  const [activities] = useState<LessonActivity[]>([
-    {
-      serialNumber: 1,
-      title: 'Introduction to Numbers',
-      description: 'Brief overview of the chapter and importance of numbers in daily life. Icebreaker activity related to numbers.'
-    },
-    {
-      serialNumber: 2,
-      title: 'Comparing Numbers',
-      description: 'Understanding place value, identifying greater and smaller numbers. Examples and practice exercises.'
-    },
-    {
-      serialNumber: 3,
-      title: 'Break',
-      description: 'Short break for students.'
-    },
-    {
-      serialNumber: 4,
-      title: 'Large Numbers in Practice',
-      description: 'Reading and writing large numbers. Use of commas. Real-world examples of large numbers.'
-    },
-    {
-      serialNumber: 5,
-      title: 'Recap and Q&A',
-      description: 'Summarize the topics covered. Address student questions and doubts.'
-    }
-  ]);
+  const [slides, setSlides] = useState<any[]>([{ lines: [] }]);
+  //const [currentSlide, setCurrentSlide] = useState(0);
+
+
+
+
+
+  const [activities] = useState<LessonActivity[]>([]);
 
   const colors = ['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500'];
+
 
   const getLessonData = async () => {
     try {
@@ -191,6 +173,7 @@ const WhiteboardTeaching: React.FC = () => {
       });
     }
   }
+
 
   useEffect(() => {
     const sessionId = sessionStorage.getItem('sessionId');
@@ -281,8 +264,17 @@ const WhiteboardTeaching: React.FC = () => {
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
 
-    let x = (e.clientX - rect.left) * scaleX;
-    let y = (e.clientY - rect.top) * scaleY;
+    let x: number, y: number;
+    if ('touches' in e && e.touches.length > 0) {
+      x = (e.touches[0].clientX - rect.left) * scaleX;
+      y = (e.touches[0].clientY - rect.top) * scaleY;
+    } else if ('clientX' in e) {
+      x = (e.clientX - rect.left) * scaleX;
+      y = (e.clientY - rect.top) * scaleY;
+    } else {
+      x = 0;
+      y = 0;
+    }
 
     // Pixel alignment for smooth writing
     x = Math.round(x * 2) / 2;
@@ -345,6 +337,10 @@ const WhiteboardTeaching: React.FC = () => {
     };
   }, [sessionToken]);
 
+
+
+
+
   const lastPointRef = useRef<{ x: number, y: number } | null>(null);
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
@@ -354,7 +350,7 @@ const WhiteboardTeaching: React.FC = () => {
     if (!ctx || !canvas) return;
 
     const { x, y } = getCanvasCoordinates(e)//getCoordinates(e);
-    pointsRef.current.push({ x, y });
+    //pointsRef.current.push({ x, y });
 
     if (currentTool === 'pen') {
       ctx.globalCompositeOperation = 'source-over';
@@ -541,6 +537,7 @@ const WhiteboardTeaching: React.FC = () => {
       setHistoryIndex(historyIndex + 1);
     }
 
+
     setDrawingHistory(newHistory);
   };
 
@@ -574,16 +571,19 @@ const WhiteboardTeaching: React.FC = () => {
     setTotalSlides((prev) => prev + 1);
     setSlideImages((prev) => [...prev, null]);
     setCurrentSlide(totalSlides + 1); // Move to new slide
+    setTimeout(() => loadSlideImage(totalSlides + 1), 0); // Load blank slide
   };
 
   const removeSlide = () => {
+    saveCurrentSlideImage();
     if (totalSlides > 1) {
-      saveCurrentSlideImage();
       setTotalSlides(totalSlides - 1);
       setSlideImages((prev) => prev.slice(0, -1));
       if (currentSlide > totalSlides - 1) {
         setCurrentSlide(totalSlides - 1);
         setTimeout(() => loadSlideImage(totalSlides - 1), 0);
+      } else {
+        setTimeout(() => loadSlideImage(currentSlide), 0);
       }
     }
   };
@@ -591,6 +591,7 @@ const WhiteboardTeaching: React.FC = () => {
   const goToSlide = (slideNumber: number) => {
     saveCurrentSlideImage(); // Save current slide's drawing
     setCurrentSlide(slideNumber); // Switch slide
+    setTimeout(() => loadSlideImage(slideNumber), 0); // Load selected slide
   };
 
   // Load slide image whenever currentSlide changes
