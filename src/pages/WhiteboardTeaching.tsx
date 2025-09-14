@@ -617,9 +617,9 @@ const WhiteboardTeaching: React.FC = () => {
     }
 
     ctx.save();
+    let prev = null;
     for (let i = 0; i < slideData.length; i++) {
       const curr = slideData[i];
-      const prev = slideData[i - 1];
 
       ctx.lineWidth = curr.size;
       ctx.strokeStyle = curr.color;
@@ -627,15 +627,18 @@ const WhiteboardTeaching: React.FC = () => {
       ctx.lineJoin = 'round';
       ctx.globalCompositeOperation = curr.tool === 'pen' ? 'source-over' : 'destination-out';
 
-      if (curr.isStart || i === 0) {
+      if (curr.isStart || !prev) {
+        // Start a new stroke
         ctx.beginPath();
         ctx.moveTo(curr.x, curr.y);
-      } else if (prev) {
+      } else {
+        // Continue the stroke
         ctx.beginPath();
         ctx.moveTo(prev.x, prev.y);
         ctx.lineTo(curr.x, curr.y);
         ctx.stroke();
       }
+      prev = curr;
     }
     ctx.restore();
   };
@@ -644,9 +647,7 @@ const WhiteboardTeaching: React.FC = () => {
     if (savedData) {
       replaySavedData(currentSlide);
     }
-
-    // eslint-disable-next-line
-  }, [savedData, currentSlide]);
+  }, [savedData]);
 
   useEffect(() => {
     if (savedData && Array.isArray(savedData)) {
@@ -668,18 +669,25 @@ const WhiteboardTeaching: React.FC = () => {
               tempCtx.fillStyle = 'white';
               tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
               const slideData = savedData.filter((d) => d.slide === i + 1);
-              for (let j = 1; j < slideData.length; j++) {
-                const prev = slideData[j - 1];
+              for (let j = 0; j < slideData.length; j++) {
                 const curr = slideData[j];
-                tempCtx.beginPath();
+                const prev = slideData[j - 1];
+
                 tempCtx.lineWidth = curr.size;
                 tempCtx.strokeStyle = curr.color;
                 tempCtx.lineCap = 'round';
                 tempCtx.lineJoin = 'round';
                 tempCtx.globalCompositeOperation = curr.tool === 'pen' ? 'source-over' : 'destination-out';
-                tempCtx.moveTo(prev.x, prev.y);
-                tempCtx.lineTo(curr.x, curr.y);
-                tempCtx.stroke();
+
+                if (curr.isStart || !prev) {
+                  tempCtx.beginPath();
+                  tempCtx.moveTo(curr.x, curr.y);
+                } else {
+                  tempCtx.beginPath();
+                  tempCtx.moveTo(prev.x, prev.y);
+                  tempCtx.lineTo(curr.x, curr.y);
+                  tempCtx.stroke();
+                }
               }
               updated[i] = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
             }
