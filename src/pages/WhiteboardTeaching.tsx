@@ -95,7 +95,6 @@ const WhiteboardTeaching: React.FC = () => {
   const [slideImages, setSlideImages] = useState<(ImageData | null)[]>([null]);
   const [sessionToken, setSessionToken] = useState<string>('');
   const [savedData, setSavedData] = useState<any>(null);
-  const [dataLoader, setDataLoader] = useState(false);
 
   // const [loader, setLoader] = useState(true);
 
@@ -443,22 +442,17 @@ const WhiteboardTeaching: React.FC = () => {
 
   // Helper to load image data for a slide
   const loadSlideImage = (slideNum: number) => {
-    setDataLoader(true);
-    if (!dataLoader) {
-      const canvas = canvasRef.current;
-      const ctx = canvas?.getContext('2d');
-      if (!ctx || !canvas) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      const imageData = slideImages[slideNum - 1];
-      if (imageData) {
-        setDataLoader(false);
-        ctx.putImageData(imageData, 0, 0);
-      } else if (savedData && Array.isArray(savedData)) {
-        setDataLoader(false);
-        replaySavedData(slideNum);
-      }
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!ctx || !canvas) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const imageData = slideImages[slideNum - 1];
+    if (imageData) {
+      ctx.putImageData(imageData, 0, 0);
+    } else if (savedData && Array.isArray(savedData)) {
+      replaySavedData(slideNum);
     }
   };
 
@@ -581,7 +575,7 @@ const WhiteboardTeaching: React.FC = () => {
   const goToSlide = (slideNumber: number) => {
     saveCurrentSlideImage(); // Save current slide's drawing
     setCurrentSlide(slideNumber); // Switch slide
-    setTimeout(() => loadSlideImage(slideNumber), 0);
+    setTimeout(() => loadSlideImage(slideNumber), 0); // Load selected slide
   };
 
   // Load slide image whenever currentSlide changes
@@ -750,7 +744,7 @@ const WhiteboardTeaching: React.FC = () => {
       if (totalSlides !== 1) setTotalSlides(1);
       if (currentSlide !== 1) setCurrentSlide(1);
       if (!slideImages || slideImages.length !== 1) setSlideImages([null]);
-      setTimeout(() => { loadSlideImage(1) }, 0);
+      setTimeout(() => {loadSlideImage(1)}, 0);
     }
   }, [savedData]);
 
