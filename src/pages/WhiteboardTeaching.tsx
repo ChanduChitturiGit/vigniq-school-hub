@@ -365,53 +365,22 @@ const WhiteboardTeaching: React.FC = () => {
 
     const { x, y } = getCanvasCoordinates(e);
 
-    if (currentTool === 'pen') {
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.strokeStyle = currentColor;
-      ctx.lineWidth = brushSize;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
+    ctx.lineWidth = brushSize;
+    ctx.strokeStyle = currentColor;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.globalCompositeOperation = currentTool === 'pen' ? 'source-over' : 'destination-out';
 
-      // Add current point to buffer
-      pointsRef.current.push({ x, y });
-
-      // Only draw if we have enough points for a curve
-      if (pointsRef.current.length >= 4) {
-        const [p0, p1, p2, p3] = pointsRef.current.slice(-4);
-        ctx.beginPath();
-        ctx.moveTo(p0.x, p0.y);
-        ctx.bezierCurveTo(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
-        ctx.stroke();
-      } else if (pointsRef.current.length >= 2) {
-        // For first few points, just draw a line
-        const [p0, p1] = pointsRef.current.slice(-2);
-        ctx.beginPath();
-        ctx.moveTo(p0.x, p0.y);
-        ctx.lineTo(p1.x, p1.y);
-        ctx.stroke();
-      }
-    } else if (currentTool === 'eraser') {
-      ctx.globalCompositeOperation = 'destination-out';
-      ctx.lineWidth = brushSize * 2;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-
-      pointsRef.current.push({ x, y });
-
-      if (pointsRef.current.length >= 4) {
-        const [p0, p1, p2, p3] = pointsRef.current.slice(-4);
-        ctx.beginPath();
-        ctx.moveTo(p0.x, p0.y);
-        ctx.bezierCurveTo(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
-        ctx.stroke();
-      } else if (pointsRef.current.length >= 2) {
-        const [p0, p1] = pointsRef.current.slice(-2);
-        ctx.beginPath();
-        ctx.moveTo(p0.x, p0.y);
-        ctx.lineTo(p1.x, p1.y);
-        ctx.stroke();
-      }
+    // Draw a line from the last point to the current point
+    if (pointsRef.current.length > 0) {
+      const last = pointsRef.current[pointsRef.current.length - 1];
+      ctx.beginPath();
+      ctx.moveTo(last.x, last.y);
+      ctx.lineTo(x, y);
+      ctx.stroke();
     }
+
+    pointsRef.current.push({ x, y });
 
     drawBufferRef.current.push({
       x, y,
@@ -420,7 +389,7 @@ const WhiteboardTeaching: React.FC = () => {
       size: brushSize,
       slide: currentSlide,
       timestamp: Date.now(),
-      isStart: false // Not the start of a stroke
+      isStart: false
     });
 
     if (drawBufferRef.current.length >= 20) {
