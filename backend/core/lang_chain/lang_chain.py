@@ -48,6 +48,8 @@ class LangChainService:
         )
 
         pdf_text = CommonFunctions.extract_text_from_pdf(pdf_file=pdf_file)
+        if not pdf_text or len(pdf_text) < 2000:
+            raise ValueError("Uploaded pdf file is not valid or does not contain enough text.")
         response = self.invoke_llm(pdf_text=pdf_text, prompt=prompt)
         parsed = chapter_parser.parse(response)
 
