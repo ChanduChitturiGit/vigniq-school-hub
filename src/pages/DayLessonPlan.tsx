@@ -209,7 +209,7 @@ const DayLessonPlan: React.FC = () => {
 
   if (!lessonData) {
     return (
-      <MainLayout pageTitle={`Chapter ${chapterId}: ${chapterName} - Day ${day}`}>
+      <MainLayout pageTitle={`Chapter ${chapterNumber}: ${chapterName} - Day ${day}`}>
         <div className="flex items-center justify-center h-64">
           <div className="text-lg text-gray-500">Loading lesson plan...</div>
         </div>
@@ -218,7 +218,7 @@ const DayLessonPlan: React.FC = () => {
   }
 
   return (
-    <MainLayout pageTitle={`Chapter ${chapterId}: ${chapterName} - Day ${lessonData.day}`}>
+    <MainLayout pageTitle={`Chapter ${chapterNumber}: ${chapterName} - Day ${lessonData.day}`}>
       <div className="space-y-8">
         {/* <Breadcrumb items={breadcrumbItems} /> */}
         <div className='w-full flex flex-col md:flex-row items-start md:items-center justify-between gap-4'>
