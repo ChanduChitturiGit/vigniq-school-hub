@@ -54,7 +54,7 @@ const CreateLessonPlan: React.FC = () => {
   const schoolId = searchParams.get('school_id') || '';
   const boardId = searchParams.get('school_board_id') || '';
   const tab = searchParams.get('tab') || '';
-  const pathData = `class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
+  const pathData = `class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}&chapter_number=${chapterNumber}`;
 
   let payload = {
     school_id: schoolId,
