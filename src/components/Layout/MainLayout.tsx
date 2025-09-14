@@ -74,7 +74,7 @@ const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
           />
         </div>
         
-        <div className="flex-1 flex flex-col min-w-0 min-h-0 mb-16 lg:mb-0">
+        <div className="flex-1 flex flex-col min-w-0 min-h-0 mb-16 xl:mb-0">
           <TopNavbar 
             isCollapsed={isCollapsed} 
             toggleSidebar={toggleSidebar} 
