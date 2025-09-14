@@ -29,6 +29,7 @@ import { useSnackbar } from '../components/snackbar/SnackbarContext';
 import { environment } from '@/environment';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { set } from 'date-fns';
 // import { SpinnerOverlay } from '../pages/SpinnerOverlay';
 
 
@@ -100,6 +101,7 @@ const WhiteboardTeaching: React.FC = () => {
   // const [loader, setLoader] = useState(true);
 
   const [slides, setSlides] = useState<any[]>([{ lines: [] }]);
+  const [sessionRender, setSessionRender] = useState(false);
   //const [currentSlide, setCurrentSlide] = useState(0);
 
 
@@ -182,6 +184,7 @@ const WhiteboardTeaching: React.FC = () => {
   useEffect(() => {
     const sessionId = sessionStorage.getItem('sessionId');
     setSessionToken(sessionId);
+    setSessionRender(true);
   }, [])
 
   useEffect(() => {
@@ -443,7 +446,10 @@ const WhiteboardTeaching: React.FC = () => {
 
   // Helper to load image data for a slide
   const loadSlideImage = (slideNum: number) => {
-    setDataLoader(true);
+    if(sessionRender){
+      setDataLoader(true);
+      setSessionRender(false);
+    }
     if (!dataLoader) {
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext('2d');
