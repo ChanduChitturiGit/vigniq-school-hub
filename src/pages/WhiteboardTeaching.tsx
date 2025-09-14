@@ -29,7 +29,7 @@ import { useSnackbar } from '../components/snackbar/SnackbarContext';
 import { environment } from '@/environment';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { SpinnerOverlay } from '../pages/SpinnerOverlay';
+// import { SpinnerOverlay } from '../pages/SpinnerOverlay';
 
 
 
@@ -96,7 +96,7 @@ const WhiteboardTeaching: React.FC = () => {
   const [sessionToken, setSessionToken] = useState<string>('');
   const [savedData, setSavedData] = useState<any>(null);
 
-  const [loader, setLoader] = useState(true);
+  // const [loader, setLoader] = useState(true);
 
   const [slides, setSlides] = useState<any[]>([{ lines: [] }]);
   //const [currentSlide, setCurrentSlide] = useState(0);
@@ -161,7 +161,6 @@ const WhiteboardTeaching: React.FC = () => {
       const response = await getWhiteboardData(data);
       if (response && response.data) {
         setSavedData(response.data);
-        setLoader(false);
       } else {
         showSnackbar({
           title: 'Error',
@@ -170,7 +169,6 @@ const WhiteboardTeaching: React.FC = () => {
         });
       }
     } catch (error) {
-      setLoader(false);
       showSnackbar({
         title: 'Error',
         description: 'An unexpected error occurred while fetching lesson plan data.',
@@ -630,11 +628,14 @@ const WhiteboardTeaching: React.FC = () => {
     : "h-screen bg-muted/30";
 
   const replaySavedData = (slideNum: number) => {
-    setLoader(true);
-    if (!savedData || !Array.isArray(savedData)) return;
+    if (!savedData || !Array.isArray(savedData)) {
+      return;
+    }
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
-    if (!ctx || !canvas) return;
+    if (!ctx || !canvas){
+      return;
+    }
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = 'white';
@@ -642,7 +643,9 @@ const WhiteboardTeaching: React.FC = () => {
 
     const slideData = savedData.filter((d) => d.slide === slideNum);
 
-    if (slideData.length === 0) return;
+    if (slideData.length === 0) {
+      return;
+    }
 
     ctx.save();
     for (let i = 0; i < slideData.length; i++) {
@@ -666,16 +669,13 @@ const WhiteboardTeaching: React.FC = () => {
       }
     }
     ctx.restore();
-    setTimeout(() =>
-     {
-       setLoader(false);
-     }, 500)    
   };
 
   useEffect(() => {
     if (savedData) {
       replaySavedData(currentSlide);
     }
+
     // eslint-disable-next-line
   }, [savedData, currentSlide]);
 
@@ -1078,11 +1078,11 @@ const WhiteboardTeaching: React.FC = () => {
           )}
         </div>
       </div>
-      {
+      {/* {
         loader && (
           <SpinnerOverlay />
         )
-      }
+      } */}
     </>
   );
 };
