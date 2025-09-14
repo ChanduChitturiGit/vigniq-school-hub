@@ -6,6 +6,8 @@ from django.urls import resolve, Resolver404
 from django.shortcuts import redirect
 from django.conf import settings
 from django.http import JsonResponse
+from django.db import connections
+from django.utils.deprecation import MiddlewareMixin
 
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, AuthenticationFailed
@@ -47,7 +49,13 @@ class LoadDynamicDatabasesMiddleware:
 
         return self.get_response(request)
 
-                
+class CloseDBConnectionMiddleware(MiddlewareMixin):
+    def process_response(self, request, response):
+        # Loop through all configured DBs
+        for conn in connections.all():
+            conn.close_if_unusable_or_obsolete()
+        return response
+
 
 class AuthenticationMiddleware:
     """
