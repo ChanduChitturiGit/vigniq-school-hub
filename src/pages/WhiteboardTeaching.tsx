@@ -291,11 +291,22 @@ const WhiteboardTeaching: React.FC = () => {
 
     const { x, y } = getCoordinates(e);
 
-    // Save current state to history
     saveToHistory();
 
     ctx.beginPath();
     ctx.moveTo(x, y);
+
+    // Mark the start of a new stroke
+    drawBufferRef.current.push({
+      x, y,
+      tool: currentTool,
+      color: currentColor,
+      size: brushSize,
+      slide: currentSlide,
+      timestamp: Date.now(),
+      isStart: true
+    });
+    pointsRef.current = [{ x, y }];
   };
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -349,8 +360,7 @@ const WhiteboardTeaching: React.FC = () => {
     const ctx = canvas?.getContext('2d');
     if (!ctx || !canvas) return;
 
-    const { x, y } = getCanvasCoordinates(e)//getCoordinates(e);
-    //pointsRef.current.push({ x, y });
+    const { x, y } = getCanvasCoordinates(e);
 
     if (currentTool === 'pen') {
       ctx.globalCompositeOperation = 'source-over';
@@ -400,14 +410,14 @@ const WhiteboardTeaching: React.FC = () => {
       }
     }
 
-    // Buffer the event
     drawBufferRef.current.push({
       x, y,
       tool: currentTool,
       color: currentColor,
       size: brushSize,
       slide: currentSlide,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      isStart: false // Not the start of a stroke
     });
 
     if (drawBufferRef.current.length >= 20) {
@@ -620,36 +630,34 @@ const WhiteboardTeaching: React.FC = () => {
     const ctx = canvas?.getContext('2d');
     if (!ctx || !canvas) return;
 
-    // Clear canvas before replaying
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Filter data for the current slide
     const slideData = savedData.filter((d) => d.slide === slideNum);
 
     if (slideData.length === 0) return;
 
     ctx.save();
-    for (let i = 1; i < slideData.length; i++) {
-      const prev = slideData[i - 1];
+    for (let i = 0; i < slideData.length; i++) {
       const curr = slideData[i];
+      const prev = slideData[i - 1];
 
-      ctx.beginPath();
       ctx.lineWidth = curr.size;
       ctx.strokeStyle = curr.color;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
+      ctx.globalCompositeOperation = curr.tool === 'pen' ? 'source-over' : 'destination-out';
 
-      if (curr.tool === 'pen') {
-        ctx.globalCompositeOperation = 'source-over';
-      } else if (curr.tool === 'eraser') {
-        ctx.globalCompositeOperation = 'destination-out';
+      if (curr.isStart || i === 0) {
+        ctx.beginPath();
+        ctx.moveTo(curr.x, curr.y);
+      } else if (prev) {
+        ctx.beginPath();
+        ctx.moveTo(prev.x, prev.y);
+        ctx.lineTo(curr.x, curr.y);
+        ctx.stroke();
       }
-
-      ctx.moveTo(prev.x, prev.y);
-      ctx.lineTo(curr.x, curr.y);
-      ctx.stroke();
     }
     ctx.restore();
   };
