@@ -451,6 +451,8 @@ const WhiteboardTeaching: React.FC = () => {
     const imageData = slideImages[slideNum - 1];
     if (imageData) {
       ctx.putImageData(imageData, 0, 0);
+    } else if (savedData && Array.isArray(savedData)) {
+      replaySavedData(slideNum);
     }
   };
 
@@ -602,7 +604,7 @@ const WhiteboardTeaching: React.FC = () => {
     }
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
-    if (!ctx || !canvas){
+    if (!ctx || !canvas) {
       return;
     }
 
@@ -647,59 +649,52 @@ const WhiteboardTeaching: React.FC = () => {
     if (savedData) {
       replaySavedData(currentSlide);
     }
-  }, [savedData]);
+  }, [savedData, currentSlide]);
 
   useEffect(() => {
-    if (savedData && Array.isArray(savedData)) {
-      // Find the max slide number in savedData
+    if (savedData && Array.isArray(savedData) && savedData.length > 0) {
       const maxSlide = Math.max(...savedData.map((d) => d.slide));
-      if (maxSlide > 1) {
-        setTotalSlides(maxSlide);
-        setCurrentSlide(maxSlide);
-        // Preload all slide images from savedData
-        setSlideImages((prev) => {
-          const updated = [...prev];
-          for (let i = 0; i < maxSlide; i++) {
-            // Create a temporary canvas to replay and get image data
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = canvasRef.current?.width || 800;
-            tempCanvas.height = canvasRef.current?.height || 600;
-            const tempCtx = tempCanvas.getContext('2d');
-            if (tempCtx) {
-              tempCtx.fillStyle = 'white';
-              tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-              const slideData = savedData.filter((d) => d.slide === i + 1);
-              for (let j = 0; j < slideData.length; j++) {
-                const curr = slideData[j];
-                const prev = slideData[j - 1];
+      setTotalSlides(maxSlide);
+      setCurrentSlide(maxSlide);
 
-                tempCtx.lineWidth = curr.size;
-                tempCtx.strokeStyle = curr.color;
-                tempCtx.lineCap = 'round';
-                tempCtx.lineJoin = 'round';
-                tempCtx.globalCompositeOperation = curr.tool === 'pen' ? 'source-over' : 'destination-out';
+      const preloadImages: (ImageData | null)[] = Array(maxSlide).fill(null);
+      for (let i = 0; i < maxSlide; i++) {
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvasRef.current?.width || 800;
+        tempCanvas.height = canvasRef.current?.height || 600;
+        const tempCtx = tempCanvas.getContext('2d');
+        if (tempCtx) {
+          tempCtx.fillStyle = 'white';
+          tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+          const slideData = savedData.filter((d) => d.slide === i + 1);
+          let prev = null;
+          for (let j = 0; j < slideData.length; j++) {
+            const curr = slideData[j];
+            tempCtx.lineWidth = curr.size;
+            tempCtx.strokeStyle = curr.color;
+            tempCtx.lineCap = 'round';
+            tempCtx.lineJoin = 'round';
+            tempCtx.globalCompositeOperation = curr.tool === 'pen' ? 'source-over' : 'destination-out';
 
-                if (curr.isStart || !prev) {
-                  tempCtx.beginPath();
-                  tempCtx.moveTo(curr.x, curr.y);
-                } else {
-                  tempCtx.beginPath();
-                  tempCtx.moveTo(prev.x, prev.y);
-                  tempCtx.lineTo(curr.x, curr.y);
-                  tempCtx.stroke();
-                }
-              }
-              updated[i] = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+            if (curr.isStart || !prev) {
+              tempCtx.beginPath();
+              tempCtx.moveTo(curr.x, curr.y);
+            } else {
+              tempCtx.beginPath();
+              tempCtx.moveTo(prev.x, prev.y);
+              tempCtx.lineTo(curr.x, curr.y);
+              tempCtx.stroke();
             }
+            prev = curr;
           }
-          return updated;
-        });
-
-        // Immediately load the highest slide image onto the canvas
-        setTimeout(() => {
-          loadSlideImage(maxSlide);
-        }, 0);
+          preloadImages[i] = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+        }
       }
+      setSlideImages(preloadImages);
+
+      setTimeout(() => {
+        loadSlideImage(maxSlide);
+      }, 0);
     }
   }, [savedData]);
 
@@ -738,6 +733,21 @@ const WhiteboardTeaching: React.FC = () => {
 
     handleSaveData();
   };
+
+
+  useEffect(() => {
+    if (
+      !savedData ||
+      !Array.isArray(savedData) ||
+      savedData.length === 0
+    ) {
+      if (totalSlides !== 1) setTotalSlides(1);
+      if (currentSlide !== 1) setCurrentSlide(1);
+      if (!slideImages || slideImages.length !== 1) setSlideImages([null]);
+      setTimeout(() => {loadSlideImage(1)}, 0);
+    }
+  }, [savedData]);
+
 
   return (
     <>
