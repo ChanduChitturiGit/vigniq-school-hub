@@ -355,10 +355,6 @@ const WhiteboardTeaching: React.FC = () => {
     };
   }, [sessionToken]);
 
-
-
-
-
   const lastPointRef = useRef<{ x: number, y: number } | null>(null);
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
@@ -449,16 +445,24 @@ const WhiteboardTeaching: React.FC = () => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (!ctx || !canvas) return;
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+
     const imageData = slideImages[slideNum - 1];
     if (imageData) {
       ctx.putImageData(imageData, 0, 0);
-    } else if (savedData && Array.isArray(savedData)) {
-      replaySavedData(slideNum);
+      return;
+    }
+
+    // fallback: replay saved data
+    if (savedData && Array.isArray(savedData)) {
+      replaySavedData(slideNum, ctx);
     }
   };
+
+
 
   const clearCanvas = () => {
     const canvas = canvasRef.current;
@@ -583,13 +587,70 @@ const WhiteboardTeaching: React.FC = () => {
   };
 
   // Load slide image whenever currentSlide changes
+  // useEffect(() => {
+  //   loadSlideImage(currentSlide);
+  //   // Optionally reset drawing history for each slide if needed
+  //   setDrawingHistory([]);
+  //   setHistoryIndex(-1);
+  //   // eslint-disable-next-line
+  // }, [currentSlide]);
+
+  // Load savedData into slideImages once at start
+  // 🔹 Always use this one effect to load/redraw
   useEffect(() => {
-    loadSlideImage(currentSlide);
-    // Optionally reset drawing history for each slide if needed
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!ctx || !canvas) return;
+
+    // clear background
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 🔹 Try preloaded image first
+    const imageData = slideImages[currentSlide - 1];
+
+    if (imageData) {
+      ctx.putImageData(imageData, 0, 0);
+    } else {
+      // 🔹 Fallback immediately to API data
+      const slideData = savedData?.filter((d) => d.slide === currentSlide) || [];
+      if (slideData.length > 0) {
+        ctx.save();
+        let prev = null;
+        for (let i = 0; i < slideData.length; i++) {
+          const curr = slideData[i];
+          ctx.lineWidth = curr.size;
+          ctx.strokeStyle = curr.color;
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ctx.globalCompositeOperation =
+            curr.tool === "pen" ? "source-over" : "destination-out";
+
+          if (curr.isStart || !prev) {
+            ctx.beginPath();
+            ctx.moveTo(curr.x, curr.y);
+          } else {
+            ctx.beginPath();
+            ctx.moveTo(prev.x, prev.y);
+            ctx.lineTo(curr.x, curr.y);
+            ctx.stroke();
+          }
+          prev = curr;
+        }
+        ctx.restore();
+      }
+    }
+
+    // reset history
     setDrawingHistory([]);
     setHistoryIndex(-1);
-    // eslint-disable-next-line
-  }, [currentSlide]);
+  }, [currentSlide, slideImages, savedData]);
+
+
+
+
+
 
 
   const handleSaveData = async () => {
@@ -602,43 +663,25 @@ const WhiteboardTeaching: React.FC = () => {
     ? "fixed inset-0 z-50 bg-background"
     : "h-screen bg-muted/30";
 
-  const replaySavedData = (slideNum: number) => {
-    if (!savedData || !Array.isArray(savedData)) {
-      return;
-    }
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
-    if (!ctx || !canvas) {
-      return;
-    }
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+  const replaySavedData = (slideNum: number, ctx?: CanvasRenderingContext2D) => {
     const slideData = savedData.filter((d) => d.slide === slideNum);
-
-    if (slideData.length === 0) {
-      return;
-    }
+    if (slideData.length === 0) return;
 
     ctx.save();
     let prev = null;
     for (let i = 0; i < slideData.length; i++) {
       const curr = slideData[i];
-
       ctx.lineWidth = curr.size;
       ctx.strokeStyle = curr.color;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      ctx.globalCompositeOperation = curr.tool === 'pen' ? 'source-over' : 'destination-out';
+      ctx.globalCompositeOperation =
+        curr.tool === 'pen' ? 'source-over' : 'destination-out';
 
       if (curr.isStart || !prev) {
-        // Start a new stroke
         ctx.beginPath();
         ctx.moveTo(curr.x, curr.y);
       } else {
-        // Continue the stroke
         ctx.beginPath();
         ctx.moveTo(prev.x, prev.y);
         ctx.lineTo(curr.x, curr.y);
@@ -647,14 +690,14 @@ const WhiteboardTeaching: React.FC = () => {
       prev = curr;
     }
     ctx.restore();
-    setTimeout( () => saveCurrentSlideImage());
   };
 
-  useEffect(() => {
-    if (savedData) {
-      replaySavedData(currentSlide);
-    }
-  }, [savedData, currentSlide]);
+
+  // useEffect(() => {
+  //   if (savedData) {
+  //     replaySavedData(currentSlide);
+  //   }
+  // }, [savedData, currentSlide]);
 
   useEffect(() => {
     if (savedData && Array.isArray(savedData) && savedData.length > 0) {
@@ -699,7 +742,7 @@ const WhiteboardTeaching: React.FC = () => {
 
       setTimeout(() => {
         loadSlideImage(maxSlide);
-      }, 100);
+      }, 0);
     }
   }, [savedData]);
 
@@ -738,6 +781,13 @@ const WhiteboardTeaching: React.FC = () => {
 
     handleSaveData();
   };
+
+  const hasSlideData = (slideNum: number) => {
+    const imageData = slideImages[slideNum - 1];
+    const slideData = savedData?.filter((d) => d.slide === slideNum) || [];
+    return !!imageData || slideData.length > 0;
+  };
+
 
 
   // useEffect(() => {
