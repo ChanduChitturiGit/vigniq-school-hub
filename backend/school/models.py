@@ -95,6 +95,7 @@ class SchoolSyllabusEbooks(models.Model):
     chapter_number = models.PositiveIntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         db_table = 'school_syllabus_ebooks'
