@@ -446,25 +446,17 @@ const WhiteboardTeaching: React.FC = () => {
 
   // Helper to load image data for a slide
   const loadSlideImage = (slideNum: number) => {
-    if(sessionRender){
-      setDataLoader(true);
-      setSessionRender(false);
-    }
-    if (!dataLoader) {
-      const canvas = canvasRef.current;
-      const ctx = canvas?.getContext('2d');
-      if (!ctx || !canvas) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      const imageData = slideImages[slideNum - 1];
-      if (imageData) {
-        setDataLoader(false);
-        ctx.putImageData(imageData, 0, 0);
-      } else if (savedData && Array.isArray(savedData)) {
-        setDataLoader(false);
-        replaySavedData(slideNum);
-      }
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!ctx || !canvas) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const imageData = slideImages[slideNum - 1];
+    if (imageData) {
+      ctx.putImageData(imageData, 0, 0);
+    } else if (savedData && Array.isArray(savedData)) {
+      replaySavedData(slideNum);
     }
   };
 
@@ -655,6 +647,7 @@ const WhiteboardTeaching: React.FC = () => {
       prev = curr;
     }
     ctx.restore();
+    setTimeout( () => saveCurrentSlideImage());
   };
 
   useEffect(() => {
@@ -706,7 +699,7 @@ const WhiteboardTeaching: React.FC = () => {
 
       setTimeout(() => {
         loadSlideImage(maxSlide);
-      }, 0);
+      }, 100);
     }
   }, [savedData]);
 
@@ -747,18 +740,18 @@ const WhiteboardTeaching: React.FC = () => {
   };
 
 
-  useEffect(() => {
-    if (
-      !savedData ||
-      !Array.isArray(savedData) ||
-      savedData.length === 0
-    ) {
-      if (totalSlides !== 1) setTotalSlides(1);
-      if (currentSlide !== 1) setCurrentSlide(1);
-      if (!slideImages || slideImages.length !== 1) setSlideImages([null]);
-      setTimeout(() => { loadSlideImage(1) }, 0);
-    }
-  }, [savedData]);
+  // useEffect(() => {
+  //   if (
+  //     !savedData ||
+  //     !Array.isArray(savedData) ||
+  //     savedData.length === 0
+  //   ) {
+  //     if (totalSlides !== 1) setTotalSlides(1);
+  //     if (currentSlide !== 1) setCurrentSlide(1);
+  //     if (!slideImages || slideImages.length !== 1) setSlideImages([null]);
+  //     setTimeout(() => { loadSlideImage(1) }, 0);
+  //   }
+  // }, [savedData]);
 
 
   return (
