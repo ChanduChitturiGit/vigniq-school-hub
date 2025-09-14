@@ -160,7 +160,7 @@ const AIChatLessonPlan: React.FC = () => {
   const [firstMessage, setFirstMessage] = useState({
     id: '999',
     role: 'assistant',
-    content: `Hello! I'm your AI teaching assistant for Chapter ${chapterId}: ${chapterName}, Day ${dayCount}. I can help you with lesson planning, teaching strategies, and answer questions about the curriculum. How can I assist you today?`,
+    content: `Hello! I'm your AI teaching assistant for Chapter ${chapterNumber}: ${chapterName}, Day ${dayCount}. I can help you with lesson planning, teaching strategies, and answer questions about the curriculum. How can I assist you today?`,
     created_at: new Date()
   });
   const [loader, setLoader] = useState(false);
@@ -364,7 +364,7 @@ const AIChatLessonPlan: React.FC = () => {
   };
 
   return (
-    <MainLayout pageTitle={`AI Chat - Chapter ${chapterId}: ${chapterName} - Day ${dayCount}`}>
+    <MainLayout pageTitle={`AI Chat - Chapter ${chapterNumber}: ${chapterName} - Day ${dayCount}`}>
       <div className="">
         {/* <Breadcrumb items={breadcrumbItems} /> */}
         <Link
