@@ -21,6 +21,7 @@ from core.common_modules.password_validator import is_valid_password
 from core.common_modules.common_functions import CommonFunctions
 
 from teacher.models import Teacher
+from student.models import Student
 
 from school.models import School, SchoolDbMetadata, SchoolBoard, SchoolBoardMapping
 
@@ -267,7 +268,7 @@ class SchoolService:
                 else:
                     continue
                 teacher_count = Teacher.objects.using(school_db_name).filter(is_active=True).count()
-
+                student_count = Student.objects.using(school_db_name).filter(is_active=True).count()
                 schools_data.append({
                     "school_id": school.id,
                     "school_name": school.name,
@@ -275,6 +276,7 @@ class SchoolService:
                     "school_contact_number": school.contact_number,
                     "school_email": school.email if school.school_admin else None,
                     "teacher_count": teacher_count,
+                    "student_count": student_count,
                 })
             return Response({"schools": schools_data}, status=status.HTTP_200_OK)
         except Exception as e:
@@ -294,8 +296,8 @@ class SchoolService:
             if not school_id:
                 return Response({"error": "School id is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-            school = School.objects.get(pk=school_id)
-
+            school = School.objects.select_related('school_admin').get(pk=school_id)
+            boards = SchoolBoardMapping.objects.filter(school=school).select_related('board')
             school_data = {
                 "school_id": school.id,
                 "school_name": school.name,
@@ -306,6 +308,7 @@ class SchoolService:
                 "school_admin_email": school.school_admin.email if school.school_admin else None,
                 "school_admin_full_name" : f"{school.school_admin.first_name} {school.school_admin.last_name}" if school.school_admin else None,
                 "school_admin_phone_number": school.school_admin.phone_number if school.school_admin else None,
+                "boards": [{"id": board.id, "name": board.board.board_name} for board in boards],
             }
             return Response({"school": school_data}, status=status.HTTP_200_OK)
         except School.DoesNotExist:

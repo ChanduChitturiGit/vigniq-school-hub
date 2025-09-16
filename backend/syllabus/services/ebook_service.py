@@ -133,6 +133,9 @@ class EbookService:
             else:
                 return Response({"error": "Failed to upload eBook."},
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except ValueError as ve:
+            logger.error(f"ValueError: {ve}")
+            return Response({"error": str(ve)}, status=status.HTTP_400_BAD_REQUEST)
         except SchoolBoard.DoesNotExist:
             logger.error(f"Board with ID {board_id} does not exist.")
             return Response({"error": "Board not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -176,6 +179,7 @@ class EbookService:
                 subject = SchoolDefaultSubjects.objects.all()
             filter_conditions['subject__in'] = subject
             filter_conditions['syllabus_year__lte'] = year
+            filter_conditions['is_active'] = True
 
             base_queryset = SchoolSyllabusEbooks.objects.filter(**filter_conditions)
 
@@ -258,12 +262,13 @@ class EbookService:
                                 status=status.HTTP_400_BAD_REQUEST)
 
             ebook = SchoolSyllabusEbooks.objects.get(id=ebook_id)
-            try:
-                s3_client.delete_file(f"{ebook.file_path}.pdf")
-                s3_client.delete_file(f"{ebook.file_path}.txt")
-            except Exception as e:
-                logger.error(f"Error deleting files from S3: {e}")
-            ebook.delete()
+            # try:
+            #     s3_client.delete_file(f"{ebook.file_path}.pdf")
+            #     s3_client.delete_file(f"{ebook.file_path}.txt")
+            # except Exception as e:
+            #     logger.error(f"Error deleting files from S3: {e}")
+            ebook.is_active = False
+            ebook.save()
 
             logger.info("eBook with ID %s deleted successfully.",ebook_id)
             return Response({"message": "eBook deleted successfully."}, status=status.HTTP_200_OK)
@@ -278,6 +283,7 @@ class EbookService:
         """Extract topics and prerequisites from the provided PDF file."""
 
         lang_chain_service = LangChainService()
+
         chapters_obj,pdf_text = lang_chain_service.get_topics_and_prerequisites(pdf_file)
 
         with transaction.atomic():

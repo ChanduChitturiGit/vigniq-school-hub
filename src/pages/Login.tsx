@@ -194,7 +194,7 @@ const Login: React.FC = () => {
             description: `📬 A verification Successful.Please fill the details to reset your Password ✅`,
             status: "success"
           });
-          localStorage.setItem('access_token', response.access_token);
+          sessionStorage.setItem('access_token', response.access_token);
           setForgotStep(3);
           setError('');
         } else {
@@ -234,10 +234,13 @@ const Login: React.FC = () => {
             description: `✅ Password updated successfully! You can now log in with your new password.`,
             status: "success"
           });
+
+          sessionStorage.clear();
         }
       }
     } catch (err) {
       setError('An error occurred. Please try again.');
+      sessionStorage.clear();
     } finally {
       setForgotLoading(false);
     }

@@ -275,9 +275,16 @@ const AddClass: React.FC = () => {
   return (
     <MainLayout pageTitle="Add Class">
       <div className="space-y-6">
-        <Breadcrumb items={breadcrumbItems} />
+        {/* <Breadcrumb items={breadcrumbItems} /> */}
+        <div
+          onClick={() => window.history.back()}
+          className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span className="font-medium">Back</span>
+        </div>
 
-        <div className="flex items-center gap-4">
+        {/* <div className="flex items-center gap-4">
           <button
             onClick={() => navigate(userData.role == 'superadmin' ? `/school-details/${schoolId}` : '/admin-school')}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
@@ -285,7 +292,7 @@ const AddClass: React.FC = () => {
             <ArrowLeft className="w-5 h-5" />
             Back to School
           </button>
-        </div>
+        </div> */}
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center gap-3 mb-6">

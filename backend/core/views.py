@@ -40,7 +40,10 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             serializer.is_valid(raise_exception=True)
             return Response(serializer.validated_data, status=status.HTTP_200_OK)
         except AuthenticationFailed as e:
-            return Response({"error": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Error during token obtain: {str(e)}")
+            return Response({"error": "An error occurred while processing your request."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class PasswordManagerView(APIView):

@@ -25,7 +25,6 @@ class WhiteboardConsumer(AsyncWebsocketConsumer):
 
         self.session_id = self.scope['url_route']['kwargs']['session_id']
         self.school_name = await sync_to_async(CommonFunctions.get_school_db_name)(school_id)
-        print(self.session_id, self.school_name)
         if not self.school_name:
             await self.close(code=4002)
             return
@@ -41,7 +40,8 @@ class WhiteboardConsumer(AsyncWebsocketConsumer):
         key = f"whiteboard:{self.session_id}"
 
         # Push to Redis
-        r.rpush(key, json.dumps(data['stroke_data']))
+        # r.rpush(key, json.dumps(data['data']))
+        r.rpush(key, *[json.dumps(obj) for obj in data['data']])
 
         if r.llen(key) >= 50:
             await self.flush_to_db()
@@ -62,7 +62,7 @@ class WhiteboardConsumer(AsyncWebsocketConsumer):
         r.delete(key)
 
         # Get or create session
-        session, _ = WhiteboardSession.objects.using(self.school_name).get_or_create(session_id=self.session_id,topic_id=1)
+        session, _ = WhiteboardSession.objects.using(self.school_name).get_or_create(session_id=self.session_id)
 
         # Get latest chunk
         latest_chunk = WhiteboardDataChunk.objects.using(self.school_name).filter(session=session).order_by("-chunk_index").first()

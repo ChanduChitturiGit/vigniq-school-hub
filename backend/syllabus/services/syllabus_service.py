@@ -13,7 +13,8 @@ from syllabus.models import (
     SchoolClassPrerequisite,
     SchoolClassSubTopic,
     SchoolLessonPlanDay,
-    Topic
+    Topic,
+    WhiteboardSession
 )
 
 from core.common_modules.common_functions import CommonFunctions
@@ -116,7 +117,7 @@ class SyllabusService:
                           'school_class__section', 'subject_id','subject__name',
                           'school_class__board_id')
 
-            boards= dict(SchoolBoard.objects.all().values_list("id", "board_name"))
+            boards= CommonFunctions().get_boards_dict()
 
             data = {}
             for assignment in teacher_assignment_obj:
@@ -124,7 +125,8 @@ class SyllabusService:
                     school_db_name,
                     assignment["school_class_id"],
                     assignment["school_class__class_instance_id"],
-                    assignment["subject_id"]
+                    assignment["subject_id"],
+                    assignment["school_class__board_id"]
                 )
                 assignment_data = {
                     "class_id": assignment["school_class_id"],
@@ -148,11 +150,12 @@ class SyllabusService:
             return Response({"error": "Failed to fetch grade."},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def get_subject_progress_and_chapters_count(self, school_db_name, section_id, class_id, subject_id):
+    def get_subject_progress_and_chapters_count(self, school_db_name, section_id, class_id, subject_id,board_id):
         """Calculate subject progress based on completed lesson plan days."""
         chapters = SchoolChapter.objects.using(school_db_name).filter(
             class_number_id=class_id,
-            subject_id=subject_id
+            subject_id=subject_id,
+            school_board_id=board_id
         )
 
         total_chapters = chapters.count()
@@ -398,7 +401,14 @@ class SyllabusService:
                 logger.error("Lesson plan day not found.")
                 return Response({"error": "Lesson plan day not found."},
                                 status=status.HTTP_404_NOT_FOUND)
-
+            whiteboard_session = None
+            try:
+                whiteboard_session = WhiteboardSession.objects.using(school_db_name).get(
+                    lesson_plan_day_id=lesson_plan_day.id,
+                    is_active=True
+                ).session_id
+            except WhiteboardSession.DoesNotExist:
+                pass
             topics = lesson_plan_day.school_lesson_topics.all()
 
             data = {
@@ -407,6 +417,7 @@ class SyllabusService:
                 "learning_outcomes": lesson_plan_day.learning_outcomes,
                 "real_world_applications": lesson_plan_day.real_world_applications,
                 "taxonomy_alignment": lesson_plan_day.taxonomy_alignment,
+                "session_id": whiteboard_session,
                 "status": lesson_plan_day.status,
                 "topics": [
                     {
@@ -790,7 +801,7 @@ class SyllabusService:
                 class_section=class_section
             )
             if school_lesson_plan_day.exists():
-                school_lesson_plan_day.delete(using=school_db_name)
+                school_lesson_plan_day.delete()
 
             for day in lesson_plan_data['lesson_plan']:
                 lesson_plan_day = SchoolLessonPlanDay.objects.using(school_db_name).create(

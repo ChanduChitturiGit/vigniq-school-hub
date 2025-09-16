@@ -12,6 +12,8 @@ import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import { generateLessonData, saveLessonData } from '../services/grades';
 import { SpinnerOverlay } from '../pages/SpinnerOverlay';
 import path from 'path';
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface Topic {
   title: string;
@@ -52,7 +54,7 @@ const CreateLessonPlan: React.FC = () => {
   const schoolId = searchParams.get('school_id') || '';
   const boardId = searchParams.get('school_board_id') || '';
   const tab = searchParams.get('tab') || '';
-  const pathData = `class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
+  const pathData = `class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}&chapter_number=${chapterNumber}`;
 
   let payload = {
     school_id: schoolId,
@@ -62,14 +64,14 @@ const CreateLessonPlan: React.FC = () => {
     chapter_id: chapterId,
     num_days: null,
     time_period: null,
-    instructions : ''
+    instructions: ''
   }
 
   const [formData, setFormData] = useState({
     numberOfDays: '',
     classesPerDay: '',
     minutesPerClass: '',
-    instructions : ''
+    instructions: ''
   });
 
   const [showPreview, setShowPreview] = useState(false);
@@ -94,11 +96,11 @@ const CreateLessonPlan: React.FC = () => {
   const generateLesson = async () => {
     try {
       setLoader(true);
-      payload = { 
-        ...payload, 
-        num_days: parseInt(formData.numberOfDays), 
+      payload = {
+        ...payload,
+        num_days: parseInt(formData.numberOfDays),
         time_period: parseInt(formData.minutesPerClass) * parseInt(formData.classesPerDay),
-        instructions : formData.instructions
+        instructions: formData.instructions
       };
       const response = await generateLessonData(payload);
       if (response && response.data) {
@@ -156,7 +158,7 @@ const CreateLessonPlan: React.FC = () => {
 
   const handleGenerateWithAI = async () => {
     if (!formData.numberOfDays || !formData.classesPerDay || !formData.minutesPerClass) {
-       showSnackbar({
+      showSnackbar({
         title: "⛔ Error",
         description: "Please fill in all fields",
         status: "error"
@@ -404,7 +406,11 @@ const CreateLessonPlan: React.FC = () => {
                             className="min-h-[100px] border-2 border-green-300 focus:border-green-500 text-sm"
                           />
                         ) : (
-                          <p className="text-green-700 text-sm leading-relaxed">{day.learning_outcomes}</p>
+                          <p className="text-green-700 text-sm leading-relaxed">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {day.learning_outcomes}
+                            </ReactMarkdown>
+                          </p>
                         )}
                       </div>
 
@@ -420,7 +426,11 @@ const CreateLessonPlan: React.FC = () => {
                             className="min-h-[100px] border-2 border-purple-300 focus:border-purple-500 text-sm"
                           />
                         ) : (
-                          <p className="text-purple-700 text-sm leading-relaxed">{day.real_world_applications}</p>
+                          <p className="text-purple-700 text-sm leading-relaxed">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {day.real_world_applications}
+                            </ReactMarkdown>
+                          </p>
                         )}
                       </div>
 
@@ -436,7 +446,11 @@ const CreateLessonPlan: React.FC = () => {
                             className="min-h-[100px] border-2 border-orange-300 focus:border-orange-500 text-sm"
                           />
                         ) : (
-                          <p className="text-orange-700 text-sm leading-relaxed">{day.taxonomy_alignment}</p>
+                           <p className="text-orange-700 text-sm leading-relaxed">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {day.taxonomy_alignment}
+                            </ReactMarkdown>
+                          </p>
                         )}
                       </div>
                     </div>

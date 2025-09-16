@@ -65,13 +65,13 @@ const ChapterDetails: React.FC = () => {
   const subject = searchParams.get('subject') || '';
   const chapterName = searchParams.get('chapter_name') || '';
   const chapterNumber = searchParams.get('chapter_number') || '';
-  const progress = parseInt(searchParams.get('progress') || '0');
+  const [progress,setProgress] = useState(parseInt(searchParams.get('progress') || '0'));
   const classId = searchParams.get('class_id') || '';
   const subjectId = searchParams.get('subject_id') || '';
   const schoolId = searchParams.get('school_id') || '';
   const boardId = searchParams.get('school_board_id') || '';
   const tab = searchParams.get('tab') || '';
-  const pathData = `class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
+  const pathData = `class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}&chapter_number=${chapterNumber}`;
 
 
   const [topics, setTopics] = useState<Topic[]>([]);
@@ -162,6 +162,7 @@ const ChapterDetails: React.FC = () => {
         setTopics(response.data.sub_topics);
         setPrerequisites(response.data.prerequisites);
         setLessonPlan(response.data.lesson_plan_days);
+        setProgress(response.data.progress);
       }
     } catch (error) {
       showSnackbar({
@@ -595,7 +596,7 @@ const ChapterDetails: React.FC = () => {
 
                           <div className="flex flex-col gap-1 space-y-2">
                             <Link
-                              to={`/grades/lesson-plan/day/${chapterId}/${day.lesson_plan_day_id}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&day=${day.day}&${pathData}`}
+                              to={`/grades/lesson-plan/day/${chapterId}/${day.lesson_plan_day_id}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&day=${day.day}&${pathData}&status=${day.status}`}
                               className="w-full"
                             >
                               <Button variant="outline" className="w-full flex items-center gap-2 text-blue-600 border-blue-200 hover:bg-blue-50">
@@ -605,7 +606,7 @@ const ChapterDetails: React.FC = () => {
                             </Link>
 
                             <Link
-                              to={`/grades/lesson-plan/ai-chat/${chapterId}/${day.day}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`}
+                              to={`/grades/lesson-plan/ai-chat/${chapterId}/${day.lesson_plan_day_id}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}&dayCount=${day.day}`}
                               className="w-full"
                             >
                               <Button className="w-full flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white">

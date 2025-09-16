@@ -20,8 +20,8 @@ class WhiteboardService:
     def create_whiteboard_session(self, request):
         """Create a new whiteboard session."""
         try:
-            school_id = request.GET.get('school_id') or getattr(request.user, 'school_id', None)
-            lesson_plan_day_id = request.GET.get('lesson_plan_day_id')
+            school_id = request.data.get('school_id') or getattr(request.user, 'school_id', None)
+            lesson_plan_day_id = request.data.get('lesson_plan_day_id')
 
             if not school_id:
                 return Response({"error": "Missing school_id"}, status=status.HTTP_400_BAD_REQUEST)
@@ -129,10 +129,11 @@ class WhiteboardService:
 
             data = []
             for chunk in data_chunks:
-                data.append({
-                    "chunk_index": chunk.chunk_index,
-                    "data": chunk.data
-                })
+                for sub_chunk in chunk.data:
+                    if isinstance(sub_chunk, list):
+                        data.extend(sub_chunk)
+                    else:
+                        data.append(sub_chunk)
 
             return Response({"data": data}, status=status.HTTP_200_OK)
 

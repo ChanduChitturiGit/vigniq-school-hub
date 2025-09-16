@@ -79,14 +79,17 @@ class StudentService:
                                             status=status.HTTP_404_NOT_FOUND)
                     acadamic_year = SchoolAcademicYear.objects.using(school_db_name).get(id=acadamic_year_id)
 
-                    exixsting_roll_number = StudentClassAssignment.objects.using(
+                    if roll_number.isdigit():
+                        roll_number = int(roll_number)
+
+                    existing_roll_number = StudentClassAssignment.objects.using(
                         school_db_name
                     ).select_for_update().filter(
                         class_instance = class_section_instance,
                         academic_year = acadamic_year,
                         student__roll_number = roll_number
                     ).exists()
-                    if exixsting_roll_number:
+                    if existing_roll_number:
                         raise ValueError("Roll number already exists in this class for the current academic year.")
 
                     role = Role.objects.get(name='student')
@@ -185,7 +188,7 @@ class StudentService:
             last_name = request.data.get('last_name')
             email = request.data.get('email')
             phone = request.data.get('phone_number')
-            class_assignment_id = request.data.get('class_assignment_id')
+            # class_assignment_id = request.data.get('class_assignment_id')
             class_id = request.data.get('class_id')
             roll_number = request.data.get('roll_number')
             date_of_birth = request.data.get('date_of_birth')
@@ -234,6 +237,8 @@ class StudentService:
                 return JsonResponse({"error": "Student not found."},
                                     status=status.HTTP_404_NOT_FOUND)
             if roll_number:
+                if roll_number.isdigit():
+                    roll_number = int(roll_number)
                 student.roll_number = roll_number
             if addmission_date:
                 student.admission_date = addmission_date
@@ -248,22 +253,40 @@ class StudentService:
                 with transaction.atomic(using=school_db_name):
                     user.save()
                     student.save(using=school_db_name)
-                    if class_assignment_id and class_id and acadamic_year_id:
-                        class_assignment_instance = StudentClassAssignment.objects.using(
-                            school_db_name
-                        ).get(
-                            id=class_assignment_id
-                        )
-                        if not class_assignment_instance:
-                            raise ValueError("Class Assignment not found for the student.")
-                        class_assignment_instance.delete()
+                    if class_id and acadamic_year_id:
 
                         class_section_instance = SchoolSection.objects.using(school_db_name).get(id=class_id)
 
                         acadamic_year = SchoolAcademicYear.objects.using(school_db_name).get(id=acadamic_year_id)
+
+                        class_assignment_instance = StudentClassAssignment.objects.using(
+                            school_db_name
+                        ).get(
+                            academic_year=acadamic_year,
+                            student=student,
+                        )
+                        if not class_assignment_instance:
+                            raise ValueError("Class Assignment not found for the student.")
+                        
+                        existing_roll_number = StudentClassAssignment.objects.using(
+                            school_db_name
+                        ).select_for_update().filter(
+                            class_instance=class_section_instance,
+                            academic_year=acadamic_year,
+                            student__roll_number=roll_number,
+                        ).exclude(
+                            student__student_id=student_id
+                        ).exists()
+
+                        if existing_roll_number:
+                            raise ValueError("Roll number already exists in this class for the current academic year.")
+
+                        class_assignment_instance.delete(using=school_db_name)
+
+
                         if not acadamic_year:
                             raise ValueError("Academic year not found.")
-                        student_class_assignment = StudentClassAssignment.objects.using(
+                        StudentClassAssignment.objects.using(
                             school_db_name
                         ).create(
                             student=student,
@@ -275,7 +298,7 @@ class StudentService:
                             "student_id": student.student_id}, status=status.HTTP_200_OK)
         except ValueError as ve:
             logger.error(f"Value error: {ve}")
-            return JsonResponse({"error": ve},
+            return JsonResponse({"error": str(ve)},
                                             status=status.HTTP_404_NOT_FOUND)
         except User.DoesNotExist:
             return JsonResponse({"error": "User not found."},
@@ -376,6 +399,8 @@ class StudentService:
                 id=class_assignment.class_instance_id
             )
 
+            boards = CommonFunctions().get_boards_dict()
+
             student_data = {
                 "student_id": student.student_id,
                 "student_first_name": user.first_name,
@@ -388,6 +413,8 @@ class StudentService:
                 "class_number": class_instance.class_instance_id,
                 "class_id": class_instance.id,
                 "section": class_instance.section,
+                'board_id': class_instance.board_id,
+                "board_name": boards.get(class_instance.board_id, None),
                 "email": user.email,
                 "current_address": user.current_address,
                 "permanent_address": user.permanent_address,
@@ -496,32 +523,51 @@ class StudentService:
             return JsonResponse({"error": "Failed to delete student."},
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def get_students_data(self,students,academic_year_id):
-        """Helper method to format student data."""
+    def get_students_data(self, students, academic_year_id):
+        """Helper method to format student data with optimized DB calls."""
         try:
             students_data = []
-            
+            boards = CommonFunctions().get_boards_dict()
+
+            # Get academic year (single query)
             academic_year = SchoolAcademicYear.objects.using(self.school_db_name).get(id=academic_year_id)
+
+            student_ids = [s.student_id for s in students]
+
+            # Fetch all users in bulk
+            users_map = {
+                u.id: u for u in User.objects.filter(id__in=student_ids)
+            }
+
+            # Fetch all class assignments in bulk
+            assignments_map = {
+                a.student_id: a
+                for a in StudentClassAssignment.objects.using(self.school_db_name)
+                .filter(student__in=students, academic_year=academic_year)
+            }
+
+            # Fetch all related sections in bulk
+            section_ids = [a.class_instance_id for a in assignments_map.values()]
+            sections_map = {
+                s.id: s for s in SchoolSection.objects.using(self.school_db_name).filter(id__in=section_ids)
+            }
+
+            # Now iterate without hitting DB
             for student in students:
-                try:
-                    user = User.objects.get(id=student.student_id)
-                    class_assignment = StudentClassAssignment.objects.using(
-                        self.school_db_name
-                    ).get(
-                        student=student,
-                        academic_year = academic_year
-                    )
-                    class_instance = SchoolSection.objects.using(self.school_db_name).get(
-                        id=class_assignment.class_instance_id)
-                except User.DoesNotExist:
+                user = users_map.get(student.student_id)
+                assignment = assignments_map.get(student.student_id)
+                class_instance = sections_map.get(assignment.class_instance_id) if assignment else None
+
+                if not user:
                     logger.warning(f"User with ID {student.student_id} not found.")
                     continue
-                except StudentClassAssignment.DoesNotExist:
+                if not assignment:
                     logger.warning(f"Class assignment for student ID {student.student_id} not found.")
                     continue
-                except SchoolSection.DoesNotExist:
-                    logger.warning(f"Class with ID {class_assignment.class_instance.id} not found.")
+                if not class_instance:
+                    logger.warning(f"Class with ID {assignment.class_instance_id} not found.")
                     continue
+
                 students_data.append({
                     "student_id": student.student_id,
                     "student_name": user.full_name(),
@@ -532,9 +578,13 @@ class StudentService:
                     "class_number": class_instance.class_instance_id,
                     "class_id": class_instance.id,
                     "section": class_instance.section,
+                    "board_id": class_instance.board_id,
+                    "board_name": boards.get(class_instance.board_id, None),
                     "email": user.email,
                 })
+
             return students_data
+
         except SchoolAcademicYear.DoesNotExist:
             raise ValueError("Academic year not found.")
         except Exception as e:

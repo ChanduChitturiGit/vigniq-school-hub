@@ -69,8 +69,8 @@ const ClassSectionSubjectInput: React.FC<ClassSectionSubjectInputProps> = ({
             </SelectTrigger>
             <SelectContent >
               {classes && classes.map((cls) => (
-                <SelectItem key={cls} value={'Class '+ cls.class_number+' - '+cls.section}>
-                  {'Class '+ cls.class_number+' - '+cls.section}
+                <SelectItem key={cls} value={'Class '+ cls.class_number+' - '+cls.section + ' ('+cls.school_board_name+')'}>
+                  {'Class '+ cls.class_number+' - '+cls.section + ' ('+cls.school_board_name+')'}
                 </SelectItem>
               ))}
             </SelectContent>

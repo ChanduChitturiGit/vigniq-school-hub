@@ -111,10 +111,8 @@ class ClassesService:
                             ).full_name()
                     except Teacher.DoesNotExist:
                         logger.error(f"Teacher with ID {class_instance.class_teacher_id} does not exist.")
-                        continue
                     except User.DoesNotExist:
                         logger.error(f"Teacher with ID {teacher.teacher_id} does not exist.")
-                        continue
 
                     academic_year_obj = SchoolAcademicYear.objects.using(school_db_name).get(
                         pk=class_instance.academic_year_id)
@@ -183,6 +181,7 @@ class ClassesService:
             ).first()
             teacher = None
             teacher_name = None
+            print(class_instance.class_teacher_id)
             if class_instance and class_instance.class_teacher_id:
                 teacher = Teacher.objects.using(school_db_name).get(
                     teacher_id=class_instance.class_teacher_id
@@ -261,6 +260,7 @@ class ClassesService:
 
             classes = SchoolSection.objects.using(school_db_name).all()
 
+            boards = CommonFunctions().get_boards_dict()
             data = []
             for class_obj in classes:
                 class_instance = ClassAssignment.objects.using(school_db_name).filter(
@@ -273,6 +273,7 @@ class ClassesService:
                         'class_number': class_obj.class_instance_id,
                         'section': class_obj.section,
                         'board_id': class_obj.board_id,
+                        'board_name': boards.get(class_obj.board_id, 'N/A')
                     })
             return JsonResponse({"classes": data}, status=200)
         except Exception as e:
@@ -396,7 +397,7 @@ class ClassesService:
                 }, status=400)
             elif 'unique_class_instance_section' in str(e):
                 return JsonResponse({
-                    'error': 'A class with the same class number and section already exists.'
+                    'error': 'A class with the same class number, section and board already exists.'
                 }, status=400)
             else:
                 return JsonResponse({
@@ -441,6 +442,12 @@ class ClassesService:
                 class_instance = class_section_instance,
                 academic_year_id = academic_year_id
             )
+
+            ClassAssignment.objects.using(school_db_name).filter(
+                class_teacher=class_teacher,
+                academic_year_id=academic_year_id
+            ).update(class_teacher=None)
+
             if not class_assignment:
                 return JsonResponse({"error": "Class assignment not found."},
                                     status=404)

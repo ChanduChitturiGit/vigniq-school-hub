@@ -44,7 +44,6 @@ dependencies:
       - charset-normalizer==3.4.2
       - click==8.2.1
       - django==5.2.3
-      - django-channels==0.7.0
       - django-cors-headers==4.7.0
       - djangorestframework==3.16.0
       - djangorestframework-simplejwt==5.5.0
@@ -69,7 +68,6 @@ dependencies:
       - langchain-text-splitters==0.3.8
       - langsmith==0.4.8
       - msgpack==1.1.1
-      - oauthlib==3.3.1
       - orjson==3.11.0
       - packaging==25.0
       - proto-plus==1.26.1
@@ -86,7 +84,6 @@ dependencies:
       - pyyaml==6.0.2
       - redis==6.2.0
       - requests==2.32.4
-      - requests-oauthlib==2.0.0
       - requests-toolbelt==1.0.0
       - rsa==4.9.1
       - s3transfer==0.13.1
@@ -99,5 +96,6 @@ dependencies:
       - typing-inspection==0.4.1
       - urllib3==2.5.0
       - uvicorn==0.35.0
+      - websockets==15.0.1
       - zstandard==0.23.0
-prefix: /home/chanduchitturi/miniconda3/envs/vigniq-env
+prefix: /home/bhanu-ganikala/miniconda3/envs/vigniq-env

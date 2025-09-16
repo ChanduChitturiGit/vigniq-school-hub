@@ -1,16 +1,28 @@
 
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Search, Plus, GraduationCap, LoaderCircle, Grid, List, Eye, Trash2 } from 'lucide-react';
+import { Edit, Search, Plus, GraduationCap, LoaderCircle, Grid, List, Eye, Trash2, ArrowLeft } from 'lucide-react';
 import { getStudentsBySchoolId, deleteStudentById } from '../services/student';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../components/ui/alert-dialog';
 
 const Students: React.FC = () => {
   const { showSnackbar } = useSnackbar();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [loader, setLoader] = useState(true);
@@ -19,10 +31,11 @@ const Students: React.FC = () => {
   const [students, setStudents] = useState([]);
 
   const filteredStudents = students.filter(student =>
-    student.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.class.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.roll_number.includes(searchTerm) ||
-    student.parent_name.toLowerCase().includes(searchTerm.toLowerCase())
+    student?.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    student?.class_number.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+    //('Class ' + student?.class_number.toString().toLowerCase() + student?.section.toLowercase()).includes(searchTerm.toLowerCase()) ||
+    student?.roll_number.includes(searchTerm) ||
+    student?.parent_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getBreadcrumbItems = () => {
@@ -91,12 +104,43 @@ const Students: React.FC = () => {
     // console.log('Delete student:', studentId);
   };
 
+
+  const deleteModal = (student: any) => {
+    return (
+      <>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button className="flex items-center gap-2 text-red-500 hover:text-red-600 transition-colors">
+              <Trash2 className="w-4 h-4" />
+              {/* Reset Password */}
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Student</AlertDialogTitle>
+              <AlertDialogDescription className='text-gray-700'>
+                <p>Are you sure you want to delete student <span className='font-bold'>{student.student_name}</span>?</p>
+                This action cannot be undone
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => deleteStudent(student.student_id)} className="bg-red-600 hover:bg-red-700">
+                Confirm Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
+    )
+  }
+
   const renderGridView = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {filteredStudents.map((student) => (
-        <Link
+        <div
           key={student.student_id}
-          to={`/student-details/${student.student_id}`}
+          onClick={() => { navigate(`/student-details/${student.student_id}`) }}
           className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
         >
           <div className="flex items-start justify-between mb-4">
@@ -116,7 +160,11 @@ const Students: React.FC = () => {
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Class :</span>
-              <span className="font-medium text-gray-800">{'Class '+student.class_number + ' - ' + student.section}</span>
+              <span className="font-medium text-gray-800">{'Class ' + student.class_number + ' - ' + student.section}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">Board:</span>
+              <span className="font-medium text-gray-800">{student.board_name}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Roll Number:</span>
@@ -132,24 +180,14 @@ const Students: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-end">
+          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-end"
+            onClick={(e) => e.stopPropagation()}>
             {/* <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
               {student.status || 'active'}
             </span> */}
-            {(user?.role !== 'student') && (
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleDelete(student.student_id);
-                }}
-                className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                title="Delete Student"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            )}
+            {deleteModal(student)}
           </div>
-        </Link>
+        </div>
       ))}
     </div>
   );
@@ -162,6 +200,7 @@ const Students: React.FC = () => {
             <TableRow>
               <TableHead className="font-medium">Student</TableHead>
               <TableHead className="font-medium">Class</TableHead>
+              <TableHead className="font-medium">Board</TableHead>
               <TableHead className="font-medium">Roll No.</TableHead>
               <TableHead className="font-medium">Parent</TableHead>
               <TableHead className="font-medium">Phone</TableHead>
@@ -182,7 +221,8 @@ const Students: React.FC = () => {
                     <span className="font-medium">{student.student_name}</span>
                   </div>
                 </TableCell>
-                <TableCell>{'Class '+student.class_number + ' - ' + student.section}</TableCell>
+                <TableCell>{'Class ' + student.class_number + ' - ' + student.section}</TableCell>
+                 <TableCell>{student.board_name}</TableCell>
                 <TableCell>{student.roll_number}</TableCell>
                 <TableCell>{student.parent_name}</TableCell>
                 <TableCell>{student.parent_phone}</TableCell>
@@ -200,18 +240,9 @@ const Students: React.FC = () => {
                     >
                       <Eye className="w-4 h-4" />
                     </Link>
-                    {(user?.role !== 'student') && (
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleDelete(student.student_id);
-                        }}
-                        className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Delete Student"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
+                    {(user?.role !== 'student') &&
+                      deleteModal(student)
+                    }
                   </div>
                 </TableCell>
               </TableRow>
@@ -233,7 +264,14 @@ const Students: React.FC = () => {
               <GraduationCap className="w-6 h-6 text-purple-600" />
             </div>
             <h1 className="text-2xl font-bold text-gray-800">Students</h1> */}
-            <Breadcrumb items={getBreadcrumbItems()} />
+            {/* <Breadcrumb items={getBreadcrumbItems()} /> */}
+            <div
+              onClick={() => window.history.back()}
+              className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="font-medium">Back</span>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {/* window.innerWidth >= 768 */}

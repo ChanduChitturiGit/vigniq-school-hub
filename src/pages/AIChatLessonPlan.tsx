@@ -160,7 +160,7 @@ const AIChatLessonPlan: React.FC = () => {
   const [firstMessage, setFirstMessage] = useState({
     id: '999',
     role: 'assistant',
-    content: `Hello! I'm your AI teaching assistant for Chapter ${chapterId}: ${chapterName}, Day ${dayCount}. I can help you with lesson planning, teaching strategies, and answer questions about the curriculum. How can I assist you today?`,
+    content: `Hello! I'm your AI teaching assistant for Chapter ${chapterNumber}: ${chapterName}, Day ${dayCount}. I can help you with lesson planning, teaching strategies, and answer questions about the curriculum. How can I assist you today?`,
     created_at: new Date()
   });
   const [loader, setLoader] = useState(false);
@@ -173,7 +173,14 @@ const AIChatLessonPlan: React.FC = () => {
   // ];
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    //messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollTo({
+        top: messagesEndRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
   };
 
   const getLessonData = async () => {
@@ -357,7 +364,7 @@ const AIChatLessonPlan: React.FC = () => {
   };
 
   return (
-    <MainLayout pageTitle={`AI Chat - Chapter ${chapterId}: ${chapterName} - Day ${dayCount}`}>
+    <MainLayout pageTitle={`AI Chat - Chapter ${chapterNumber}: ${chapterName} - Day ${dayCount}`}>
       <div className="">
         {/* <Breadcrumb items={breadcrumbItems} /> */}
         <Link
@@ -404,7 +411,7 @@ const AIChatLessonPlan: React.FC = () => {
                 </AccordionTrigger>
               </Card>
               <AccordionContent>
-                <Card className="shadow-lg border-0 h-[80vh] flex flex-col">
+                <Card className="shadow-lg border-0 max-h-[80vh] flex flex-col">
                   <CardContent className="flex-1 p-0 min-h-0">
                     <ScrollArea className="h-full">
                       <div className="p-6 space-y-4">
@@ -477,8 +484,8 @@ const AIChatLessonPlan: React.FC = () => {
               <CardContent className="flex-1 flex flex-col p-0 min-h-0">
                 {/* Messages Area */}
                 <div className="flex-1 overflow-hidden">
-                  <ScrollArea className="h-full">
-                    <div className="p-6 space-y-4">
+                  <div  className="h-full ">
+                    <div ref={messagesEndRef} className=" h-full p-6 space-y-4 overflow-y-auto" >
                       {/* first message */}
                       <ChatMessage message={firstMessage} condition={'initial'} />
                       {/* loader */}
@@ -531,9 +538,9 @@ const AIChatLessonPlan: React.FC = () => {
                           <ChatMessage message={firstMessage} condition={'loader'} />
                         )
                       }
-                      <div ref={messagesEndRef} />
+                      {/* <div ref={messagesEndRef} /> */}
                     </div>
-                  </ScrollArea>
+                  </div>
                 </div>
 
                 {/* Input Area */}

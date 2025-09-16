@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Search, Plus, BookOpen, Users, LoaderCircle, ExternalLink,Expand } from 'lucide-react';
+import { Edit, Search, Plus, BookOpen, Users, LoaderCircle, ExternalLink, Expand, ArrowLeft } from 'lucide-react';
 import { getSchoolById, editSchool } from '../services/school';
 import { getTeachersBySchoolId } from '../services/teacher';
 import { getClassesBySchoolId } from '../services/class';
@@ -24,7 +24,8 @@ const AdminSchool: React.FC = () => {
     school_name: '',
     school_email: '',
     school_contact_number: '',
-    school_address: ''
+    school_address: '',
+    boards: []
   });
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const { id } = useParams();
@@ -181,7 +182,18 @@ const AdminSchool: React.FC = () => {
   return (
     <MainLayout pageTitle={`My School - ${schoolData.school_name}`}>
       <div className="space-y-6">
-        <Breadcrumb items={breadcrumbItems} />
+        {/* <Breadcrumb items={breadcrumbItems} /> */}
+        {
+          userData.role == 'superadmin' && (
+            <div
+              onClick={() => window.history.back()}
+              className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="font-medium">Back</span>
+            </div>
+          )
+        }
 
         {/* School Details Section */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -263,6 +275,15 @@ const AdminSchool: React.FC = () => {
                 <p className="text-gray-900">{schoolData.school_address}</p>
               )}
             </div>
+{/* 
+            {
+              !isEditing && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Board</label>
+                  <p className="text-gray-900">  {schoolData?.boards?.map((board: any) => board.name).join(', ')}</p>
+                </div>
+              )
+            } */}
           </div>
 
           {isEditing && (
@@ -403,6 +424,7 @@ const AdminSchool: React.FC = () => {
                     <h3 className="font-semibold text-gray-800">{'Class ' + classItem.class_number} - {classItem.section}</h3>
                     <BookOpen className="w-5 h-5 text-blue-500" />
                   </div>
+                  <p className="text-sm text-gray-600">Board: {classItem.school_board_name}</p>
                   <p className="text-sm text-gray-600">Students: {classItem.student_count}</p>
                   <p className="text-sm text-gray-500">Teacher: {classItem.teacher_name || 'N/A'}</p>
                 </div>

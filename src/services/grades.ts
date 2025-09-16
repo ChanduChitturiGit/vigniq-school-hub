@@ -4,6 +4,7 @@ import { environment } from '@/environment';
 
 const baseurl = environment.baseurl;
 const suburl = '/syllabus/manage_syllabus';
+const socketurl = '/syllabus/manage_whiteboard';
 
 
 //get grades by teacher id
@@ -77,7 +78,6 @@ export const editTopicByLesson = async (data: any): Promise<any> => {
 };
 
 
-
 // add prerequisite
 export const savePrerequisite = async (data: any): Promise<any> => {
   const response = await api.post<any>(baseurl+suburl+'/addPrerequisite', data);
@@ -89,3 +89,22 @@ export const editPrerequisiteByLesson = async (data: any): Promise<any> => {
   const response = await api.put<any>(baseurl+suburl+'/editPrerequisiteById', data);
   return response.data;
 };
+
+
+//whiteboard session create
+export const createWhiteboardSession = async (data: any): Promise<any> => {
+  const response = await api.post<any>(baseurl+socketurl+'/createWhiteboardSession', data);
+  return response.data;
+};
+
+//updateLessonPlanDayStatus
+export const updateLessonPlanDayStatus = async (data: any): Promise<any> => {
+  const response = await api.put<any>(baseurl+socketurl+'/updateLessonPlanDayStatus', data);
+  return response.data;
+}
+
+//getWhiteboardData
+export const getWhiteboardData = async (data: any): Promise<any> => {
+  const response = await api.get<any>(baseurl+socketurl+'/getWhiteboardData',{params : data});
+  return response.data;
+} 

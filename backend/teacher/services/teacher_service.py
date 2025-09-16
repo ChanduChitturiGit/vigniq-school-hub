@@ -360,16 +360,19 @@ class TeacherService:
                 academic_year = acadamic_year
             ).values(
                 'subject__id', 'subject__name', 'school_class__id', 'school_class__class_instance__class_number',
-                'school_class__section'
+                'school_class__section','school_class__board_id'
             ).distinct()
 
+            boards = CommonFunctions().get_boards_dict()
             renamed_assignments = [
                 {
                     'subject_id': item['subject__id'], 
                     'subject_name': item['subject__name'],
                     'class_id': item['school_class__id'],
                     'class_number': item['school_class__class_instance__class_number'],
-                    'section': item['school_class__section']
+                    'section': item['school_class__section'],
+                    'board_id': item['school_class__board_id'],
+                    'board_name': boards.get(item['school_class__board_id'], 'Unknown')
                 }
                 for item in subject_assignments
             ]
@@ -378,7 +381,8 @@ class TeacherService:
                 class_teacher=teacher,
                 academic_year_id=academic_year_id
             ).values(
-                'class_instance_id', 'class_instance__class_instance__class_number', 'class_instance__section'
+                'class_instance_id', 'class_instance__class_instance__class_number',
+                'class_instance__section','class_instance__board_id'
             )
             class_section = None
             class_assignment = class_assignments.first()
@@ -386,7 +390,9 @@ class TeacherService:
                 class_section = {
                     'class_section_id': class_assignment['class_instance_id'],
                     'class_number': class_assignment['class_instance__class_instance__class_number'],
-                    'section': class_assignment['class_instance__section']
+                    'section': class_assignment['class_instance__section'],
+                    'board_id': class_assignment['class_instance__board_id'],
+                    'board_name': boards.get(class_assignment['class_instance__board_id'], 'Unknown')
                 }
 
             teacher_details = {
@@ -493,7 +499,7 @@ class TeacherService:
         try:
             teacher_id = request.GET.get("teacher_id") or getattr(request.user, 'teacher_id', None) or request.data.get('teacher_id', None)
             school_id = request.GET.get("school_id") or request.data.get("school_id") or getattr(request.user, 'school_id', None)
-
+            academic_year_id = request.GET.get('academic_year_id', 1)
             if not teacher_id:
                 logger.error("Teacher ID is required to delete a teacher.")
                 return JsonResponse({"error": "Teacher ID is required."}, status=400)
@@ -519,6 +525,11 @@ class TeacherService:
                     if not user.exists():
                         logger.error(f"User with ID {teacher_id} does not exist.")
                         return JsonResponse({"error": "User not found."}, status=404)
+                    
+                    ClassAssignment.objects.using(school_db_name).filter(
+                        class_teacher_id=teacher_id,
+                        academic_year_id=academic_year_id
+                    ).update(class_teacher=None)
 
                     # deactivate the teacher record
                     teacher.is_active = False

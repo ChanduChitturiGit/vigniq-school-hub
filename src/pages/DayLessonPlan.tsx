@@ -15,12 +15,26 @@ import {
   Clock,
   Target,
   Globe,
-  BookMarked
+  BookMarked,
+  KeyRound,
+  BadgeCheck
 } from 'lucide-react';
 import { useSnackbar } from '../components/snackbar/SnackbarContext';
-import { getLessonPlanDataByDay } from '../services/grades';
+import { getLessonPlanDataByDay, updateLessonPlanDayStatus, createWhiteboardSession } from '../services/grades';
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../components/ui/alert-dialog';
+
 
 interface Topic {
   topic_id: number;
@@ -56,11 +70,14 @@ const DayLessonPlan: React.FC = () => {
   const schoolId = searchParams.get('school_id') || '';
   const boardId = searchParams.get('school_board_id') || '';
   const tab = searchParams.get('tab') || '';
+  const status = searchParams.get('status') || '';
   const pathData = `class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}&chapter_number=${chapterNumber}&chapter_name=${chapterName}&progress=${progress}&tab=${'lesson-plan'}`;
 
 
   const [lessonData, setLessonData] = useState<LessonPlanDay | null>(null);
   const [overallProgress] = useState(0);
+
+  const [sessionToken, setSessionToken] = useState<string>('');
 
   const breadcrumbItems = [
     { label: 'Grades', path: '/grades' },
@@ -84,6 +101,11 @@ const DayLessonPlan: React.FC = () => {
       const response = await getLessonPlanDataByDay(data);
       if (response && response.data) {
         setLessonData(response.data);
+        if(response.data.session_id){
+          setSessionToken(response.data.session_id);
+        }else{
+          generateSession();
+        }
       } else {
         showSnackbar({
           title: 'Error',
@@ -100,39 +122,81 @@ const DayLessonPlan: React.FC = () => {
     }
   }
 
+  const generateSession = async () => {
+    try {
+      const data = {
+        // chapter_id: chapterId,
+        // lesson_plan_day_id: day,
+        // subject: subject,
+        // class: className,
+        // section: section,
+        school_id: Number(schoolId),
+        // board_id: boardId,
+        // subject_id: subjectId,
+        // class_id: classId,
+        lesson_plan_day_id: Number(day)
+      };
+      const response = await createWhiteboardSession(data);
+      console.log('white', response);
+      if (response && response.data) {
+        setSessionToken(response.data.session_id);
+      } else {
+        showSnackbar({
+          title: 'Error',
+          description: response.message || 'Failed to create whiteboard session.',
+          status: 'error'
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: 'Error',
+        description: 'An unexpected error occurred while creating whiteboard session.',
+        status: 'error'
+      });
+    }
+  }
+
+
   useEffect(() => {
-    // Sample data for lesson plan day
     getLessonData();
-    // const sampleActivities: LessonPlanDay = {
-    //   "lesson_plan_day_id": 31,
-    //   "day": 1,
-    //   "learning_outcomes": "Students will be able to define the division algorithm, apply Euclid's algorithm to find the HCF of two positive integers, and use the division algorithm to prove basic properties of integers related to their form (even/odd, squares, cubes).",
-    //   "real_world_applications": "The division algorithm is fundamental to cryptography and computer science. Euclid's algorithm is used in various computational tasks, such as simplifying fractions and in computer graphics. The bee puzzle demonstrates its use in solving real-world problems involving remainders.",
-    //   "taxonomy_alignment": "Understanding (Division Algorithm, Euclid's Algorithm), Applying (finding HCF, proving integer properties), Analyzing (interpreting results of the algorithm).",
-    //   "status": "not_started",
-    //   "topics": [
-    //     {
-    //       "topic_id": 94,
-    //       "title": "Introduction to Real Numbers & Division Algorithm",
-    //       "summary": "Begin with a real-world puzzle (bees and flowers) to introduce the concept of remainders in division. Generalize this to the Division Algorithm: for positive integers 'a' and 'b', there exist unique whole numbers 'q' and 'r' such that a = bq + r, where 0 ≤ r < b.",
-    //       "time_minutes": 20
-    //     },
-    //     {
-    //       "topic_id": 95,
-    //       "title": "Euclid's Division Algorithm",
-    //       "summary": "Introduce Theorem 1.1 (Euclid's Division Algorithm) as a technique to compute the Highest Common Factor (HCF) of two positive integers. Demonstrate the algorithm using an activity (paper strips) and an example (HCF of 60 and 100). Emphasize that HCF(c, d) = HCF(d, r).",
-    //       "time_minutes": 30
-    //     },
-    //     {
-    //       "topic_id": 96,
-    //       "title": "Applications of Division Algorithm",
-    //       "summary": "Apply the division algorithm to prove properties of integers. Examples include showing that every positive even integer is of the form 2q and every positive odd integer is of the form 2q + 1. Further examples involve proving that positive odd integers are of the form 4q + 1 or 4q + 3, and exploring squares/cubes of integers (3p, 3p+1, 9m, 9m+1, 9m+8).",
-    //       "time_minutes": 40
-    //     }
-    //   ]
-    // };
-    // setLessonData(sampleActivities);
   }, []);
+
+  useEffect(() => {
+    sessionStorage.setItem('sessionId',sessionToken)
+  },[sessionToken])
+
+  const handleMarkAsCompleted = async () => {
+    try {
+      if (!lessonData) return;
+      const data = {
+        lesson_plan_day_id: lessonData.lesson_plan_day_id,
+        status: 'completed',
+        school_id: Number(schoolId)
+      };
+      const response = await updateLessonPlanDayStatus(data);
+      if (response && response.message) {
+        showSnackbar({
+          title: 'Success',
+          description: response.message || 'Day marked as completed successfully.',
+          status: 'success'
+        });
+        // Refresh lesson data to reflect the updated status
+        getLessonData();
+      } else {
+        showSnackbar({
+          title: 'Error',
+          description: response.message || 'Failed to update day status.',
+          status: 'error'
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: 'Error',
+        description: 'An unexpected error occurred while updating day status.',
+        status: 'error'
+      });
+    }
+  }
 
   const handleStartTeaching = () => {
     navigate(`/grades/lesson-plan/whiteboard/${chapterId}/${day}?subject=${subject}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`);
@@ -145,7 +209,7 @@ const DayLessonPlan: React.FC = () => {
 
   if (!lessonData) {
     return (
-      <MainLayout pageTitle={`Chapter ${chapterId}: ${chapterName} - Day ${day}`}>
+      <MainLayout pageTitle={`Chapter ${chapterNumber}: ${chapterName} - Day ${day}`}>
         <div className="flex items-center justify-center h-64">
           <div className="text-lg text-gray-500">Loading lesson plan...</div>
         </div>
@@ -154,79 +218,77 @@ const DayLessonPlan: React.FC = () => {
   }
 
   return (
-    <MainLayout pageTitle={`Chapter ${chapterId}: ${chapterName} - Day ${lessonData.day}`}>
+    <MainLayout pageTitle={`Chapter ${chapterNumber}: ${chapterName} - Day ${lessonData.day}`}>
       <div className="space-y-8">
         {/* <Breadcrumb items={breadcrumbItems} /> */}
-        <Link
-          to={`/grades/chapter/${chapterId}?${pathData}&tab=lesson-plan`}
-          className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span className="font-medium">Back</span>
-        </Link>
+        <div className='w-full flex flex-col md:flex-row items-start md:items-center justify-between gap-4'>
+          <Link
+            to={`/grades/chapter/${chapterId}?${pathData}&tab=lesson-plan`}
+            className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="font-medium">Back</span>
+          </Link>
 
-        {/* <div className="flex items-center justify-between">subject
-          <div className="flex items-center gap-4">
-            <Link
-              //to={`/grades/lesson-plan/view/${chapterId}/1?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`}
-              to={`/grades/syllabus/${pathData}`}
-              className="flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span className="font-medium">Back</span>
-            </Link>
-          </div>
-        </div> */}
 
-        {/* <div className="flex items-center gap-4 mb-6">
-          <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center border border-blue-200">
-            <Calculator className="w-8 h-8 text-blue-600" />
-          </div>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold text-gray-900">Chapter {chapterId}: {chapterName}</h1>
-            <p className="text-lg text-blue-600 font-medium">Day {lessonData.day}</p>
-            <div className="flex items-center gap-4 mt-2">
-              <div className="flex items-center gap-2">
-                <div className="w-32 h-3 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-blue-500 transition-all duration-500"
-                    style={{ width: `${overallProgress}%` }}
-                  />
-                </div>
-                <span className="text-m font-bold text-gray-900">{overallProgress}%</span>
-              </div>
-              <div className="flex items-center gap-2 text-gray-600">
-                <Clock className="w-4 h-4" />
-                <span className="text-sm font-medium">Total: {getTotalTime()} minutes</span>
-              </div>
-            </div>
-          </div>
-        </div> */}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button
+                className={`flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors ${lessonData.status === 'completed' ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                disabled={lessonData.status === 'completed'}
+              >
+                <BadgeCheck className="w-4 h-4" />
+                {
+                  lessonData.status === 'completed' ? 'Completed' : 'Mark as Completed'
+                }
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Mark as Completed</AlertDialogTitle>
+                <AlertDialogDescription className="text-gray-700">
+                  <p>Great work!</p>
+                  <span>
+                    Do you want to mark this day as completed? (You won’t be able to undo this later.)
+                  </span>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleMarkAsCompleted} className="bg-green-500 hover:bg-green-600">
+                  Mark as Completed
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+        </div>
 
         {/* Topics Section */}
         <Card className="shadow-lg border-0">
           <CardHeader>
             <CardTitle className={`${window.innerWidth >= 768 ? 'flex ' : 'flex-col '} items-center justify-between`}>
-              <div>
-                <span className="text-lg md:text-2xl font-bold text-gray-900">Lesson Plan Activities</span>
-                <div className="flex items-center gap-4 mt-2">
-                  <div className="flex items-center gap-2">
-                    {/* <div className="w-32 h-3 bg-gray-200 rounded-full overflow-hidden">
+              <div className='w-full flex flex-wrap items-center justify-between gap-6 mb-4 md:mb-0'>
+                <div className="flex flex-col">
+                  <span className="text-lg md:text-2xl font-bold text-gray-900">Lesson Plan Activities</span>
+                  <div className="flex items-center gap-4 mt-2">
+                    <div className="flex items-center gap-2">
+                      {/* <div className="w-32 h-3 bg-gray-200 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-blue-500 transition-all duration-500"
                         style={{ width: `${overallProgress}%` }}
                       />
                     </div>
                     <span className="text-sm font-bold text-gray-900">{overallProgress}%</span> */}
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Clock className="w-4 h-4" />
-                    <span className="teDayLessonPlanxt-sm text-sm md:text-lg">Total: {getTotalTime()} minutes</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Clock className="w-4 h-4" />
+                      <span className="teDayLessonPlanxt-sm text-sm md:text-lg">Total: {getTotalTime()} minutes</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-3">
-                {/* <Button variant="outline" size="sm" className="text-blue-600 hover:text-blue-800 border-blue-300">
+                <div className="flex items-center gap-3">
+                  {/* <Button variant="outline" size="sm" className="text-blue-600 hover:text-blue-800 border-blue-300">
                   <Printer className="w-4 h-4 mr-2" />
                   Print
                 </Button>
@@ -234,13 +296,15 @@ const DayLessonPlan: React.FC = () => {
                   <Download className="w-4 h-4 mr-2" />
                   Download
                 </Button> */}
-                {/* onClick={handleStartTeaching} */}
-                <Button className="bg-blue-600 hover:bg-blue-700"
-                  onClick={handleStartTeaching}>
-                  <Play className="w-4 h-4 mr-2" />
-                  Open White Board
-                </Button>
+                  {/* onClick={handleStartTeaching} */}
+                  <Button className="bg-blue-600 hover:bg-blue-700"
+                    onClick={handleStartTeaching}>
+                    <Play className="w-4 h-4 mr-2" />
+                    Open White Board
+                  </Button>
+                </div>
               </div>
+
             </CardTitle>
           </CardHeader>
           <CardContent>

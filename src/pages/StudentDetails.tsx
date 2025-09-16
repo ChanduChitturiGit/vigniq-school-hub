@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Save, X } from 'lucide-react';
+import { ArrowLeft, Edit, Save, X } from 'lucide-react';
 import { getStudentsById, editStudent } from '../services/student';
 import { getClassesBySchoolId } from '@/services/class';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
@@ -47,7 +47,8 @@ const StudentDetails: React.FC = () => {
     admission_date: '',
     blood_group: '',
     emergency_contact: '',
-    school_id: Number(schoolId)
+    school_id: Number(schoolId),
+    board_name: ''
   });
 
   const [errors, setErrors] = useState({
@@ -86,7 +87,7 @@ const StudentDetails: React.FC = () => {
       setStudentData(response.student);
       setStudentData((prev) => ({
         ...prev,
-        class: 'Class ' + response.student.class_number + ' - ' + response.student.section,
+        class: 'Class ' + response.student.class_number + ' - ' + response.student.section +' ('+response.student.board_name+')',
         class_id: response.student.class_id,
       }));
       setBreadCrumbItems([
@@ -170,7 +171,7 @@ const StudentDetails: React.FC = () => {
   };
 
   const getClassId = (className: string) => {
-    const classdata = classes.find((val: any) => ('Class ' + val.class_number + ' - ' + val.section) == className);
+    const classdata = classes.find((val: any) => ('Class ' + val.class_number + ' - ' + val.section +' ('+val.school_board_name+')') == className);
     return classdata?.class_id || 0;
   };
 
@@ -202,10 +203,6 @@ const StudentDetails: React.FC = () => {
       }));
     }
 
-
-    console.log("Student Data to be saved:", studentData);
-
-    // Prepare data for API call
     try {
       const response = await editStudent({ ...studentData, school_id: Number(schoolId) });
       if (response && response.message) {
@@ -219,7 +216,7 @@ const StudentDetails: React.FC = () => {
     } catch (error) {
       showSnackbar({
         title: "⛔ Error",
-        description: "Failed to update student data. Please try again.",
+        description: error?.response?.data?.error ||  "Failed to update student data. Please try again.",
         status: "error"
       });
     } finally {
@@ -231,7 +228,14 @@ const StudentDetails: React.FC = () => {
   return (
     <MainLayout pageTitle={`Student Details - ${studentData.student_first_name + ' ' + studentData.student_last_name}`}>
       <div className="space-y-6">
-        <Breadcrumb items={breadcrumbItems} />
+        {/* <Breadcrumb items={breadcrumbItems} /> */}
+        <div
+          onClick={() =>  window.history.back()}
+          className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span className="font-medium">Back</span>
+        </div>
 
         {/* Student Header */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -366,8 +370,8 @@ const StudentDetails: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {classes.map((classItem, index) => (
-                      <SelectItem key={index} value={'Class ' + classItem.class_number + ' - ' + classItem.section}>
-                        {'Class ' + classItem.class_number + ' - ' + classItem.section}
+                      <SelectItem key={index} value={'Class ' + classItem.class_number + ' - ' + classItem.section + ' ('+classItem.school_board_name+')'}>
+                        {'Class ' + classItem.class_number + ' - ' + classItem.section +' ('+classItem.school_board_name+')'}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -375,7 +379,7 @@ const StudentDetails: React.FC = () => {
               ) : (
                 <div className="flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-gray-400" />
-                  <p className="text-gray-900">{'Class ' + studentData.class_number + ' - ' + studentData.section}</p>
+                  <p className="text-gray-900">{'Class ' + studentData.class_number + ' - ' + studentData.section+' ('+studentData?.board_name+')'}</p>
                 </div>
               )
               }

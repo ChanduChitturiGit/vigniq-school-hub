@@ -2,12 +2,25 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Search, Plus, X, GraduationCap, LoaderCircle, Save, Trash2 } from 'lucide-react';
+import { Edit, Search, Plus, X, GraduationCap, LoaderCircle, Save, Trash2, ArrowLeft } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { getClassesById, editClass } from '../services/class'
 import { getTeachersBySchoolId } from '../services/teacher'
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import { deleteStudentById } from '@/services/student';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../components/ui/alert-dialog';
+
+
 
 const ClassDetails: React.FC = () => {
   const { showSnackbar } = useSnackbar();
@@ -74,6 +87,7 @@ const ClassDetails: React.FC = () => {
     section: '',
     academicYear: '',
     teacher_name: '',
+    school_board_name : '',
     studends_list: allStudents
   };
   const [classData, setClassData] = useState(sampleClassData);
@@ -189,8 +203,8 @@ const ClassDetails: React.FC = () => {
     setLoader(true);
     try {
       const response = await deleteStudentById({
-         student_id: studentId, school_id: userData.role == 'superadmin' ? schoolId : userData.school_id 
-        });
+        student_id: studentId, school_id: userData.role == 'superadmin' ? schoolId : userData.school_id
+      });
       if (response && response.message) {
         // setStudents(students.filter(student => student.student_id !== studentId));
         showSnackbar({
@@ -211,12 +225,49 @@ const ClassDetails: React.FC = () => {
     }
   }
 
+  const deleteModal = (student: any) => {
+    return (
+      <>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button className="flex items-center gap-2 text-red-500 hover:text-red-600 transition-colors">
+              <Trash2 className="w-4 h-4" />
+              {/* Reset Password */}
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Student</AlertDialogTitle>
+              <AlertDialogDescription className='text-gray-700'>
+                <p>Are you sure you want to delete student <span className='font-bold'>{student.student_name}</span>?</p>
+                This action cannot be undone
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => deleteStudent(student.student_id)} className="bg-red-600 hover:bg-red-700">
+                Confirm Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
+    )
+  }
+
 
 
   return (
     <MainLayout pageTitle={`Class ${classData.class_number}-${classData.section} Students`}>
       <div className="space-y-6">
-        <Breadcrumb items={breadcrumbItems} />
+        {/* <Breadcrumb items={breadcrumbItems} /> */}
+        <div
+          onClick={() => window.history.back()}
+          className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span className="font-medium">Back</span>
+        </div>
 
         {/* Class Info Section */}
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
@@ -225,62 +276,62 @@ const ClassDetails: React.FC = () => {
               <h1 className="text-xl md:text-2xl font-bold text-gray-800">
                 {'Class ' + classData.class_number} - {classData.section}
               </h1>
-              <p className="text-gray-600">{classData.academicYear}</p>
+              <p className="text-gray-600">{classData?.school_board_name}</p>
             </div>
-                <div className="text-left md:text-right flex flex-wrap ">
-                  {!isEditing ? (
-                    <>
-                      <div>
-                        <p className="text-sm text-gray-500">Class Teacher</p>
-                        <p className="font-semibold text-gray-800">{classData.teacher_name || 'N/A'}</p>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Class Teacher
-                        </label>
-                        <Select value={formData.teacher_name} onValueChange={handleTeacherChange}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select a teacher" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {teachers.map((teacher, index) => (
-                              <SelectItem key={index} value={teacher.teacher_first_name + ' ' + teacher.teacher_last_name}>
-                                {teacher.teacher_first_name + ' ' + teacher.teacher_last_name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </>
-                  )}
-                  <>
-                    { (userData.role == 'superadmin' || userData.role == 'admin') &&  (
-                      <div className='flex flex-wrap'>
-                        {
-                          isEditing && (
-                            <button
-                              onClick={saveTeacher}
-                              className="flex items-center gap-2 px-2 py-2 mx-4 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            >
-                              <Save className="w-4 h-4" />
-                              {'Save'}
-                            </button>
-                          )
-                        }
+            <div className="text-left md:text-right flex flex-wrap ">
+              {!isEditing ? (
+                <>
+                  <div>
+                    <p className="text-sm text-gray-500">Class Teacher</p>
+                    <p className="font-semibold text-gray-800">{classData.teacher_name || 'N/A'}</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Class Teacher
+                    </label>
+                    <Select value={formData.teacher_name} onValueChange={handleTeacherChange}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a teacher" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {teachers.map((teacher, index) => (
+                          <SelectItem key={index} value={teacher.teacher_first_name + ' ' + teacher.teacher_last_name}>
+                            {teacher.teacher_first_name + ' ' + teacher.teacher_last_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+              <>
+                {(userData.role == 'superadmin' || userData.role == 'admin') && (
+                  <div className='flex flex-wrap'>
+                    {
+                      isEditing && (
                         <button
-                          onClick={() => setIsEditing(!isEditing)}
+                          onClick={saveTeacher}
                           className="flex items-center gap-2 px-2 py-2 mx-4 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         >
-                          <Edit className="w-4 h-4" />
-                          {isEditing ? 'Cancel' : 'Edit'}
+                          <Save className="w-4 h-4" />
+                          {'Save'}
                         </button>
-                      </div>
-                    )}
-                  </>
-                  {/* {
+                      )
+                    }
+                    <button
+                      onClick={() => setIsEditing(!isEditing)}
+                      className="flex items-center gap-2 px-2 py-2 mx-4 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    >
+                      <Edit className="w-4 h-4" />
+                      {isEditing ? 'Cancel' : 'Edit'}
+                    </button>
+                  </div>
+                )}
+              </>
+              {/* {
                     userData.role != 'teacher' && (
                       <button
                         onClick={() => setIsEditing(!isEditing)}
@@ -291,7 +342,7 @@ const ClassDetails: React.FC = () => {
                       </button>
                     )
                   } */}
-                </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -339,9 +390,9 @@ const ClassDetails: React.FC = () => {
         {/* Students Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredStudents.map((student) => (
-            <Link
+            <div
               key={student.student_id}
-              to={`/student-details/${student.student_id}`}
+              onClick={() => { navigate(`/student-details/${student.student_id}`) }}
               className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between mb-4">
@@ -382,24 +433,13 @@ const ClassDetails: React.FC = () => {
                 </div>
               </div>
 
-              <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-end ">
-                {/* <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                  {student.status || 'active'}
-                </span> */}
-                {(
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      deleteStudent(student.student_id);
-                    }}
-                    className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                    title="Delete Class"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
+              <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-end "
+                onClick={(e) => e.stopPropagation()}>
+                {
+                  deleteModal(student)
+                }
               </div>
-            </Link>
+            </div>
           ))}
         </div>
         {filteredStudents.length === 0 && !loader && (

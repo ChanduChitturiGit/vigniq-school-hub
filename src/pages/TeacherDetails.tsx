@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Mail, Phone, Calendar, GraduationCap, BookOpen, Plus, X, User, Home } from 'lucide-react';
+import { Edit, Mail, Phone, Calendar, GraduationCap, BookOpen, Plus, X, User, Home, ArrowLeft } from 'lucide-react';
 import { getTeachersById, editTeacher } from '../services/teacher';
 import ClassSectionSubjectInput, { ClassSectionSubjectData } from '../components/ui/class-section-subject-input';
 import { getSubjectsBySchoolId } from '../services/subject';
@@ -42,7 +42,8 @@ const TeacherDetails: React.FC = () => {
     class: '',
     class_assignment: {
       class_number: '',
-      section: ''
+      section: '',
+      board_name: ''
     },
   });
   const [errors, setErrors] = useState({
@@ -89,6 +90,11 @@ const TeacherDetails: React.FC = () => {
       getClasses();
       subjectsList();
       setFormData(response.data);
+       setFormData((prev) => ({
+        ...prev,
+        board_name: response.data?.class_assignment && response.data.class_assignment.board_name ? response.data.class_assignment.board_name : '',
+        class:'Class ' + response.data?.class_assignment?.class_number + ' - ' + response.data?.class_assignment?.section + ' ('+ response?.data?.class_assignment?.board_name+')'
+      }));
       setBreadCrumb();
       seTeacherAssignments(response.data.subject_assignments);
     }
@@ -266,10 +272,12 @@ const TeacherDetails: React.FC = () => {
   };
 
   const getClassId = (className: string) => {
-    const classdata = classes.find((val: any) => ('Class ' + val.class_number + ' - ' + val.section) == className);
+    const classdata = classes.find((val: any) => ('Class ' + val.class_number + ' - ' + val.section + ' ('+val.school_board_name+')') == className);
     const classId = classdata.class_id ? classdata.class_id : 0;
     return classId;
   }
+
+
 
 
   const getSubjectId = (subjectName: string) => {
@@ -300,7 +308,14 @@ const TeacherDetails: React.FC = () => {
   return (
     <MainLayout pageTitle={`Teacher Details`}>
       <div className="space-y-6">
-        <Breadcrumb items={breadcrumbItems} />
+        {/* <Breadcrumb items={breadcrumbItems} /> */}
+        <div
+          onClick={() => window.history.back()}
+          className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span className="font-medium">Back</span>
+        </div>
 
         {/* Teacher Profile Section */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -468,8 +483,8 @@ const TeacherDetails: React.FC = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {teacherClasses.map((classItem, index) => (
-                        <SelectItem key={index} value={'Class ' + classItem.class_number + ' - ' + classItem.section}>
-                          {'Class ' + classItem.class_number + ' - ' + classItem.section}
+                        <SelectItem key={index} value={'Class ' + classItem.class_number + ' - ' + classItem.section + ' ('+classItem.board_name+')'}>
+                          {'Class ' + classItem.class_number + ' - ' + classItem.section + ' ('+classItem.board_name+')'}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -477,7 +492,7 @@ const TeacherDetails: React.FC = () => {
                 ) : (
                   <div className="flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-gray-400" />
-                    <p className="text-gray-900">{formData?.class_assignment && formData.class_assignment.class_number ? 'Class ' + formData?.class_assignment?.class_number + ' ' + formData?.class_assignment?.section : 'N/A'}</p>
+                    <p className="text-gray-900">{formData?.class_assignment && formData.class_assignment.class_number ? 'Class ' + formData?.class_assignment?.class_number + ' ' + formData?.class_assignment?.section + ' ('+formData.class_assignment.board_name+')'  : 'N/A'}</p>
                   </div>
                 )
                 }
@@ -627,6 +642,7 @@ const TeacherDetails: React.FC = () => {
                       <h3 className="font-semibold text-gray-800">
                         {'Class ' + classItem.class_number + ' - ' + classItem.section}
                       </h3>
+                       <p className="text-sm text-gray-600">Board : {classItem.board_name}</p>
                       <p className="text-sm text-gray-600">Subject : {classItem.subject_name}</p>
                     </Link>
                   ))}

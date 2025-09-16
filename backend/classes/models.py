@@ -16,7 +16,7 @@ class SchoolSection(models.Model):
     class Meta:
         db_table = 'school_section'
         constraints = [
-            models.UniqueConstraint(fields=['class_instance', 'section'],
+            models.UniqueConstraint(fields=['class_instance', 'section','board_id'],
                                     name='unique_class_instance_section')
         ]
 
