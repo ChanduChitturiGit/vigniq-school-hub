@@ -256,19 +256,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
   };
 
   return (
-    <div className={`bg-slate-50 text-gray-700 h-screen transition-all duration-500 ease-in-out ${isCollapsed && window.innerWidth >= 768 ? 'w-16' : 'w-64'
-      } flex flex-col border-r border-gray-200`}>
+    <div className={`bg-gradient-to-b from-[hsl(var(--sidebar-gradient-start))] to-[hsl(var(--sidebar-gradient-end))] text-white h-screen transition-all duration-500 ease-in-out ${isCollapsed && window.innerWidth >= 768 ? 'w-16' : 'w-64'
+      } flex flex-col border-r border-blue-800/20`}>
       {/* Logo Section */}
-      {/* bg-white */}
-      <div className="p-4 bg-[#E0F2FE] border-b border-gray-200">
+      <div className="p-4 border-b border-blue-800/20">
         <div className="flex items-center gap-3">
           <div className="rounded flex items-center justify-center">
             <img src="/assets/logo.png" alt="Logo" className="w-[2rem] h-[2rem] bg-white rounded-[0.6rem] object-contain" />
           </div>
           {(!isCollapsed || window.innerWidth < 768) && (
             <div className="transition-opacity duration-500 ease-in-out w-[70%]">
-              <span className="text-xl font-bold text-blue-600">VIGYS AI</span>
-               <div className={`text-xs text-gray-500 mt-1 truncate `} title={schoolName}>
+              <span className="text-xl font-bold text-white tracking-wide">VIGIUS</span>
+               <div className={`text-xs text-blue-100 mt-1 truncate `} title={schoolName}>
                   {schoolName || 'School Name here'}
                 </div>
             </div>
@@ -277,7 +276,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
       </div>
 
       {/* Navigation Menu */}
-      <nav className="bg-[#E0F2FE] flex-1 py-4 px-3">
+      <nav className="flex-1 py-4 px-3">
         <ul className="space-y-2">
           {getMenuItems().map((item) => {
             if (item.roles && item.roles.includes(user?.role || '')) {
@@ -298,8 +297,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                         }
                       }}
                       className={`w-full flex items-center justify-between gap-3 ${isCollapsed ? 'px-1' : 'px-4'} py-3 rounded-lg transition-all duration-200 ease-in-out ${isDropdownHighlighted
-                        ? 'bg-blue-500 text-white shadow-sm'
-                        : 'text-gray-700 hover:bg-[#BAE6FD]'
+                        ? 'bg-[hsl(var(--sidebar-active))] text-white shadow-sm'
+                        : 'text-white hover:bg-[hsl(var(--sidebar-hover))]'
                         }`}
                     >
                       <div className="flex items-center gap-3">
@@ -324,8 +323,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                                 to={subItem.path}
                                 onClick={handleLinkClick}
                                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ease-in-out ${isActive(subItem.path)
-                                  ? 'bg-blue-500 text-white shadow-sm font-medium'
-                                  : 'text-gray-600 hover:bg-[#BAE6FD]'
+                                  ? 'bg-[hsl(var(--sidebar-active))] text-white shadow-sm font-medium'
+                                  : 'text-blue-100 hover:bg-[hsl(var(--sidebar-hover))]'
                                   }`}
                               >
                                 {SubIcon && <SubIcon className="w-4 h-4" />}
@@ -353,8 +352,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                         }
                       }}
                       className={`flex items-center gap-3 px-[0.5rem] py-3 rounded-lg transition-all duration-200 ease-in-out ${isActive(regularItem.path)
-                        ? 'bg-blue-500 text-white shadow-sm font-medium'
-                        : 'text-gray-700 hover:bg-[#BAE6FD]'
+                        ? 'bg-[hsl(var(--sidebar-active))] text-white shadow-sm font-medium'
+                        : 'text-white hover:bg-[hsl(var(--sidebar-hover))]'
                         }`}
                     >
                       <Icon className="w-5 h-5 flex-shrink-0" />
