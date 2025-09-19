@@ -11,7 +11,7 @@ import { getClassesBySchoolId, getClassesWithoutClassTeacher } from '@/services/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from '../components/ui/sonner';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
-import { Dayjs } from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -449,7 +449,8 @@ const AdminAddTeacher: React.FC = () => {
                       setJoinDate(newValue);
                       formData.joining_date = newValue ? newValue.format("YYYY-MM-DD") : null;
                     }}
-                    format="DD/MM/YYYY"   // 👈 force display format
+                    format="DD/MM/YYYY" 
+                    
                   />
                 </LocalizationProvider>
                 {errors.joining_date && <p className="text-red-500 text-xs mt-1">{errors.joining_date}</p>}
@@ -474,7 +475,8 @@ const AdminAddTeacher: React.FC = () => {
                       setValue(newValue);
                       formData.date_of_birth = newValue ? newValue.format("YYYY-MM-DD") : null;
                     }}
-                    format="DD/MM/YYYY"   // 👈 force display format
+                    format="DD/MM/YYYY"   
+                    maxDate={dayjs().subtract(12, "year")}
                   />
                 </LocalizationProvider>
                 {errors.date_of_birth && <p className="text-red-500 text-xs mt-1">{errors.date_of_birth}</p>}

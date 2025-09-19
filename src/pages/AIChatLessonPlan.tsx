@@ -367,13 +367,13 @@ const AIChatLessonPlan: React.FC = () => {
     <MainLayout pageTitle={`AI Chat - Chapter ${chapterNumber}: ${chapterName} - Day ${dayCount}`}>
       <div className="">
         {/* <Breadcrumb items={breadcrumbItems} /> */}
-        <Link
+        {/* <Link
           to={`/grades/chapter/${chapterId}?${pathData}&tab=lesson-plan`}
           className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 mb-2 rounded-lg transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
           <span className="font-medium">Back</span>
-        </Link>
+        </Link> */}
 
         {/* <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -398,7 +398,7 @@ const AIChatLessonPlan: React.FC = () => {
           </div>
         </div>  */}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
           {/* Fixed Lesson Plan Panel for mobile*/}
           <Accordion type="single" collapsible className="lg:hidden lg:col-span-1">
@@ -411,7 +411,7 @@ const AIChatLessonPlan: React.FC = () => {
                 </AccordionTrigger>
               </Card>
               <AccordionContent>
-                <Card className="shadow-lg border-0 max-h-[80vh] flex flex-col">
+                <Card className="shadow-lg border-0 max-h-[90vh] flex flex-col">
                   <CardContent className="flex-1 p-0 min-h-0">
                     <ScrollArea className="h-full">
                       <div className="p-6 space-y-4">
@@ -470,13 +470,20 @@ const AIChatLessonPlan: React.FC = () => {
 
           {/* Chat Section */}
           <div className="lg:col-span-2">
-            <Card className="shadow-lg border-0 h-[80vh] flex flex-col">
+            <Card className="shadow-lg border-0 h-[90vh] flex flex-col">
               <CardHeader className="flex-shrink-0 border-b h-14 px-6 flex items-start justify-center">
-                <CardTitle className="flex items-center gap-3 text-xl">
-                  <div className="w-6 h-6 bg-purple-100 rounded-xl flex items-center justify-center">
-                    <MessageSquare className="w-6 h-6 text-purple-600" />
+                <CardTitle className="flex w-full items-center gap-6 text-xl">
+                  <div className='flex items-center  gap-1 cursor-pointer hover:bg-blue-100 px-2 py-2 rounded-lg'
+                  onClick={() => window.history.back()}>
+                    <ArrowLeft className="w-5 h-5" />
+                    <span className='text-sm'>Back</span>
                   </div>
-                  Chat with AI Assistant
+                  <div className='flex items-center justify-center gap-2'>
+                    <div className="w-6 h-6 bg-purple-100  flex items-center justify-center">
+                      <MessageSquare className="w-6 h-6 text-purple-600" />
+                    </div>
+                    Chat with AI Assistant
+                  </div>
                 </CardTitle>
               </CardHeader>
 
@@ -484,7 +491,7 @@ const AIChatLessonPlan: React.FC = () => {
               <CardContent className="flex-1 flex flex-col p-0 min-h-0">
                 {/* Messages Area */}
                 <div className="flex-1 overflow-hidden">
-                  <div  className="h-full ">
+                  <div className="h-full ">
                     <div ref={messagesEndRef} className=" h-full p-6 space-y-4 overflow-y-auto" >
                       {/* first message */}
                       <ChatMessage message={firstMessage} condition={'initial'} />
@@ -544,14 +551,14 @@ const AIChatLessonPlan: React.FC = () => {
                 </div>
 
                 {/* Input Area */}
-                <div className="flex-shrink-0 border-t p-6">
+                <div className="flex-shrink-0 border-t px-6 py-4">
                   <div className="flex items-center justify-center gap-2">
                     <textarea
                       value={inputMessage}
                       onChange={(e) => setInputMessage(e.target.value)}
                       onKeyPress={handleKeyPress}
                       placeholder="Type your message here..."
-                      className="flex-1 resize-none rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[3.2rem]"
+                      className="flex-1 resize-none rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[2.5rem]"
                       rows={2}
                     />
                     <Button
@@ -569,7 +576,7 @@ const AIChatLessonPlan: React.FC = () => {
 
           {/* Fixed Lesson Plan Panel */}
           <div className="hidden lg:block lg:col-span-1">
-            <Card className="shadow-lg border-0 h-[80vh] flex flex-col">
+            <Card className="shadow-lg border-0 h-[90vh] flex flex-col">
               <CardHeader className="flex-shrink-0 bg-gray-50 border-b h-14 px-6 flex items-start justify-center">
                 <CardTitle className="text-xl text-gray-900">Today's Lesson Plan</CardTitle>
               </CardHeader>
