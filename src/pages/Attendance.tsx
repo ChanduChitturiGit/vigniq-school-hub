@@ -33,6 +33,9 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { getTickets } from '../services/support'
+import '../pages/styles/datepicker.scss';
+
+
 
 
 interface Student {
@@ -660,7 +663,7 @@ const Attendance: React.FC = () => {
                 </div>
                 <div className='w-full md:w-auto'>
                   <Select value={selectedClass} onValueChange={handleClassChange}>
-                    <SelectTrigger className="w-full md:min-w-[12rem] h-[3.5rem] text-sm">
+                    <SelectTrigger className="w-full md:min-w-[12rem] h-[2.6rem] text-sm">
                       <SelectValue placeholder="Select Class" />
                     </SelectTrigger>
                     <SelectContent>
