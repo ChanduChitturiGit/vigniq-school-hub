@@ -49,7 +49,7 @@ const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
 
     return (
       // bg-gray-50  bg-[#f1f8fd]
-      <div className="flex h-screen bg-gray-50 relative overflow-hidden">
+      <div className="flex h-[100dvh] bg-gray-50 relative overflow-hidden">
         {/* Mobile Overlay */}
         {isMobileMenuOpen && (
           <div 
@@ -74,15 +74,15 @@ const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
           />
         </div>
         
-        <div className="flex-1 flex flex-col min-w-0 min-h-0 mb-16 xl:mb-0">
+        <div className="flex-1 flex flex-col min-w-0 min-h-0 ">
           <TopNavbar 
             isCollapsed={isCollapsed} 
             toggleSidebar={toggleSidebar} 
             pageTitle={pageTitle} 
           />
           {/* forward the ref here */}
-          <main ref={ref} className="flex-1 min-h-0 overflow-y-auto p-6">
-            <div className="max-w-full mb-[1rem]">
+          <main ref={ref} className="flex-1 h-full overflow-y-auto p-6">
+            <div className="max-w-full">
               {children}
             </div>
           </main>

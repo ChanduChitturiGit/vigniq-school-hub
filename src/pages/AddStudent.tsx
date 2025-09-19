@@ -8,7 +8,7 @@ import { addStudent } from '../services/student';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
-import { Dayjs } from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -393,7 +393,8 @@ const AddStudent: React.FC = () => {
                       setValue(newValue);
                       formData.date_of_birth = newValue ? newValue.format("YYYY-MM-DD") : null;
                     }}
-                    format="DD/MM/YYYY"   // 👈 force display format
+                    format="DD/MM/YYYY"  
+                    maxDate={dayjs().subtract(2, "year")}
                   />
                 </LocalizationProvider>
                 {errors.date_of_birth && <p className="text-red-500 text-xs mt-1">{errors.date_of_birth}</p>}
