@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { format, isSameDay, isAfter, startOfDay, set } from 'date-fns';
 import MainLayout from '@/components/Layout/MainLayout';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
-import { getAttendenceData, submitAttendence, getPastAttendenceData, markAsHoiday, unmarkAsHoiday } from '../services/attendence';
+import { getAttendenceData, submitAttendence, getPastAttendenceData, markAsHoiday, unmarkAsHoiday, saveStudentRemarks } from '../services/attendence';
 import { getClassesBySchoolId } from '@/services/class';
 import {
   AlertDialog,
@@ -44,6 +44,7 @@ interface Student {
   roll_number: string;
   morningPresent: boolean;
   afternoonPresent: boolean;
+  remarks?: string;
 }
 
 interface AttendanceData {
@@ -102,6 +103,8 @@ const Attendance: React.FC = () => {
     date: null,
   });
   const [startDate, setStartDate] = React.useState<Dayjs | null>(dayjs());
+  const [editingRemarks, setEditingRemarks] = useState<string | null>(null);
+  const [tempRemarks, setTempRemarks] = useState<string>('');
 
 
   // Sample data - in real app this would come from API
@@ -187,7 +190,8 @@ const Attendance: React.FC = () => {
           const fetchedStudents = response.data.attendance_data.map((student: any) => ({
             ...student,
             morningPresent: response.data?.session == 'M' || session == 'M' ? student.is_present : student?.morning_present || null,
-            afternoonPresent: response.data?.session == 'A' || session == 'A' ? student.is_present : student?.afternoon_present || null
+            afternoonPresent: response.data?.session == 'A' || session == 'A' ? student.is_present : student?.afternoon_present || null,
+            remarks: student.remarks || ''
           }));
           // setStudents(fetchedStudents);
           setStudents(fetchedStudents);
@@ -541,6 +545,56 @@ const Attendance: React.FC = () => {
       session: value == 'Full Day' ? 'F' : value == 'Morning Session' ? 'M' : 'A'
     }))
   }
+
+  const handleRemarksEdit = (studentId: string, currentRemarks: string) => {
+    setEditingRemarks(studentId);
+    setTempRemarks(currentRemarks || '');
+  };
+
+  const handleRemarksSave = async (studentId: string) => {
+    try {
+      const currentClassId = classId || (classes[0] ? getClassId('Class ' + classes[0].class_id + ' - ' + classes[0].section) : '');
+      const date = format(selectedDate, 'yyyy-MM-dd');
+      
+      const requestData = {
+        student_id: studentId,
+        class_section_id: currentClassId,
+        date: date,
+        school_id: userData?.school_id,
+        remarks: tempRemarks
+      };
+
+      const response = await saveStudentRemarks(requestData);
+      if (response && response.message) {
+        // Update the local state
+        setStudents(prev => prev.map(student => 
+          student.student_id === studentId 
+            ? { ...student, remarks: tempRemarks }
+            : student
+        ));
+        
+        showSnackbar({
+          title: "Success",
+          description: response.message,
+          status: "success"
+        });
+        
+        setEditingRemarks(null);
+        setTempRemarks('');
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Failed to save remarks",
+        status: "error"
+      });
+    }
+  };
+
+  const handleRemarksCancel = () => {
+    setEditingRemarks(null);
+    setTempRemarks('');
+  };
 
 
   const downloadExcel = async () => {
@@ -1064,43 +1118,97 @@ const Attendance: React.FC = () => {
                       <TabsContent value="morning" className="mt-6 max-h-[27rem] overflow-auto md:px-2">
                         <div className="space-y-4">
                           {!isMorningHoliday && students && students?.map((student) => (
-                            <div key={student.student_id} className="flex flex-col md:flex-row items-center justify-between p-4 border rounded-lg bg-gray-50">
-                              <div className="flex items-center gap-4 mb-4 md:mb-0">
-                                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-semibold">
-                                  {student.student_name.split(' ').map(n => n[0]).join('')}
+                            <div key={student.student_id} className="flex flex-col p-4 border rounded-lg bg-gray-50">
+                              <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
+                                <div className="flex items-center gap-4 mb-4 md:mb-0">
+                                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-semibold">
+                                    {student.student_name.split(' ').map(n => n[0]).join('')}
+                                  </div>
+                                  <div>
+                                    <p className="font-medium">{student.student_name}</p>
+                                    <p className="text-sm text-gray-600">Roll No. {student.roll_number}</p>
+                                  </div>
                                 </div>
-                                <div>
-                                  <p className="font-medium">{student.student_name}</p>
-                                  <p className="text-sm text-gray-600">Roll No. {student.roll_number}</p>
-                                </div>
+                                {
+                                  (!isSessionSubmitted(activeSession) || isEditing == activeSession || isPastDate) ? (
+                                    <div className="flex gap-2 items-center">
+                                      <Button
+                                        size="sm"
+                                        variant={student.morningPresent ? "default" : "outline"}
+                                        onClick={() => toggleAttendance(student.student_id, true)}
+                                        className={student.morningPresent ? "bg-green-600 hover:bg-green-700" : ""}
+                                      >
+                                        Present
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant={student.morningPresent == false ? "destructive" : "outline"}
+                                        onClick={() => toggleAttendance(student.student_id, false)}
+                                      >
+                                        Absent
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => handleRemarksEdit(student.student_id, student.remarks)}
+                                        className="flex items-center gap-1"
+                                      >
+                                        <Edit className="w-3 h-3" />
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex gap-2 items-center">
+                                      {getStatusBadge(student.morningPresent ? 'Present' : 'Absent')}
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => handleRemarksEdit(student.student_id, student.remarks)}
+                                        className="flex items-center gap-1"
+                                      >
+                                        <Edit className="w-3 h-3" />
+                                      </Button>
+                                    </div>
+                                  )
+                                }
                               </div>
-                              {
-                                (!isSessionSubmitted(activeSession) || isEditing == activeSession || isPastDate) ? (
+                              
+                              {/* Remarks Section */}
+                              {editingRemarks === student.student_id ? (
+                                <div className="mt-4 p-3 bg-white rounded-lg border">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-sm font-medium text-blue-600">Add Remarks:</span>
+                                  </div>
                                   <div className="flex gap-2">
+                                    <input
+                                      type="text"
+                                      value={tempRemarks}
+                                      onChange={(e) => setTempRemarks(e.target.value)}
+                                      placeholder="Type your remarks here..."
+                                      className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
                                     <Button
                                       size="sm"
-                                      variant={student.morningPresent ? "default" : "outline"}
-                                      onClick={() => toggleAttendance(student.student_id, true)}
-                                      className={student.morningPresent ? "bg-green-600 hover:bg-green-700" : ""}
+                                      onClick={() => handleRemarksSave(student.student_id)}
+                                      className="bg-green-600 hover:bg-green-700"
                                     >
-                                      Present
+                                      ✓
                                     </Button>
                                     <Button
                                       size="sm"
-                                      variant={student.morningPresent == false ? "destructive" : "outline"}
-                                      onClick={() => toggleAttendance(student.student_id, false)}
+                                      variant="outline"
+                                      onClick={handleRemarksCancel}
+                                      className="text-red-600 border-red-300 hover:bg-red-50"
                                     >
-                                      Absent
+                                      ✕
                                     </Button>
                                   </div>
-                                ) : (
-                                  <>
-                                    {
-                                      getStatusBadge(student.morningPresent ? 'Present' : 'Absent')
-                                    }
-                                  </>
-                                )
-                              }
+                                </div>
+                              ) : student.remarks && (
+                                <div className="mt-2 flex items-center gap-2">
+                                  <span className="text-sm text-gray-600">Remarks:</span>
+                                  <span className="text-sm">{student.remarks}</span>
+                                </div>
+                              )}
                             </div>
                           ))}
 
@@ -1123,45 +1231,99 @@ const Attendance: React.FC = () => {
                       <TabsContent value="afternoon" className="mt-6 max-h-[27rem] overflow-auto md:px-2">
                         <div className="space-y-4">
                           {!isAfternoonHoliday && students && students?.map((student) => (
-                            <div key={student.student_id} className="flex flex-col md:flex-row  items-center justify-between p-4 border rounded-lg bg-gray-50">
-                              <div className="flex items-center gap-4 mb-4 md:mb-0">
-                                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-semibold">
-                                  {student.student_name.split(' ').map(n => n[0]).join('')}
+                            <div key={student.student_id} className="flex flex-col p-4 border rounded-lg bg-gray-50">
+                              <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
+                                <div className="flex items-center gap-4 mb-4 md:mb-0">
+                                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-semibold">
+                                    {student.student_name.split(' ').map(n => n[0]).join('')}
+                                  </div>
+                                  <div>
+                                    <p className="font-medium">{student.student_name}</p>
+                                    <p className="text-sm text-gray-600">Roll No. {student.roll_number}</p>
+                                  </div>
                                 </div>
-                                <div>
-                                  <p className="font-medium">{student.student_name}</p>
-                                  <p className="text-sm text-gray-600">Roll No. {student.roll_number}</p>
+                                <div className="flex gap-2">
+                                  {
+                                    (!isSessionSubmitted(activeSession) || isEditing == activeSession || isPastDate) ? (
+                                      <div className="flex gap-2 items-center">
+                                        <Button
+                                          size="sm"
+                                          variant={student.afternoonPresent ? "default" : "outline"}
+                                          onClick={() => toggleAttendance(student.student_id, true)}
+                                          className={student.afternoonPresent ? "bg-green-600 hover:bg-green-700" : ""}
+                                        >
+                                          Present
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant={student.afternoonPresent == false ? "destructive" : "outline"}
+                                          onClick={() => toggleAttendance(student.student_id, false)}
+                                        >
+                                          Absent
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => handleRemarksEdit(student.student_id, student.remarks)}
+                                          className="flex items-center gap-1"
+                                        >
+                                          <Edit className="w-3 h-3" />
+                                        </Button>
+                                      </div>
+                                    ) : (
+                                      <div className="flex gap-2 items-center">
+                                        {getStatusBadge(student.afternoonPresent ? 'Present' : 'Absent')}
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => handleRemarksEdit(student.student_id, student.remarks)}
+                                          className="flex items-center gap-1"
+                                        >
+                                          <Edit className="w-3 h-3" />
+                                        </Button>
+                                      </div>
+                                    )
+                                  }
                                 </div>
                               </div>
-                              <div className="flex gap-2">
-                                {
-                                  (!isSessionSubmitted(activeSession) || isEditing == activeSession || isPastDate) ? (
-                                    <div className="flex gap-2">
-                                      <Button
-                                        size="sm"
-                                        variant={student.afternoonPresent ? "default" : "outline"}
-                                        onClick={() => toggleAttendance(student.student_id, true)}
-                                        className={student.afternoonPresent ? "bg-green-600 hover:bg-green-700" : ""}
-                                      >
-                                        Present
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant={student.afternoonPresent == false ? "destructive" : "outline"}
-                                        onClick={() => toggleAttendance(student.student_id, false)}
-                                      >
-                                        Absent
-                                      </Button>
-                                    </div>
-                                  ) : (
-                                    <>
-                                      {
-                                        getStatusBadge(student.afternoonPresent ? 'Present' : 'Absent')
-                                      }
-                                    </>
-                                  )
-                                }
-                              </div>
+                              
+                              {/* Remarks Section */}
+                              {editingRemarks === student.student_id ? (
+                                <div className="mt-4 p-3 bg-white rounded-lg border">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-sm font-medium text-blue-600">Add Remarks:</span>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <input
+                                      type="text"
+                                      value={tempRemarks}
+                                      onChange={(e) => setTempRemarks(e.target.value)}
+                                      placeholder="Type your remarks here..."
+                                      className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                    <Button
+                                      size="sm"
+                                      onClick={() => handleRemarksSave(student.student_id)}
+                                      className="bg-green-600 hover:bg-green-700"
+                                    >
+                                      ✓
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={handleRemarksCancel}
+                                      className="text-red-600 border-red-300 hover:bg-red-50"
+                                    >
+                                      ✕
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : student.remarks && (
+                                <div className="mt-2 flex items-center gap-2">
+                                  <span className="text-sm text-gray-600">Remarks:</span>
+                                  <span className="text-sm">{student.remarks}</span>
+                                </div>
+                              )}
                             </div>
                           ))}
 
