@@ -750,12 +750,12 @@ const CreateSchool: React.FC = () => {
           <div className="bg-card p-8 rounded-lg shadow-sm border border-border">
             {/* <h1 className="text-2xl font-bold text-foreground mb-8">Create School</h1> */}
             {/* Step Indicator */}
-            <div className="flex items-center justify-center mb-12 w-full">
+            <div className="flex items-start justify-center mb-12 w-full">
               {steps.map((step, index) => (
                 <React.Fragment key={step.number}>
                   <div className="flex flex-col items-center">
                     <div
-                      className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-semibold border-2 transition-all duration-200 ${step.completed
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold border-2 transition-all duration-200 ${step.completed
                         ? 'bg-blue-600 text-white border-blue-600'
                         : step.number === currentStep
                           ? 'bg-blue-600 text-white border-blue-600'
