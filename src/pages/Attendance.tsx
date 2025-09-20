@@ -895,8 +895,8 @@ const Attendance: React.FC = () => {
                             <TableCell>{getStatusBadge(record.morning ? 'Present' : isMorningHoliday ? 'Holiday' : 'Absent')}</TableCell>
                             <TableCell>{getStatusBadge(record.afternoon ? 'Present' : isAfternoonHoliday ? 'Holiday' : 'Absent')}</TableCell>
                             <TableCell>{getOverallStatus(record.morning, record.afternoon)}</TableCell>
-                            <TableCell className="font-medium max-w-[4rem] truncate" title='record.morning_remarks'>{record.morning_remarks}</TableCell>
-                            <TableCell className="font-medium max-w-[4rem] truncate" title='record.afternoon_remarks'>{record.afternoon_remarks}</TableCell>
+                            <TableCell className="font-medium max-w-[4rem] truncate" title={record.morning_remarks}>{record.morning_remarks}</TableCell>
+                            <TableCell className="font-medium max-w-[4rem] truncate" title={record.afternoon_remarks}>{record.afternoon_remarks}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
