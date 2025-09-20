@@ -331,12 +331,7 @@ const ViewEbooks: React.FC = () => {
     //   toast.error('Only super admin can delete e-books');
     // }
     if (user?.role === 'superadmin') {
-      //deleteEbook(ebookId);
-      showSnackbar({
-        title: "⛔ Error",
-        description: "Only super admin can delete e-books",
-        status: "error"
-      });
+      deleteEbook(ebookId);
     } else {
       showSnackbar({
         title: "⛔ Error",
