@@ -281,13 +281,14 @@ class TeacherService:
                                 academic_year = acadamic_year
                             )
                     
-                    if class_section_id:
-                        class_assignment = ClassAssignment.objects.using(school_db_name).filter(
+                    class_assignment = ClassAssignment.objects.using(school_db_name).filter(
                             academic_year_id=academic_year_id,
                             class_teacher_id=teacher_id
                         )
-                        if class_assignment.exists():
-                            class_assignment.update(class_teacher=None)
+                    if class_assignment.exists():
+                        class_assignment.update(class_teacher=None)
+
+                    if class_section_id:
 
                         class_assignment = ClassAssignment.objects.using(school_db_name).get(
                             class_instance_id=class_section_id,
@@ -428,6 +429,7 @@ class TeacherService:
         """
         try:
             school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
+            is_active = request.GET.get("is_active", "true").lower() in ["true", "1", "yes"]
             # academic_year_id = request.GET.get('academic_year_id', None)
 
             if not school_id:
@@ -437,52 +439,49 @@ class TeacherService:
             # if not academic_year_id:
             #     logger.error("Academic Year ID is required for fetching teacher list.")
             #     return JsonResponse({"error": "Academic Year ID is required."}, status=400)
-            
+
 
             school_db_name = SchoolDbMetadata.objects.filter(school_id=school_id).first().db_name
 
-            # acadamic_year = AcademicYear.objects.using(school_db_name
-            #                     ).filter(id=academic_year_id).first()
-            # if not acadamic_year:
-            #     logger.error(f"Academic Year with ID {academic_year_id} does not exist.")
-            #     return JsonResponse({"error": "Academic Year not found."}, status=404)
+            academic_year = CommonFunctions().get_latest_academic_year(school_db_name)
 
-            teachers = Teacher.objects.using(school_db_name).filter(is_active=True)
+            teachers = Teacher.objects.using(school_db_name).filter(is_active=is_active)
+
+            if not teachers.exists():
+                return JsonResponse({"teachers": []}, status=200)
+            teacher_ids = [t.teacher_id for t in teachers]
+
+            users = {
+                u.id: u
+                for u in User.objects.filter(id__in=teacher_ids, school_id=school_id)
+            }
+
+            assignments = (
+                TeacherSubjectAssignment.objects.using(school_db_name)
+                .filter(teacher__in=teachers, academic_year=academic_year)
+                .values("teacher_id", "subject__name")
+                .distinct()
+            )
+
+            teacher_subject_map = {}
+            for a in assignments:
+                teacher_subject_map.setdefault(a["teacher_id"], []).append(a["subject__name"])
+
             teacher_list = []
-
             for teacher in teachers:
-                try:
-                    user = User.objects.get(id=teacher.teacher_id, school_id=school_id)
-                except User.DoesNotExist:
+                user = users.get(teacher.teacher_id)
+                if not user:
                     continue
-
-                # subject_assignments = TeacherSubjectAssignment.objects.using(school_db_name).filter(
-                #     teacher = teacher,
-                #     academic_year = acadamic_year
-                # ).values(
-                #     'subject__id', 'subject__name', 'school_class__id', 'school_class__name',
-                #     'school_class__section'
-                # ).distinct()
-
-                # renamed_assignments = [
-                #     {
-                #         'subject': {'id': item['subject__id'], 'name': item['subject__name']},
-                #         'class': {'id': item['school_class__id'],
-                #                 'class_name': item['school_class__name'],
-                #                 'section_name': item['school_class__section']
-                #         },
-                #     }
-                #     for item in subject_assignments
-                # ]
 
                 teacher_list.append({
                     "teacher_id": teacher.teacher_id,
                     "teacher_first_name": user.first_name,
                     "teacher_last_name": user.last_name,
                     "email": user.email,
-                    # "subject_assignments": renamed_assignments
+                    "subject_assignments": teacher_subject_map.get(teacher.teacher_id, []),
                     "qualification": teacher.qualification,
-                    'phone_number': user.phone_number,
+                    "phone_number": user.phone_number,
+                    "is_active": teacher.is_active,
                 })
 
             return JsonResponse({"teachers": teacher_list}, status=200)
@@ -545,4 +544,51 @@ class TeacherService:
         except Exception as e:
             logger.error("Error deleting teacher: %s", e)
             return JsonResponse({"error": "An error occurred while deleting the teacher."},
+                                status=500)
+    
+    def reactivate_teacher(self, request):
+        """
+        Reactivate a previously deactivated teacher by their ID.
+        This method expects the request to contain a 'teacher_id' parameter.
+        """
+        try:
+            teacher_id = request.data.get("teacher_id", None)
+            school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
+            if not teacher_id:
+                logger.error("Teacher ID is required to reactivate a teacher.")
+                return JsonResponse({"error": "Teacher ID is required."}, status=400)
+            
+            if not school_id:
+                logger.error("School ID is required to reactivate a teacher.")
+                return JsonResponse({"error": "School ID is required."}, status=400)
+
+            school_db_name = SchoolDbMetadata.objects.filter(school_id=school_id).first().db_name
+
+            with transaction.atomic(using='default'):
+                with transaction.atomic(using=school_db_name):
+                    try:
+                        teacher = Teacher.objects.using(school_db_name).get(
+                            teacher_id=teacher_id,
+                            is_active=False
+                        )
+                    except Teacher.DoesNotExist:
+                        logger.error(f"Teacher with ID {teacher_id} does not exist or is already active.")
+                        return JsonResponse({"error": "Teacher not found or already active."}, status=404)
+
+                    user = User.objects.get(id=teacher_id, school_id=school_id)
+
+                    teacher.is_active = True
+                    teacher.save(using=school_db_name)
+
+                    user.is_active = True
+                    user.save()
+
+                    logger.info(f"Teacher with ID {teacher_id} reactivated successfully.")
+                    return JsonResponse({"message": "Teacher reactivated successfully."}, status=200)
+        except User.DoesNotExist:
+            logger.error(f"User with ID {teacher_id} does not exist.")
+            return JsonResponse({"error": "User not found."}, status=404)
+        except Exception as e:
+            logger.error("Error reactivating teacher: %s", e)
+            return JsonResponse({"error": "An error occurred while reactivating the teacher."},
                                 status=500)

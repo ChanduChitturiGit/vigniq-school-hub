@@ -96,7 +96,9 @@ class LangChainService:
             return_messages=True
         )
 
-        chat_messages = ChatMessage.objects.using(school_db_name).order_by('-created_at')[:10]
+        chat_messages = ChatMessage.objects.using(school_db_name).filter(
+            session=session
+        ).order_by('-created_at')[:10]
         chat_messages = reversed(chat_messages)
 
         for msg in chat_messages:

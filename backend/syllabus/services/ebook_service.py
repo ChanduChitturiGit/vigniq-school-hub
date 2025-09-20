@@ -68,10 +68,25 @@ class EbookService:
                 class_number=class_obj,
                 ebook_type=upload_type_check,
                 syllabus_year=syllabus_year,
+                is_active=True
             ).exists()
             if ebook_available_status:
                 logger.error("Ebook with upload type: %s exists for the given board, class, and subject.", upload_type_check)
                 return Response({"error": f"Ebook with upload type: {upload_type_check} exists for the given board, class, and subject. Please delete the existing ebook before uploading a new one."},
+                                status=status.HTTP_400_BAD_REQUEST)
+        
+            ebook_available_status = SchoolSyllabusEbooks.objects.filter(
+                board=board_obj,
+                subject=subject_obj,
+                class_number=class_obj,
+                ebook_type=upload_type,
+                syllabus_year=syllabus_year,
+                chapter_number=chapter_number if upload_type == 'chapter_wise' else None,
+                is_active=True
+            ).exists()
+            if ebook_available_status:
+                logger.error("Ebook with upload type: %s already exists for the given board, class, and subject.", upload_type)
+                return Response({"error": f"Ebook with upload type: {upload_type} already exists for the given board, class, and subject. Please delete the existing ebook before uploading a new one."},
                                 status=status.HTTP_400_BAD_REQUEST)
 
             if upload_type == 'chapter_wise':
@@ -317,7 +332,9 @@ class EbookService:
             with transaction.atomic(using=school_db_name):
                 boards = SchoolBoardMapping.objects.filter(school_id = school_db_metadata.school_id)
                 for board in boards:
-                    ebooks = SchoolSyllabusEbooks.objects.filter(board_id = board.board_id).select_related('class_number', 'subject')
+                    ebooks = SchoolSyllabusEbooks.objects.filter(
+                        board_id=board.board_id, is_active=True
+                    ).select_related('class_number', 'subject')
                     for ebook in ebooks:
                         chapters = Chapter.objects.filter(ebook=ebook)
                         for chapter in chapters:

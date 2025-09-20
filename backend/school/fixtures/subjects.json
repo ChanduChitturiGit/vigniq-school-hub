@@ -29,5 +29,6 @@
   { "model": "school.schooldefaultsubjects", "pk": 28, "fields": { "name": "Music" } },
   { "model": "school.schooldefaultsubjects", "pk": 29, "fields": { "name": "Dance" } },
   { "model": "school.schooldefaultsubjects", "pk": 30, "fields": { "name": "General Knowledge" } },
-  { "model": "school.schooldefaultsubjects", "pk": 31, "fields": { "name": "Value Education" } }
+  { "model": "school.schooldefaultsubjects", "pk": 31, "fields": { "name": "Value Education" } },
+  { "model": "school.schooldefaultsubjects", "pk": 32, "fields": { "name": "Physical Science" } }
 ]

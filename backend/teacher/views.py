@@ -47,6 +47,12 @@ class TeacherActionView(APIView):
             return TeacherService().edit_teacher(request)
         return Response({"error": "Invalid PUT action"}, status=status.HTTP_400_BAD_REQUEST)
     
+    def patch(self, request, action=None):
+
+        if action == "reactivateTeacherById":
+            return TeacherService().reactivate_teacher(request)
+        return Response({"error": "Invalid PATCH action"}, status=status.HTTP_400_BAD_REQUEST)
+    
     def delete(self, request, action=None):
 
         if action == "deleteTeacherById":
