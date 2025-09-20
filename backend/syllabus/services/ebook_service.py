@@ -3,9 +3,11 @@
 import logging
 from io import BytesIO
 from datetime import datetime
+
 from django.db import transaction
 from collections import OrderedDict
 from django.utils import timezone
+from django.conf import settings
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -20,10 +22,11 @@ from school.models import (
     SchoolSyllabusEbooks,
     SchoolBoardMapping
 )
-from syllabus.models import SchoolChapter,SchoolSubTopic, SchoolPrerequisite
-from classes.models import SchoolClass
+from syllabus.models import SchoolChapter, SchoolClassPrerequisite, SchoolClassSubTopic, SchoolSubTopic, SchoolPrerequisite
+from classes.models import SchoolClass, SchoolSection
 from core import s3_client
 from core.lang_chain.lang_chain import LangChainService
+from core.common_modules.common_functions import CommonFunctions
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +44,7 @@ class EbookService:
             subject_id = request.data.get('subject_id')
             chapter_number = request.data.get('chapter_number')
             syllabus_year = request.data.get('year')
+            apply_to_all_schools = str(request.data.get("apply_to_all_schools", False)).lower() in ["true", "1", "yes"]
 
             if not file:
                 logger.error("No file provided for upload.")
@@ -133,14 +137,21 @@ class EbookService:
                     if upload_type == 'chapter_wise':
                         ebook.chapter_number = int(chapter_number)
                         ebook.save()
-                    extract_status, pdf_text = self.extract_topics_and_prerequisites(BytesIO(file_bytes), ebook,
-                                                          previously_uploaded_ebook_id)
+                    extract_status, pdf_text = self.extract_topics_and_prerequisites(
+                        BytesIO(file_bytes), ebook,
+                        previously_uploaded_ebook_id,
+                        board_id=board_id, class_id=class_id,
+                        subject_id=subject_id, chapter_number=chapter_number,
+                        upload_type=upload_type,
+                        apply_to_all_schools=apply_to_all_schools
+                    )
                     pdf_text_file = BytesIO()
                     pdf_text_file.write(pdf_text.encode("utf-8"))
                     pdf_text_file.seek(0)
                     text_file_upload_status = s3_client.upload_file(pdf_text_file, f"{s3_key}.txt", file_type='text/plain')
                     if not text_file_upload_status:
                         logger.error("Failed to upload extracted text file to S3.")
+
                     logger.info("Uploaded extracted text file to S3 successfully.")
                     logger.info("eBook uploaded successfully with ID: %s", ebook.id)
                 return Response({"message": "eBook uploaded successfully"},
@@ -272,18 +283,26 @@ class EbookService:
         """Delete an eBook."""
         try:
             ebook_id = request.query_params.get("ebook_id")
+            delete_in_school_db = request.query_params.get("delete_in_school_db", "false").lower() in ["true", "1", "yes"]
+
             if not ebook_id:
                 return Response({"error": "eBook ID is required."},
                                 status=status.HTTP_400_BAD_REQUEST)
+            with transaction.atomic():
+                ebook = SchoolSyllabusEbooks.objects.get(id=ebook_id)
 
-            ebook = SchoolSyllabusEbooks.objects.get(id=ebook_id)
-            # try:
-            #     s3_client.delete_file(f"{ebook.file_path}.pdf")
-            #     s3_client.delete_file(f"{ebook.file_path}.txt")
-            # except Exception as e:
-            #     logger.error(f"Error deleting files from S3: {e}")
-            ebook.is_active = False
-            ebook.save()
+                ebook.is_active = False
+                ebook.save()
+
+                if delete_in_school_db:
+                    for database in settings.DATABASES:
+                        if database != 'default':
+                            try:
+                                SchoolChapter.objects.using(database).filter(ebook_id=ebook.id).delete()
+                                logger.info(f"Deleted syllabus data for ebook ID {ebook.id} from school DB {database}.")
+                            except Exception as e:
+                                logger.exception(f"Error deleting syllabus data from school DB {database}: {str(e)}")
+                                continue
 
             logger.info("eBook with ID %s deleted successfully.",ebook_id)
             return Response({"message": "eBook deleted successfully."}, status=status.HTTP_200_OK)
@@ -294,7 +313,10 @@ class EbookService:
             return Response({"error": "An error occurred while deleting the eBook."},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def extract_topics_and_prerequisites(self, pdf_file, ebook, previously_uploaded_ebook_id):
+    def extract_topics_and_prerequisites(self, pdf_file, ebook, previously_uploaded_ebook_id,
+            board_id=None, class_id=None, subject_id=None,
+            chapter_number=None, upload_type=None,
+            apply_to_all_schools=False):
         """Extract topics and prerequisites from the provided PDF file."""
 
         lang_chain_service = LangChainService()
@@ -322,6 +344,68 @@ class EbookService:
                         topic=prerequisite['topic'],
                         explanation=prerequisite['explanation']
                     )
+            if apply_to_all_schools:
+                for database in settings.DATABASES:
+                    if database != 'default':
+                        try:
+                            academic_year = CommonFunctions().get_latest_academic_year(database)
+                            if academic_year:
+                                filters = {
+                                    'academic_year': academic_year,
+                                    'school_board_id':board_id,
+                                    'class_number_id':class_id,
+                                    'subject_id':subject_id,
+                                }
+                                if upload_type == 'chapter_wise':
+                                    filters['chapter_number'] = int(chapter_number)
+                                SchoolChapter.objects.using(database).filter(
+                                    **filters
+                                ).delete()
+
+                                for chapter_item in chapters_obj:
+                                    school_class_obj = SchoolClass.objects.using(database).get(
+                                        class_number=ebook.class_number_id
+                                    )
+                                    school_section_objs = SchoolSection.objects.using(database).filter(
+                                        class_instance=school_class_obj,
+                                    )
+                                    school_chapter_obj = SchoolChapter.objects.using(database).create(
+                                        school_board_id=board_id,
+                                        academic_year=academic_year,
+                                        class_number=school_class_obj,
+                                        subject_id=subject_id,
+                                        chapter_number=chapter_item['chapter_number'],
+                                        chapter_name=chapter_item['chapter_name'],
+                                        ebook_id=ebook.id
+                                    )
+                                    for sub_topic in chapter_item['sub_topics']:
+                                        SchoolSubTopic.objects.using(database).create(
+                                            chapter=school_chapter_obj,
+                                            name=sub_topic
+                                        )
+                                        for school_section in school_section_objs:
+                                            SchoolClassSubTopic.objects.using(database).create(
+                                                chapter=school_chapter_obj,
+                                                name=sub_topic,
+                                                class_section=school_section
+                                            )
+                                    for prerequisite in chapter_item['pre_requisites']:
+                                        SchoolPrerequisite.objects.using(database).create(
+                                            chapter=school_chapter_obj,
+                                            topic=prerequisite['topic'],
+                                            explanation=prerequisite['explanation']
+                                        )
+                                        for school_section in school_section_objs:
+                                            SchoolClassPrerequisite.objects.using(database).create(
+                                                chapter=school_chapter_obj,
+                                                topic=prerequisite['topic'],
+                                                explanation=prerequisite['explanation'],
+                                                class_section=school_section
+                                            )
+                                logger.info(f"Syllabus data for ebook ID {ebook.id} copied to school DB {database} successfully.")
+                        except Exception as e:
+                            logger.exception(f"Error copying syllabus data to school DB {database}: {str(e)}")
+                            continue
         
         return True, pdf_text
     
