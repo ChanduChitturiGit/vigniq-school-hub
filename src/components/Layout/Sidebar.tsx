@@ -266,7 +266,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
           </div>
           {(!isCollapsed || window.innerWidth < 768) && (
             <div className="transition-opacity duration-500 ease-in-out w-[70%]">
-              <span className="text-xl font-bold text-white tracking-wide">VIGIUS</span>
+              <span className="text-xl font-bold text-white tracking-wide">VIGYS AI</span>
                <div className={`text-xs text-blue-100 mt-1 truncate `} title={schoolName}>
                   {schoolName || 'School Name here'}
                 </div>
