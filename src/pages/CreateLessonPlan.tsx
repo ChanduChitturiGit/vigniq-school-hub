@@ -482,7 +482,7 @@ const CreateLessonPlan: React.FC = () => {
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
                 <p className="text-lg font-medium text-gray-700">{className} - {section}</p>
                 <p className="text-base text-gray-600">Subject: {subject}</p>
-                <p className="text-base text-gray-600">Chapter {chapterId}: {chapterName}</p>
+                <p className="text-base text-gray-600">Chapter {chapterNumber}: {chapterName}</p>
               </div>
             </div>
 
