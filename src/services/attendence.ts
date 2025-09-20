@@ -36,3 +36,9 @@ export const unmarkAsHoiday = async (data: any): Promise<any> => {
   const response = await api.post<any>(baseurl+suburl+'/unmarkHoliday', data);
   return response.data;
 };
+
+//saveRemarks
+export const saveStudentRemarks = async (data: any): Promise<any> => {
+  const response = await api.post<any>(baseurl+suburl+'/saveRemarks', data);
+  return response.data;
+};
