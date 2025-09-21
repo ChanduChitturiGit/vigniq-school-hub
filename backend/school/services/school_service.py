@@ -347,7 +347,6 @@ class SchoolService:
 
                 teacher_count = Teacher.objects.using(school_db_name).filter(is_active=True).count()
                 student_count = Student.objects.using(school_db_name).filter(is_active=True).count()
-                print(teacher_count,student_count,school.name)
                 schools_data.append({
                     "school_id": school.id,
                     "school_name": school.name,
