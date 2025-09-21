@@ -27,7 +27,7 @@ from school.models import School, SchoolDbMetadata, SchoolBoard, SchoolBoardMapp
 
 from academics.models import SchoolAcademicYear
 
-from syllabus.services.ebook_service import EbookService
+from syllabus.services.ebook_service import EbookService, SchoolChapter
 
 from subscriptions.models import Subscription,Transaction,PackageVersion
 
@@ -234,15 +234,41 @@ class SchoolService:
                 school.email = data.get('school_email', school.email)
                 school.save()
 
-                # Update boards if provided
-                board_ids = data.get('boards')
+                board_ids = [i['id'] for i in data.get('boards', [])]
                 if board_ids is not None:
+                    school_metadata = SchoolDbMetadata.objects.get(school=school)
+                    academic_year = CommonFunctions().get_latest_academic_year(school_metadata.db_name)
+
                     boards = SchoolBoard.objects.filter(id__in=board_ids)
-                    # Remove old mappings
-                    SchoolBoardMapping.objects.filter(school=school).exclude(board__in=boards).delete()
-                    # Add new mappings
+
+                    removed_board_mappings = SchoolBoardMapping.objects.filter(
+                        school=school
+                    ).exclude(
+                        board__in=boards
+                    )
+                    for mapping in removed_board_mappings:
+                        try:
+                            logger.info(f"Deleting chapters for board {mapping.board_id} in database {school_metadata.db_name}")
+                            SchoolChapter.objects.using(school_metadata.db_name).filter(
+                                school_board_id=mapping.board_id,
+                                academic_year=academic_year,
+                            ).delete()
+                            logger.info(f"Deleted chapters for board {mapping.board_id} in database {school_metadata.db_name}")
+                        except Exception as e:
+                            logger.error(f"Error while deleting chapters for board {mapping.board_id} in database {school_metadata.db_name}: {e}")
+                    removed_board_mappings.delete()
                     for board in boards:
-                        SchoolBoardMapping.objects.get_or_create(school=school, board=board)
+                        school_board_mapping, is_created = SchoolBoardMapping.objects.get_or_create(
+                            school=school, board=board
+                        )
+                        if is_created:
+                            try:
+                                EbookService().copy_syllabus_data_to_school_db(
+                                    school_metadata, academic_year.id, boards=[school_board_mapping]
+                                )
+                            except Exception as e:
+                                logger.error(f"Error while copying chapters for board {board.id} to database {school_metadata.db_name}: {e}")
+
 
                 return Response({"message": "School updated successfully."}, status=status.HTTP_200_OK)
         except School.DoesNotExist:
@@ -321,7 +347,7 @@ class SchoolService:
 
                 teacher_count = Teacher.objects.using(school_db_name).filter(is_active=True).count()
                 student_count = Student.objects.using(school_db_name).filter(is_active=True).count()
-
+                print(teacher_count,student_count,school.name)
                 schools_data.append({
                     "school_id": school.id,
                     "school_name": school.name,
@@ -363,7 +389,7 @@ class SchoolService:
                 "school_admin_email": school.school_admin.email if school.school_admin else None,
                 "school_admin_full_name" : f"{school.school_admin.first_name} {school.school_admin.last_name}" if school.school_admin else None,
                 "school_admin_phone_number": school.school_admin.phone_number if school.school_admin else None,
-                "boards": [{"id": board.id, "name": board.board.board_name} for board in boards],
+                "boards": [{"id": board.board_id, "name": board.board.board_name} for board in boards],
             }
             return Response({"school": school_data}, status=status.HTTP_200_OK)
         except School.DoesNotExist:

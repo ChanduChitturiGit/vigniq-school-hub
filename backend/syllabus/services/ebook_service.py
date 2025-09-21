@@ -409,12 +409,15 @@ class EbookService:
         
         return True, pdf_text
     
-    def copy_syllabus_data_to_school_db(self,school_db_metadata,academic_year_id):
+    def copy_syllabus_data_to_school_db(self,school_db_metadata,academic_year_id,boards = None):
         try:
             school_db_name = school_db_metadata.db_name
             
             with transaction.atomic(using=school_db_name):
-                boards = SchoolBoardMapping.objects.filter(school_id = school_db_metadata.school_id)
+                if not boards:
+                    boards = SchoolBoardMapping.objects.filter(
+                        school_id=school_db_metadata.school_id
+                    )
                 for board in boards:
                     ebooks = SchoolSyllabusEbooks.objects.filter(
                         board_id=board.board_id, is_active=True
