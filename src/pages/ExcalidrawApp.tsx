@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom';
-import { Excalidraw } from "@excalidraw/excalidraw";
+import { Excalidraw, exportToCanvas } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
 import { ArrowLeft, List } from "lucide-react";
 import { Button } from '../components/ui/button';
@@ -8,6 +8,7 @@ import { environment } from '@/environment';
 import { useSnackbar } from '../components/snackbar/SnackbarContext';
 import { getLessonPlanDataByDay, getWhiteboardData } from '../services/grades';
 import styles from "./ExcalidrawApp.module.css";
+import { jsPDF } from "jspdf";
 
 
 export default function ExcalidrawApp() {
@@ -39,6 +40,8 @@ export default function ExcalidrawApp() {
   const lastSentRef = useRef<number>(0); // timestamp of last send
   const [savedData, setSavedData] = useState<any>(null);
   const [sessionToken, setSessionToken] = useState<string>('');
+  const excalidrawRef = useRef<any>(null);
+  const excalidrawApiRef = useRef<any>(null);
 
   //getWhiteboardData
   const getWhiteboardSavedData = async (session_token: any = '') => {
@@ -57,8 +60,25 @@ export default function ExcalidrawApp() {
 
       };
       const response = await getWhiteboardData(data);
+      console.log('response from getWhiteboardData api', response);
       if (response && response.data) {
-        setSavedData(response.data);
+        console.log("Whiteboard Data:", response.data, response.data[0]?.data);
+        // setSavedData(response.data[0].data);
+        const scene = response.data[response.data.length-1]?.data;
+
+        if (scene && excalidrawApiRef.current) {
+          const safeAppState = {
+            ...scene.appState,
+            collaborators: new Map(), 
+          };
+
+          excalidrawApiRef.current.updateScene({
+            elements: scene.elements || [],
+            appState: safeAppState,
+            files: scene.files || {},
+          });
+        }
+
       } else {
         showSnackbar({
           title: 'Error',
@@ -238,6 +258,30 @@ export default function ExcalidrawApp() {
   // }, [savedData]);
 
 
+  const handleDownloadPDF = async () => {
+    if (!excalidrawApiRef.current) return;
+
+    const elements = excalidrawApiRef.current.getSceneElements();
+    const appState = excalidrawApiRef.current.getAppState();
+
+    // Convert drawing to canvas
+    const canvas = await exportToCanvas({
+      elements,
+      appState,
+      files: excalidrawApiRef.current.getFiles(),
+    });
+
+    const imageData = canvas.toDataURL("image/png");
+
+    // Create PDF
+    const pdf = new jsPDF("l", "pt", [canvas.width, canvas.height]);
+    pdf.addImage(imageData, "PNG", 0, 0, canvas.width, canvas.height);
+    pdf.save("drawing.pdf");
+    exitFullScreen();
+    setIsFullscreen(false);
+  };
+
+
 
   // return (
   //   <div ref={containerRef} className="w-screen h-screen relative">
@@ -337,7 +381,7 @@ export default function ExcalidrawApp() {
 
   return (
     <>
-      <div ref={containerRef} style={{ width: "100vw", height: "100vh" }}
+      <div style={{ width: "100vw", height: "100vh" }}
         className={`excalidraw ${styles.excalidrawFix}`}>
         {/* 🔹 Custom Back Button */}
         {/* <button
@@ -374,7 +418,7 @@ export default function ExcalidrawApp() {
         }}
       /> */}
         <Excalidraw
-
+          excalidrawAPI={(api) => (excalidrawApiRef.current = api)}
           theme="light"
           UIOptions={{
             canvasActions: {
@@ -382,14 +426,20 @@ export default function ExcalidrawApp() {
               saveAsImage: true, // hides "Save As image"
               saveToActiveFile: false, // hides "Save"
               toggleTheme: false, // hides dark mode toggle
-              export: false,  
+              export: false,
               clearCanvas: false,
             },
           }}
           onChange={handleSceneChange}
-          initialData={savedData}
+          // initialData={savedData}
           renderTopRightUI={() => (
             <div style={{ display: "flex", gap: "8px" }}>
+              <Button
+                onClick={handleDownloadPDF}
+                className="px-3 py-1 bg-blue-600 text-white rounded-md "
+              >
+                Download as PDF
+              </Button>
               <Button
                 variant="outline"
                 onClick={handleBack}
