@@ -1,0 +1,7 @@
+/* index.css */
+.excalidraw .Dialog,
+.excalidraw .dropdown-menu,
+.excalidraw .Popover,
+.excalidraw .Portal {
+  z-index: 99999 !important;
+}
