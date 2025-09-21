@@ -296,7 +296,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                           toggleMenu(item.key);
                         }
                       }}
-                      className={`w-full flex items-center justify-between gap-3 ${isCollapsed ? 'px-1' : 'px-4'} py-3 rounded-lg transition-all duration-200 ease-in-out ${isDropdownHighlighted
+                      className={`w-full flex items-center justify-between gap-3 ${isCollapsed ? 'px-1' : 'px-2'} py-3 rounded-lg transition-all duration-200 ease-in-out ${isDropdownHighlighted
                         ? 'bg-[hsl(var(--sidebar-active))] text-white shadow-sm'
                         : 'text-white hover:bg-[hsl(var(--sidebar-hover))]'
                         }`}
@@ -314,7 +314,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                       )}
                     </button>
                     {isExpanded && (!isCollapsed || window.innerWidth < 768) && item.subItems && (
-                      <ul className="ml-8 mt-1 space-y-1 transition-all duration-300 ease-in-out">
+                      <ul className="ml-4 mt-1 space-y-1 transition-all duration-300 ease-in-out">
                         {item.subItems.map((subItem) => {
                           const SubIcon = subItem.icon;
                           return (
