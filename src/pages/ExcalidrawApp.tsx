@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { Excalidraw, exportToCanvas } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
-import { ArrowLeft, List } from "lucide-react";
+import { ArrowLeft, ArrowRight, List } from "lucide-react";
 import { Button } from '../components/ui/button';
 import { environment } from '@/environment';
 import { useSnackbar } from '../components/snackbar/SnackbarContext';
@@ -64,12 +64,12 @@ export default function ExcalidrawApp() {
       if (response && response.data) {
         console.log("Whiteboard Data:", response.data, response.data[0]?.data);
         // setSavedData(response.data[0].data);
-        const scene = response.data[response.data.length-1]?.data;
+        const scene = response.data[response.data.length - 1]?.data;
 
         if (scene && excalidrawApiRef.current) {
           const safeAppState = {
             ...scene.appState,
-            collaborators: new Map(), 
+            collaborators: new Map(),
           };
 
           excalidrawApiRef.current.updateScene({
@@ -435,6 +435,13 @@ export default function ExcalidrawApp() {
           renderTopRightUI={() => (
             <div style={{ display: "flex", gap: "8px" }}>
               <Button
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="excalidraw-Button rounded-lg px-3 py-1 flex items-center gap-1"
+              >
+                <List className="w-4 h-4" />
+                Lesson Plan
+              </Button>
+              <Button
                 onClick={handleDownloadPDF}
                 className="px-3 py-1 bg-blue-600 text-white rounded-md "
               >
@@ -449,10 +456,80 @@ export default function ExcalidrawApp() {
                 <span className="text-sm font-medium">Back</span>
               </Button>
             </div>
+
           )}
 
         />
 
+
+
+
+        {/* Overlay Left Sidebar */}
+        <div
+          className={`absolute right-0 top-0 h-full z-30 bg-background/95 backdrop-blur-sm border-l border-border shadow-lg flex flex-col transition-transform duration-300 ease-in-out 
+${isSidebarOpen ? "translate-x-0 w-80" : "translate-x-full w-0"}
+
+            }`}
+        >
+          {/* Header */}
+          <div className="p-4 border-b border-border">
+            <div className="w-full flex items-center justify-start my-3">
+              <button
+                onClick={() => setIsSidebarOpen(false)}
+                className="flex items-center gap-2 text-primary hover:text-primary/80"
+              >
+                <span className="text-sm font-medium">Close</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-foreground">
+                Chapter {chapterId}: {chapterName}
+              </h1>
+              <p className="text-sm text-primary font-medium">
+                Day {lessonData.day} - Teaching Mode
+              </p>
+            </div>
+          </div>
+
+          {/* Lesson Activities */}
+          <div className="flex-1 overflow-y-auto p-4">
+            <h2 className="text-lg font-semibold text-foreground mb-4">
+              Lesson Activities
+            </h2>
+            <div className="space-y-3">
+              {lessonData.topics.map((activity, index) => (
+                <div
+                  key={activity.topic_id}
+                  className={`cursor-pointer rounded-lg border p-4 transition-colors ${currentActivity === activity.topic_id
+                    ? "border-primary bg-primary/5"
+                    : "hover:bg-muted/50"
+                    }`}
+                  onClick={() => setCurrentActivity(activity.topic_id)}
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${currentActivity === activity.topic_id
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground"
+                        }`}
+                    >
+                      {index + 1}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground text-sm mb-1">
+                        {activity.title}
+                      </h3>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        {activity.summary}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </>
   );
