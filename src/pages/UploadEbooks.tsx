@@ -36,7 +36,8 @@ const UploadEbooks: React.FC = () => {
     chapter: '',
     yearString: '',
     year: null,
-    inputKey: Date.now()
+    inputKey: Date.now(),
+    apply_to_all_schools: false
   });
   const [contentPdf, setContentPdf] = useState<File | null>(null);
   const [contentPdfProgress, setContentPdfProgress] = useState(0);
@@ -313,7 +314,8 @@ const UploadEbooks: React.FC = () => {
             chapter: '',
             yearString: '',
             year: null,
-            inputKey: Date.now()
+            inputKey: Date.now(),
+            apply_to_all_schools: false
           });
           setChapterStatus(false);
         } else {
@@ -388,7 +390,8 @@ const UploadEbooks: React.FC = () => {
       chapter: '',
       yearString: '',
       year: null,
-      inputKey: Date.now()
+      inputKey: Date.now(),
+      apply_to_all_schools: false
     });
     setContentPdf(null);
     setContentPdfProgress(0);
@@ -713,6 +716,32 @@ const UploadEbooks: React.FC = () => {
                   </>
                 )}
 
+                {/* check box */}
+                <div>
+                    <input
+                      type="checkbox"
+                      id="sameAddress"
+                      checked={formData.apply_to_all_schools}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFormData(prev => ({
+                            ...prev,
+                            apply_to_all_schools: true
+                          }));
+                        } else {
+                          setFormData(prev => ({
+                            ...prev,
+                            apply_to_all_schools: false
+                          }));
+                        }
+                      }}
+                      className="mr-2"
+                    />
+                    <label htmlFor="sameAddress" className="text-sm text-gray-700">
+                      Upload to all schools
+                    </label>
+                </div>
+
                 {/* Action Buttons */}
                 <div className="flex justify-end space-x-4 pt-6">
                   <Button
@@ -745,7 +774,7 @@ const UploadEbooks: React.FC = () => {
             </CardContent>
           </Card>
         </div>
-      </MainLayout>
+      </MainLayout >
       {
         isUploading && (
           <SpinnerOverlay />
