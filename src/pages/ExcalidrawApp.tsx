@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom';
-import { Excalidraw, exportToCanvas } from "@excalidraw/excalidraw";
+import { Excalidraw, exportToCanvas, MainMenu } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
-import { ArrowLeft, ArrowRight, List } from "lucide-react";
+import { ArrowLeft, ArrowRight, List, Download } from "lucide-react";
 import { Button } from '../components/ui/button';
 import { environment } from '@/environment';
 import { useSnackbar } from '../components/snackbar/SnackbarContext';
@@ -61,9 +61,7 @@ export default function ExcalidrawApp() {
 
       };
       const response = await getWhiteboardData(data);
-      console.log('response from getWhiteboardData api', response);
       if (response && response.data) {
-        console.log("Whiteboard Data:", response.data, response.data[0]?.data);
         // setSavedData(response.data[0].data);
         const scene = response.data[response.data.length - 1]?.data;
 
@@ -234,7 +232,6 @@ export default function ExcalidrawApp() {
           data: scene,
         })
       );
-      console.log("📤 Scene sent:", scene);
     }
   };
 
@@ -467,12 +464,12 @@ export default function ExcalidrawApp() {
                 <List className="w-4 h-4" />
                 Lesson Plan
               </Button>
-              <Button
+              {/* <Button
                 onClick={handleDownloadPDF}
                 className="px-3 py-1 bg-blue-600 text-white rounded-md "
               >
                 Download as PDF
-              </Button>
+              </Button> */}
               <Button
                 variant="outline"
                 onClick={handleBack}
@@ -485,7 +482,15 @@ export default function ExcalidrawApp() {
 
           )}
 
-        />
+        >
+          <MainMenu>
+            <MainMenu.DefaultItems.SaveAsImage />
+            <MainMenu.Item onSelect={handleDownloadPDF}>
+              <Download className="w-4 h-4" /> Download as PDF
+            </MainMenu.Item>
+            <MainMenu.DefaultItems.ChangeCanvasBackground />
+          </MainMenu>
+        </Excalidraw>
 
 
 
