@@ -42,6 +42,7 @@ export default function ExcalidrawApp() {
   const [sessionToken, setSessionToken] = useState<string>('');
   const excalidrawRef = useRef<any>(null);
   const excalidrawApiRef = useRef<any>(null);
+  const [lessonData, setLessonData] = useState<any>([]);
 
   //getWhiteboardData
   const getWhiteboardSavedData = async (session_token: any = '') => {
@@ -96,6 +97,39 @@ export default function ExcalidrawApp() {
   }
 
 
+  const getLessonData = async () => {
+      try {
+        const data = {
+          chapter_id: chapterId,
+          lesson_plan_day_id: day,
+          subject: subject,
+          class: className,
+          section: section,
+          school_id: schoolId,
+          board_id: boardId,
+          subject_id: subjectId,
+          class_id: classId
+        };
+        const response = await getLessonPlanDataByDay(data);
+        if (response && response.data) {
+          setLessonData(response.data);
+        } else {
+          showSnackbar({
+            title: 'Error',
+            description: response.message || 'Failed to fetch lesson plan data.',
+            status: 'error'
+          });
+        }
+      } catch (error) {
+        showSnackbar({
+          title: 'Error',
+          description: 'An unexpected error occurred while fetching lesson plan data.',
+          status: 'error'
+        });
+      }
+    }
+
+
   const goFullScreen = () => {
     if (document.documentElement.requestFullscreen) {
       document.documentElement.requestFullscreen();
@@ -122,6 +156,7 @@ export default function ExcalidrawApp() {
     const sessionId = sessionStorage.getItem('sessionId');
     setSessionToken(sessionId);
     getWhiteboardSavedData(sessionId);
+    getLessonData();
 
     const handleChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
@@ -173,16 +208,7 @@ export default function ExcalidrawApp() {
     navigate(-1); // go back
   };
 
-  // sample lesson data
-  const lessonData = {
-    day: 1,
-    topics: [
-      { topic_id: 1, title: "Introduction", summary: "Overview of concepts" },
-      { topic_id: 2, title: "Examples", summary: "Practice problems" },
-    ],
-  };
-  const chapterIds = 1;
-  const chapterNames = "Real Numbers";
+
   const [currentActivity, setCurrentActivity] = useState<number | null>(null);
 
   const handleBackNavigation = () => {
@@ -484,7 +510,7 @@ ${isSidebarOpen ? "translate-x-0 w-80" : "translate-x-full w-0"}
             </div>
             <div>
               <h1 className="text-lg font-bold text-foreground">
-                Chapter {chapterId}: {chapterName}
+                Chapter {chapterNumber}: {chapterName}
               </h1>
               <p className="text-sm text-primary font-medium">
                 Day {lessonData.day} - Teaching Mode
@@ -498,7 +524,7 @@ ${isSidebarOpen ? "translate-x-0 w-80" : "translate-x-full w-0"}
               Lesson Activities
             </h2>
             <div className="space-y-3">
-              {lessonData.topics.map((activity, index) => (
+              {lessonData && lessonData.topics && lessonData.topics.map((activity, index) => (
                 <div
                   key={activity.topic_id}
                   className={`cursor-pointer rounded-lg border p-4 transition-colors ${currentActivity === activity.topic_id
