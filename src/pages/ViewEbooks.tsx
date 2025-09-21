@@ -88,6 +88,7 @@ const ViewEbooks: React.FC = () => {
   const [isScrolling, setIsScrolling] = useState(true);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
+  const [isDeleteSchools, setIsDeleteSchools] = useState(false);
 
 
   // Sample data
@@ -118,7 +119,7 @@ const ViewEbooks: React.FC = () => {
     }
   }
 
-  const ebookData = async (data, condition = false,start : Number = 0) => {
+  const ebookData = async (data, condition = false, start: Number = 0) => {
     if (!hasMore && !condition) return;
     try {
       setLoader(true);
@@ -155,10 +156,12 @@ const ViewEbooks: React.FC = () => {
 
   const deleteEbook = async (ebookId: string) => {
     try {
-      const response = await deleteEbookById({ ebook_id: ebookId });
+      const payload = { ebook_id: ebookId, delete_in_school_db : isDeleteSchools };
+      const response = await deleteEbookById(payload);
       if (response && response.message) {
         setEbooks(prev => prev.filter(ebook => ebook.id !== ebookId));
         // setFilteredEbooks(prev => prev.filter(ebook => ebook.id !== ebookId));
+        setIsDeleteSchools(false);
         showSnackbar({
           title: "Success",
           description: "E-book deleted successfully",
@@ -219,8 +222,8 @@ const ViewEbooks: React.FC = () => {
   useEffect(() => {
     setHasMore(true);
     setPage(1);
-    ebookData({ ...payload, page : 1 }, true,1);
-    
+    ebookData({ ...payload, page: 1 }, true, 1);
+
   }, [payload.board_id, payload.class_id, payload.subject_id, payload.year]);
 
   const getBoardId = (data: string) => {
@@ -501,8 +504,30 @@ const ViewEbooks: React.FC = () => {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Delete E-Book</AlertDialogTitle>
                               <AlertDialogDescription className='text-gray-700'>
-                                <p>Are you sure you want to delete E-Book <span className='font-bold'>{ebook.ebook_name}</span>?</p>
-                                This action cannot be undone
+                                <div className='flex flex-col space-y-4'>
+                                  <div>
+                                    <p>Are you sure you want to delete E-Book <span className='font-bold'>{ebook.ebook_name}</span>?</p>
+                                    This action cannot be undone
+                                  </div>
+                                  <div>
+                                    <input
+                                      type="checkbox"
+                                      id="sameAddress"
+                                      checked={isDeleteSchools}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setIsDeleteSchools(true);
+                                        } else {
+                                          setIsDeleteSchools(false);
+                                        }
+                                      }}
+                                      className="mr-2"
+                                    />
+                                    <label htmlFor="sameAddress" className="text-sm text-gray-700">
+                                      Delete for all Schools
+                                    </label>
+                                  </div>
+                                </div>
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -535,7 +560,7 @@ const ViewEbooks: React.FC = () => {
           </div>
         )}
       </div>
-    </MainLayout>
+    </MainLayout >
   );
 };
 
