@@ -49,6 +49,7 @@ import Exams from './pages/Exams';
 import ChapterDetails from './pages/ChapterDetails';
 import ComingSoon from './pages/ComingSoon';
 import SupportDetails from './pages/SupportRequest';
+import ExcalidrawApp from './pages/ExcalidrawApp';
 
 function App() {
   return (
@@ -223,7 +224,10 @@ function App() {
           {/* <Route path="/grades/lesson-plan/view/:chapterId/:lessonPlanId" element={<ProtectedRoute allowedRoles={['teacher']}><ViewLessonPlan /></ProtectedRoute>} /> */}
           <Route path="/grades/lesson-plan/customize/:chapterId" element={<ProtectedRoute allowedRoles={['teacher']}><CustomizeLessonPlan /></ProtectedRoute>} />
           <Route path="/grades/lesson-plan/day/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}><DayLessonPlan /></ProtectedRoute>} />
-          <Route path="/grades/lesson-plan/whiteboard/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}><WhiteboardTeaching /></ProtectedRoute>} />
+          <Route path="/grades/lesson-plan/whiteboard/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}>
+            {/* <WhiteboardTeaching /> */}
+            <ExcalidrawApp/>
+          </ProtectedRoute>} />
           <Route path="/grades/lesson-plan/ai-chat/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}><AIChatLessonPlan /></ProtectedRoute>} />
           <Route path="/grades/exams/:subjectId" element={<ProtectedRoute><Exams /></ProtectedRoute>} />
           <Route path="/grades/exams/create-exam/:subjectId" element={<ProtectedRoute><CreateExam /></ProtectedRoute>} />
