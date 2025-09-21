@@ -27,7 +27,7 @@ from school.models import School, SchoolDbMetadata, SchoolBoard, SchoolBoardMapp
 
 from academics.models import SchoolAcademicYear
 
-from syllabus.services.ebook_service import EbookService
+from syllabus.services.ebook_service import EbookService, SchoolChapter
 
 from subscriptions.models import Subscription,Transaction,PackageVersion
 
@@ -223,6 +223,9 @@ class SchoolService:
             with transaction.atomic():
                 data = request.data
                 school_id = data.get('school_id')
+                if not school_id:
+                    return Response({"error": "school_id is required."},
+                                    status=status.HTTP_400_BAD_REQUEST)
                 school = School.objects.get(pk=school_id)
 
                 school.name = data.get('school_name', school.name)
@@ -231,15 +234,41 @@ class SchoolService:
                 school.email = data.get('school_email', school.email)
                 school.save()
 
-                # Update boards if provided
-                board_ids = data.get('boards')
+                board_ids = [i['id'] for i in data.get('boards', [])]
                 if board_ids is not None:
+                    school_metadata = SchoolDbMetadata.objects.get(school=school)
+                    academic_year = CommonFunctions().get_latest_academic_year(school_metadata.db_name)
+
                     boards = SchoolBoard.objects.filter(id__in=board_ids)
-                    # Remove old mappings
-                    SchoolBoardMapping.objects.filter(school=school).exclude(board__in=boards).delete()
-                    # Add new mappings
+
+                    removed_board_mappings = SchoolBoardMapping.objects.filter(
+                        school=school
+                    ).exclude(
+                        board__in=boards
+                    )
+                    for mapping in removed_board_mappings:
+                        try:
+                            logger.info(f"Deleting chapters for board {mapping.board_id} in database {school_metadata.db_name}")
+                            SchoolChapter.objects.using(school_metadata.db_name).filter(
+                                school_board_id=mapping.board_id,
+                                academic_year=academic_year,
+                            ).delete()
+                            logger.info(f"Deleted chapters for board {mapping.board_id} in database {school_metadata.db_name}")
+                        except Exception as e:
+                            logger.error(f"Error while deleting chapters for board {mapping.board_id} in database {school_metadata.db_name}: {e}")
+                    removed_board_mappings.delete()
                     for board in boards:
-                        SchoolBoardMapping.objects.get_or_create(school=school, board=board)
+                        school_board_mapping, is_created = SchoolBoardMapping.objects.get_or_create(
+                            school=school, board=board
+                        )
+                        if is_created:
+                            try:
+                                EbookService().copy_syllabus_data_to_school_db(
+                                    school_metadata, academic_year.id, boards=[school_board_mapping]
+                                )
+                            except Exception as e:
+                                logger.error(f"Error while copying chapters for board {board.id} to database {school_metadata.db_name}: {e}")
+
 
                 return Response({"message": "School updated successfully."}, status=status.HTTP_200_OK)
         except School.DoesNotExist:
@@ -248,25 +277,74 @@ class SchoolService:
         except Exception as e:
             logger.error("Error while editing school.")
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def deactivate_school(self, request):
+        """
+        Delete an existing school.
+        Args:
+            request: The HTTP request containing the school ID.
+        Returns:
+            Response: A response indicating success or failure.
+        """
+        try:
+            with transaction.atomic():
+                data = request.data
+                school_id = data.get('school_id')
+                school = School.objects.get(pk=school_id)
+                school.is_active = False
+                school.save()
+
+                return Response({"message": "School deleted successfully."}, status=status.HTTP_200_OK)
+        except School.DoesNotExist:
+            logger.error(f"School with id {school_id} does not exist.")
+            return Response({"error": "School not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error("Error while deleting school.")
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def reactivate_school(self, request):
+        """
+        Reactivate an existing school.
+        Args:
+            request: The HTTP request containing the school ID.
+        Returns:
+            Response: A response indicating success or failure.
+        """
+        try:
+            with transaction.atomic():
+                data = request.data
+                school_id = data.get('school_id')
+                school = School.objects.get(pk=school_id)
+                school.is_active = True
+                school.save()
+
+                return Response({"message": "School reactivated successfully."}, status=status.HTTP_200_OK)
+        except School.DoesNotExist:
+            logger.error(f"School with id {school_id} does not exist.")
+            return Response({"error": "School not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error("Error while reactivating school.")
+            return Response({"error": "Unable to reactivate school."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def get_schools(self, request):
         """
-        Get all available schools.
-        Args:
-            request: The HTTP request.
-        Returns:
-            Response: A response with the list of schools.
+        Get all available schools with teacher and student counts.
         """
         try:
-            schools = School.objects.all()
+            is_active = request.GET.get("is_active", "true").lower() in ["true", "1", "yes"]
+
+            schools = (
+                School.objects.filter(is_active=is_active)
+                .select_related("metadata", "school_admin")
+            )
+
             schools_data = []
             for school in schools:
-                school_db_metadata = SchoolDbMetadata.objects.filter(school=school).first()
-
-                if school_db_metadata:
-                    school_db_name = school_db_metadata.db_name
-                else:
+                if not school.metadata:
                     continue
+
+                school_db_name = school.metadata.db_name
+
                 teacher_count = Teacher.objects.using(school_db_name).filter(is_active=True).count()
                 student_count = Student.objects.using(school_db_name).filter(is_active=True).count()
                 schools_data.append({
@@ -278,10 +356,12 @@ class SchoolService:
                     "teacher_count": teacher_count,
                     "student_count": student_count,
                 })
+
             return Response({"schools": schools_data}, status=status.HTTP_200_OK)
+
         except Exception as e:
-            logger.error("Error while fetching schools.")
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.exception("Error while fetching schools. Error: %s", str(e))
+            return Response({"error": "Unable to fetch schools."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def get_school(self,request):
         """
@@ -308,7 +388,7 @@ class SchoolService:
                 "school_admin_email": school.school_admin.email if school.school_admin else None,
                 "school_admin_full_name" : f"{school.school_admin.first_name} {school.school_admin.last_name}" if school.school_admin else None,
                 "school_admin_phone_number": school.school_admin.phone_number if school.school_admin else None,
-                "boards": [{"id": board.id, "name": board.board.board_name} for board in boards],
+                "boards": [{"id": board.board_id, "name": board.board.board_name} for board in boards],
             }
             return Response({"school": school_data}, status=status.HTTP_200_OK)
         except School.DoesNotExist:

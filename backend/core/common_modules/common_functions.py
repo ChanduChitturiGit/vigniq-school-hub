@@ -5,6 +5,7 @@ import logging
 import PyPDF2
 
 from school.models import SchoolDbMetadata, SchoolBoard
+from academics.models import SchoolAcademicYear
 
 logger = logging.getLogger(__name__)
 
@@ -60,3 +61,14 @@ class CommonFunctions:
     def get_boards_dict(self):
         boards= dict(SchoolBoard.objects.all().values_list("id", "board_name"))
         return boards
+    
+    def get_latest_academic_year(self, school_db_name):
+        """Get the latest academic year for a given school ID."""
+        try:
+            if not school_db_name:
+                return None
+            latest_academic_year = SchoolAcademicYear.objects.using(school_db_name).all().order_by('-id').first()
+            return latest_academic_year
+        except Exception as e:
+            logger.error(f"Error retrieving latest academic year: {e}")
+            return None

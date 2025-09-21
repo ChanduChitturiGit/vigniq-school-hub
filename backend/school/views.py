@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from core.permissions import IsSuperAdminOrAdminOrTeacher
+from core.permissions import IsSuperAdminOrAdmin,IsSuperAdmin
 
 from school.services.school_service import SchoolService
 
@@ -21,7 +21,13 @@ class SchoolActionView(APIView):
     
     - PUT /school/edit/ - Edit an existing school (super admin only)  
     """
-    permission_classes = [IsAuthenticated, IsSuperAdminOrAdminOrTeacher]
+    
+    def get_permissions(self):
+        if self.kwargs.get('action') in ['create', 'reactivateSchoolById', 'deactivateSchoolById']:
+            return [IsSuperAdmin()]
+        elif self.kwargs.get('action') in ['updateSchoolById']:
+            return [IsSuperAdminOrAdmin()]
+        return [IsAuthenticated()]
 
     def get(self, request, action=None):
 
@@ -46,15 +52,19 @@ class SchoolActionView(APIView):
         return Response({"error": "Invalid POST action"}, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, action=None):
-        user = request.user
-        if user.role.id not in (1,2):
-            return Response({"error": "You do not have permission to edit a school."},
-                            status=status.HTTP_403_FORBIDDEN)
 
         if action == "updateSchoolById":
+            return SchoolService().edit_school(request)
+        elif action == "reactivateSchoolById":
+            return SchoolService().reactivate_school(request)
+        return Response({"error": "Invalid PUT action"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, action=None):
+
+        if action == "deactivateSchoolById":
             school_id = request.data.get('school_id')
             if not school_id:
                 return Response({"error": "school_id is required."},
                                 status=status.HTTP_400_BAD_REQUEST)
-            return SchoolService().edit_school(request)
-        return Response({"error": "Invalid PUT action"}, status=status.HTTP_400_BAD_REQUEST)
+            return SchoolService().deactivate_school(request)
+        return Response({"error": "Invalid DELETE action"}, status=status.HTTP_400_BAD_REQUEST)

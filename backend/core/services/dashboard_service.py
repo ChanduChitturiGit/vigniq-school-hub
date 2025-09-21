@@ -38,7 +38,7 @@ class DashboardService:
         if request.user.role_id == 1:
             total_schools = School.objects.filter(is_active=True).count()
             total_active_users = User.objects.filter(is_active=True).count()
-            total_ebooks = SchoolSyllabusEbooks.objects.count()
+            total_ebooks = SchoolSyllabusEbooks.objects.filter(is_active=True).count()
             return Response({
                 "data":{
                     "total_schools": total_schools,

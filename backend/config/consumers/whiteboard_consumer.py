@@ -40,8 +40,7 @@ class WhiteboardConsumer(AsyncWebsocketConsumer):
         key = f"whiteboard:{self.session_id}"
 
         # Push to Redis
-        # r.rpush(key, json.dumps(data['data']))
-        r.rpush(key, *[json.dumps(obj) for obj in data['data']])
+        r.rpush(key, json.dumps(data))
 
         if r.llen(key) >= 50:
             await self.flush_to_db()

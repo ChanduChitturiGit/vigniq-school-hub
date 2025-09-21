@@ -106,6 +106,12 @@ class AIChatView(APIView):
         if action == 'chatWithAssistant':
             return AiAssistantService(request).chat_with_assistant()
         return Response({"error": f"POST request not found for action: {action}"}, status=400)
+    
+    def delete(self, request, action=None):
+        """Handle DELETE requests for AI chat actions."""
+        if action == 'clearAssistantChat':
+            return AiAssistantService(request).clear_chat()
+        return Response({"error": f"DELETE request not found for action: {action}"}, status=400)
 
 class WhiteboardView(APIView):
     """View for managing whiteboard sessions."""
