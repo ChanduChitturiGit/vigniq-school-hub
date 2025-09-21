@@ -406,10 +406,10 @@ const UploadEbooks: React.FC = () => {
     <>
       <MainLayout ref={bottomRef} pageTitle="Upload E-books">
         <div className="p-6">
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900">Upload E-books</h1>
             <p className="text-gray-600 mt-2">Upload educational materials for students</p>
-          </div>
+          </div> */}
 
           <Card className="max-w-4xl mx-auto">
             <CardHeader>
