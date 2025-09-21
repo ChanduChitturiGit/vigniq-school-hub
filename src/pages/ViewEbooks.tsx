@@ -118,13 +118,13 @@ const ViewEbooks: React.FC = () => {
     }
   }
 
-  const ebookData = async (data, condition = false) => {
+  const ebookData = async (data, condition = false,start : Number = 0) => {
     if (!hasMore && !condition) return;
     try {
       setLoader(true);
       const response = await getEbookList(data);
       if (response && response.data && response.data.length > 0) {
-        if (page == 1) {
+        if (page == 1 || start == 1) {
           setEbooks(response.data);
           //setFilteredEbooks(response.data);
         }
@@ -219,7 +219,8 @@ const ViewEbooks: React.FC = () => {
   useEffect(() => {
     setHasMore(true);
     setPage(1);
-    ebookData({ ...payload, page }, true);
+    ebookData({ ...payload, page : 1 }, true,1);
+    
   }, [payload.board_id, payload.class_id, payload.subject_id, payload.year]);
 
   const getBoardId = (data: string) => {
@@ -367,10 +368,10 @@ const ViewEbooks: React.FC = () => {
   return (
     <MainLayout ref={scrollContainerRef} pageTitle="View E-books">
       <div className="p-6">
-        <div className="mb-6">
+        {/* <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">View E-books</h1>
           <p className="text-gray-600 mt-2">Browse and access available educational materials</p>
-        </div>
+        </div> */}
 
         {/* Filters Section */}
         <Card className="mb-6">
