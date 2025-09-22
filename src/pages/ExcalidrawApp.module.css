@@ -5,3 +5,22 @@
 .excalidraw .Portal {
   z-index: 99999 !important;
 }
+
+/* Hide the bottom-right help button in Excalidraw */
+.myExcalidrawWrapper :global(.layer-ui__wrapper__footer-right.zen-mode-transition) {
+  display: none !important;
+}
+
+.myExcalidrawWrapper [data-testid="toolbar-embeddable"] {
+  display: none !important;
+}
+
+/* Hide Mermaid to Excalidraw button */
+.myExcalidrawWrapper [data-testid="toolbar-mermaid"] {
+  display: none !important;
+}
+
+
+.myExcalidrawWrapper :global(.App-toolbar__extra-tools-dropdown > .Island > div) {
+  display: none !important;
+}

@@ -81,3 +81,10 @@
   background: #fff;
 }
 
+.excalidraw .sidebar-trigger {
+	display: none !important;
+}
+
+.excalidraw .App-footer button[aria-label="Help"] {
+  display: none !important;
+}

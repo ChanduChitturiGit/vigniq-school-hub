@@ -43,6 +43,7 @@ export default function ExcalidrawApp() {
   const excalidrawRef = useRef<any>(null);
   const excalidrawApiRef = useRef<any>(null);
   const [lessonData, setLessonData] = useState<any>([]);
+  const [expanded, setExpanded] = useState(false);
 
   //getWhiteboardData
   const getWhiteboardSavedData = async (session_token: any = '') => {
@@ -63,8 +64,7 @@ export default function ExcalidrawApp() {
       const response = await getWhiteboardData(data);
       if (response && response.data) {
         // setSavedData(response.data[0].data);
-        const scene = response.data[response.data.length - 1]?.data;
-
+        const scene = response.data.data;
         if (scene && excalidrawApiRef.current) {
           const safeAppState = {
             ...scene.appState,
@@ -274,6 +274,7 @@ export default function ExcalidrawApp() {
     return () => clearInterval(interval);
   }, []);
 
+
   // useEffect(() => {
   //   if (savedData && excalidrawRef.current) {
   //     excalidrawRef.current.updateScene(savedData);
@@ -405,7 +406,7 @@ export default function ExcalidrawApp() {
   return (
     <>
       <div style={{ width: "100vw", height: "100vh" }}
-        className={`excalidraw ${styles.excalidrawFix}`}>
+        className={`excalidraw ${styles.excalidrawFix} ${styles.myExcalidrawWrapper}`}>
         {/* 🔹 Custom Back Button */}
         {/* <button
         onClick={handleBack}
@@ -445,16 +446,23 @@ export default function ExcalidrawApp() {
           theme="light"
           UIOptions={{
             canvasActions: {
-              loadScene: false,   // hides "Open"
-              saveAsImage: true, // hides "Save As image"
-              saveToActiveFile: false, // hides "Save"
-              toggleTheme: false, // hides dark mode toggle
+              loadScene: false,
+              saveAsImage: true,
+              saveToActiveFile: false,
+              toggleTheme: false,
               export: false,
               clearCanvas: false,
             },
+            tools: {
+              image: false,
+            },
           }}
           onChange={handleSceneChange}
-          // initialData={savedData}
+          initialData={{
+            appState: {
+              activeTool: { type: "freedraw", locked: true },
+            },
+          }}
           renderTopRightUI={() => (
             <div style={{ display: "flex", gap: "8px" }}>
               <Button
