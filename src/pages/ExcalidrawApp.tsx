@@ -2,13 +2,14 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { Excalidraw, exportToCanvas, MainMenu } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
-import { ArrowLeft, ArrowRight, List, Download } from "lucide-react";
+import { ArrowLeft, ArrowRight, List, Download, ChevronLeft, ChevronRight, Minus, Plus, Trash2 } from "lucide-react";
 import { Button } from '../components/ui/button';
 import { environment } from '@/environment';
 import { useSnackbar } from '../components/snackbar/SnackbarContext';
 import { getLessonPlanDataByDay, getWhiteboardData } from '../services/grades';
 import styles from "./ExcalidrawApp.module.css";
 import { jsPDF } from "jspdf";
+
 
 
 export default function ExcalidrawApp() {
@@ -44,39 +45,44 @@ export default function ExcalidrawApp() {
   const excalidrawApiRef = useRef<any>(null);
   const [lessonData, setLessonData] = useState<any>([]);
   const [expanded, setExpanded] = useState(false);
+  const [currentActivity, setCurrentActivity] = useState<number | null>(null);
+  const [sceneData, setSceneData] = useState(null);
+  const wsRef = useRef<WebSocket | null>(null);
+
+  const [pages, setPages] = useState([[]]); // pages store elements
+  const [currentPage, setCurrentPage] = useState(0);
+
+  const [slides, setSlides] = useState<any>({});
 
   //getWhiteboardData
   const getWhiteboardSavedData = async (session_token: any = '') => {
     try {
       const data = {
-        // chapter_id: chapterId,
-        // lesson_plan_day_id: day,
-        // subject: subject,
-        // class: className,
-        // section: section,
         school_id: schoolId,
-        // board_id: boardId,
-        // subject_id: subjectId,
-        // class_id: classId,
         session_id: session_token != '' ? session_token : sessionToken
 
       };
       const response = await getWhiteboardData(data);
       if (response && response.data) {
-        // setSavedData(response.data[0].data);
-        const scene = response.data.data;
-        if (scene && excalidrawApiRef.current) {
+        const scene = response.data;
+        setSlides(scene);
+        const size = Object.keys(response.data).length;
+        setCurrentPage(response.data && size>0 ? size-1 : 0);
+        const currentScene = scene && scene[size-1] ? scene[size-1] : null;
+        if (currentScene && excalidrawApiRef.current) {
           const safeAppState = {
-            ...scene.appState,
+            ...currentScene.appState,
             collaborators: new Map(),
           };
 
           excalidrawApiRef.current.updateScene({
-            elements: scene.elements || [],
+            elements: currentScene.elements || [],
             appState: safeAppState,
-            files: scene.files || {},
+            files: currentScene.files || {},
           });
         }
+
+        // setPages([...(scene && Object.values(scene))]);
 
       } else {
         showSnackbar({
@@ -96,36 +102,36 @@ export default function ExcalidrawApp() {
 
 
   const getLessonData = async () => {
-      try {
-        const data = {
-          chapter_id: chapterId,
-          lesson_plan_day_id: day,
-          subject: subject,
-          class: className,
-          section: section,
-          school_id: schoolId,
-          board_id: boardId,
-          subject_id: subjectId,
-          class_id: classId
-        };
-        const response = await getLessonPlanDataByDay(data);
-        if (response && response.data) {
-          setLessonData(response.data);
-        } else {
-          showSnackbar({
-            title: 'Error',
-            description: response.message || 'Failed to fetch lesson plan data.',
-            status: 'error'
-          });
-        }
-      } catch (error) {
+    try {
+      const data = {
+        chapter_id: chapterId,
+        lesson_plan_day_id: day,
+        subject: subject,
+        class: className,
+        section: section,
+        school_id: schoolId,
+        board_id: boardId,
+        subject_id: subjectId,
+        class_id: classId
+      };
+      const response = await getLessonPlanDataByDay(data);
+      if (response && response.data) {
+        setLessonData(response.data);
+      } else {
         showSnackbar({
           title: 'Error',
-          description: 'An unexpected error occurred while fetching lesson plan data.',
+          description: response.message || 'Failed to fetch lesson plan data.',
           status: 'error'
         });
       }
+    } catch (error) {
+      showSnackbar({
+        title: 'Error',
+        description: 'An unexpected error occurred while fetching lesson plan data.',
+        status: 'error'
+      });
     }
+  }
 
 
   const goFullScreen = () => {
@@ -166,6 +172,7 @@ export default function ExcalidrawApp() {
 
 
     return () => {
+      sendScene();
       document.removeEventListener("fullscreenchange", handleChange);
       document.removeEventListener("webkitfullscreenchange", handleChange);
       document.removeEventListener("msfullscreenchange", handleChange);
@@ -207,16 +214,6 @@ export default function ExcalidrawApp() {
   };
 
 
-  const [currentActivity, setCurrentActivity] = useState<number | null>(null);
-
-  const handleBackNavigation = () => {
-    window.history.back();
-  };
-
-
-  const [sceneData, setSceneData] = useState(null);
-  const wsRef = useRef<WebSocket | null>(null);
-
   // WebSocket setup similar to your previous code
   useEffect(() => {
     wsRef.current = new WebSocket(`${baseurl}/ws/whiteboard/${sessionStorage.getItem('sessionId')}/?token=${sessionStorage.getItem('access_token')}&school_id=${userData.school_id}`);
@@ -224,13 +221,14 @@ export default function ExcalidrawApp() {
     wsRef.current.onclose = () => console.log('WebSocket disconnected');
   }, []);
 
-  const sendScene = (scene: any) => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+  const sendScene = (scene: any = []) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && Object.keys(slides).length > 0) {
       wsRef.current.send(
-        JSON.stringify({
-          type: "scene",
-          data: scene,
-        })
+        // JSON.stringify({
+        //   type: "scene",
+        //   data: scene,
+        // })
+        JSON.stringify(slides)
       );
     }
   };
@@ -260,6 +258,15 @@ export default function ExcalidrawApp() {
       lastSentRef.current = now;
       bufferRef.current = null; // reset after sending
     }
+
+    if (slides && currentPage !== null && slides[currentPage]) {
+      slides[currentPage] = sceneData;
+    } else {
+      setSlides((prev: any) => ({
+        ...prev,
+        [currentPage]: sceneData
+      }));
+    }
   };
 
   // 🔹 Safety interval: flush buffer every 5s if not already sent
@@ -274,173 +281,162 @@ export default function ExcalidrawApp() {
     return () => clearInterval(interval);
   }, []);
 
-
-  // useEffect(() => {
-  //   if (savedData && excalidrawRef.current) {
-  //     excalidrawRef.current.updateScene(savedData);
-  //   }
-  // }, [savedData]);
-
-
+  // Download as PDF
   const handleDownloadPDF = async () => {
     if (!excalidrawApiRef.current) return;
 
-    const elements = excalidrawApiRef.current.getSceneElements();
-    const appState = excalidrawApiRef.current.getAppState();
+    const pdf = new jsPDF("l", "pt"); // landscape, points
 
-    // Convert drawing to canvas
-    const canvas = await exportToCanvas({
-      elements,
-      appState,
-      files: excalidrawApiRef.current.getFiles(),
-    });
+    const slideEntries = Object.entries(slides);
 
-    const imageData = canvas.toDataURL("image/png");
+    for (let i = 0; i < slideEntries.length; i++) {
+      const [pageIndex, scene] = slideEntries[i];
 
-    // Create PDF
-    const pdf = new jsPDF("l", "pt", [canvas.width, canvas.height]);
-    pdf.addImage(imageData, "PNG", 0, 0, canvas.width, canvas.height);
-    pdf.save("drawing.pdf");
+      if (!scene) continue;
+
+      const safeAppState = {
+        ...scene.appState,
+        collaborators: new Map(),
+      };
+
+      // Render canvas for this slide
+      const canvas = await exportToCanvas({
+        elements: scene.elements || [],
+        appState: safeAppState,
+        files: scene.files || {},
+      });
+
+      const imageData = canvas.toDataURL("image/png");
+
+      // Resize PDF page to fit canvas
+      const pageWidth = canvas.width;
+      const pageHeight = canvas.height;
+
+      if (i === 0) {
+        // First page → set size
+        pdf.deletePage(1); // remove the auto-added blank page
+        pdf.addPage([pageWidth, pageHeight], "l");
+      } else {
+        // Add new page for each subsequent slide
+        pdf.addPage([pageWidth, pageHeight], "l");
+      }
+
+      pdf.setPage(i + 1);
+      pdf.addImage(imageData, "PNG", 0, 0, pageWidth, pageHeight);
+    }
+
+    pdf.save("slides.pdf");
     exitFullScreen();
     setIsFullscreen(false);
   };
 
 
 
-  // return (
-  //   <div ref={containerRef} className="w-screen h-screen relative">
-  //     {/* Excalidraw with custom toolbar */}
-  //     <Excalidraw
-  //       renderTopRightUI={() => (
-  //         <div className="flex gap-2">
-  //           {/* Back button */}
-  //           <button
-  //             onClick={handleBackNavigation}
-  //             className="excalidraw-button rounded-lg px-3 py-1"
-  //           >
-  //             ⬅ Back
-  //           </button>
+  // Save current scene before switching
+  const saveCurrentPage = () => {
+    if (excalidrawRef.current) {
+      const scene = excalidrawRef.current.getSceneElements();
+      const appState = excalidrawRef.current.getAppState();
+      setPages(prev =>
+        prev.map((p, i) =>
+          i === currentPage ? { ...p, elements: scene, appState } : p
+        )
+      );
+    }
+  };
 
-  //           {/* Sidebar toggle button */}
-  //           <button
-  //             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-  //             className="excalidraw-button rounded-lg px-3 py-1 flex items-center gap-1"
-  //           >
-  //             <List className="w-4 h-4" />
-  //             Lesson Plan
-  //           </button>
-  //         </div>
-  //       )}
-  //     />
+  //setData
+  const setSlideData = (pageIndex: number) => {
+    const scene = slides[pageIndex];
+    if (scene && excalidrawApiRef.current) {
+      const safeAppState = {
+        ...scene.appState,
+        collaborators: new Map(),
+      };
 
-  //     {/* Overlay Left Sidebar */}
-  //     <div
-  //       className={`absolute left-0 top-0 h-full z-30 bg-background/95 backdrop-blur-sm border-r border-border shadow-lg flex flex-col transition-transform duration-300 ease-in-out ${isSidebarOpen ? "translate-x-0 w-80" : "-translate-x-full w-0"
-  //         }`}
-  //     >
-  //       {/* Header */}
-  //       <div className="p-4 border-b border-border">
-  //         <div className="w-full flex items-center justify-end my-3">
-  //           <button
-  //             onClick={() => setIsSidebarOpen(false)}
-  //             className="flex items-center gap-2 text-primary hover:text-primary/80"
-  //           >
-  //             <ArrowLeft className="w-4 h-4" />
-  //             <span className="text-sm font-medium">Close</span>
-  //           </button>
-  //         </div>
-  //         <div>
-  //           <h1 className="text-lg font-bold text-foreground">
-  //             Chapter {chapterId}: {chapterName}
-  //           </h1>
-  //           <p className="text-sm text-primary font-medium">
-  //             Day {lessonData.day} - Teaching Mode
-  //           </p>
-  //         </div>
-  //       </div>
+      excalidrawApiRef.current.updateScene({
+        elements: scene.elements || [],
+        appState: safeAppState,
+        files: scene.files || {},
+      });
+    }
+  }
 
-  //       {/* Lesson Activities */}
-  //       <div className="flex-1 overflow-y-auto p-4">
-  //         <h2 className="text-lg font-semibold text-foreground mb-4">
-  //           Lesson Activities
-  //         </h2>
-  //         <div className="space-y-3">
-  //           {lessonData.topics.map((activity, index) => (
-  //             <div
-  //               key={activity.topic_id}
-  //               className={`cursor-pointer rounded-lg border p-4 transition-colors ${currentActivity === activity.topic_id
-  //                   ? "border-primary bg-primary/5"
-  //                   : "hover:bg-muted/50"
-  //                 }`}
-  //               onClick={() => setCurrentActivity(activity.topic_id)}
-  //             >
-  //               <div className="flex items-start gap-3">
-  //                 <div
-  //                   className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${currentActivity === activity.topic_id
-  //                       ? "bg-primary text-primary-foreground"
-  //                       : "bg-muted text-muted-foreground"
-  //                     }`}
-  //                 >
-  //                   {index + 1}
-  //                 </div>
-  //                 <div className="flex-1">
-  //                   <h3 className="font-semibold text-foreground text-sm mb-1">
-  //                     {activity.title}
-  //                   </h3>
-  //                   <p className="text-xs text-muted-foreground leading-relaxed">
-  //                     {activity.summary}
-  //                   </p>
-  //                 </div>
-  //               </div>
-  //             </div>
-  //           ))}
-  //         </div>
-  //       </div>
-  //     </div>
-  //   </div>
-  // );
 
+  const goToPage = (index: number) => {
+    if (index >= 0 && index < Object.keys(slides).length) {
+      setCurrentPage(index);
+      //excalidrawApiRef.current.updateScene({ elements: pages[index] || [] });
+      setSlideData(index);
+    }
+  };
+
+  const addPage = () => {
+    //setPages((prev) => [...prev, []]);
+    setCurrentPage(Object.keys(slides).length);
+    setSlides((prev: any) => ({
+      ...prev,
+      [currentPage + 1]: []
+    }));
+    excalidrawApiRef.current.updateScene({ elements: [] });
+  };
+
+  const reorderObject = (obj: any) => {
+    // Get values in insertion order
+    const values = Object.values(obj);
+
+    // Rebuild with new consecutive keys
+    const newObj = {};
+    values.forEach((val, idx) => {
+      newObj[idx + 1] = val; // keys start from 1
+    });
+
+    return newObj;
+  }
+
+  const removePage = (index: number) => {
+    if (Object.keys(slides).length === 1) return;
+    const newPages = [...pages];
+    newPages.splice(index, 1);
+    setPages(newPages);
+
+    slides && delete slides[index];
+
+    setSlides(reorderObject(slides));
+
+
+    let newPageIndex = index == 0 ? 0 : index - 1;
+    if (newPageIndex >= Object.keys(slides).length) newPageIndex = Object.keys(slides).length - 1;
+
+    setCurrentPage(newPageIndex);
+    excalidrawApiRef.current.updateScene({ elements: slides[newPageIndex].elements || [] });
+  };
+
+  // --- Pagination window logic ---
+  const getVisiblePages = () => {
+    const maxVisible = 5;
+    const total = Object.keys(slides).length;
+
+    // if (total <= maxVisible) {
+    //   return [...Array(total).keys()]; // all pages
+    // }
+
+    let start = Math.max(0, currentPage - 2);
+    let end = Math.min(total - 1, start + maxVisible - 1);
+
+    if (end - start < maxVisible - 1) {
+      start = Math.max(0, end - (maxVisible - 1));
+    }
+
+    return [...Array(end - start + 1).keys()].map((i) => start + i);
+  };
 
 
 
   return (
     <>
       <div style={{ width: "100vw", height: "100vh" }}
-        className={`excalidraw ${styles.excalidrawFix} ${styles.myExcalidrawWrapper}`}>
-        {/* 🔹 Custom Back Button */}
-        {/* <button
-        onClick={handleBack}
-        style={{
-          position: "absolute",
-          top: 10,
-          right: 10, // replaces library button location
-          zIndex: 1000,
-          padding: "6px 12px",
-          background: "#ef4444",
-          color: "white",
-          border: "none",
-          borderRadius: "6px",
-          cursor: "pointer",
-        }}
-      >
-        ⬅ Back
-      </button> */}
-
-        {/* <Excalidraw
-        UIOptions={{
-          canvasActions: {
-            loadScene: false,
-            // saveScene: false,
-            export: false,
-            saveAsImage: false,
-            changeViewBackgroundColor: false,
-            toggleTheme: false,
-          },
-          tools: {
-            library: false, // 🚫 removes top-right library button
-          },
-        }}
-      /> */}
+        className={`relative  excalidraw ${styles.excalidrawFix} ${styles.myExcalidrawWrapper}`}>
         <Excalidraw
           excalidrawAPI={(api) => (excalidrawApiRef.current = api)}
           theme="light"
@@ -499,6 +495,52 @@ export default function ExcalidrawApp() {
             <MainMenu.DefaultItems.ChangeCanvasBackground />
           </MainMenu>
         </Excalidraw>
+
+
+        {/* Page numbers (max 5 visible) */}
+        <div className="absolute bottom-4 right-1/4 z-30  flex items-center gap-2 bg-gray-100 rounded-lg shadow px-3 py-1">
+
+          {/* Remove page */}
+          {/* <Button size="sm" variant="outline" onClick={() => removePage(currentPage)}>
+            <Minus className="w-4 h-4" />
+          </Button> */}
+
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={currentPage === 0}
+            onClick={() => goToPage(currentPage - 1)}
+          >
+            {"<"}
+          </Button>
+          <div className="flex gap-2">
+            {getVisiblePages().map((idx) => (
+              <Button
+                key={idx}
+                size="sm"
+                variant={currentPage === idx ? "default" : "outline"}
+                onClick={() => goToPage(idx)}
+              >
+                {idx + 1}
+              </Button>
+            ))}
+          </div>
+
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={currentPage === pages.length - 1}
+            onClick={() => goToPage(currentPage + 1)}
+          >
+            {">"}
+          </Button>
+
+          {/* Add page */}
+          <Button size="sm" variant="outline" onClick={addPage}>
+            <Plus className="w-4 h-4" />
+          </Button>
+        </div>
+
 
 
 
@@ -569,7 +611,7 @@ ${isSidebarOpen ? "translate-x-0 w-80" : "translate-x-full w-0"}
             </div>
           </div>
         </div>
-      </div>
+      </div >
     </>
   );
 
