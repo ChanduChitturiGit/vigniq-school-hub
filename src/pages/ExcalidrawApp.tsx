@@ -62,21 +62,21 @@ export default function ExcalidrawApp() {
   //   console.log(i, el.tagName, el.className, getComputedStyle(el).position, getComputedStyle(el).backgroundColor);
   // });
 
-  useEffect(() => {
-    const handleResize = () => {
-      excalidrawRef.current?.refresh?.(); // some builds support refresh()
-      excalidrawRef.current?.scrollToContent?.(); // force redraw
-    };
+//   useEffect(() => {
+//     const handleResize = () => {
+//       excalidrawRef.current?.refresh?.(); // some builds support refresh()
+//       excalidrawRef.current?.scrollToContent?.(); // force redraw
+//     };
 
-    window.addEventListener("resize", handleResize);
-    handleResize(); // trigger once on mount
+//     window.addEventListener("resize", handleResize);
+//     handleResize(); // trigger once on mount
 
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+//     return () => window.removeEventListener("resize", handleResize);
+//   }, []);
 
-  useEffect(() => {
-  setTimeout(() => window.dispatchEvent(new Event("resize")), 100);
-}, []);
+//   useEffect(() => {
+//   setTimeout(() => window.dispatchEvent(new Event("resize")), 100);
+// }, []);
 
 
 
