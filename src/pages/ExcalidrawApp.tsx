@@ -54,6 +54,32 @@ export default function ExcalidrawApp() {
 
   const [slides, setSlides] = useState<any>({});
 
+  // // check center-bottom stack
+  // const x = Math.round(window.innerWidth * 0.5);
+  // const y = window.innerHeight - 6; // 6px above bottom, adjust if needed
+  // console.log('point', x, y);
+  // document.elementsFromPoint(x, y).forEach((el, i) => {
+  //   console.log(i, el.tagName, el.className, getComputedStyle(el).position, getComputedStyle(el).backgroundColor);
+  // });
+
+  useEffect(() => {
+    const handleResize = () => {
+      excalidrawRef.current?.refresh?.(); // some builds support refresh()
+      excalidrawRef.current?.scrollToContent?.(); // force redraw
+    };
+
+    window.addEventListener("resize", handleResize);
+    handleResize(); // trigger once on mount
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+  setTimeout(() => window.dispatchEvent(new Event("resize")), 100);
+}, []);
+
+
+
   //getWhiteboardData
   const getWhiteboardSavedData = async (session_token: any = '') => {
     try {
@@ -222,12 +248,12 @@ export default function ExcalidrawApp() {
   }, []);
 
   const sendScene = (scene: any = []) => {
-    console.log(currentPage,slides,scene);
+    // console.log(currentPage, slides, scene);
     // setSlides((prev: any) => ({
     //   ...prev,
     //   [currentPage]: sceneData
     // }));
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && (Object.keys(slides).length > 0 || (scene && scene?.elements && scene?.elements.length>0 && currentPage == 0)) ) {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && (Object.keys(slides).length > 0 || (scene && scene?.elements && scene?.elements.length > 0 && currentPage == 0))) {
       wsRef.current.send(
         // JSON.stringify({
         //   type: "scene",
@@ -263,7 +289,7 @@ export default function ExcalidrawApp() {
 
     // Condition 2: send at most once every 5s
     if (bigChange || elapsed > 5000) {
-      console.log("Sending scene data...", sceneData);
+      // console.log("Sending scene data...", sceneData);
       sendScene(sceneData);
       lastSentRef.current = now;
       bufferRef.current = null; // reset after sending
@@ -271,12 +297,12 @@ export default function ExcalidrawApp() {
 
     if (slides && currentPage !== null && slides[currentPage]) {
       slides[currentPage] = sceneData;
-    }else{
+    } else {
       setSlides((prev: any) => ({
         ...prev,
         [currentPage]: sceneData
       }));
-    } 
+    }
   };
 
   // useEffect(() => {
@@ -429,7 +455,7 @@ export default function ExcalidrawApp() {
   // --- Pagination window logic ---
   const getVisiblePages = () => {
     const maxVisible = 5;
-    const total = Math.max(Object.keys(slides).length,1);
+    const total = Math.max(Object.keys(slides).length, 1);
 
     if (total <= maxVisible) {
       return [...Array(total).keys()]; // all pages
@@ -447,12 +473,15 @@ export default function ExcalidrawApp() {
 
 
 
+
   return (
     <>
       <div style={{ width: "100vw", height: "100vh" }}
         className={`relative  excalidraw ${styles.excalidrawFix} ${styles.myExcalidrawWrapper}`}>
         <Excalidraw
+         ref={excalidrawRef}
           excalidrawAPI={(api) => (excalidrawApiRef.current = api)}
+          style={{ height: "100%", width: "100%" }}
           theme="light"
           UIOptions={{
             canvasActions: {
@@ -512,7 +541,7 @@ export default function ExcalidrawApp() {
 
 
         {/* Page numbers (max 5 visible) */}
-        <div className="absolute bottom-4 right-1/4 z-30  flex items-center gap-2 bg-gray-200 rounded-lg shadow px-3 py-1">
+        <div className="absolute bottom-4 right-1/4 z-50  flex items-center gap-2 bg-gray-200 rounded-lg shadow px-3 py-1">
 
           {/* Remove page */}
           {/* <Button size="sm" variant="outline" onClick={() => removePage(currentPage)}>
