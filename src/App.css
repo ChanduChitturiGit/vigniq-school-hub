@@ -88,3 +88,9 @@
 .excalidraw .App-footer button[aria-label="Help"] {
   display: none !important;
 }
+
+.excalidraw__canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
