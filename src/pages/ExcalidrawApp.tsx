@@ -49,7 +49,7 @@ export default function ExcalidrawApp() {
   const [sceneData, setSceneData] = useState(null);
   const wsRef = useRef<WebSocket | null>(null);
 
-  const [pages, setPages] = useState([[]]); // pages store elements
+  // const [pages, setPages] = useState([[]]); // pages store elements
   const [currentPage, setCurrentPage] = useState(0);
 
   const [slides, setSlides] = useState<any>({});
@@ -67,8 +67,8 @@ export default function ExcalidrawApp() {
         const scene = response.data;
         setSlides(scene);
         const size = Object.keys(response.data).length;
-        setCurrentPage(response.data && size>0 ? size-1 : 0);
-        const currentScene = scene && scene[size-1] ? scene[size-1] : null;
+        setCurrentPage(response.data && size > 0 ? size - 1 : 0);
+        const currentScene = scene && scene[size - 1] ? scene[size - 1] : null;
         if (currentScene && excalidrawApiRef.current) {
           const safeAppState = {
             ...currentScene.appState,
@@ -222,14 +222,23 @@ export default function ExcalidrawApp() {
   }, []);
 
   const sendScene = (scene: any = []) => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && Object.keys(slides).length > 0) {
+    console.log(currentPage,slides,scene);
+    // setSlides((prev: any) => ({
+    //   ...prev,
+    //   [currentPage]: sceneData
+    // }));
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && (Object.keys(slides).length > 0 || (scene && scene?.elements && scene?.elements.length>0 && currentPage == 0)) ) {
       wsRef.current.send(
         // JSON.stringify({
         //   type: "scene",
         //   data: scene,
         // })
-        JSON.stringify(slides)
+        JSON.stringify({ ...slides, [currentPage]: scene })
       );
+      // setSlides((prev: any) => ({
+      //   ...prev,
+      //   [currentPage]: sceneData
+      // }));
     }
   };
 
@@ -250,10 +259,11 @@ export default function ExcalidrawApp() {
     const elapsed = now - lastSentRef.current;
 
     // Condition 1: enough elements (≥20 for example)
-    const bigChange = elements.length >= 20;
+    const bigChange = elements.length >= 1;
 
     // Condition 2: send at most once every 5s
     if (bigChange || elapsed > 5000) {
+      console.log("Sending scene data...", sceneData);
       sendScene(sceneData);
       lastSentRef.current = now;
       bufferRef.current = null; // reset after sending
@@ -261,13 +271,17 @@ export default function ExcalidrawApp() {
 
     if (slides && currentPage !== null && slides[currentPage]) {
       slides[currentPage] = sceneData;
-    } else {
+    }else{
       setSlides((prev: any) => ({
         ...prev,
         [currentPage]: sceneData
       }));
-    }
+    } 
   };
+
+  // useEffect(() => {
+  //   console.log(currentPage, slides);
+  // }, [slides])
 
   // 🔹 Safety interval: flush buffer every 5s if not already sent
   useEffect(() => {
@@ -333,17 +347,17 @@ export default function ExcalidrawApp() {
 
 
   // Save current scene before switching
-  const saveCurrentPage = () => {
-    if (excalidrawRef.current) {
-      const scene = excalidrawRef.current.getSceneElements();
-      const appState = excalidrawRef.current.getAppState();
-      setPages(prev =>
-        prev.map((p, i) =>
-          i === currentPage ? { ...p, elements: scene, appState } : p
-        )
-      );
-    }
-  };
+  // const saveCurrentPage = () => {
+  //   if (excalidrawRef.current) {
+  //     const scene = excalidrawRef.current.getSceneElements();
+  //     const appState = excalidrawRef.current.getAppState();
+  //     setPages(prev =>
+  //       prev.map((p, i) =>
+  //         i === currentPage ? { ...p, elements: scene, appState } : p
+  //       )
+  //     );
+  //   }
+  // };
 
   //setData
   const setSlideData = (pageIndex: number) => {
@@ -394,32 +408,32 @@ export default function ExcalidrawApp() {
     return newObj;
   }
 
-  const removePage = (index: number) => {
-    if (Object.keys(slides).length === 1) return;
-    const newPages = [...pages];
-    newPages.splice(index, 1);
-    setPages(newPages);
+  // const removePage = (index: number) => {
+  //   if (Object.keys(slides).length === 1) return;
+  //   const newPages = [...pages];
+  //   newPages.splice(index, 1);
+  //   setPages(newPages);
 
-    slides && delete slides[index];
+  //   slides && delete slides[index];
 
-    setSlides(reorderObject(slides));
+  //   setSlides(reorderObject(slides));
 
 
-    let newPageIndex = index == 0 ? 0 : index - 1;
-    if (newPageIndex >= Object.keys(slides).length) newPageIndex = Object.keys(slides).length - 1;
+  //   let newPageIndex = index == 0 ? 0 : index - 1;
+  //   if (newPageIndex >= Object.keys(slides).length) newPageIndex = Object.keys(slides).length - 1;
 
-    setCurrentPage(newPageIndex);
-    excalidrawApiRef.current.updateScene({ elements: slides[newPageIndex].elements || [] });
-  };
+  //   setCurrentPage(newPageIndex);
+  //   excalidrawApiRef.current.updateScene({ elements: slides[newPageIndex].elements || [] });
+  // };
 
   // --- Pagination window logic ---
   const getVisiblePages = () => {
     const maxVisible = 5;
-    const total = Object.keys(slides).length;
+    const total = Math.max(Object.keys(slides).length,1);
 
-    // if (total <= maxVisible) {
-    //   return [...Array(total).keys()]; // all pages
-    // }
+    if (total <= maxVisible) {
+      return [...Array(total).keys()]; // all pages
+    }
 
     let start = Math.max(0, currentPage - 2);
     let end = Math.min(total - 1, start + maxVisible - 1);
@@ -498,7 +512,7 @@ export default function ExcalidrawApp() {
 
 
         {/* Page numbers (max 5 visible) */}
-        <div className="absolute bottom-4 right-1/4 z-30  flex items-center gap-2 bg-gray-100 rounded-lg shadow px-3 py-1">
+        <div className="absolute bottom-4 right-1/4 z-30  flex items-center gap-2 bg-gray-200 rounded-lg shadow px-3 py-1">
 
           {/* Remove page */}
           {/* <Button size="sm" variant="outline" onClick={() => removePage(currentPage)}>
@@ -508,7 +522,7 @@ export default function ExcalidrawApp() {
           <Button
             size="sm"
             variant="outline"
-            disabled={currentPage === 0}
+            disabled={currentPage === 0 || Object.keys(slides).length === 0}
             onClick={() => goToPage(currentPage - 1)}
           >
             {"<"}
@@ -529,7 +543,7 @@ export default function ExcalidrawApp() {
           <Button
             size="sm"
             variant="outline"
-            disabled={currentPage === pages.length - 1}
+            disabled={currentPage == Object.keys(slides).length - 1 || Object.keys(slides).length === 0}
             onClick={() => goToPage(currentPage + 1)}
           >
             {">"}
