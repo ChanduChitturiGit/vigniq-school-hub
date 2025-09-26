@@ -87,7 +87,7 @@ const ClassDetails: React.FC = () => {
     section: '',
     academicYear: '',
     teacher_name: '',
-    school_board_name : '',
+    school_board_name: '',
     studends_list: allStudents
   };
   const [classData, setClassData] = useState(sampleClassData);
@@ -433,12 +433,16 @@ const ClassDetails: React.FC = () => {
                 </div>
               </div>
 
-              <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-end "
-                onClick={(e) => e.stopPropagation()}>
-                {
-                  deleteModal(student)
-                }
-              </div>
+              {
+                (userData?.role !== 'student' && userData?.role !== 'teacher') && (
+                  <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-end "
+                    onClick={(e) => e.stopPropagation()}>
+                    {
+                      deleteModal(student)
+                    }
+                  </div>
+                )
+              }
             </div>
           ))}
         </div>
