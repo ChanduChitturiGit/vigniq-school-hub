@@ -77,6 +77,18 @@ export const editTopicByLesson = async (data: any): Promise<any> => {
   return response.data;
 };
 
+//deleteSubTopicById
+export const deleteSubTopicById = async (data: any): Promise<any> => {
+  const response = await api.delete<any>(baseurl+suburl+'/deleteSubTopicById',{params : {...data}});
+  return response.data;
+}
+
+//deletePrerequisiteById
+export const deletePrerequisiteById = async (data: any): Promise<any> => {
+  const response = await api.delete<any>(baseurl+suburl+'/deletePrerequisiteById',{params : {...data}});
+  return response.data;
+}
+
 
 // add prerequisite
 export const savePrerequisite = async (data: any): Promise<any> => {
