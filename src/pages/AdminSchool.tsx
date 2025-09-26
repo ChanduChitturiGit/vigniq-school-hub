@@ -169,14 +169,14 @@ const AdminSchool: React.FC = () => {
     if (userData && userData.role && userData.role == 'superadmin') {
       localStorage.setItem('current_school_id', id)
     }
-    navigate(`/teacher-details/${teacherId}`);
+    navigate(`/teachers/teacher-details/${teacherId}`);
   };
 
   const handleClassClick = (classId: string) => {
     if (userData && userData.role && userData.role == 'superadmin') {
       localStorage.setItem('current_school_id', id)
     }
-    navigate(`/class-details/${classId}`);
+    navigate(`/classes/class-details/${classId}`);
   };
 
   return (
@@ -315,7 +315,7 @@ const AdminSchool: React.FC = () => {
             </div>
             <div className="flex items-center gap-1">
               <Link
-                to="/admin-add-teacher"
+                to="/teachers/admin-add-teacher"
                 className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
               >
                 <Plus className="w-4 h-4" />
@@ -382,7 +382,7 @@ const AdminSchool: React.FC = () => {
             </div>
             <div className="flex items-center gap-2">
               <Link
-                to="/add-class"
+                to="/classes/add-class"
                 className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
               >
                 <Plus className="w-4 h-4" />

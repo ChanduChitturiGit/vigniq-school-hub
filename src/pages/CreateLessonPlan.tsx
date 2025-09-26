@@ -142,7 +142,7 @@ const CreateLessonPlan: React.FC = () => {
           description: `${response.message} ✅ `,
           status: "success"
         });
-        navigate(`/grades/chapter/${chapterId}?chapter_name=${chapterName}&${pathData}&tab=lesson-plan`);
+        navigate(`/grades/syllabus/chapter/${chapterId}?chapter_name=${chapterName}&${pathData}&tab=lesson-plan`);
       }
     } catch (error) {
       //console.error('Error saving lesson plan:', error);
@@ -311,7 +311,7 @@ const CreateLessonPlan: React.FC = () => {
         <div className="space-y-8">
           {/* <Breadcrumb items={breadcrumbItems} /> */}
           <Link
-            to={`/grades/chapter/${chapterId}?chapter_name=${chapterName}&${pathData}&tab=lesson-plan`}
+            to={`/grades/syllabus/chapter/${chapterId}?chapter_name=${chapterName}&${pathData}&tab=lesson-plan`}
             className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -469,7 +469,7 @@ const CreateLessonPlan: React.FC = () => {
       <MainLayout pageTitle="Create Lesson Plan">
         <div className="space-y-8">
           <Link
-            to={`/grades/chapter/${chapterId}?chapter_name=${chapterName}&${pathData}&tab=lesson-plan`}
+            to={`/grades/syllabus/chapter/${chapterId}?chapter_name=${chapterName}&${pathData}&tab=lesson-plan`}
             className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />

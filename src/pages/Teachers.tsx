@@ -69,7 +69,7 @@ const Teachers: React.FC = () => {
       { label: 'Teachers' }
     ]
     : [
-      { label: userData.role == 'teacher' ? 'Home' : 'My School', path: (userData.role == 'superadmin' ? `/school-details/${schoolId}` : userData.role == 'admin' ? '/admin-school' : '/dashboard') },
+      { label: userData.role == 'teacher' ? 'Home' : 'My School', path: (userData.role == 'superadmin' ? `/schools/school-details/${schoolId}` : userData.role == 'admin' ? '/admin-school' : '/dashboard') },
       { label: 'Teachers' }
     ];
 
@@ -145,7 +145,7 @@ const Teachers: React.FC = () => {
       {filteredTeachers.map((teacher) => (
         <div
           key={teacher.teacher_id}
-          onClick={() => { navigate(`/teacher-details/${teacher.teacher_id}`) }}
+          onClick={() => { navigate(`/teachers/teacher-details/${teacher.teacher_id}`) }}
           className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
         >
           <div >
@@ -243,7 +243,7 @@ const Teachers: React.FC = () => {
                 <TableCell>
                   <div className="flex items-center justify-center gap-2">
                     <Link
-                      to={`/teacher-details/${teacher.teacher_id}`}
+                      to={`/teachers/teacher-details/${teacher.teacher_id}`}
                       className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
                       title="View Details"
                     >
@@ -306,7 +306,7 @@ const Teachers: React.FC = () => {
             </div>
             {(user?.role === 'admin' || user?.role === 'superadmin') && (
               <Link
-                to={"/admin-add-teacher"}
+                to={"/teachers/admin-add-teacher"}
                 className="bg-blue-500 text-white px-2 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center"
               >
                 <Plus className="w-3 h-3 md:w-4 md:h-4" />

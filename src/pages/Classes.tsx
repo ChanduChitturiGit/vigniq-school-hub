@@ -32,7 +32,7 @@ const Classes: React.FC = () => {
       { label: 'Classes' }
     ]
     : [
-      { label: userData.role == 'teacher' ? 'Home' : 'My School', path: (userData.role == 'superadmin' ? `/school-details/${schoolId}` : userData.role == 'admin' ? '/admin-school' : '/dashboard') },
+      { label: userData.role == 'teacher' ? 'Home' : 'My School', path: (userData.role == 'superadmin' ? `/schools/school-details/${schoolId}` : userData.role == 'admin' ? '/admin-school' : '/dashboard') },
       { label: 'Classes' }
     ];
 
@@ -59,7 +59,7 @@ const Classes: React.FC = () => {
       {filteredClasses.map((classItem) => (
         <Link
           key={classItem.class_id}
-          to={`/class-details/${classItem.class_id}`}
+          to={`/classes/class-details/${classItem.class_id}`}
           className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
         >
           <div className="flex items-start justify-between mb-4">
@@ -130,7 +130,7 @@ const Classes: React.FC = () => {
                 <TableCell>
                   <div className="flex items-center justify-center gap-2">
                     <Link
-                      to={`/class-details/${classItem.class_id}`}
+                      to={`/classes/class-details/${classItem.class_id}`}
                       className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
                       title="View Details"
                     >
@@ -198,7 +198,7 @@ const Classes: React.FC = () => {
             </div>
             {user?.role === 'admin' && (
               <Link
-                to="/add-class"
+                to="/classes/add-class"
                 className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />

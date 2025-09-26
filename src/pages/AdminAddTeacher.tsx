@@ -76,7 +76,7 @@ const AdminAddTeacher: React.FC = () => {
     if (userData.role == 'superadmin') {
       setBreadCrumbItems([
         { label: 'Schools', path: '/schools' },
-        { label: 'My School', path: `/school-details/${schoolId}` },
+        { label: 'My School', path: `/schools/school-details/${schoolId}` },
         { label: 'Add Teacher' }
       ])
     } else {
@@ -285,7 +285,7 @@ const AdminAddTeacher: React.FC = () => {
           description: "Teacher added successfully ✅",
           status: "success"
         });
-        navigate(userData.role == 'superadmin' ? `/school-details/${schoolId}` : '/admin-school');
+        navigate(userData.role == 'superadmin' ? `/schools/school-details/${schoolId}` : '/admin-school');
       }
     } catch (error: any) {
       showSnackbar({
@@ -629,7 +629,7 @@ const AdminAddTeacher: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => navigate(userData.role == 'admin' ? '/admin-school' : '/school-details/' + schoolId)}
+                    onClick={() => navigate(userData.role == 'admin' ? '/admin-school' : '/schools/school-details/' + schoolId)}
                     className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors"
                   >
                     Cancel

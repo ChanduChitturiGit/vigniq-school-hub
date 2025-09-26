@@ -56,7 +56,7 @@ const AddClass: React.FC = () => {
     if (userData.role == 'superadmin') {
       setBreadCrumbItems([
         { label: 'Schools', path: '/schools' },
-        { label: 'My School', path: `/school-details/${schoolId}` },
+        { label: 'My School', path: `/schools/school-details/${schoolId}` },
         { label: 'Add Class' }
       ])
     } else {
@@ -248,7 +248,7 @@ const AddClass: React.FC = () => {
           status: "success"
         });
 
-        navigate(userData.role === 'superadmin' ? `/school-details/${schoolId}` : '/admin-school');
+        navigate(userData.role === 'superadmin' ? `/schools/school-details/${schoolId}` : '/admin-school');
       } else if (response?.error) {
         showSnackbar({
           title: "⛔ Error",
@@ -286,7 +286,7 @@ const AddClass: React.FC = () => {
 
         {/* <div className="flex items-center gap-4">
           <button
-            onClick={() => navigate(userData.role == 'superadmin' ? `/school-details/${schoolId}` : '/admin-school')}
+            onClick={() => navigate(userData.role == 'superadmin' ? `/schools/school-details/${schoolId}` : '/admin-school')}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />

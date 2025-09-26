@@ -220,7 +220,7 @@ export default function ExcalidrawApp() {
       }
       // optional: wait a moment to ensure WebSocket send completes
       setTimeout(() => {
-        navigate(`/grades/lesson-plan/day/${chapterId}/${day}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&day=${day}&${pathData}`); // go back
+        navigate(`/grades/syllabus/lesson-plan/day/${chapterId}/${day}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&day=${day}&${pathData}`); // go back
       }, 300);
     }
   }, [isFullscreen]);

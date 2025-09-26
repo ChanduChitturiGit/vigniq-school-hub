@@ -84,7 +84,7 @@ function App() {
             </ProtectedRoute>
           } />
 
-          <Route path="/school-details/:id" element={
+          <Route path="/schools/school-details/:id" element={
             <ProtectedRoute allowedRoles={['superadmin', 'admin']}>
               <AdminSchool />
             </ProtectedRoute>
@@ -97,7 +97,7 @@ function App() {
             </ProtectedRoute>
           } />
 
-          <Route path="/teacher-details/:id" element={
+          <Route path="/teachers/teacher-details/:id" element={
             <ProtectedRoute allowedRoles={['superadmin', 'admin']}>
               <TeacherDetails />
             </ProtectedRoute>
@@ -109,13 +109,13 @@ function App() {
             </ProtectedRoute>
           } />
 
-          <Route path="/class-details/:id" element={
+          <Route path="/classes/class-details/:id" element={
             <ProtectedRoute allowedRoles={['superadmin', 'admin', 'teacher']}>
               <ClassDetails />
             </ProtectedRoute>
           } />
 
-          <Route path="/add-class" element={
+          <Route path="/classes/add-class" element={
             <ProtectedRoute allowedRoles={['superadmin', 'admin']}>
               <AddClass />
             </ProtectedRoute>
@@ -127,13 +127,13 @@ function App() {
             </ProtectedRoute>
           } />
 
-          <Route path="/student-details/:id" element={
+          <Route path="/students/student-details/:id" element={
             <ProtectedRoute allowedRoles={['superadmin', 'admin', 'teacher']}>
               <StudentDetails />
             </ProtectedRoute>
           } />
 
-          <Route path="/add-student" element={
+          <Route path="/students/add-student" element={
             <ProtectedRoute allowedRoles={['superadmin', 'admin', 'teacher']}>
               <AddStudent />
             </ProtectedRoute>
@@ -163,7 +163,7 @@ function App() {
             </ProtectedRoute>
           } />
 
-          <Route path="/admin-add-teacher" element={
+          <Route path="/teachers/admin-add-teacher" element={
             <ProtectedRoute allowedRoles={['superadmin', 'admin']}>
               <AdminAddTeacher />
             </ProtectedRoute>
@@ -220,15 +220,15 @@ function App() {
           {/* <Route path="/grades" element={<ProtectedRoute allowedRoles={['teacher']}><Grades /></ProtectedRoute>} />
           <Route path="/grades/syllabus/:subjectId" element={<ProtectedRoute allowedRoles={['teacher']}><Syllabus /></ProtectedRoute>} />
           <Route path="/grades/progress/:subjectId" element={<ProtectedRoute allowedRoles={['teacher']}><GradesProgress /></ProtectedRoute>} /> */}
-          <Route path="/grades/lesson-plan/create/:chapterId" element={<ProtectedRoute allowedRoles={['teacher']}><CreateLessonPlan /></ProtectedRoute>} />
+          <Route path="/grades/syllabus/lesson-plan/create/:chapterId" element={<ProtectedRoute allowedRoles={['teacher']}><CreateLessonPlan /></ProtectedRoute>} />
           {/* <Route path="/grades/lesson-plan/view/:chapterId/:lessonPlanId" element={<ProtectedRoute allowedRoles={['teacher']}><ViewLessonPlan /></ProtectedRoute>} /> */}
-          <Route path="/grades/lesson-plan/customize/:chapterId" element={<ProtectedRoute allowedRoles={['teacher']}><CustomizeLessonPlan /></ProtectedRoute>} />
-          <Route path="/grades/lesson-plan/day/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}><DayLessonPlan /></ProtectedRoute>} />
-          <Route path="/grades/lesson-plan/whiteboard/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}>
+          <Route path="/grades/syllabus/lesson-plan/customize/:chapterId" element={<ProtectedRoute allowedRoles={['teacher']}><CustomizeLessonPlan /></ProtectedRoute>} />
+          <Route path="/grades/syllabus/lesson-plan/day/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}><DayLessonPlan /></ProtectedRoute>} />
+          <Route path="/grades/syllabus/lesson-plan/whiteboard/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}>
             {/* <WhiteboardTeaching /> */}
             <ExcalidrawApp/>
           </ProtectedRoute>} />
-          <Route path="/grades/lesson-plan/ai-chat/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}><AIChatLessonPlan /></ProtectedRoute>} />
+          <Route path="/grades/syllabus/lesson-plan/ai-chat/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}><AIChatLessonPlan /></ProtectedRoute>} />
           <Route path="/grades/exams/:subjectId" element={<ProtectedRoute><Exams /></ProtectedRoute>} />
           <Route path="/grades/exams/create-exam/:subjectId" element={<ProtectedRoute><CreateExam /></ProtectedRoute>} />
           <Route path="/grades/exams/exam-results/:examId" element={<ProtectedRoute><ExamResults /></ProtectedRoute>} />
@@ -236,7 +236,7 @@ function App() {
           <Route path="/grades" element={<ProtectedRoute><Grades /></ProtectedRoute>} />
           <Route path="/grades/syllabus/:subjectId" element={<ProtectedRoute><Syllabus /></ProtectedRoute>} />
           <Route path="/grades/progress/:subjectId" element={<ProtectedRoute><GradesProgress /></ProtectedRoute>} />
-          <Route path="/grades/chapter/:chapterId" element={<ProtectedRoute><ChapterDetails /></ProtectedRoute>} />
+          <Route path="/grades/syllabus/chapter/:chapterId" element={<ProtectedRoute><ChapterDetails /></ProtectedRoute>} />
 
 
 
@@ -246,7 +246,7 @@ function App() {
 
           <Route path="/support" element={<Support />} />
           <Route path="/requests" element={<Requests />} />
-          <Route path="/support-details/:requestId" element={<SupportDetails />} />
+          <Route path="/requests/support-details/:requestId" element={<SupportDetails />} />
 
           <Route path="/admin-requests" element={
             <ProtectedRoute allowedRoles={['admin', 'superadmin', 'teacher', 'superadmin']}>
