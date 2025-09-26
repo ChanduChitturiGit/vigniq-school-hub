@@ -28,12 +28,24 @@ import {
   Loader2Icon,
   LoaderCircleIcon,
   TimerIcon,
-  FileCheck
+  FileCheck,
+  Trash2
 } from 'lucide-react';
-import { getGradeByChapter, saveTopicByLesson, editTopicByLesson, savePrerequisite, editPrerequisiteByLesson, getChapterDetailsById } from '../services/grades'
+import { deleteSubTopicById,deletePrerequisiteById, saveTopicByLesson, editTopicByLesson, savePrerequisite, editPrerequisiteByLesson, getChapterDetailsById } from '../services/grades'
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../components/ui/alert-dialog';
 
 
 interface Topic {
@@ -65,7 +77,7 @@ const ChapterDetails: React.FC = () => {
   const subject = searchParams.get('subject') || '';
   const chapterName = searchParams.get('chapter_name') || '';
   const chapterNumber = searchParams.get('chapter_number') || '';
-  const [progress,setProgress] = useState(parseInt(searchParams.get('progress') || '0'));
+  const [progress, setProgress] = useState(parseInt(searchParams.get('progress') || '0'));
   const classId = searchParams.get('class_id') || '';
   const subjectId = searchParams.get('subject_id') || '';
   const schoolId = searchParams.get('school_id') || '';
@@ -322,7 +334,7 @@ const ChapterDetails: React.FC = () => {
 
   const handleSaveTopicEdit = () => {
     if (editingTopic && newTopicTitle.trim()) {
-      editTopic({sub_topic_id: editingTopic.sub_topic_id, sub_topic: newTopicTitle.trim()});
+      editTopic({ sub_topic_id: editingTopic.sub_topic_id, sub_topic: newTopicTitle.trim() });
       setEditingTopic(null);
       setNewTopicTitle('');
     }
@@ -355,7 +367,7 @@ const ChapterDetails: React.FC = () => {
       //     ? { ...p, topic: newPrerequisiteTitle.trim(), explanation: newPrerequisiteExplanation.trim() }
       //     : p
       // ));
-      editPrerequisite({prerequisite_id: editingPrerequisite.prerequisite_id, topic: newPrerequisiteTitle.trim(), explanation: newPrerequisiteExplanation.trim()});
+      editPrerequisite({ prerequisite_id: editingPrerequisite.prerequisite_id, topic: newPrerequisiteTitle.trim(), explanation: newPrerequisiteExplanation.trim() });
       setEditingPrerequisite(null);
       setNewPrerequisiteTitle('');
       setNewPrerequisiteExplanation('');
@@ -364,6 +376,60 @@ const ChapterDetails: React.FC = () => {
 
   const completedTopics = topics.filter(topic => topic.completed).length;
   const totalTopics = topics.length;
+
+  const handleTopicDelete = async (sub_topic_id: number) => {
+
+    try {
+      const response = await deleteSubTopicById({ sub_topic_id, chapter_id: chapterId });
+      if (response && response.message) {
+        getGradesData();
+        showSnackbar({
+          title: "✅ Success",
+          description: `${response.message}`,
+          status: "success"
+        });
+      } else {
+        showSnackbar({
+          title: "⛔ Error",
+          description: "Something went wrong",
+          status: "error"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
+  //handlePrerequisteDelete
+  const handlePrerequisteDelete = async (id: number) => {
+    try {
+      const response = await deletePrerequisiteById({ "prerequisite_id" : id, chapter_id: chapterId });
+      if (response && response.message) {
+        getGradesData();
+        showSnackbar({
+          title: "✅ Success",
+          description: `${response.message}`,
+          status: "success"
+        });
+      } else {
+        showSnackbar({
+          title: "⛔ Error",
+          description: "Something went wrong",
+          status: "error"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
 
   return (
     <MainLayout pageTitle={`${subject} - Chapter ${chapterNumber}: ${chapterName} ( ${className} - ${section})`}>
@@ -399,7 +465,7 @@ const ChapterDetails: React.FC = () => {
         </div> */}
 
         {/* Tabs */}
-        <Tabs defaultValue={tab && tab.length>0 ?  tab : `topics`} className="space-y-6">
+        <Tabs defaultValue={tab && tab.length > 0 ? tab : `topics`} className="space-y-6">
           <TabsList className="grid md:w-[60%] xl:w-[40%] grid-cols-3 bg-gray-100">
             <TabsTrigger value="topics" className="flex items-center gap-1 md:gap-2">
               <BookOpen className="w-4 h-4" />
@@ -463,82 +529,115 @@ const ChapterDetails: React.FC = () => {
             </div>
 
             {/* Inline topic edit card */}
-            {editingTopic && (
-              <Card className="border-blue-200 bg-blue-50">
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-medium text-gray-900">Edit Topic</h3>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setEditingTopic(null);
-                        setNewTopicTitle('');
-                      }}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Topic Title
-                    </label>
-                    <Input
-                      value={newTopicTitle}
-                      onChange={(e) => setNewTopicTitle(e.target.value)}
-                      placeholder="Enter topic title..."
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setEditingTopic(null);
-                        setNewTopicTitle('');
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button onClick={handleSaveTopicEdit} className="bg-blue-600 hover:bg-blue-700">
-                      <Save className="w-4 h-4 mr-2" />
-                      Save
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
             <div className="space-y-4">
               {topics.map((topic, index) => (
                 <Card key={topic.sub_topic_id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-lg">
-                          <span className="text-sm font-bold text-blue-600">{index + 1}</span>
+                    {editingTopic?.sub_topic_id === topic.sub_topic_id ? (
+                      // 🔹 Edit mode for this topic
+                      <Card className="border-blue-200 bg-blue-50">
+                        <CardContent className="p-6 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-medium text-gray-900">Edit Topic : {index + 1}</h3>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setEditingTopic(null);
+                                setNewTopicTitle('');
+                              }}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Topic Title
+                            </label>
+                            <Input
+                              value={newTopicTitle}
+                              onChange={(e) => setNewTopicTitle(e.target.value)}
+                              placeholder="Enter topic title..."
+                            />
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                setEditingTopic(null);
+                                setNewTopicTitle('');
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                            <Button onClick={handleSaveTopicEdit} className="bg-blue-600 hover:bg-blue-700">
+                              <Save className="w-4 h-4 mr-2" />
+                              Save
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      // 🔹 View mode for this topic
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-lg">
+                            <span className="text-sm font-bold text-blue-600">{index + 1}</span>
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900" title={topic.sub_topic} >{topic.sub_topic}</h3>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900">{topic.sub_topic}</h3>
+                        <div className="flex items-center gap-3">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-blue-600 hover:text-blue-700"
+                            onClick={() => {
+                              setEditingTopic(topic);
+                              setNewTopicTitle(topic.sub_topic);
+                            }}
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </Button>
+
+                          <>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <button className="flex items-center gap-2 text-red-500 hover:text-red-600">
+                                  <Trash2 className="w-4 h-4" />
+                                  {/* Reset Password */}
+                                </button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Topic</AlertDialogTitle>
+                                  <AlertDialogDescription className='text-gray-700'>
+                                    <div className='flex flex-col space-y-4'>
+                                      <div >
+                                        <p className='max-w-[28rem] truncate' title={topic.sub_topic}>Are you sure you want to delete Topic <span className='font-bold'>{topic.sub_topic}</span>?</p>
+                                        This action cannot be undone
+                                      </div>
+                                    </div>
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleTopicDelete(topic.sub_topic_id)} className="bg-red-600 hover:bg-red-700">
+                                    Confirm Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        {/* {topic.completed && (
-                          <CheckCircle2 className="w-5 h-5 text-green-600" />
-                        )} */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-blue-600 hover:text-blue-700"
-                          onClick={() => handleEditTopic(topic)}
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
               ))}
             </div>
+
           </TabsContent>
 
           <TabsContent value="lesson-plan" className="space-y-6">
@@ -690,7 +789,10 @@ const ChapterDetails: React.FC = () => {
                       >
                         Cancel
                       </Button>
-                      <Button onClick={handleAddPrerequisite} className="bg-green-600 hover:bg-green-700">
+                      <Button
+                        onClick={handleAddPrerequisite}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
                         <Save className="w-4 h-4 mr-2" />
                         Save
                       </Button>
@@ -700,102 +802,146 @@ const ChapterDetails: React.FC = () => {
               </Dialog>
             </div>
 
-            {editingPrerequisite && (
-              <Card className="border-blue-200 bg-blue-50">
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-medium text-gray-900">Edit Prerequisite</h3>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setEditingPrerequisite(null);
-                        setNewPrerequisiteTitle('');
-                        setNewPrerequisiteExplanation('');
-                      }}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Prerequisite Title
-                    </label>
-                    <Input
-                      value={newPrerequisiteTitle}
-                      onChange={(e) => setNewPrerequisiteTitle(e.target.value)}
-                      placeholder="Enter prerequisite title..."
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Explanation
-                    </label>
-                    <Textarea
-                      value={newPrerequisiteExplanation}
-                      onChange={(e) => setNewPrerequisiteExplanation(e.target.value)}
-                      placeholder="Enter detailed explanation..."
-                      rows={4}
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setEditingPrerequisite(null);
-                        setNewPrerequisiteTitle('');
-                        setNewPrerequisiteExplanation('');
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button onClick={handleSavePrerequisiteEdit} className="bg-green-600 hover:bg-green-700">
-                      <Save className="w-4 h-4 mr-2" />
-                      Save
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
+            {/* 🔹 Accordion list */}
             <div className="space-y-4">
               <Accordion type="multiple" className="space-y-4">
                 {prerequisites.map((prerequisite) => (
-                  <AccordionItem key={prerequisite.prerequisite_id} value={`prerequisite-${prerequisite.prerequisite_id}`} className="border rounded-lg">
-                    <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                      <div className="flex items-center justify-between w-full">
-                        <div className="flex items-center gap-3">
-                          <Lightbulb className="w-5 h-5 text-blue-600" />
-                          <span className="font-medium text-left">{prerequisite.topic}</span>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-blue-600 hover:text-blue-700 mr-2"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditPrerequisite(prerequisite);
-                          }}
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="px-4 pb-4">
-                      {/* <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-                        {prerequisite.explanation}
-                      </p> */}
-                      <p className="text-sm leading-relaxed">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                           {prerequisite.explanation}
-                        </ReactMarkdown>
-                      </p>
-                    </AccordionContent>
+                  <AccordionItem
+                    key={prerequisite.prerequisite_id}
+                    value={`prerequisite-${prerequisite.prerequisite_id}`}
+                    className="border rounded-lg"
+                  >
+                    {editingPrerequisite?.prerequisite_id === prerequisite.prerequisite_id ? (
+                      // 🔹 Edit mode for this prerequisite
+                      <Card className="border-blue-200 bg-blue-50">
+                        <CardContent className="p-6 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-medium text-gray-900">Edit Prerequisite</h3>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setEditingPrerequisite(null);
+                                setNewPrerequisiteTitle('');
+                                setNewPrerequisiteExplanation('');
+                              }}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Prerequisite Title
+                            </label>
+                            <Input
+                              value={newPrerequisiteTitle}
+                              onChange={(e) => setNewPrerequisiteTitle(e.target.value)}
+                              placeholder="Enter prerequisite title..."
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Explanation
+                            </label>
+                            <Textarea
+                              value={newPrerequisiteExplanation}
+                              onChange={(e) => setNewPrerequisiteExplanation(e.target.value)}
+                              placeholder="Enter detailed explanation..."
+                              rows={4}
+                            />
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                setEditingPrerequisite(null);
+                                setNewPrerequisiteTitle('');
+                                setNewPrerequisiteExplanation('');
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={() => handleSavePrerequisiteEdit(prerequisite.prerequisite_id)}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              <Save className="w-4 h-4 mr-2" />
+                              Save
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      // 🔹 View mode
+                      <>
+                        <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center gap-3">
+                              <Lightbulb className="w-5 h-5 text-blue-600" />
+                              <span className="font-medium text-left">{prerequisite.topic}</span>
+                            </div>
+                            <div className='flex flex-row'>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-blue-600 hover:text-blue-700 mr-2"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingPrerequisite(prerequisite);
+                                  setNewPrerequisiteTitle(prerequisite.topic);
+                                  setNewPrerequisiteExplanation(prerequisite.explanation);
+                                }}
+                              >
+                                <Edit3 className="w-4 h-4" />
+                              </Button>
+
+                              <>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <button className="flex items-center gap-2 text-red-500 hover:text-red-600 me-2">
+                                      <Trash2 className="w-4 h-4" />
+                                      {/* Reset Password */}
+                                    </button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Delete prerequisite</AlertDialogTitle>
+                                      <AlertDialogDescription className='text-gray-700'>
+                                        <div className='flex flex-col space-y-4'>
+                                          <div >
+                                            <p className='max-w-[28rem] truncate' title={prerequisite.topic}>Are you sure you want to delete prerequisite <span className='font-bold'>{prerequisite.topic}</span>?</p>
+                                            This action cannot be undone
+                                          </div>
+                                        </div>
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => handlePrerequisteDelete(prerequisite.prerequisite_id)} className="bg-red-600 hover:bg-red-700">
+                                        Confirm Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </>
+                            </div>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="px-4 pb-4">
+                          <p className="text-sm leading-relaxed">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {prerequisite.explanation}
+                            </ReactMarkdown>
+                          </p>
+                        </AccordionContent>
+                      </>
+                    )}
                   </AccordionItem>
                 ))}
               </Accordion>
             </div>
           </TabsContent>
+
         </Tabs>
       </div>
     </MainLayout>

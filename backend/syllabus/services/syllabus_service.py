@@ -568,7 +568,7 @@ class SyllabusService:
         try:
             logger.info("Deleting sub-topic by ID...")
             school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
-            sub_topic_id = request.data.get("sub_topic_id")
+            sub_topic_id = request.GET.get("sub_topic_id")
 
             if not all([school_id, sub_topic_id]):
                 logger.error("Missing required parameters for deleting sub-topic.")
@@ -667,7 +667,7 @@ class SyllabusService:
         try:
             logger.info("Deleting prerequisite by ID...")
             school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
-            prerequisite_id = request.data.get("prerequisite_id")
+            prerequisite_id = request.GET.get("prerequisite_id")
 
             if not all([school_id, prerequisite_id]):
                 logger.error("Missing required parameters for deleting prerequisite.")

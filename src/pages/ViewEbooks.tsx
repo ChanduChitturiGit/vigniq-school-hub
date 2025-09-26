@@ -509,7 +509,7 @@ const ViewEbooks: React.FC = () => {
                                     <p>Are you sure you want to delete E-Book <span className='font-bold'>{ebook.ebook_name}</span>?</p>
                                     This action cannot be undone
                                   </div>
-                                  <div>
+                                  {/* <div>
                                     <input
                                       type="checkbox"
                                       id="sameAddress"
@@ -526,7 +526,7 @@ const ViewEbooks: React.FC = () => {
                                     <label htmlFor="sameAddress" className="text-sm text-gray-700">
                                       Delete for all Schools
                                     </label>
-                                  </div>
+                                  </div> */}
                                 </div>
                               </AlertDialogDescription>
                             </AlertDialogHeader>
