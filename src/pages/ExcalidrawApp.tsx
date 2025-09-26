@@ -9,6 +9,7 @@ import { useSnackbar } from '../components/snackbar/SnackbarContext';
 import { getLessonPlanDataByDay, getWhiteboardData } from '../services/grades';
 import styles from "./ExcalidrawApp.module.css";
 import { jsPDF } from "jspdf";
+import { exportToPdf } from "@excalidraw/excalidraw";
 
 
 
@@ -323,52 +324,54 @@ export default function ExcalidrawApp() {
 
   // Download as PDF
   const handleDownloadPDF = async () => {
-    if (!excalidrawApiRef.current) return;
+  if (!excalidrawApiRef.current) return;
 
-    const pdf = new jsPDF("l", "pt"); // landscape, points
+  const pdf = new jsPDF("l", "pt"); // landscape, points
 
-    const slideEntries = Object.entries(slides);
+  const slideEntries = Object.entries(slides);
 
-    for (let i = 0; i < slideEntries.length; i++) {
-      const [pageIndex, scene] = slideEntries[i];
+  for (let i = 0; i < slideEntries.length; i++) {
+    const [pageIndex, scene] = slideEntries[i];
+    if (!scene) continue;
 
-      if (!scene) continue;
+    const safeAppState = {
+      ...scene.appState,
+      collaborators: new Map(),
+    };
 
-      const safeAppState = {
-        ...scene.appState,
-        collaborators: new Map(),
-      };
+    // ✅ Remove deleted/undone elements
+    const filteredElements = (scene.elements || []).filter(
+      (el) => !el.isDeleted
+    );
 
-      // Render canvas for this slide
-      const canvas = await exportToCanvas({
-        elements: scene.elements || [],
-        appState: safeAppState,
-        files: scene.files || {},
-      });
+    // Render canvas for this slide
+    const canvas = await exportToCanvas({
+      elements: filteredElements,
+      appState: safeAppState,
+      files: scene.files || {},
+    });
 
-      const imageData = canvas.toDataURL("image/png");
+    const imageData = canvas.toDataURL("image/png");
 
-      // Resize PDF page to fit canvas
-      const pageWidth = canvas.width;
-      const pageHeight = canvas.height;
+    const pageWidth = canvas.width;
+    const pageHeight = canvas.height;
 
-      if (i === 0) {
-        // First page → set size
-        pdf.deletePage(1); // remove the auto-added blank page
-        pdf.addPage([pageWidth, pageHeight], "l");
-      } else {
-        // Add new page for each subsequent slide
-        pdf.addPage([pageWidth, pageHeight], "l");
-      }
-
-      pdf.setPage(i + 1);
-      pdf.addImage(imageData, "PNG", 0, 0, pageWidth, pageHeight);
+    if (i === 0) {
+      pdf.deletePage(1); // remove the auto-added blank page
+      pdf.addPage([pageWidth, pageHeight], "l");
+    } else {
+      pdf.addPage([pageWidth, pageHeight], "l");
     }
 
-    pdf.save("slides.pdf");
-    exitFullScreen();
-    setIsFullscreen(false);
-  };
+    pdf.setPage(i + 1);
+    pdf.addImage(imageData, "PNG", 0, 0, pageWidth, pageHeight);
+  }
+
+  pdf.save("slides.pdf");
+  exitFullScreen();
+  setIsFullscreen(false);
+};
+
 
 
 
