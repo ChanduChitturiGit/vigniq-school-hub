@@ -70,7 +70,7 @@ const TeacherDetails: React.FC = () => {
     if (userData.role == 'superadmin') {
       setBreadCrumbItems([
         { label: 'Schools', path: '/schools' },
-        { label: 'My School', path: `/school-details/${schoolId}` },
+        { label: 'My School', path: `/schools/school-details/${schoolId}` },
         { label: `Teacher Details - ${teacherName}` }
       ])
     } else {
@@ -636,7 +636,7 @@ const TeacherDetails: React.FC = () => {
                   {formData.subject_assignments.map((classItem) => (
                     <Link
                       key={classItem.class_id}
-                      to={`/class-details/${classItem.class_id}`}
+                      to={`/classes/class-details/${classItem.class_id}`}
                       className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
                     >
                       <h3 className="font-semibold text-gray-800">

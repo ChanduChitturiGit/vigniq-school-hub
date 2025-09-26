@@ -648,14 +648,14 @@ const ChapterDetails: React.FC = () => {
               </div>
               <div className='flex flex-col md:flex-row gap-2'>
                 {lessonPlan && lessonPlan.length > 0 ? (
-                  <Link to={`/grades/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`}>
+                  <Link to={`/grades/syllabus/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`}>
                     <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
                       <RefreshCw className="w-4 h-4" />
                       Re-generate Lesson Plan
                     </Button>
                   </Link>
                 ) : (
-                  <Link to={`/grades/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`}>
+                  <Link to={`/grades/syllabus/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`}>
                     <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
                       <Plus className="w-4 h-4" />
                       Generate Lesson Plan
@@ -663,7 +663,7 @@ const ChapterDetails: React.FC = () => {
                   </Link>
                 )}
                 {/* <Link
-                  to={`/grades/lesson-plan/customize/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}&${pathData}`}
+                  to={`/grades/syllabus/lesson-plan/customize/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}&${pathData}`}
                 >
                   <Button className="bg-purple-600 hover:bg-purple-700">
                     <FileCheck className="w-4 h-4 mr-2" />
@@ -695,7 +695,7 @@ const ChapterDetails: React.FC = () => {
 
                           <div className="flex flex-col gap-1 space-y-2">
                             <Link
-                              to={`/grades/lesson-plan/day/${chapterId}/${day.lesson_plan_day_id}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&day=${day.day}&${pathData}&status=${day.status}`}
+                              to={`/grades/syllabus/lesson-plan/day/${chapterId}/${day.lesson_plan_day_id}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&day=${day.day}&${pathData}&status=${day.status}`}
                               className="w-full"
                             >
                               <Button variant="outline" className="w-full flex items-center gap-2 text-blue-600 border-blue-200 hover:bg-blue-50">
@@ -705,7 +705,7 @@ const ChapterDetails: React.FC = () => {
                             </Link>
 
                             <Link
-                              to={`/grades/lesson-plan/ai-chat/${chapterId}/${day.lesson_plan_day_id}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}&dayCount=${day.day}`}
+                              to={`/grades/syllabus/lesson-plan/ai-chat/${chapterId}/${day.lesson_plan_day_id}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}&dayCount=${day.day}`}
                               className="w-full"
                             >
                               <Button className="w-full flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white">
@@ -729,7 +729,7 @@ const ChapterDetails: React.FC = () => {
                   <p className="text-gray-500 mb-4">
                     Generate a lesson plan for this chapter to get started with structured teaching.
                   </p>
-                  <Link to={`/grades/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`}>
+                  <Link to={`/grades/syllabus/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`}>
                     <Button className="bg-blue-600 hover:bg-blue-700">
                       Create Lesson Plan
                     </Button>

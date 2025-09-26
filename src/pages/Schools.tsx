@@ -83,7 +83,7 @@ const Schools: React.FC = () => {
             {schools.map((school) => (
               <Link
                 key={school.school_id}
-                to={`/school-details/${school.school_id}`}
+                to={`/schools/school-details/${school.school_id}`}
                 className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start justify-between mb-4">

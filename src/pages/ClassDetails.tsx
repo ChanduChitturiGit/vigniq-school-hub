@@ -101,7 +101,7 @@ const ClassDetails: React.FC = () => {
     if (userData.role == 'superadmin') {
       setBreadCrumbItems([
         { label: 'Schools', path: '/schools' },
-        { label: 'My School', path: `/school-details/${schoolId}` },
+        { label: 'My School', path: `/schools/school-details/${schoolId}` },
         { label: `Class Details : ${'Class ' + classData.class_number}-${classData.section}` }
       ])
     } else if (userData == 'admin') {
@@ -378,7 +378,7 @@ const ClassDetails: React.FC = () => {
           </div>
           {(userData?.role === 'superadmin' || userData?.role === 'admin' || userData?.role === 'teacher') && (
             <Link
-              to={'/add-student'}
+              to={'/students/add-student'}
               className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
@@ -392,7 +392,7 @@ const ClassDetails: React.FC = () => {
           {filteredStudents.map((student) => (
             <div
               key={student.student_id}
-              onClick={() => { navigate(`/student-details/${student.student_id}`) }}
+              onClick={() => { navigate(`/students/student-details/${student.student_id}`) }}
               className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between mb-4">

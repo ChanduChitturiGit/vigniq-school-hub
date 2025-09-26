@@ -203,7 +203,7 @@ const DayLessonPlan: React.FC = () => {
   }
 
   const handleStartTeaching = () => {
-    navigate(`/grades/lesson-plan/whiteboard/${chapterId}/${day}?subject=${subject}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`);
+    navigate(`/grades/syllabus/lesson-plan/whiteboard/${chapterId}/${day}?subject=${subject}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`);
   };
 
   const getTotalTime = () => {
@@ -320,7 +320,7 @@ const DayLessonPlan: React.FC = () => {
         {/* <Breadcrumb items={breadcrumbItems} /> */}
         <div className='no-print w-full flex flex-col md:flex-row items-start md:items-center justify-between gap-4'>
           <Link
-            to={`/grades/chapter/${chapterId}?${pathData}&tab=lesson-plan`}
+            to={`/grades/syllabus/chapter/${chapterId}?${pathData}&tab=lesson-plan`}
             className=" max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />

@@ -95,7 +95,7 @@ const Students: React.FC = () => {
   }, [])
 
   const getAddStudentPath = () => {
-    return '/add-student';
+    return '/students/add-student';
   };
 
   const handleDelete = (studentId: string) => {
@@ -140,7 +140,7 @@ const Students: React.FC = () => {
       {filteredStudents.map((student) => (
         <div
           key={student.student_id}
-          onClick={() => { navigate(`/student-details/${student.student_id}`) }}
+          onClick={() => { navigate(`/students/student-details/${student.student_id}`) }}
           className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
         >
           <div className="flex items-start justify-between mb-4">
@@ -239,7 +239,7 @@ const Students: React.FC = () => {
                 <TableCell>
                   <div className="flex items-center justify-center gap-2">
                     <Link
-                      to={`/student-details/${student.student_id}`}
+                      to={`/students/student-details/${student.student_id}`}
                       className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
                       title="View Details"
                     >

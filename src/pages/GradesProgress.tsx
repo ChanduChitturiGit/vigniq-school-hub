@@ -204,7 +204,7 @@ const GradesProgress: React.FC = () => {
                 <CardContent className="p-6"
                   onClick={() => {
                     // Navigate to chapter details page
-                    navigate(`/grades/chapter/${chapter.chapter_id}?${pathData}&chapter_name=${chapter.chapter_name}&class=${className}&tab=lesson-plan&chapter_number=${chapter.chapter_number}`);
+                    navigate(`/grades/syllabus/chapter/${chapter.chapter_id}?${pathData}&chapter_name=${chapter.chapter_name}&class=${className}&tab=lesson-plan&chapter_number=${chapter.chapter_number}`);
                   }
                   }>
                   <div className="flex items-center justify-between mb-4">

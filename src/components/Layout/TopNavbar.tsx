@@ -91,7 +91,7 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ isCollapsed, toggleSidebar, pageT
   };
 
   const handleNotificationClick = (ticket_id: number) => {
-    navigate(`/support-details/${ticket_id}`);
+    navigate(`/requests/support-details/${ticket_id}`);
     setShowNotificationMenu(false);
   }
 

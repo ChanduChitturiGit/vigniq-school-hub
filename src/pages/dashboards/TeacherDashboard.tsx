@@ -227,7 +227,7 @@ const TeacherDashboard: React.FC = () => {
               {myClasses.map((classItem) => (
                 <Link
                   key={classItem.id}
-                  to={`/class-details/${classItem.id}`}
+                  to={`/classes/class-details/${classItem.id}`}
                   className="flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
                 >
                   <div className="flex-1">
