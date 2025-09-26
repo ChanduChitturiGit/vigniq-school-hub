@@ -180,13 +180,18 @@ const Students: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-end"
-            onClick={(e) => e.stopPropagation()}>
-            {/* <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+          {
+            (userData?.role !== 'student' && userData?.role !== 'teacher') &&
+            (
+              <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-end"
+                onClick={(e) => e.stopPropagation()}>
+                {/* <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
               {student.status || 'active'}
             </span> */}
-            {deleteModal(student)}
-          </div>
+                {deleteModal(student)}
+              </div>
+            )
+          }
         </div>
       ))}
     </div>
@@ -222,7 +227,7 @@ const Students: React.FC = () => {
                   </div>
                 </TableCell>
                 <TableCell>{'Class ' + student.class_number + ' - ' + student.section}</TableCell>
-                 <TableCell>{student.board_name}</TableCell>
+                <TableCell>{student.board_name}</TableCell>
                 <TableCell>{student.roll_number}</TableCell>
                 <TableCell>{student.parent_name}</TableCell>
                 <TableCell>{student.parent_phone}</TableCell>
@@ -240,7 +245,7 @@ const Students: React.FC = () => {
                     >
                       <Eye className="w-4 h-4" />
                     </Link>
-                    {(user?.role !== 'student') &&
+                    {(userData?.role !== 'student' && userData?.role !== 'teacher') &&
                       deleteModal(student)
                     }
                   </div>
