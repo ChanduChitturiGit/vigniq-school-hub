@@ -20,7 +20,7 @@ import {
 import { useSnackbar } from '../components/snackbar/SnackbarContext';
 import { getLessonPlanDataByDay } from '../services/grades';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '../components/ui/accordion';
-import { sendMessage as sendMessageApi, getChat as getChatApi } from '../services/aiChat'
+import { sendMessage as sendMessageApi, getChat as getChatApi,clearChat } from '../services/aiChat'
 import { differenceInHours, differenceInMinutes, differenceInSeconds, format, isToday, isYesterday } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";

@@ -55,7 +55,7 @@ const AdminDashboard: React.FC = () => {
     try {
       const response = await getHomePageData();
       // Process and set the data as needed
-      console.log(response);
+      // console.log(response);
       if (response && response.data) {
         setStats(
           [
@@ -104,7 +104,7 @@ const AdminDashboard: React.FC = () => {
   const schoolDataById = async () => {
     const schoolData = await getSchoolById(userData.school_id);
     if (schoolData && schoolData.school) {
-      console.log(schoolData.school);
+      // console.log(schoolData.school);
       setSchoolData(schoolData.school);
     }
   }

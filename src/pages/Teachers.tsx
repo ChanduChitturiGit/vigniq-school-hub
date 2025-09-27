@@ -4,8 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Plus, Mail, Phone, Search, Users as UsersIcon, LoaderCircle, Grid, List, Eye, Trash2, Trash, ArrowLeft } from 'lucide-react';
-import { getTeachersBySchoolId, deleteTeacherById } from '../services/teacher';
+import { Edit, Plus, Mail, Phone, Search, Users as UsersIcon, LoaderCircle, Grid, List, Eye, Trash2, Trash, ArrowLeft, Book, RefreshCcw, PlayCircle, CheckCircle } from 'lucide-react';
+import { getTeachersBySchoolId, deleteTeacherById, getTeachersListBySchoolId, reactivateTeacherById } from '../services/teacher';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import { SpinnerOverlay } from '../pages/SpinnerOverlay';
@@ -20,6 +20,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '../components/ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 
 const Teachers: React.FC = () => {
   const { showSnackbar } = useSnackbar();
@@ -31,12 +32,17 @@ const Teachers: React.FC = () => {
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const schoolId = JSON.parse(localStorage.getItem("current_school_id"));
   const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    status: 'Active',
+    is_active: true,
+  });
 
 
-  const getTeachersList = async () => {
+
+  const getTeachersList = async (isActive = true) => {
     setLoader(true);
     try {
-      const response = await getTeachersBySchoolId(userData.school_id ? userData.school_id : schoolId);
+      const response = await getTeachersListBySchoolId({ school_id: (userData.school_id ? userData.school_id : schoolId), is_active: isActive });
       if (response && response.teachers) {
         setLoader(false);
         setTeachers(response.teachers);
@@ -49,6 +55,36 @@ const Teachers: React.FC = () => {
         description: error?.response?.data?.error || "Something went wrong",
         status: "error"
       });
+    }
+  }
+
+  //reactivateTeacherById
+  const handleTeacherReactivate = async (teacherId: number) => {
+    setLoader(true);
+    try {
+      const response = await reactivateTeacherById({ teacher_id: teacherId, school_id: userData.school_id ? userData.school_id : schoolId });
+      if (response && response.message) {
+        showSnackbar({
+          title: "Success",
+          description: "Teacher reactivated successfully ✅",
+          status: "success"
+        });
+      } else {
+        showSnackbar({
+          title: "⛔ Error",
+          description: "Something went wrong",
+          status: "error"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    } finally {
+      setLoader(false);
+      getTeachersList(false);
     }
   }
 
@@ -108,6 +144,13 @@ const Teachers: React.FC = () => {
     handleTeacherDelete(Number(teacherId));
   };
 
+  const handleStatusChange = (value: string) => {
+    setFormData(prevState => ({ ...prevState, status: value, is_active: value === 'Active' ? true : false }));
+    setTimeout(() => {
+      getTeachersList(value === 'Active' ? true : false);
+    }, 100);
+  }
+
 
   const deleteModal = (teacher: any) => {
     return (
@@ -124,13 +167,42 @@ const Teachers: React.FC = () => {
               <AlertDialogTitle>Delete Teacher</AlertDialogTitle>
               <AlertDialogDescription className='text-gray-700'>
                 <p>Are you sure you want to delete teacher <span className='font-bold'>{teacher.teacher_first_name} {teacher.teacher_last_name}</span>?</p>
-                This action cannot be undone
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={() => handleDelete(teacher.teacher_id)} className="bg-red-600 hover:bg-red-700">
                 Confirm Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
+    )
+  }
+
+  const reActiveModal = (teacher: any) => {
+    return (
+      <>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button className="flex items-center gap-2 text-orange-500 hover:text-orange-600 transition-colors">
+              <CheckCircle className="w-4 h-4" />
+              Make Active
+              {/* Reset Password */}
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Activate Teacher</AlertDialogTitle>
+              <AlertDialogDescription className='text-gray-700'>
+                <p>Are you sure you want to Re-Activate Teacher <span className='font-bold'>{teacher.teacher_first_name} {teacher.teacher_last_name}</span>?</p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => handleTeacherReactivate(teacher.teacher_id)} className="bg-orange-600 hover:bg-orange-700">
+                Confirm Active
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -170,6 +242,11 @@ const Teachers: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-2">
+                <Book className="w-4 h-4 text-gray-400" />
+                <p className="text-sm text-gray-600 truncate" title={teacher?.subject_assignments.join(",")}>{teacher?.subject_assignments.join(",")}</p>
+              </div>
+
+              <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-gray-400" />
                 <p className="text-sm text-gray-600">{teacher.phone_number}</p>
               </div>
@@ -191,13 +268,13 @@ const Teachers: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-end"
+          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between"
             onClick={(e) => e.stopPropagation()} >
-            {/* <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-              {teacher.status || 'Active'}
-            </span> */}
+            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${teacher.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+              {teacher.is_active ? 'Active' : 'In Active'}
+            </span>
             {(user?.role === 'admin' || user?.role === 'superadmin') &&
-              deleteModal(teacher)
+              (teacher.is_active ? deleteModal(teacher) : reActiveModal(teacher))
             }
           </div>
         </div>
@@ -212,10 +289,10 @@ const Teachers: React.FC = () => {
           <TableHeader>
             <TableRow>
               <TableHead className="font-medium">Name</TableHead>
-              {/* <TableHead className="font-medium">Subject</TableHead> */}
+              <TableHead className="font-medium">Subject</TableHead>
               <TableHead className="font-medium">Email</TableHead>
               <TableHead className="font-medium">Phone</TableHead>
-              {/* <TableHead className="font-medium">Status</TableHead> */}
+              <TableHead className="font-medium">Status</TableHead>
               <TableHead className="font-medium text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -232,14 +309,14 @@ const Teachers: React.FC = () => {
                     <span className="font-medium">{teacher.teacher_first_name + " " + teacher.teacher_last_name}</span>
                   </div>
                 </TableCell>
-                {/* <TableCell>{teacher.subject}</TableCell> */}
+                <TableCell className='truncate' title={teacher?.subject_assignments.join(",")}>{teacher?.subject_assignments.join(",")}</TableCell>
                 <TableCell className="max-w-xs truncate">{teacher.email}</TableCell>
                 <TableCell>{teacher.phone_number}</TableCell>
-                {/* <TableCell>
+                <TableCell>
                   <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                    {teacher.status || 'Active'}
+                     {teacher.is_active ? 'Active' : 'In Active'}
                   </span>
-                </TableCell> */}
+                </TableCell>
                 <TableCell>
                   <div className="flex items-center justify-center gap-2">
                     <Link
@@ -250,7 +327,7 @@ const Teachers: React.FC = () => {
                       <Eye className="w-4 h-4" />
                     </Link>
                     {(user?.role === 'admin' || user?.role === 'superadmin') &&
-                      deleteModal(teacher)
+                      (teacher.is_active ? deleteModal(teacher) : reActiveModal(teacher))
                     }
                   </div>
                 </TableCell>
@@ -282,6 +359,23 @@ const Teachers: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <div className='flex items-center justify gap-2'>
+              {/* <label className="block text-sm font-medium text-gray-700 mb-2">
+                Status
+              </label> */}
+              <Select value={formData.status} onValueChange={handleStatusChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a board" />
+                </SelectTrigger>
+                <SelectContent>
+                  {['Active', 'In Active'].map((val, index) => (
+                    <SelectItem key={index} value={val}>
+                      {val}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="flex items-center bg-gray-100 rounded-lg p-1">
               <button
                 onClick={() => setViewMode('grid')}

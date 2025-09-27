@@ -12,6 +12,11 @@ export const getTeachersBySchoolId = async (schoolId : Number) => {
   return response.data;
 }
 
+export const getTeachersListBySchoolId = async (data : any) => {
+  const response = await api.get(baseurl+suburl+'/getTeachersBySchoolId',{params : data});
+  return response.data;
+}
+
 //add new teacher or create new teacher
 export const addTeacher = async (data: any): Promise<any> => {
   const response = await api.post<any>(baseurl+suburl+'/addTeacher', data);
@@ -33,5 +38,11 @@ export const editTeacher = async (data : any) => {
 //deleteTeacherById
 export const deleteTeacherById = async (data) => {
   const response = await api.delete(baseurl+suburl+'/deleteTeacherById',{params : data});
+  return response.data;
+}
+
+//reactivateTeacherById
+export const reactivateTeacherById = async (data) => {
+  const response = await api.patch(baseurl+suburl+'/reactivateTeacherById',data);
   return response.data;
 }
