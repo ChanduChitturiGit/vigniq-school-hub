@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Search, Plus, X, GraduationCap, LoaderCircle, Save, Trash2, ArrowLeft } from 'lucide-react';
+import { Edit, Search, Plus, X, GraduationCap, LoaderCircle, Save, Trash2, ArrowLeft, CheckCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { getClassesById, editClass } from '../services/class'
+import { getClassesById, editClass, getClassesListById } from '../services/class'
 import { getTeachersBySchoolId } from '../services/teacher'
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
-import { deleteStudentById } from '@/services/student';
+import { deleteStudentById,reactivateStudentById } from '@/services/student';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '../components/ui/alert-dialog';
+import { get } from 'http';
 
 
 
@@ -41,6 +42,11 @@ const ClassDetails: React.FC = () => {
     teacher_name: '',
     school_id: null
   });
+  const [activeData, setActiveData] = useState({
+    status: 'Active',
+    is_active: true,
+  });
+
 
   // Mock students data for this class
   // const sampleAllStudents = [
@@ -125,12 +131,12 @@ const ClassDetails: React.FC = () => {
   }
 
 
-  const getClass = async () => {
+  const getClass = async (isActive = true) => {
     if (userData && userData.role && userData.role == 'superadmin') {
       userData.school_id = localStorage.getItem('current_school_id');
     }
     setLoader(true);
-    const response = await getClassesById(Number(id), userData.school_id);
+    const response = await getClassesListById({ class_id: Number(id), school_id: userData.school_id, is_active: isActive });
     if (response && response.class) {
       setClassData(response.class);
       setAllStudents(response.class.studends_list);
@@ -225,6 +231,38 @@ const ClassDetails: React.FC = () => {
     }
   }
 
+  const handleStatusChange = (value: string) => {
+    setFormData(prevState => ({ ...prevState, status: value, is_active: value === 'Active' ? true : false }));
+    setActiveData(prevState => ({ ...prevState, status: value, is_active: value === 'Active' ? true : false }));
+    setTimeout(() => {
+      getClass(value === 'Active' ? true : false);
+    }, 100);
+  }
+
+  const handleStudentReactivate = async (studentId: string) => {
+    setLoader(true);
+    try {
+      const response = await reactivateStudentById({ student_id: studentId, school_id: userData.school_id });
+      if (response && response.message) {
+        // setStudents(students.filter(student => student.student_id !== studentId));
+        showSnackbar({
+          title: "✅ Success",
+          description: "Student re-activated successfully",
+          status: "success"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    } finally {
+      setLoader(false);
+      getClass(false);
+    }
+  }
+
   const deleteModal = (student: any) => {
     return (
       <>
@@ -240,13 +278,42 @@ const ClassDetails: React.FC = () => {
               <AlertDialogTitle>Delete Student</AlertDialogTitle>
               <AlertDialogDescription className='text-gray-700'>
                 <p>Are you sure you want to delete student <span className='font-bold'>{student.student_name}</span>?</p>
-                This action cannot be undone
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={() => deleteStudent(student.student_id)} className="bg-red-600 hover:bg-red-700">
                 Confirm Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
+    )
+  }
+
+  const reActiveModal = (student: any) => {
+    return (
+      <>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button className="flex items-center gap-2 text-orange-500 hover:text-orange-600 transition-colors">
+              <CheckCircle className="w-4 h-4" />
+              Make Active
+              {/* Reset Password */}
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Activate Student</AlertDialogTitle>
+              <AlertDialogDescription className='text-gray-700'>
+                <p>Are you sure you want to Re-Activate Student  <span className='font-bold'>{student.student_name}</span>?</p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => handleStudentReactivate(student.student_id)} className="bg-orange-600 hover:bg-orange-700">
+                Confirm Active
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -302,6 +369,9 @@ const ClassDetails: React.FC = () => {
                             {teacher.teacher_first_name + ' ' + teacher.teacher_last_name}
                           </SelectItem>
                         ))}
+                        {/* <SelectItem key={999} value={null}>
+                          {'Remove Teacher'}
+                        </SelectItem> */}
                       </SelectContent>
                     </Select>
                   </div>
@@ -385,6 +455,20 @@ const ClassDetails: React.FC = () => {
               Add Student
             </Link>
           )}
+          <div className='w-[10%]'>
+            <Select value={activeData.status} onValueChange={handleStatusChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a board" />
+              </SelectTrigger>
+              <SelectContent>
+                {['Active', 'In Active'].map((val, index) => (
+                  <SelectItem key={index} value={val}>
+                    {val}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Students Grid */}
@@ -435,10 +519,13 @@ const ClassDetails: React.FC = () => {
 
               {
                 (userData?.role !== 'student' && userData?.role !== 'teacher') && (
-                  <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-end "
+                  <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between "
                     onClick={(e) => e.stopPropagation()}>
+                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                      {student.is_active ? 'Active' : 'In Active'}
+                    </span>
                     {
-                      deleteModal(student)
+                      (student.is_active ? deleteModal(student) : reActiveModal(student))
                     }
                   </div>
                 )

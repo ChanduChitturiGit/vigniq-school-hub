@@ -11,6 +11,11 @@ export const getStudentsBySchoolId = async (schoolId : Number) => {
   return response.data;
 }
 
+export const getStudentsListBySchoolId = async (data : any) => {
+  const response = await api.get(baseurl+suburl+'/getStudentsBySchoolId',{params : data});
+  return response.data;
+}
+
 //add new student or create new student
 export const addStudent = async (data : any): Promise<any> => {
   const response = await api.post<any>(baseurl+suburl+'/createStudent', data);
@@ -23,6 +28,7 @@ export const getStudentsById = async (id : Number,schoolId : Number) => {
   return response.data;
 }
 
+
 //update student or edit student
 export const editStudent = async (data : any): Promise<any> => {
   const response = await api.put<any>(baseurl+suburl+'/updateStudentById', data);
@@ -33,5 +39,11 @@ export const editStudent = async (data : any): Promise<any> => {
 //deleteStudentById
 export const deleteStudentById = async (data) => {
   const response = await api.delete(baseurl+suburl+'/deleteStudentById',{params : data});
+  return response.data;
+}
+
+//reactivatestudentById
+export const reactivateStudentById = async (data) => {
+  const response = await api.delete(baseurl+suburl+'/deleteStudentById',data);
   return response.data;
 }

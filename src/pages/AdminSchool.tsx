@@ -3,12 +3,18 @@ import { Link, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import { Edit, Search, Plus, BookOpen, Users, LoaderCircle, ExternalLink, Expand, ArrowLeft } from 'lucide-react';
-import { getSchoolById, editSchool } from '../services/school';
+import { getSchoolById, editSchool, getBoardsList } from '../services/school';
 import { getTeachersBySchoolId } from '../services/teacher';
 import { getClassesBySchoolId } from '../services/class';
 import { useParams } from 'react-router-dom';
 import { toast } from '../components/ui/sonner';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
+import Select, { ActionMeta, MultiValue } from 'react-select';
+
+type OptionType = {
+  label: string;
+  value: number;
+};
 
 const AdminSchool: React.FC = () => {
   const { showSnackbar } = useSnackbar();
@@ -25,7 +31,8 @@ const AdminSchool: React.FC = () => {
     school_email: '',
     school_contact_number: '',
     school_address: '',
-    boards: []
+    boards: [],
+    selectedBoards: [] as OptionType[]
   });
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const { id } = useParams();
@@ -34,18 +41,7 @@ const AdminSchool: React.FC = () => {
     { label: 'My School' }
   ]);
   const [showMore, setShowMore] = useState(false);
-
-
-
-  // Mock data for admin's school
-  const school = {
-    id: '1',
-    name: 'Greenwood High School',
-    email: 'admin@greenwood.edu',
-    phone: '+1 234-567-8900',
-    address: '123 Education Street, Learning City, LC 12345'
-  };
-
+  const [boards, setBoards] = useState([]);
 
 
   const setBreadCrumb = () => {
@@ -58,31 +54,11 @@ const AdminSchool: React.FC = () => {
     }
   }
 
-  // Mock data for teachers and classes
-  let sampleTeachers = [
-    { id: '1', name: 'John Smith', subject: 'Mathematics', email: 'john@school.com', phone: '+1234567890' },
-    { id: '2', name: 'Sarah Johnson', subject: 'English', email: 'sarah@school.com', phone: '+1234567891' },
-    { id: '3', name: 'Mike Wilson', subject: 'Science', email: 'mike@school.com', phone: '+1234567892' },
-    { id: '4', name: 'Emily Davis', subject: 'History', email: 'emily@school.com', phone: '+1234567893' },
-    { id: '5', name: 'Robert Brown', subject: 'Geography', email: 'robert@school.com', phone: '+1234567894' },
-    { id: '6', name: 'Lisa White', subject: 'Physics', email: 'lisa@school.com', phone: '+1234567895' },
-    { id: '7', name: 'David Green', subject: 'Chemistry', email: 'david@school.com', phone: '+1234567896' }
-  ];
-
-  let sampleClasses = [
-    { id: '1', name: 'Class 10', section: 'A', students: 25, teacher: 'John Smith' },
-    { id: '2', name: 'Class 10', section: 'B', students: 28, teacher: 'Sarah Johnson' },
-    { id: '3', name: 'Class 11', section: 'A', students: 22, teacher: 'Mike Wilson' },
-    { id: '4', name: 'Class 11', section: 'B', students: 26, teacher: 'Emily Davis' },
-    { id: '5', name: 'Class 12', section: 'A', students: 24, teacher: 'Robert Brown' },
-    { id: '6', name: 'Class 12', section: 'B', students: 23, teacher: 'Lisa White' },
-    { id: '7', name: 'Class 9', section: 'A', students: 30, teacher: 'David Green' }
-  ];
 
   const schoolDataById = async () => {
     const schoolData = await getSchoolById(id ? id : userData.school_id);
     if (schoolData && schoolData.school) {
-      setSchoolData(schoolData.school);
+      setSchoolData({...schoolData.school, selectedBoards: schoolData.school.boards.map((board: any) => ({ label: board.name, value: board.id })) });
     }
   }
 
@@ -114,6 +90,7 @@ const AdminSchool: React.FC = () => {
   }
 
   useEffect(() => {
+    boardsList();
     if (userData.role == 'superadmin') {
       setSchoolId();
 
@@ -121,6 +98,29 @@ const AdminSchool: React.FC = () => {
     setBreadCrumb();
     fetchSchools();
   }, []);
+
+  const boardsList = async () => {
+    const response = await getBoardsList();
+    if (response && response.boards) {
+      setBoards(
+        response.boards.map((board) => ({
+          label: board.name,
+          value: board.id,
+        }))
+      );
+    }
+  }
+
+  const handleBoardChange = (
+    selectedOptions: MultiValue<OptionType>,
+    _actionMeta: ActionMeta<OptionType>
+  ) => {
+    setSchoolData((prev) => ({
+      ...prev,
+      selectedBoards: selectedOptions as OptionType[],
+      board_ids: selectedOptions.map((option) => option.value),
+    }));
+  };
 
 
   const filteredTeachers = teachers.filter(teacher =>
@@ -261,29 +261,42 @@ const AdminSchool: React.FC = () => {
               )}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
-              {isEditing ? (
-                <textarea
-                  name="school_address"
-                  value={schoolData.school_address}
-                  onChange={handleSchoolInputChange}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              ) : (
-                <p className="text-gray-900">{schoolData.school_address}</p>
-              )}
-            </div>
-{/* 
             {
-              !isEditing && (
+              isEditing ? (
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Board *</label>
+                  <Select<OptionType, true>
+                    isMulti
+                    options={boards}
+                    onChange={handleBoardChange}
+                    className="basic-multi-select"
+                    classNamePrefix="select"
+                    placeholder="Select Board"
+                    value={schoolData.selectedBoards}
+                  />
+                </div>
+              ) : (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Board</label>
                   <p className="text-gray-900">  {schoolData?.boards?.map((board: any) => board.name).join(', ')}</p>
                 </div>
               )
-            } */}
+            }
+          </div>
+
+          <div className='mt-6'>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+            {isEditing ? (
+              <textarea
+                name="school_address"
+                value={schoolData.school_address}
+                onChange={handleSchoolInputChange}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            ) : (
+              <p className="text-gray-900">{schoolData.school_address}</p>
+            )}
           </div>
 
           {isEditing && (

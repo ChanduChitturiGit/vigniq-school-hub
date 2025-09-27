@@ -90,10 +90,10 @@ const TeacherDetails: React.FC = () => {
       getClasses();
       subjectsList();
       setFormData(response.data);
-       setFormData((prev) => ({
+      setFormData((prev) => ({
         ...prev,
         board_name: response.data?.class_assignment && response.data.class_assignment.board_name ? response.data.class_assignment.board_name : '',
-        class:'Class ' + response.data?.class_assignment?.class_number + ' - ' + response.data?.class_assignment?.section + ' ('+ response?.data?.class_assignment?.board_name+')'
+        class: 'Class ' + response.data?.class_assignment?.class_number + ' - ' + response.data?.class_assignment?.section + ' (' + response?.data?.class_assignment?.board_name + ')'
       }));
       setBreadCrumb();
       seTeacherAssignments(response.data.subject_assignments);
@@ -272,7 +272,7 @@ const TeacherDetails: React.FC = () => {
   };
 
   const getClassId = (className: string) => {
-    const classdata = classes.find((val: any) => ('Class ' + val.class_number + ' - ' + val.section + ' ('+val.school_board_name+')') == className);
+    const classdata = classes.find((val: any) => ('Class ' + val.class_number + ' - ' + val.section + ' (' + val.school_board_name + ')') == className);
     const classId = classdata.class_id ? classdata.class_id : 0;
     return classId;
   }
@@ -288,11 +288,11 @@ const TeacherDetails: React.FC = () => {
 
 
 
-  const handleClassChange = (value: string) => {
+  const handleClassChange = (value: any) => {
     setFormData(prev => ({
       ...prev,
       class: value,
-      class_section_id: getClassId(value)
+      class_section_id: value ? getClassId(value) : value
     }));
     setErrors(prev => ({ ...prev, class: '' }));
   };
@@ -477,22 +477,25 @@ const TeacherDetails: React.FC = () => {
                   Class Teacher
                 </label>
                 {isEditing ? (
-                  <Select value={formData.class} onValueChange={handleClassChange} disabled={teacherClasses.length === 0}>
+                  <Select value={formData.class} onValueChange={handleClassChange} >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder={`${teacherClasses.length > 0 ? 'Select a Class' : 'All Classes got assigned with teachers'}`} />
                     </SelectTrigger>
                     <SelectContent>
-                      {teacherClasses.map((classItem, index) => (
-                        <SelectItem key={index} value={'Class ' + classItem.class_number + ' - ' + classItem.section + ' ('+classItem.board_name+')'}>
-                          {'Class ' + classItem.class_number + ' - ' + classItem.section + ' ('+classItem.board_name+')'}
+                      {teacherClasses.length > 0 && teacherClasses.map((classItem, index) => (
+                        <SelectItem key={index} value={'Class ' + classItem.class_number + ' - ' + classItem.section + ' (' + classItem.board_name + ')'}>
+                          {'Class ' + classItem.class_number + ' - ' + classItem.section + ' (' + classItem.board_name + ')'}
                         </SelectItem>
                       ))}
+                      <SelectItem key={999} value={null}>
+                        {'Remove as Class Teacher'}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 ) : (
                   <div className="flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-gray-400" />
-                    <p className="text-gray-900">{formData?.class_assignment && formData.class_assignment.class_number ? 'Class ' + formData?.class_assignment?.class_number + ' ' + formData?.class_assignment?.section + ' ('+formData.class_assignment.board_name+')'  : 'N/A'}</p>
+                    <p className="text-gray-900">{formData?.class_assignment && formData.class_assignment.class_number ? 'Class ' + formData?.class_assignment?.class_number + ' ' + formData?.class_assignment?.section + ' (' + formData.class_assignment.board_name + ')' : 'N/A'}</p>
                   </div>
                 )
                 }
@@ -642,7 +645,7 @@ const TeacherDetails: React.FC = () => {
                       <h3 className="font-semibold text-gray-800">
                         {'Class ' + classItem.class_number + ' - ' + classItem.section}
                       </h3>
-                       <p className="text-sm text-gray-600">Board : {classItem.board_name}</p>
+                      <p className="text-sm text-gray-600">Board : {classItem.board_name}</p>
                       <p className="text-sm text-gray-600">Subject : {classItem.subject_name}</p>
                     </Link>
                   ))}

@@ -213,7 +213,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
 
     const conditionPath = isInSubjectContext ? ('/'+pathParts[1]+'/'+pathParts[2]) :  ('/'+pathParts[1]+(pathParts[2] ? ('/'+pathParts[2]) : ''));
     const status = location.pathname === path || (location.pathname !== path && location.pathname.startsWith(conditionPath) && path !== '/' )
-    console.log('location', location.pathname, 'path', conditionPath, 'status', status);
 
     return status;
   };

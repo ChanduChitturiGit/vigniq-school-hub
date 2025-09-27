@@ -75,7 +75,7 @@ const ViewLessonPlan: React.FC = () => {
               Re-generate Lesson Plan
             </Button>
             <Link
-              to={`/grades/lesson-plan/customize/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`}
+              to={`/grades/syllabus/lesson-plan/customize/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`}
             >
               <Button className="bg-purple-600 hover:bg-purple-700">
                 <MessageSquare className="w-4 h-4 mr-2" />
@@ -121,14 +121,14 @@ const ViewLessonPlan: React.FC = () => {
 
                 <div className="flex items-center gap-3 mt-6">
                   <Link
-                    to={`/grades/lesson-plan/day/${chapterId}/${dayPlan.day}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`}
+                    to={`/grades/syllabus/lesson-plan/day/${chapterId}/${dayPlan.day}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`}
                     className="flex items-center gap-2 bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-2 rounded-lg transition-colors text-sm font-medium flex-1 justify-center"
                   >
                     <Eye className="w-4 h-4" />
                     View
                   </Link>
                   <Link
-                    to={`/grades/lesson-plan/ai-chat/${chapterId}/${dayPlan.day}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`}
+                    to={`/grades/syllabus/lesson-plan/ai-chat/${chapterId}/${dayPlan.day}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}`}
                     className="flex items-center gap-2 bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200 hover:border-purple-300 px-3 py-2 rounded-lg transition-colors text-sm font-medium flex-1 justify-center"
                   >
                     <MessageSquare className="w-4 h-4" />
