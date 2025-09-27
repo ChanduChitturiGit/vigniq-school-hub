@@ -273,7 +273,7 @@ const Teachers: React.FC = () => {
             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${teacher.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
               {teacher.is_active ? 'Active' : 'In Active'}
             </span>
-            {(user?.role === 'admin' || user?.role === 'superadmin') &&
+            {(userData?.role === 'admin' || userData?.role === 'superadmin') &&
               (teacher.is_active ? deleteModal(teacher) : reActiveModal(teacher))
             }
           </div>
@@ -326,7 +326,7 @@ const Teachers: React.FC = () => {
                     >
                       <Eye className="w-4 h-4" />
                     </Link>
-                    {(user?.role === 'admin' || user?.role === 'superadmin') &&
+                    {(userData?.role === 'admin' || userData?.role === 'superadmin') &&
                       (teacher.is_active ? deleteModal(teacher) : reActiveModal(teacher))
                     }
                   </div>
