@@ -15,7 +15,9 @@ import {
   LoaderCircle,
   CheckCircle,
   CircleDot,
-  Target
+  Target,
+  Trash2,
+  RefreshCcw
 } from 'lucide-react';
 import { useSnackbar } from '../components/snackbar/SnackbarContext';
 import { getLessonPlanDataByDay } from '../services/grades';
@@ -24,6 +26,17 @@ import { sendMessage as sendMessageApi, getChat as getChatApi,clearChat } from '
 import { differenceInHours, differenceInMinutes, differenceInSeconds, format, isToday, isYesterday } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../components/ui/alert-dialog';
 
 interface LessonActivity {
   serialNumber: number;
@@ -251,6 +264,39 @@ const AIChatLessonPlan: React.FC = () => {
     }
   }
 
+  //clearChat
+  const clearChatApi = async () => {
+    try {
+      const data = {
+        chapter_id: Number(chapterId),
+        lesson_plan_day_id: Number(day),
+        school_id: schoolId ? Number(schoolId) : Number(userData.school_id),
+        user_id: userData?.user_id
+      };
+      const response = await clearChat(data);
+      if (response && response.message) {
+        setMessages([]);
+        showSnackbar({
+          title: 'Success',
+          description: response.message || 'Chat history cleared successfully.',
+          status: 'success'
+        });
+      } else {
+        showSnackbar({
+          title: 'Error',
+          description: response.message || 'Failed to clear chat history.',
+          status: 'error'
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: 'Error',
+        description: 'Something went wrong while clearing chat history.',
+        status: 'error'
+      });
+    }
+  }
+
   const sendMessageData = async (message: string) => {
     try {
       setLoader(true);
@@ -362,6 +408,35 @@ const AIChatLessonPlan: React.FC = () => {
     }
     return format(d, "dd-MM-yyyy, hh:mm a");
   };
+
+  const clearChatMarkup = () => {
+    return (
+      <>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button className="flex items-center gap-2 text-red-500 hover:text-red-600 transition-colors">
+              <RefreshCcw className="w-4 h-4" />
+              {/* Reset Password */}
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Clear Chat</AlertDialogTitle>
+              <AlertDialogDescription className='text-gray-700'>
+                <p>Are you sure you want to Clear the chat ?</p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => clearChatApi()} className="bg-red-600 hover:bg-red-700">
+                Confirm Clear 
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
+    )
+  }
 
   return (
     <MainLayout pageTitle={`AI Chat - Chapter ${chapterNumber}: ${chapterName} - Day ${dayCount}`}>
@@ -483,6 +558,9 @@ const AIChatLessonPlan: React.FC = () => {
                       <MessageSquare className="w-6 h-6 text-purple-600" />
                     </div>
                     Chat with AI Assistant
+                  </div>
+                  <div className='ml-auto'>
+                    {clearChatMarkup()}
                   </div>
                 </CardTitle>
               </CardHeader>

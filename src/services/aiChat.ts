@@ -13,7 +13,7 @@ export const getChat = async (data) => {
 }
 
 //clearAssistantChat
-export const clearChat = async (data: any): Promise<any> => {
+export const clearChat = async (data: any) => {
   const response = await api.delete<any>(baseurl+suburl+'/clearAssistantChat',{params : {...data}});
   return response.data;
 }
