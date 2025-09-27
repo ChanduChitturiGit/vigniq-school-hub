@@ -522,6 +522,52 @@ class StudentService:
             logger.error(f"Error deleting student: {e}")
             return JsonResponse({"error": "Failed to delete student."},
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    def reactivate_student(self, request):
+        """Reactivate a previously deactivated student."""
+        try:
+            school_id = request.data.get("school_id") or getattr(request.user, 'school_id', None)
+            student_id = request.data.get('student_id')
+
+            if not school_id:
+                return JsonResponse({"error": "School ID is required."},
+                                    status=status.HTTP_400_BAD_REQUEST)
+            if not student_id:
+                return JsonResponse({"error": "Student ID is required."},
+                                    status=status.HTTP_400_BAD_REQUEST)
+
+            self.school_db_name = CommonFunctions.get_school_db_name(school_id)
+            if not self.school_db_name:
+                return JsonResponse({"error": "School not found or school is inactive."},
+                                    status=status.HTTP_404_NOT_FOUND)
+
+            student = Student.objects.using(self.school_db_name).get(
+                student_id=student_id,
+                is_active=False
+            )
+
+            student.is_active = True
+
+            user = User.objects.get(id=student.student_id,is_active=False)
+
+            user.is_active = True
+
+            with transaction.atomic():
+                with transaction.atomic(using=self.school_db_name):
+                    user.save()
+                    student.save(using=self.school_db_name)
+
+            return JsonResponse({"message": "Student reactivated successfully."}, status=status.HTTP_200_OK)
+        except Student.DoesNotExist:
+            return JsonResponse({"error": "Student not found or already active."},
+                                status=status.HTTP_404_NOT_FOUND)
+        except User.DoesNotExist:
+            return JsonResponse({"error": "User not found or already active."},
+                                status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error reactivating student: {e}")
+            return JsonResponse({"error": "Failed to reactivate student."},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def get_students_data(self, students, academic_year_id):
         """Helper method to format student data with optimized DB calls."""

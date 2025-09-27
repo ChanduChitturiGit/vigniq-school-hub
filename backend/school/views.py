@@ -55,9 +55,12 @@ class SchoolActionView(APIView):
 
         if action == "updateSchoolById":
             return SchoolService().edit_school(request)
-        elif action == "reactivateSchoolById":
-            return SchoolService().reactivate_school(request)
         return Response({"error": "Invalid PUT action"}, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request, action=None):
+        if action == "reactivateSchoolById":
+            return SchoolService().reactivate_school(request)
+        return Response({"error": "Invalid PATCH action"}, status=status.HTTP_400_BAD_REQUEST)
     
     def delete(self, request, action=None):
 

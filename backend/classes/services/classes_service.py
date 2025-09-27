@@ -159,6 +159,7 @@ class ClassesService:
             logger.info("Retrieving class by ID.")
             school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
             class_id = request.GET.get('class_id')
+            is_active = request.GET.get('is_active', 'true').lower() in ['true', '1', 'yes']
             academic_year_id = request.GET.get('academic_year_id',1)
 
             if not school_id:
@@ -202,7 +203,7 @@ class ClassesService:
 
             students = Student.objects.using(school_db_name).filter(
                 student_id__in=student_ids,
-                is_active=True
+                is_active=is_active
             )
             students_data = StudentService(school_db_name).get_students_data(
                 students,

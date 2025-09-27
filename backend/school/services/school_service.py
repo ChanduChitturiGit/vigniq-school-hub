@@ -234,7 +234,7 @@ class SchoolService:
                 school.email = data.get('school_email', school.email)
                 school.save()
 
-                board_ids = [i['id'] for i in data.get('boards', [])]
+                board_ids = data.get('board_ids', [])
                 if board_ids is not None:
                     school_metadata = SchoolDbMetadata.objects.get(school=school)
                     academic_year = CommonFunctions().get_latest_academic_year(school_metadata.db_name)
@@ -355,6 +355,7 @@ class SchoolService:
                     "school_email": school.email if school.school_admin else None,
                     "teacher_count": teacher_count,
                     "student_count": student_count,
+                    "is_active": school.is_active,
                 })
 
             return Response({"schools": schools_data}, status=status.HTTP_200_OK)

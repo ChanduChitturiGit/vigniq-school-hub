@@ -26,7 +26,7 @@ class AiAssistantService:
 
     def clear_chat(self):
         """Clear Chat"""
-        lesson_plan_day_id = self.request.data.get("lesson_plan_day_id")
+        lesson_plan_day_id = self.request.GET.get("lesson_plan_day_id")
         user = self.request.user
         if not lesson_plan_day_id:
             return JsonResponse({"error": "Lesson Plan Day ID is required"}, status=400)

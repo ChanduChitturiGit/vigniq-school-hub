@@ -48,6 +48,12 @@ class StudentView(APIView):
         if action == "updateStudentById":
             return StudentService().update_student_by_id(request)
         return Response({"error": "Invalid PUT action"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def patch(self, request, action=None):
+
+        if action == "reactivateStudentById":
+            return StudentService().reactivate_student(request)
+        return Response({"error": "Invalid PATCH action"}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, action=None):
         """
