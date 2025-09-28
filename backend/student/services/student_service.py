@@ -334,6 +334,8 @@ class StudentService:
         """Retrieve students by school ID."""
         try:
             school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
+            is_active = request.GET.get('is_active', 'true').lower() in ['true', '1', 'yes']
+
             academic_year_id = request.GET.get('academic_year_id', 1)
             if not academic_year_id:
                 return JsonResponse({"error": "Academic year ID is required."},
@@ -347,7 +349,7 @@ class StudentService:
                 return JsonResponse({"error": "School not found or school is inactive."},
                                     status=status.HTTP_404_NOT_FOUND)
 
-            students = Student.objects.using(self.school_db_name).filter(is_active=True)
+            students = Student.objects.using(self.school_db_name).filter(is_active=is_active)
 
             students_data = self.get_students_data(students,academic_year_id)
 

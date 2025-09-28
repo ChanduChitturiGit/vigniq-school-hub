@@ -44,6 +44,6 @@ export const deleteStudentById = async (data) => {
 
 //reactivatestudentById
 export const reactivateStudentById = async (data) => {
-  const response = await api.delete(baseurl+suburl+'/deleteStudentById',data);
+  const response = await api.patch(baseurl+suburl+'/reactivateStudentById',data);
   return response.data;
 }
