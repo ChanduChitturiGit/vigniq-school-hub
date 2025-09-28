@@ -67,6 +67,7 @@ const Schools: React.FC = () => {
     try {
       const reponse = await deleteSchoolById({ school_id: school_id });
       if (reponse && reponse.message) {
+        fetchSchools();
         setLoader(false);
         showSnackbar({
           title: "Success",
@@ -96,6 +97,7 @@ const Schools: React.FC = () => {
     try {
       const reponse = await reactiveSchoolById({ school_id: school_id });
       if (reponse && reponse.message) {
+        fetchSchools(false);
         setLoader(false);
         showSnackbar({
           title: "Success",
