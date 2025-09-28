@@ -65,7 +65,7 @@ class SchoolActionView(APIView):
     def delete(self, request, action=None):
 
         if action == "deactivateSchoolById":
-            school_id = request.data.get('school_id')
+            school_id = request.GET.get('school_id')
             if not school_id:
                 return Response({"error": "school_id is required."},
                                 status=status.HTTP_400_BAD_REQUEST)

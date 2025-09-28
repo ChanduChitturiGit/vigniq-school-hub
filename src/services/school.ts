@@ -52,12 +52,12 @@ export const getBoardsListBySchoolId = async (id : Number) => {
 
 //deactivateSchoolById
 export const deleteSchoolById = async (data:any) => {
-  const response = await api.delete(baseurl+suburl+'/school_list', {params: data});
+  const response = await api.delete(baseurl+suburl+'/deactivateSchoolById', {params: data});
   return response.data;
 };
 
 //reactivateSchoolById
 export const reactiveSchoolById = async (data:any) => {
-  const response = await api.put(baseurl+suburl+'/reactivateSchoolById', {params: data});
+  const response = await api.patch(baseurl+suburl+'/reactivateSchoolById', data);
   return response.data;
 };

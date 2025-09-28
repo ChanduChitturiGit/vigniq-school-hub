@@ -288,8 +288,7 @@ class SchoolService:
         """
         try:
             with transaction.atomic():
-                data = request.data
-                school_id = data.get('school_id')
+                school_id = request.GET.get('school_id')
                 school = School.objects.get(pk=school_id)
                 school.is_active = False
                 school.save()
