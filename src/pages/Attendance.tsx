@@ -267,7 +267,8 @@ const Attendance: React.FC = () => {
       const attendancePayload = students.map(student => ({
         student_id: student.student_id,
         student_name: student.student_name,
-        is_present: activeSession === 'morning' ? (student.morningPresent ?? false) : (student.afternoonPresent) ?? false
+        is_present: activeSession === 'morning' ? (student.morningPresent ?? false) : (student.afternoonPresent) ?? false,
+        remarks: student.remarks ?? null
       }));
 
       const requestData = {
@@ -281,6 +282,8 @@ const Attendance: React.FC = () => {
       const response = await submitAttendence(requestData);
       // console.log('Submit Attendance Response:', response);
       if (response && response.message) {
+        setEditingRemarks(null);
+        setTempRemarks('');
         showSnackbar({
           title: "Success",
           description: `${response.message}`,
@@ -551,6 +554,24 @@ const Attendance: React.FC = () => {
     setTempRemarks(currentRemarks || '');
   };
 
+  useEffect(()=>{
+    if(editingRemarks != null){
+      submitAttendanceData();
+    }
+  },[students])
+
+  const saveRemarks = (studentId: string, currentRemarks: string) => {
+    setEditingRemarks(studentId);
+    setTempRemarks(currentRemarks || '');
+    const reamrksList = students.map((student)=>{
+      if(student.student_id == studentId){
+        return {...student, remarks: currentRemarks ?? null}
+      }
+      return student;
+    });
+    setStudents(reamrksList);
+  };
+
   const handleRemarksSave = async (studentId: string) => {
     try {
       const currentClassId = classId || (classes[0] ? getClassId('Class ' + classes[0].class_id + ' - ' + classes[0].section) : '');
@@ -611,6 +632,8 @@ const Attendance: React.FC = () => {
       "Morning",
       "Afternoon",
       "Overall",
+      "Morning Remarks",
+      "Afternoon Remarks"
     ];
 
     const header = worksheet.addRow(headerRow);
@@ -642,6 +665,8 @@ const Attendance: React.FC = () => {
         morningStatus,
         afternoonStatus,
         overall,
+        student.morning_remarks,
+        student.afternoon_remarks
       ]);
       // Apply colors to Morning, Afternoon, and Overall columns
       [3, 4, 5].forEach((colIndex) => {
@@ -858,6 +883,8 @@ const Attendance: React.FC = () => {
                           <TableHead>Morning Session</TableHead>
                           <TableHead>Afternoon Session</TableHead>
                           <TableHead>Overall Status</TableHead>
+                          <TableHead>Morning Remarks</TableHead>
+                          <TableHead>Afternoon Remarks</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -868,6 +895,8 @@ const Attendance: React.FC = () => {
                             <TableCell>{getStatusBadge(record.morning ? 'Present' : isMorningHoliday ? 'Holiday' : 'Absent')}</TableCell>
                             <TableCell>{getStatusBadge(record.afternoon ? 'Present' : isAfternoonHoliday ? 'Holiday' : 'Absent')}</TableCell>
                             <TableCell>{getOverallStatus(record.morning, record.afternoon)}</TableCell>
+                            <TableCell className="font-medium max-w-[4rem] truncate" title={record.morning_remarks}>{record.morning_remarks}</TableCell>
+                            <TableCell className="font-medium max-w-[4rem] truncate" title={record.afternoon_remarks}>{record.afternoon_remarks}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -1188,7 +1217,7 @@ const Attendance: React.FC = () => {
                                     />
                                     <Button
                                       size="sm"
-                                      onClick={() => handleRemarksSave(student.student_id)}
+                                      onClick={() => saveRemarks( student.student_id ,tempRemarks)}
                                       className="bg-green-600 hover:bg-green-700"
                                     >
                                       ✓
@@ -1204,9 +1233,9 @@ const Attendance: React.FC = () => {
                                   </div>
                                 </div>
                               ) : student.remarks && (
-                                <div className="mt-2 flex items-center gap-2">
+                                <div className="w-full mt-2 flex items-center gap-2" >
                                   <span className="text-sm text-gray-600">Remarks:</span>
-                                  <span className="text-sm">{student.remarks}</span>
+                                  <span className="text-sm truncate">{student.remarks}</span>
                                 </div>
                               )}
                             </div>
@@ -1303,7 +1332,7 @@ const Attendance: React.FC = () => {
                                     />
                                     <Button
                                       size="sm"
-                                      onClick={() => handleRemarksSave(student.student_id)}
+                                      onClick={() =>  saveRemarks( student.student_id ,tempRemarks)}
                                       className="bg-green-600 hover:bg-green-700"
                                     >
                                       ✓
@@ -1347,7 +1376,7 @@ const Attendance: React.FC = () => {
                 </Card>
               )}
 
-              {/* Message section */}
+              {/* Message section || No data Section*/}
               {(!selectedClass || (sampleAttendanceRecords.length == 0 && isPastDate && !allowTakeAttendence && (!isMorningHoliday && !isAfternoonHoliday)) || isSunday) && (
                 <Card className='py-[13rem]'>
                   <CardContent className="p-8 text-center">

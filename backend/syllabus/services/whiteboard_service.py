@@ -125,17 +125,17 @@ class WhiteboardService:
                 return Response({"error": f"Whiteboard session with id {session_id} not found"},
                                 status=status.HTTP_404_NOT_FOUND)
 
-            data_chunks = session.data_chunks.all().order_by('chunk_index')
+            data_chunks = session.data_chunks.all().order_by('-chunk_index').first()
 
-            data = []
-            for chunk in data_chunks:
-                for sub_chunk in chunk.data:
-                    if isinstance(sub_chunk, list):
-                        data.extend(sub_chunk)
-                    else:
-                        data.append(sub_chunk)
+            # data = []
+            # for chunk in data_chunks:
+            #     for sub_chunk in chunk.data:
+            #         if isinstance(sub_chunk, list):
+            #             data.extend(sub_chunk)
+            #         else:
+            #             data.append(sub_chunk)
 
-            return Response({"data": data}, status=status.HTTP_200_OK)
+            return Response({"data": data_chunks.data if data_chunks else {}}, status=status.HTTP_200_OK)
 
         except Exception as e:
             logger.exception("Unexpected error fetching whiteboard data")

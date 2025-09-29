@@ -1,6 +1,6 @@
 
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
@@ -34,6 +34,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '../components/ui/alert-dialog';
+import { jsPDF } from "jspdf";
+import html2canvas from "html2canvas";
 
 
 interface Topic {
@@ -78,6 +80,8 @@ const DayLessonPlan: React.FC = () => {
   const [overallProgress] = useState(0);
 
   const [sessionToken, setSessionToken] = useState<string>('');
+  const printRef = useRef<HTMLDivElement>(null);
+
 
   const breadcrumbItems = [
     { label: 'Grades', path: '/grades' },
@@ -101,9 +105,9 @@ const DayLessonPlan: React.FC = () => {
       const response = await getLessonPlanDataByDay(data);
       if (response && response.data) {
         setLessonData(response.data);
-        if(response.data.session_id){
+        if (response.data.session_id) {
           setSessionToken(response.data.session_id);
-        }else{
+        } else {
           generateSession();
         }
       } else {
@@ -162,8 +166,8 @@ const DayLessonPlan: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    sessionStorage.setItem('sessionId',sessionToken)
-  },[sessionToken])
+    sessionStorage.setItem('sessionId', sessionToken)
+  }, [sessionToken])
 
   const handleMarkAsCompleted = async () => {
     try {
@@ -199,13 +203,106 @@ const DayLessonPlan: React.FC = () => {
   }
 
   const handleStartTeaching = () => {
-    navigate(`/grades/lesson-plan/whiteboard/${chapterId}/${day}?subject=${subject}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`);
+    navigate(`/grades/syllabus/lesson-plan/whiteboard/${chapterId}/${day}?subject=${subject}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`);
   };
 
   const getTotalTime = () => {
     if (!lessonData) return 0;
     return lessonData.topics.reduce((total, topic) => total + topic.time_minutes, 0);
   };
+
+  const handleDownload = async () => {
+    if (!printRef.current) return;
+
+    // Hide elements with .no-pdf
+    const hiddenEls = printRef.current.querySelectorAll(".no-pdf");
+    hiddenEls.forEach(el => (el as HTMLElement).style.display = "none");
+
+    // Capture screenshot of the div
+    const canvas = await html2canvas(printRef.current, { scale: 2 });
+    const imgData = canvas.toDataURL("image/png");
+
+    // Restore hidden elements
+    hiddenEls.forEach(el => (el as HTMLElement).style.display = "");
+
+    // Create PDF
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+
+    const imgWidth = pageWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    if (imgHeight <= pageHeight) {
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+    } else {
+      let heightLeft = imgHeight;
+      let y = 0;
+
+      while (heightLeft > 0) {
+        pdf.addImage(imgData, "PNG", 0, y, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+        y -= pageHeight;
+        if (heightLeft > 0) pdf.addPage();
+      }
+    }
+
+    pdf.save("download.pdf");
+  };
+
+  // const handlePrint = () => {
+  //   window.print();
+  // };
+
+  const handlePrint = (divId) => {
+    const content = document.getElementById(divId).innerHTML;
+    const myWindow = window.open("", "", "width=900,height=650");
+
+    // Copy styles from current document
+    const styles = Array.from(document.styleSheets)
+      .map(styleSheet => {
+        try {
+          return Array.from(styleSheet.cssRules)
+            .map(rule => rule.cssText)
+            .join("");
+        } catch (e) {
+          // For cross-origin stylesheets, just link them
+          if (styleSheet.href) {
+            return `<link rel="stylesheet" href="${styleSheet.href}">`;
+          }
+          return "";
+        }
+      })
+      .join("");
+
+    myWindow.document.write(`
+    <html>
+      <head>
+        <title>Print</title>
+        <style>${styles}</style>
+        <style>
+          @media print {
+            .no-print { display: none !important; }
+          }
+        </style>
+      </head>
+      <body>
+        <div id="printArea">${content}</div>
+      </body>
+    </html>
+  `);
+
+    myWindow.document.close();
+    myWindow.focus();
+    myWindow.print();
+    myWindow.close();
+  }
+
+
+
+
+
+
 
   if (!lessonData) {
     return (
@@ -221,10 +318,10 @@ const DayLessonPlan: React.FC = () => {
     <MainLayout pageTitle={`Chapter ${chapterNumber}: ${chapterName} - Day ${lessonData.day}`}>
       <div className="space-y-8">
         {/* <Breadcrumb items={breadcrumbItems} /> */}
-        <div className='w-full flex flex-col md:flex-row items-start md:items-center justify-between gap-4'>
+        <div className='no-print w-full flex flex-col md:flex-row items-start md:items-center justify-between gap-4'>
           <Link
-            to={`/grades/chapter/${chapterId}?${pathData}&tab=lesson-plan`}
-            className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+            to={`/grades/syllabus/chapter/${chapterId}?${pathData}&tab=lesson-plan`}
+            className=" max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             <span className="font-medium">Back</span>
@@ -265,7 +362,7 @@ const DayLessonPlan: React.FC = () => {
         </div>
 
         {/* Topics Section */}
-        <Card className="shadow-lg border-0">
+        <Card className="shadow-lg border-0 " ref={printRef} id="pdf-content">
           <CardHeader>
             <CardTitle className={`${window.innerWidth >= 768 ? 'flex ' : 'flex-col '} items-center justify-between`}>
               <div className='w-full flex flex-wrap items-center justify-between gap-6 mb-4 md:mb-0'>
@@ -287,15 +384,17 @@ const DayLessonPlan: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  {/* <Button variant="outline" size="sm" className="text-blue-600 hover:text-blue-800 border-blue-300">
-                  <Printer className="w-4 h-4 mr-2" />
-                  Print
-                </Button>
-                <Button variant="outline" size="sm" className="text-green-600 hover:text-green-800 border-green-300">
-                  <Download className="w-4 h-4 mr-2" />
-                  Download
-                </Button> */}
+                <div className="flex items-center gap-3 no-pdf no-print">
+                  <Button variant="outline" size="sm" className="text-blue-600 hover:text-blue-800 border-blue-300"
+                    onClick={() => handlePrint('printArea')}>
+                    <Printer className="w-4 h-4 mr-2" />
+                    Print
+                  </Button>
+                  <Button variant="outline" size="sm" className="text-green-600 hover:text-green-800 border-green-300"
+                    onClick={handleDownload}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Download
+                  </Button>
                   {/* onClick={handleStartTeaching} */}
                   <Button className="bg-blue-600 hover:bg-blue-700"
                     onClick={handleStartTeaching}>

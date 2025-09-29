@@ -191,7 +191,7 @@ const Syllabus: React.FC = () => {
               return (
                 <Link
                   key={chapter.chapter_id}
-                  to={`/grades/chapter/${chapter.chapter_id}?${pathData}&chapter_name=${encodeURIComponent(chapter.chapter_name)}&chapter_number=${chapter.chapter_number}&progress=${chapter.progress}`}
+                  to={`/grades/syllabus/chapter/${chapter.chapter_id}?${pathData}&chapter_name=${encodeURIComponent(chapter.chapter_name)}&chapter_number=${chapter.chapter_number}&progress=${chapter.progress}`}
                   className="group"
                 >
                   <Card className="h-[19rem] hover:shadow-lg transition-all duration-300 group-hover:-translate-y-1 overflow-hidden">

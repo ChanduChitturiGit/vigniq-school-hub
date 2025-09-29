@@ -62,8 +62,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
   const schoolName = userData?.school_name ?? '';
 
   // Check if we're in a subject-specific context
-  const isInSubjectContext = location.pathname.includes('/grades/syllabus') || location.pathname.includes('/grades/progress/')  || location.pathname.includes('/grades/lesson-plan') || location.pathname.includes('/grades/exams')
-  || location.pathname.includes('/grades/lesson-plan/create') || location.pathname.includes('/grades/lesson-plan/customize') || location.pathname.includes('/grades/lesson-plan/day') || location.pathname.includes('/grades/chapter');
+  const isInSubjectContext = location.pathname.includes('/grades/syllabus') || location.pathname.includes('/grades/progress/')  || location.pathname.includes('/grades/syllabus/lesson-plan') || location.pathname.includes('/grades/exams')
+  || location.pathname.includes('/grades/syllabus/lesson-plan/create') || location.pathname.includes('/grades/syllabus/lesson-plan/customize') || location.pathname.includes('/grades/syllabus/lesson-plan/day') || location.pathname.includes('/grades/syllabus/chapter');
 
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
@@ -92,7 +92,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
       { path: '/grades', icon: Award, label: 'Home', roles: ['teacher'] },
       { path: baseSubjectPath, icon: BookOpen, label: 'Syllabus', roles: ['teacher'] },
       { path: progressPath, icon: TrendingUp, label: 'Progress', roles: ['teacher'] },
-       { path: examsPath, icon: FileCheck, label: 'Exams', roles: ['teacher'] },
+      { path: examsPath, icon: FileCheck, label: 'Exams', roles: ['teacher'] },
     ];
   };
 
@@ -202,14 +202,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
   };
 
   const isActive = (path: string) => {
+    const pathParts = path.split('/');
+    
     if (path === '#') return false;
 
     // For subject-specific paths, match the full path including query params
-    if (path.includes('?')) {
-      return path.includes(location.pathname);
-    }
+    // if (path.includes('?')) {
+    //   return path.includes(location.pathname);
+    // }
 
-    return location.pathname === path;
+    const conditionPath = isInSubjectContext ? ('/'+pathParts[1]+'/'+pathParts[2]) :  ('/'+pathParts[1]+(pathParts[2] ? ('/'+pathParts[2]) : ''));
+    const status = location.pathname === path || (location.pathname !== path && location.pathname.startsWith(conditionPath) && path !== '/' )
+
+    return status;
   };
 
   const isDropdownActive = (subItems: { path: string; label: string }[]) => {
@@ -296,7 +301,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                           toggleMenu(item.key);
                         }
                       }}
-                      className={`w-full flex items-center justify-between gap-3 ${isCollapsed ? 'px-1' : 'px-4'} py-3 rounded-lg transition-all duration-200 ease-in-out ${isDropdownHighlighted
+                      className={`w-full flex items-center justify-between gap-3 ${isCollapsed ? 'px-1' : 'px-2'} py-3 rounded-lg transition-all duration-200 ease-in-out ${isDropdownHighlighted
                         ? 'bg-[hsl(var(--sidebar-active))] text-white shadow-sm'
                         : 'text-white hover:bg-[hsl(var(--sidebar-hover))]'
                         }`}
@@ -314,7 +319,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
                       )}
                     </button>
                     {isExpanded && (!isCollapsed || window.innerWidth < 768) && item.subItems && (
-                      <ul className="ml-8 mt-1 space-y-1 transition-all duration-300 ease-in-out">
+                      <ul className="ml-4 mt-1 space-y-1 transition-all duration-300 ease-in-out">
                         {item.subItems.map((subItem) => {
                           const SubIcon = subItem.icon;
                           return (

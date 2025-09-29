@@ -64,8 +64,8 @@ const StudentDetails: React.FC = () => {
   });
 
   const [breadcrumbItems, setBreadCrumbItems] = useState([
-    { label: userData.role == 'teacher' ? 'Home' : 'My School', path: (userData.role == 'superadmin' ? `/school-details/${schoolId}` : userData.role == 'admin' ? '/admin-school' : '/dashboard') },
-    { label: 'Class Details', path: `/class-details/${studentData.class_id}` },
+    { label: userData.role == 'teacher' ? 'Home' : 'My School', path: (userData.role == 'superadmin' ? `/schools/school-details/${schoolId}` : userData.role == 'admin' ? '/admin-school' : '/dashboard') },
+    { label: 'Class Details', path: `/classes/class-details/${studentData.class_id}` },
     { label: studentData.student_first_name }
   ]);
 
@@ -91,8 +91,8 @@ const StudentDetails: React.FC = () => {
         class_id: response.student.class_id,
       }));
       setBreadCrumbItems([
-        { label: userData.role == 'teacher' ? 'Home' : 'My School', path: (userData.role == 'superadmin' ? `/school-details/${schoolId}` : userData.role == 'admin' ? '/admin-school' : '/dashboard') },
-        { label: 'Class Details', path: `/class-details/${response.student.class_id}` },
+        { label: userData.role == 'teacher' ? 'Home' : 'My School', path: (userData.role == 'superadmin' ? `/schools/school-details/${schoolId}` : userData.role == 'admin' ? '/admin-school' : '/dashboard') },
+        { label: 'Class Details', path: `/classes/class-details/${response.student.class_id}` },
         { label: response.student.student_first_name + ' ' + response.student.student_last_name }
       ]);
     }

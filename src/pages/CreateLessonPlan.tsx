@@ -55,6 +55,11 @@ const CreateLessonPlan: React.FC = () => {
   const boardId = searchParams.get('school_board_id') || '';
   const tab = searchParams.get('tab') || '';
   const pathData = `class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}&chapter_number=${chapterNumber}`;
+  const [errors, setErrors] = useState({
+    numberOfDays: '',
+    classesPerDay: '',
+    minutesPerClass: ''
+  });
 
   let payload = {
     school_id: schoolId,
@@ -91,6 +96,31 @@ const CreateLessonPlan: React.FC = () => {
       ...prev,
       [field]: value
     }));
+    if(field == 'numberOfDays') {
+      if((value === '' || parseInt(value) <= 0)){
+        setErrors(prev => ({ ...prev, numberOfDays: 'Please enter a valid number of days' }));
+      }else if(parseInt(value) > 20) {
+        setErrors(prev => ({ ...prev, numberOfDays: 'Number of days should not exceed 20' }));
+      }else{
+        setErrors(prev => ({...prev,numberOfDays:''}))
+      }
+    }else if(field == 'classesPerDay') {
+      if((value === '' || parseInt(value) <= 0)){
+        setErrors(prev => ({ ...prev, classesPerDay: 'Please enter a valid number of classes per day' }));
+      }else if(parseInt(value) > 2) {
+        setErrors(prev => ({ ...prev, classesPerDay: 'Classes per day should not exceed 2' }));
+      }else{
+        setErrors(prev => ({...prev,classesPerDay:''}))
+      }
+    }else if(field == 'minutesPerClass') {
+      if((value === '' || parseInt(value) <= 0)){
+        setErrors(prev => ({ ...prev, minutesPerClass: 'Please enter a valid number of minutes per class' }));
+      }else if(parseInt(value) > 120) {
+        setErrors(prev => ({ ...prev, minutesPerClass: 'Minutes per class should not exceed 120' }));
+      }else{
+        setErrors(prev => ({...prev,minutesPerClass:''}))
+      }
+    }
   };
 
   const generateLesson = async () => {
@@ -142,7 +172,7 @@ const CreateLessonPlan: React.FC = () => {
           description: `${response.message} ✅ `,
           status: "success"
         });
-        navigate(`/grades/chapter/${chapterId}?chapter_name=${chapterName}&${pathData}&tab=lesson-plan`);
+        navigate(`/grades/syllabus/chapter/${chapterId}?chapter_name=${chapterName}&${pathData}&tab=lesson-plan`);
       }
     } catch (error) {
       //console.error('Error saving lesson plan:', error);
@@ -311,7 +341,7 @@ const CreateLessonPlan: React.FC = () => {
         <div className="space-y-8">
           {/* <Breadcrumb items={breadcrumbItems} /> */}
           <Link
-            to={`/grades/chapter/${chapterId}?chapter_name=${chapterName}&${pathData}&tab=lesson-plan`}
+            to={`/grades/syllabus/chapter/${chapterId}?chapter_name=${chapterName}&${pathData}&tab=lesson-plan`}
             className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -469,7 +499,7 @@ const CreateLessonPlan: React.FC = () => {
       <MainLayout pageTitle="Create Lesson Plan">
         <div className="space-y-8">
           <Link
-            to={`/grades/chapter/${chapterId}?chapter_name=${chapterName}&${pathData}&tab=lesson-plan`}
+            to={`/grades/syllabus/chapter/${chapterId}?chapter_name=${chapterName}&${pathData}&tab=lesson-plan`}
             className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -482,7 +512,7 @@ const CreateLessonPlan: React.FC = () => {
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
                 <p className="text-lg font-medium text-gray-700">{className} - {section}</p>
                 <p className="text-base text-gray-600">Subject: {subject}</p>
-                <p className="text-base text-gray-600">Chapter {chapterId}: {chapterName}</p>
+                <p className="text-base text-gray-600">Chapter {chapterNumber}: {chapterName}</p>
               </div>
             </div>
 
@@ -507,7 +537,9 @@ const CreateLessonPlan: React.FC = () => {
                       value={formData.numberOfDays}
                       onChange={(e) => handleInputChange('numberOfDays', e.target.value)}
                       className="text-base py-3 border-2 border-gray-200 focus:border-blue-500"
+                      max={20}
                     />
+                    {errors.numberOfDays && <p className="text-sm text-red-600">{errors.numberOfDays}</p>}
                   </div>
 
                   <div className="space-y-2">
@@ -520,7 +552,9 @@ const CreateLessonPlan: React.FC = () => {
                       value={formData.classesPerDay}
                       onChange={(e) => handleInputChange('classesPerDay', e.target.value)}
                       className="text-base py-3 border-2 border-gray-200 focus:border-blue-500"
+                      max={2}
                     />
+                    {errors.classesPerDay && <p className="text-sm text-red-600">{errors.classesPerDay}</p>}
                   </div>
 
                   <div className="space-y-2">
@@ -533,7 +567,9 @@ const CreateLessonPlan: React.FC = () => {
                       value={formData.minutesPerClass}
                       onChange={(e) => handleInputChange('minutesPerClass', e.target.value)}
                       className="text-base py-3 border-2 border-gray-200 focus:border-blue-500"
+                      max={120}
                     />
+                    {errors.minutesPerClass && <p className="text-sm text-red-600">{errors.minutesPerClass}</p>}
                   </div>
                 </div>
 
@@ -552,7 +588,11 @@ const CreateLessonPlan: React.FC = () => {
                 <div className="pt-6 border-t border-gray-200">
                   <Button
                     onClick={handleGenerateWithAI}
-                    disabled={isGenerating}
+                    disabled={
+                      isGenerating || 
+                      (errors.classesPerDay !== '' || errors.minutesPerClass != '' || errors.numberOfDays !='')
+
+                    }
                     className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-4 text-lg font-medium flex items-center justify-center gap-3 rounded-xl shadow-lg disabled:opacity-50"
                   >
                     <Sparkles className="w-5 h-5" />

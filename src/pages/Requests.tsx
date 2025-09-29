@@ -271,7 +271,7 @@ const Requests: React.FC = () => {
   }, [showAttachmentsModal]);
 
   const handleViewDetails = (requestId: string) => {
-    navigate(`/support-details/${requestId}`);
+    navigate(`/requests/support-details/${requestId}`);
   };
 
   const formatFileSize = (bytes: number) => {

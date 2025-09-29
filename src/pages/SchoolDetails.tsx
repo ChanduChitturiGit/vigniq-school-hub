@@ -101,7 +101,7 @@ const SchoolDetails: React.FC = () => {
   };
 
   const handleTeacherClick = (teacherId: string) => {
-    navigate(`/teacher-details/${teacherId}`);
+    navigate(`/teachers/teacher-details/${teacherId}`);
   };
 
   const TeacherModal = ({ teacher, onClose }: { teacher: any, onClose: () => void }) => (
@@ -331,7 +331,7 @@ const SchoolDetails: React.FC = () => {
               {filteredClasses.slice(0, 6).map((classItem) => (
                 <Link
                   key={classItem.id}
-                  to={`/class-details/${classItem.id}`}
+                  to={`/classes/class-details/${classItem.id}`}
                   className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-center justify-between mb-2">

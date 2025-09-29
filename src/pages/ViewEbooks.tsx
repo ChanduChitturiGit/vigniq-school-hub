@@ -20,6 +20,17 @@ import { getSubjectsList } from '../services/subject'
 import { SpinnerOverlay } from '../pages/SpinnerOverlay';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import sampleData from '../services/ebooksData.json'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../components/ui/alert-dialog';
 
 
 
@@ -77,7 +88,8 @@ const ViewEbooks: React.FC = () => {
   const [isScrolling, setIsScrolling] = useState(true);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
-  
+  const [isDeleteSchools, setIsDeleteSchools] = useState(false);
+
 
   // Sample data
   const sampleEbooks: any = sampleData;
@@ -107,13 +119,13 @@ const ViewEbooks: React.FC = () => {
     }
   }
 
-  const ebookData = async (data,condition = false) => {
-    if(!hasMore && !condition) return;
+  const ebookData = async (data, condition = false, start: Number = 0) => {
+    if (!hasMore && !condition) return;
     try {
       setLoader(true);
       const response = await getEbookList(data);
-      if (response && response.data && response.data.length>0) {
-        if (page == 1) {
+      if (response && response.data && response.data.length > 0) {
+        if (page == 1 || start == 1) {
           setEbooks(response.data);
           //setFilteredEbooks(response.data);
         }
@@ -121,15 +133,15 @@ const ViewEbooks: React.FC = () => {
           setEbooks(prev => [...prev, ...response.data]);
           //setFilteredEbooks(prev => [...prev, ...response.data]);
         }
-      } 
-      if (response && (response.message || response.data.length<10)) {
+      }
+      if (response && (response.message || response.data.length < 10)) {
         setHasMore(false);
       }
       setLoader(false);
     } catch (error) {
       if (error?.response?.data?.error == 'No eBooks found for the given criteria.') {
-      //  setFilteredEbooks([]);
-          setEbooks([]);
+        //  setFilteredEbooks([]);
+        setEbooks([]);
       } else {
         showSnackbar({
           title: "⛔ Error",
@@ -144,10 +156,12 @@ const ViewEbooks: React.FC = () => {
 
   const deleteEbook = async (ebookId: string) => {
     try {
-      const response = await deleteEbookById({ ebook_id: ebookId });
+      const payload = { ebook_id: ebookId, delete_in_school_db : isDeleteSchools };
+      const response = await deleteEbookById(payload);
       if (response && response.message) {
         setEbooks(prev => prev.filter(ebook => ebook.id !== ebookId));
-       // setFilteredEbooks(prev => prev.filter(ebook => ebook.id !== ebookId));
+        // setFilteredEbooks(prev => prev.filter(ebook => ebook.id !== ebookId));
+        setIsDeleteSchools(false);
         showSnackbar({
           title: "Success",
           description: "E-book deleted successfully",
@@ -180,16 +194,16 @@ const ViewEbooks: React.FC = () => {
   const handleScroll = () => {
     const container = scrollContainerRef.current;
     const isBottom =
-        (container.scrollHeight - container.scrollTop) <= (container.clientHeight + (loader ? (-200) : 10) ) ;
+      (container.scrollHeight - container.scrollTop) <= (container.clientHeight + (loader ? (-200) : 10));
     //console.log('scrollScheck',(!container || loader || !hasMore || !isBottom));
-    if (!container || loader || !hasMore || !isBottom){
+    if (!container || loader || !hasMore || !isBottom) {
       return; // avoid multiple calls while loading
-    }else{
+    } else {
       //console.log('scrolled');
       if (isBottom && hasMore && !loader) {
-        setPage(prev => prev + 1); 
+        setPage(prev => prev + 1);
       }
-    } 
+    }
   };
 
   useEffect(() => {
@@ -200,7 +214,7 @@ const ViewEbooks: React.FC = () => {
 
 
   useEffect(() => {
-    if(page>1){ 
+    if (page > 1) {
       ebookData({ ...payload, page });
     }
   }, [page]);
@@ -208,7 +222,8 @@ const ViewEbooks: React.FC = () => {
   useEffect(() => {
     setHasMore(true);
     setPage(1);
-    ebookData({ ...payload, page },true);
+    ebookData({ ...payload, page: 1 }, true, 1);
+
   }, [payload.board_id, payload.class_id, payload.subject_id, payload.year]);
 
   const getBoardId = (data: string) => {
@@ -356,10 +371,10 @@ const ViewEbooks: React.FC = () => {
   return (
     <MainLayout ref={scrollContainerRef} pageTitle="View E-books">
       <div className="p-6">
-        <div className="mb-6">
+        {/* <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">View E-books</h1>
           <p className="text-gray-600 mt-2">Browse and access available educational materials</p>
-        </div>
+        </div> */}
 
         {/* Filters Section */}
         <Card className="mb-6">
@@ -477,14 +492,53 @@ const ViewEbooks: React.FC = () => {
                     </Button>
 
                     {user?.role === 'superadmin' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-red-600 hover:bg-red-50"
-                        onClick={() => handleDelete(ebook.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" className="flex items-center gap-2 text-red-500 hover:text-red-600 px-4 py-2 rounded-lg  transition-colors">
+                              <Trash2 className="w-4 h-4" />
+                              {/* Reset Password */}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete E-Book</AlertDialogTitle>
+                              <AlertDialogDescription className='text-gray-700'>
+                                <div className='flex flex-col space-y-4'>
+                                  <div>
+                                    <p>Are you sure you want to delete E-Book <span className='font-bold'>{ebook.ebook_name}</span>?</p>
+                                    This action cannot be undone
+                                  </div>
+                                  {/* <div>
+                                    <input
+                                      type="checkbox"
+                                      id="sameAddress"
+                                      checked={isDeleteSchools}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setIsDeleteSchools(true);
+                                        } else {
+                                          setIsDeleteSchools(false);
+                                        }
+                                      }}
+                                      className="mr-2"
+                                    />
+                                    <label htmlFor="sameAddress" className="text-sm text-gray-700">
+                                      Delete for all Schools
+                                    </label>
+                                  </div> */}
+                                </div>
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(ebook.id)} className="bg-red-600 hover:bg-red-700">
+                                Confirm Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </>
                     )}
                   </div>
                 </div>
@@ -506,7 +560,7 @@ const ViewEbooks: React.FC = () => {
           </div>
         )}
       </div>
-    </MainLayout>
+    </MainLayout >
   );
 };
 

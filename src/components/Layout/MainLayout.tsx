@@ -49,7 +49,7 @@ const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
 
     return (
       // bg-gray-50  bg-[#f1f8fd]
-      <div className="flex h-[100dvh] bg-gray-50 relative overflow-hidden">
+      <div className="flex h-[100dvh] bg-gray-50 relative overflow-hidden ">
         {/* Mobile Overlay */}
         {isMobileMenuOpen && (
           <div 
@@ -81,7 +81,7 @@ const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
             pageTitle={pageTitle} 
           />
           {/* forward the ref here */}
-          <main ref={ref} className="flex-1 h-full overflow-y-auto p-6">
+          <main ref={ref} className="flex-1 h-full overflow-y-auto p-6 printable-container " id="printArea">
             <div className="max-w-full">
               {children}
             </div>

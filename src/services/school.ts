@@ -19,6 +19,12 @@ export const getSchoolsList = async () => {
   return response.data;
 };
 
+//get school list with status
+export const getSchoolsListByStatus = async (data:any) => {
+  const response = await api.get(baseurl+suburl+'/school_list', {params: data});
+  return response.data;
+};
+
 
 //get school by school id
 export const getSchoolById = async (schoolId : Number) => {
@@ -41,5 +47,17 @@ export const getBoardsList = async () => {
 //get school list
 export const getBoardsListBySchoolId = async (id : Number) => {
   const response = await api.get(baseurl+suburl+'/getBoardsBySchoolId', { params: { school_id: id } });
+  return response.data;
+};
+
+//deactivateSchoolById
+export const deleteSchoolById = async (data:any) => {
+  const response = await api.delete(baseurl+suburl+'/deactivateSchoolById', {params: data});
+  return response.data;
+};
+
+//reactivateSchoolById
+export const reactiveSchoolById = async (data:any) => {
+  const response = await api.patch(baseurl+suburl+'/reactivateSchoolById', data);
   return response.data;
 };

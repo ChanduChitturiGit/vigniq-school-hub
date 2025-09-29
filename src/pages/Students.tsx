@@ -4,8 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../components/Layout/MainLayout';
 import Breadcrumb from '../components/Layout/Breadcrumb';
-import { Edit, Search, Plus, GraduationCap, LoaderCircle, Grid, List, Eye, Trash2, ArrowLeft } from 'lucide-react';
-import { getStudentsBySchoolId, deleteStudentById } from '../services/student';
+import { Edit, Search, Plus, GraduationCap, LoaderCircle, Grid, List, Eye, Trash2, ArrowLeft, CheckCircle } from 'lucide-react';
+import { getStudentsBySchoolId, deleteStudentById, reactivateStudentById, getStudentsListBySchoolId } from '../services/student';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import {
@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '../components/ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 
 const Students: React.FC = () => {
   const { showSnackbar } = useSnackbar();
@@ -29,6 +30,10 @@ const Students: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const [students, setStudents] = useState([]);
+  const [formData, setFormData] = useState({
+    status: 'Active',
+    is_active: true,
+  });
 
   const filteredStudents = students.filter(student =>
     student?.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -57,9 +62,9 @@ const Students: React.FC = () => {
     }
   };
 
-  const getStudents = async () => {
+  const getStudents = async (isActive = true) => {
     setLoader(true);
-    const response = await getStudentsBySchoolId(userData.school_id);
+    const response = await getStudentsListBySchoolId({ school_id: userData.school_id, is_active: isActive });
     if (response && response.students) {
       setLoader(false);
       setStudents(response.students);
@@ -90,12 +95,36 @@ const Students: React.FC = () => {
     }
   }
 
+  const handleStudentReactivate = async (studentId: string) => {
+    setLoader(true);
+    try {
+      const response = await reactivateStudentById({ student_id: studentId, school_id: userData.school_id });
+      if (response && response.message) {
+        // setStudents(students.filter(student => student.student_id !== studentId));
+        showSnackbar({
+          title: "✅ Success",
+          description: "Student re-activated successfully",
+          status: "success"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    } finally {
+      setLoader(false);
+      getStudents(false);
+    }
+  }
+
   useEffect(() => {
     getStudents();
   }, [])
 
   const getAddStudentPath = () => {
-    return '/add-student';
+    return '/students/add-student';
   };
 
   const handleDelete = (studentId: string) => {
@@ -103,6 +132,13 @@ const Students: React.FC = () => {
     deleteStudent(studentId);
     // console.log('Delete student:', studentId);
   };
+
+  const handleStatusChange = (value: string) => {
+    setFormData(prevState => ({ ...prevState, status: value, is_active: value === 'Active' ? true : false }));
+    setTimeout(() => {
+      getStudents(value === 'Active' ? true : false);
+    }, 100);
+  }
 
 
   const deleteModal = (student: any) => {
@@ -120,7 +156,6 @@ const Students: React.FC = () => {
               <AlertDialogTitle>Delete Student</AlertDialogTitle>
               <AlertDialogDescription className='text-gray-700'>
                 <p>Are you sure you want to delete student <span className='font-bold'>{student.student_name}</span>?</p>
-                This action cannot be undone
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -135,12 +170,42 @@ const Students: React.FC = () => {
     )
   }
 
+  const reActiveModal = (student: any) => {
+    return (
+      <>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button className="flex items-center gap-2 text-orange-500 hover:text-orange-600 transition-colors">
+              <CheckCircle className="w-4 h-4" />
+              Make Active
+              {/* Reset Password */}
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Activate Student</AlertDialogTitle>
+              <AlertDialogDescription className='text-gray-700'>
+                <p>Are you sure you want to Re-Activate Student  <span className='font-bold'>{student.student_name}</span>?</p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => handleStudentReactivate(student.student_id)} className="bg-orange-600 hover:bg-orange-700">
+                Confirm Active
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
+    )
+  }
+
   const renderGridView = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {filteredStudents.map((student) => (
         <div
           key={student.student_id}
-          onClick={() => { navigate(`/student-details/${student.student_id}`) }}
+          onClick={() => { navigate(`/students/student-details/${student.student_id}`) }}
           className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
         >
           <div className="flex items-start justify-between mb-4">
@@ -180,13 +245,18 @@ const Students: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-end"
-            onClick={(e) => e.stopPropagation()}>
-            {/* <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-              {student.status || 'active'}
-            </span> */}
-            {deleteModal(student)}
-          </div>
+          {
+            (userData?.role !== 'student' && userData?.role !== 'teacher') &&
+            (
+              <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between"
+                onClick={(e) => e.stopPropagation()}>
+                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                  {student.is_active ? 'Active' : 'In Active'}
+                </span>
+                {(student.is_active ? deleteModal(student) : reActiveModal(student))}
+              </div>
+            )
+          }
         </div>
       ))}
     </div>
@@ -204,7 +274,7 @@ const Students: React.FC = () => {
               <TableHead className="font-medium">Roll No.</TableHead>
               <TableHead className="font-medium">Parent</TableHead>
               <TableHead className="font-medium">Phone</TableHead>
-              {/* <TableHead className="font-medium">Status</TableHead> */}
+              <TableHead className="font-medium">Status</TableHead>
               <TableHead className="font-medium text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -222,26 +292,26 @@ const Students: React.FC = () => {
                   </div>
                 </TableCell>
                 <TableCell>{'Class ' + student.class_number + ' - ' + student.section}</TableCell>
-                 <TableCell>{student.board_name}</TableCell>
+                <TableCell>{student.board_name}</TableCell>
                 <TableCell>{student.roll_number}</TableCell>
                 <TableCell>{student.parent_name}</TableCell>
                 <TableCell>{student.parent_phone}</TableCell>
-                {/* <TableCell>
+                <TableCell>
                   <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                    {student.status || 'Active'}
+                    {student.is_active ? 'Active' : 'In Active'}
                   </span>
-                </TableCell> */}
+                </TableCell>
                 <TableCell>
                   <div className="flex items-center justify-center gap-2">
                     <Link
-                      to={`/student-details/${student.student_id}`}
+                      to={`/students/student-details/${student.student_id}`}
                       className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
                       title="View Details"
                     >
                       <Eye className="w-4 h-4" />
                     </Link>
-                    {(user?.role !== 'student') &&
-                      deleteModal(student)
+                    {(userData?.role !== 'student' && userData?.role !== 'teacher') &&
+                      (student.is_active ? deleteModal(student) : reActiveModal(student))
                     }
                   </div>
                 </TableCell>
@@ -275,6 +345,23 @@ const Students: React.FC = () => {
           </div>
           <div className="flex items-center gap-2">
             {/* window.innerWidth >= 768 */}
+            <div className='flex items-center justify gap-2'>
+              {/* <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Status
+                          </label> */}
+              <Select value={formData.status} onValueChange={handleStatusChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a board" />
+                </SelectTrigger>
+                <SelectContent>
+                  {['Active', 'In Active'].map((val, index) => (
+                    <SelectItem key={index} value={val}>
+                      {val}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="flex items-center bg-gray-100 rounded-lg p-1">
               <button
                 onClick={() => setViewMode('grid')}

@@ -24,6 +24,36 @@ class AiAssistantService:
         self.school_id = request.data.get("school_id") or request.GET.get("school_id") or getattr(request.user, 'school_id', None)
         self.school_db_name = CommonFunctions.get_school_db_name(self.school_id)
 
+    def clear_chat(self):
+        """Clear Chat"""
+        lesson_plan_day_id = self.request.GET.get("lesson_plan_day_id")
+        user = self.request.user
+        if not lesson_plan_day_id:
+            return JsonResponse({"error": "Lesson Plan Day ID is required"}, status=400)
+
+        if not user:
+            return JsonResponse({"error": "User is not authenticated"}, status=401)
+
+        try:
+            session = ChatSession.objects.using(self.school_db_name).filter(
+                            user_id=user.id, lesson_plan_day_id=lesson_plan_day_id,
+                            is_active=True
+                        )
+            
+            if session.exists():
+                session = session.first()
+                session.is_active = False
+                session.save(using=self.school_db_name)
+                logger.info(f"Chat with Lesson Plan Day ID %s for user %s cleared successfully",
+                            lesson_plan_day_id, user.id)
+                return JsonResponse({"message": "Chat cleared successfully"})
+            else:
+                return JsonResponse({"message": "No chat session found to clear"}, status=404)
+
+        except Exception as e:
+            logger.error("Error clearing chat with Lesson Plan Day ID %s: %s",
+                         lesson_plan_day_id, e)
+            return JsonResponse({"error": "Unable to clear chat"}, status=500)
 
     def get_chat(self):
         """Get Chat"""
@@ -37,7 +67,8 @@ class AiAssistantService:
 
         try:
             session = ChatSession.objects.using(self.school_db_name).filter(
-                            user_id=user.id, lesson_plan_day_id=lesson_plan_day_id
+                            user_id=user.id, lesson_plan_day_id=lesson_plan_day_id,
+                            is_active=True
                         )
             
             if session.exists():
@@ -109,7 +140,7 @@ class AiAssistantService:
                 }
                 with transaction.atomic(using=self.school_db_name):
                     session, created = ChatSession.objects.using(self.school_db_name).get_or_create(
-                                user_id=user.id, lesson_plan_day=lesson_plan_day
+                                user_id=user.id, lesson_plan_day=lesson_plan_day, is_active=True
                             )
                     
                     response = ""

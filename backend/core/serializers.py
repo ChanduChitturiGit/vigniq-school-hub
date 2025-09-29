@@ -48,6 +48,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             if not school_id:
                 raise AuthenticationFailed("User is not associated with any school. Please contact support.")
             
+            school = School.objects.get(id=school_id)
+            if not school.is_active:
+                raise AuthenticationFailed("The school associated with this user is inactive. Please contact support.")
+
             subscription = Subscription.objects.filter(school_id=school_id, is_active=True)
             if not subscription.exists():
                 raise AuthenticationFailed("Your school is not associated with any subscription. Please contact support or your school admin.")

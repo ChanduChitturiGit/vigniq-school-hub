@@ -91,6 +91,8 @@ class AuthenticationMiddleware:
             return self.get_response(request)
         
         try:
+            if path == "/login":
+                return redirect(request.build_absolute_uri('/'))
             resolve(path)
         except Resolver404:
             logger.error(f"Path not found: {path}")

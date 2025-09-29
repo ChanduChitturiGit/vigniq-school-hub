@@ -71,7 +71,7 @@ const AddStudent: React.FC = () => {
       ])
     } else if (userData.role == 'superadmin') {
       setBreadCrumbItems([
-        { label: 'My School', path: `/school-details/${schoolId}` },
+        { label: 'My School', path: `/schools/school-details/${schoolId}` },
         { label: 'Add Student' }
       ])
     }
@@ -224,7 +224,7 @@ const AddStudent: React.FC = () => {
           status: "success"
         });
         if (userData.role == 'superadmin') {
-          navigate(`/school-details/${schoolId}`);
+          navigate(`/schools/school-details/${schoolId}`);
         } else if (userData.role == 'admin') {
           navigate(`/admin-school`);
         } else {
