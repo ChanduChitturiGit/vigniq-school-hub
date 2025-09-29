@@ -98,3 +98,24 @@ class ExamResult(models.Model):
 
     def __str__(self):
         return f"{self.student} - {self.exam}: {self.marks_obtained}"
+
+
+class TeacherDiary(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('submitted', 'Submitted'),
+    ]
+    date = models.DateField()
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
+    school_class_section = models.ForeignKey(SchoolSection, on_delete=models.CASCADE)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    academic_year = models.ForeignKey(SchoolAcademicYear, on_delete=models.CASCADE)
+    notes = models.TextField(null=True, blank=True)
+    homework_assigned = models.TextField(null=True, blank=True)
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='pending')
+    is_admin_reviewed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'teacher_diary'
