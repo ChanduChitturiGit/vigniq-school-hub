@@ -50,6 +50,7 @@ import ChapterDetails from './pages/ChapterDetails';
 import ComingSoon from './pages/ComingSoon';
 import SupportDetails from './pages/SupportRequest';
 import ExcalidrawApp from './pages/ExcalidrawApp';
+import TeacherDiaries from './pages/TeacherDiaries';
 
 function App() {
   return (
@@ -242,6 +243,8 @@ function App() {
 
           <Route path="/attendance" element={<ProtectedRoute allowedRoles={['teacher']}><Attendance /></ProtectedRoute>} />
           <Route path="/attendance/reports" element={<ProtectedRoute allowedRoles={['teacher']}><AttendanceReports /></ProtectedRoute>} />
+          
+          <Route path="/teacher-diaries" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDiaries /></ProtectedRoute>} />
 
 
           <Route path="/support" element={<Support />} />
