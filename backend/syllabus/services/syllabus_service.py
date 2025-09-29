@@ -419,6 +419,7 @@ class SyllabusService:
                 "taxonomy_alignment": lesson_plan_day.taxonomy_alignment,
                 "session_id": whiteboard_session,
                 "status": lesson_plan_day.status,
+                'updated_at': lesson_plan_day.updated_at,
                 "topics": [
                     {
                         "topic_id": topic.id,
