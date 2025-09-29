@@ -24,7 +24,8 @@ import {
   Plus,
   UserCheck,
   ClipboardCheck,
-  FileCheck
+  FileCheck,
+  Notebook
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -150,6 +151,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
       'teacher': [
         { path: '/grades', icon: Award, label: 'Subjects', roles: ['teacher'] },
         { path: '/attendance', icon: ClipboardCheck, label: 'Attendance', roles: ['teacher'] },
+        { path: '/teacher-diaries', icon: Notebook, label: 'Teacher-Diaries', roles: ['teacher'] },
         {
           key: 'school-management',
           icon: Users,
