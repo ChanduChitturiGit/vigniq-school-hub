@@ -7,6 +7,7 @@ from rest_framework import status
 from teacher.services.teacher_service import TeacherService
 from teacher.services.subject_service import SubjectService
 from teacher.services.exam_service import OfflineExamsService
+from teacher.services.teacher_diary_service import TeacherDiaryService
 
 from core.permissions import IsSuperAdminOrAdmin, IsSuperAdminOrAdminOrTeacher
 
@@ -124,3 +125,23 @@ class OfflineExamActionView(APIView):
         if action == "deleteExam":
             return OfflineExamsService(request).delete_offline_exam()
         return Response({"error": "Invalid DELETE action"}, status=status.HTTP_400_BAD_REQUEST)
+
+class TeacherDiaryActionView(APIView):
+    """
+    View to handle teacher diary-related actions.
+    """
+    permission_classes = [IsAuthenticated, IsSuperAdminOrAdminOrTeacher]
+
+    def get(self, request, action=None):
+        if action == "getTeacherDiaryByClassSectionAndDate":
+            return TeacherDiaryService(request).get_diary_by_class_section_and_date()
+        elif action == "getTeacherDiaryByTeacherAndDate":
+            return TeacherDiaryService(request).get_diary_by_teacher_and_date()
+        return Response({"error": "Invalid GET action"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def post(self, request, action=None):
+        if action == "markDiaryAsReviewed":
+            return TeacherDiaryService(request).mark_diary_as_reviewed()
+        elif action == 'saveTeacherDiary':
+            return TeacherDiaryService(request).save_or_update_diary()
+        return Response({"error": "Invalid POST action"}, status=status.HTTP_400_BAD_REQUEST)
