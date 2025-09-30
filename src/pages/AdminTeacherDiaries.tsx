@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,109 +12,151 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import dayjs, { Dayjs } from "dayjs";
 import '../pages/styles/datepicker.scss';
+import { getTeacherDiariesByAdmin,markDiaryAsReviewed } from '../services/diaries'
+import { format } from 'date-fns';
+import { getClassesBySchoolId } from '@/services/class';
 
 interface DiaryEntry {
-  id: string;
+  diary_id: string;
   classId: string;
   className: string;
   section: string;
-  subject: string;
-  teacherName: string;
+  subject_name: string;
+  teacher_name: string;
   status: 'submitted' | 'pending';
-  classNotes: string;
-  homework: string;
+  notes: string;
+  homework_assigned: string;
   reviewed: boolean;
 }
 
 const AdminTeacherDiaries: React.FC = () => {
   const { showSnackbar } = useSnackbar();
-
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs());
-  const [selectedClass, setSelectedClass] = useState<string>('8A');
+  const [selectedClass, setSelectedClass] = useState<any>({});
   const [selectedEntry, setSelectedEntry] = useState<DiaryEntry | null>(null);
   const [isMobileDetailView, setIsMobileDetailView] = useState(false);
+  const [classes, setClasses] = useState([]);
 
-  // Sample data for classes
-  const classes = [
-    { id: '8A', label: 'Class 8 A' },
-    { id: '8B', label: 'Class 8 B' },
-    { id: '9A', label: 'Class 9 A' },
-    { id: '9B', label: 'Class 9 B' },
-    { id: '10A', label: 'Class 10 A' },
-    { id: '10B', label: 'Class 10 B' },
-  ];
-
+  // {
+  //           "diary_id": 3,
+  //           "teacher_id": 53,
+  //           "teacher_name": "jaya k",
+  //           "subject_id": 4,
+  //           "subject_name": "Hindi",
+  //           "notes": null,
+  //           "homework_assigned": null,
+  //           "date": "2025-10-01",
+  //           "status": "pending",
+  //           "is_admin_reviewed": false,
+  //           "created_at": "2025-10-01T01:31:15.047+05:30",
+  //           "updated_at": "2025-10-01T01:31:15.047+05:30"
+  //       },
   // Sample data for diary entries
-  const [diaryEntries, setDiaryEntries] = useState<DiaryEntry[]>([
-    {
-      id: '1',
-      classId: '8A',
-      className: 'Class 8',
-      section: 'A',
-      subject: 'Mathematics',
-      teacherName: 'Sarah Johnson',
-      status: 'submitted',
-      classNotes: 'Covered quadratic equations. Students understood the concept well. Practiced solving problems using the quadratic formula.',
-      homework: 'Complete exercises 3.1 to 3.5 from textbook',
-      reviewed: false
-    },
-    {
-      id: '2',
-      classId: '8A',
-      className: 'Class 8',
-      section: 'A',
-      subject: 'English',
-      teacherName: 'Michael Smith',
-      status: 'pending',
-      classNotes: '',
-      homework: '',
-      reviewed: false
-    },
-    {
-      id: '3',
-      classId: '8A',
-      className: 'Class 8',
-      section: 'A',
-      subject: 'Science',
-      teacherName: 'Emily Davis',
-      status: 'submitted',
-      classNotes: 'Discussed photosynthesis process. Conducted a lab experiment to observe chlorophyll.',
-      homework: 'Read chapter 3 and answer questions',
-      reviewed: false
-    },
-    {
-      id: '4',
-      classId: '8B',
-      className: 'Class 8',
-      section: 'B',
-      subject: 'Mathematics',
-      teacherName: 'Sarah Johnson',
-      status: 'pending',
-      classNotes: '',
-      homework: '',
-      reviewed: false
-    },
-    {
-      id: '5',
-      classId: '9A',
-      className: 'Class 9',
-      section: 'A',
-      subject: 'Physics',
-      teacherName: 'David Wilson',
-      status: 'submitted',
-      classNotes: 'Introduction to Newton\'s laws of motion. Demonstrated with practical examples.',
-      homework: 'Solve numerical problems from page 45',
-      reviewed: false
-    },
-  ]);
+  const [diaryEntries, setDiaryEntries] = useState<DiaryEntry[]>([]);
 
   // Filter entries by selected class
-  const filteredEntries = diaryEntries.filter(entry => entry.classId === selectedClass);
+  const filteredEntries = [...diaryEntries];
 
   // Calculate stats for selected class
-  const totalTeachers = filteredEntries.length;
-  const submittedCount = filteredEntries.filter(e => e.status === 'submitted').length;
-  const pendingCount = filteredEntries.filter(e => e.status === 'pending').length;
+  const totalTeachers = diaryEntries.length;
+  const submittedCount = diaryEntries.filter(e => e.status === 'submitted').length;
+  const pendingCount = diaryEntries.filter(e => e.status === 'pending').length;
+
+  //classes list api
+  const getClasses = async () => {
+    //classes list api
+    const classesData = await getClassesBySchoolId(userData.school_id);
+    if (classesData && classesData.classes) {
+      setClasses(classesData.classes);
+    }
+  }
+
+  const getClassId = (className: string) => {
+    const classdata = classes.find((val: any) => ('Class ' + val.class_number + ' - ' + val.section + ' (' + val.school_board_name + ')') == className);
+    const classId = classdata.class_id ? classdata.class_id : 0;
+    return classId;
+  }
+
+  const handleClassChange = (value: any) => {
+    setSelectedClass(prev => ({
+      ...prev,
+      className: value,
+      class_section_id: value ? getClassId(value) : value
+    }));
+  };
+
+  const diaryData = async (data : any) => {
+    try {
+      const payload = {
+        school_id: userData.school_id,
+        teacher_id: userData.user_id,
+        date: format(selectedDate.toDate(), 'yyyy-MM-dd'),
+        class_section_id : data.class_section_id
+      }
+      const response = await getTeacherDiariesByAdmin(payload);
+      if (response && response.data) {
+        setDiaryEntries(response.data);
+      } else {
+        showSnackbar({
+          title: "⛔ Error",
+          description: "Something went wrong with classes list",
+          status: "error"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong with classes list",
+        status: "error"
+      });
+    }
+  }
+
+  useEffect(()=>{
+    getClasses();
+  },[])
+
+  useEffect(()=>{
+    if(selectedDate && selectedClass && selectedClass.class_section_id){
+      diaryData({class_section_id : selectedClass.class_section_id});
+    }
+  },[selectedDate,selectedClass])
+
+
+   const saveDiaryData = async () => {
+      try {
+        const payload = {
+          school_id: userData.school_id,
+          diary_id: selectedEntry.diary_id
+        }
+        const response = await markDiaryAsReviewed(payload);
+        if (response && response.message) {
+          setIsMobileDetailView(!isMobileDetailView);
+          setSelectedEntry(null);
+          diaryData({class_section_id : selectedClass.class_section_id});
+          showSnackbar({
+            title: "Success",
+            description: response.message,
+            status: "success"
+          });
+        } else {
+          showSnackbar({
+            title: "⛔ Error",
+            description: "Something went wrong with classes list",
+            status: "error"
+          });
+        }
+      } catch (error) {
+        showSnackbar({
+          title: "⛔ Error",
+          description: error?.response?.data?.error || "Something went wrong with classes list",
+          status: "error"
+        });
+      }
+    }
+
+
 
   const handleViewEntry = (entry: DiaryEntry) => {
     setSelectedEntry(entry);
@@ -129,7 +171,7 @@ const AdminTeacherDiaries: React.FC = () => {
           : entry
       );
       setDiaryEntries(updatedEntries);
-      
+
       showSnackbar({
         title: "✅ Success",
         description: `All diaries for ${selectedClass} marked as reviewed`,
@@ -148,10 +190,6 @@ const AdminTeacherDiaries: React.FC = () => {
   return (
     <MainLayout pageTitle="Teacher Diaries">
       <div className="space-y-6 p-4 md:p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">Teacher Diaries</h1>
-        </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -187,9 +225,9 @@ const AdminTeacherDiaries: React.FC = () => {
                     <div className="text-xs text-muted-foreground mt-1">Awaiting diary submissions</div>
                   </div>
                 </div>
-                <Button variant="outline" size="sm" className="text-orange-600 border-orange-300">
+                {/* <Button variant="outline" size="sm" className="text-orange-600 border-orange-300">
                   View List
-                </Button>
+                </Button> */}
               </div>
             </CardContent>
           </Card>
@@ -213,21 +251,22 @@ const AdminTeacherDiaries: React.FC = () => {
                         fullWidth: true,
                       },
                     }}
+                    format="DD/MM/YYYY"
                   />
                 </LocalizationProvider>
               </div>
 
               {/* Class Selector */}
-              <div className="w-full md:w-64">
+              <div className="flex items-center justify-center gap-2 w-full md:w-64">
                 <label className="text-sm font-medium text-muted-foreground mb-2 block">Class:</label>
-                <Select value={selectedClass} onValueChange={setSelectedClass}>
+                <Select value={selectedClass?.className} onValueChange={handleClassChange}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select class" />
                   </SelectTrigger>
                   <SelectContent>
                     {classes.map((cls) => (
-                      <SelectItem key={cls.id} value={cls.id}>
-                        {cls.label}
+                      <SelectItem key={cls.class_id} value={'Class '+cls.class_number + ' - '+cls.section+' ('+cls.school_board_name+')'}>
+                        {'Class '+cls.class_number + ' - '+cls.section+' ('+cls.school_board_name+')'}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -256,10 +295,11 @@ const AdminTeacherDiaries: React.FC = () => {
                   <TableBody>
                     {filteredEntries.map((entry) => (
                       <TableRow
-                        key={entry.id}
-                        className={selectedEntry?.id === entry.id ? 'bg-blue-50' : ''}
+                        key={entry.diary_id}
+                        className={`${selectedEntry?.diary_id === entry.diary_id ? 'bg-blue-50' : ''} cursor-pointer`}
+                        onClick={() => handleViewEntry(entry)}
                       >
-                        <TableCell className="font-medium text-foreground">{entry.subject}</TableCell>
+                        <TableCell className="font-medium text-foreground">{entry.subject_name}</TableCell>
                         <TableCell>
                           <Badge
                             variant={entry.status === 'submitted' ? 'default' : 'secondary'}
@@ -268,7 +308,7 @@ const AdminTeacherDiaries: React.FC = () => {
                             {entry.status === 'submitted' ? 'Submitted' : 'Pending'}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{entry.teacherName}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{entry.teacher_name}</TableCell>
                         <TableCell>
                           <Button
                             variant="ghost"
@@ -284,6 +324,18 @@ const AdminTeacherDiaries: React.FC = () => {
                     ))}
                   </TableBody>
                 </Table>
+                {/* Administrative Review Section */}
+                <div className="w-full flex items-center justify-center space-y-4 pt-4 border-t border-border ">
+
+                  <Button
+                    onClick={saveDiaryData}
+                    disabled={allReviewed}
+                    className="w-[50%] bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-300 disabled:text-gray-500"
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    {allReviewed ? 'Reviewed' : 'Mark as Reviewed'}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -300,7 +352,7 @@ const AdminTeacherDiaries: React.FC = () => {
                     {/* Header with Close Button */}
                     <div className="flex items-center justify-between border-b border-border pb-4">
                       <h2 className="text-lg font-semibold text-foreground">
-                        {selectedEntry.className} {selectedEntry.section} - {selectedEntry.subject}
+                        {selectedClass.className} {selectedEntry.section} - {selectedEntry.subject_name}
                       </h2>
                       <Button
                         variant="ghost"
@@ -320,7 +372,7 @@ const AdminTeacherDiaries: React.FC = () => {
                         <h3 className="font-medium text-foreground">Class Notes</h3>
                       </div>
                       <div className="p-4 bg-muted rounded-md min-h-[100px]">
-                        {selectedEntry.classNotes || <span className="text-muted-foreground">No notes added yet</span>}
+                        {selectedEntry.notes || <span className="text-muted-foreground">No notes added yet</span>}
                       </div>
                     </div>
 
@@ -333,12 +385,12 @@ const AdminTeacherDiaries: React.FC = () => {
                         <h3 className="font-medium text-foreground">Homework Assignment</h3>
                       </div>
                       <div className="p-4 bg-muted rounded-md min-h-[100px]">
-                        {selectedEntry.homework || <span className="text-muted-foreground">No homework assigned yet</span>}
+                        {selectedEntry.homework_assigned || <span className="text-muted-foreground">No homework assigned yet</span>}
                       </div>
                     </div>
 
                     {/* Administrative Review Section */}
-                    <div className="space-y-4 pt-4 border-t border-border">
+                    {/* <div className="space-y-4 pt-4 border-t border-border">
                       <div className="flex items-center justify-between p-4 bg-orange-50 border border-orange-200 rounded-md">
                         <div className="flex items-center gap-3">
                           <CheckCircle className="w-5 h-5 text-orange-600" />
@@ -357,7 +409,7 @@ const AdminTeacherDiaries: React.FC = () => {
                         <CheckCircle className="w-4 h-4 mr-2" />
                         {allReviewed ? 'Reviewed' : 'Mark as Reviewed'}
                       </Button>
-                    </div>
+                    </div> */}
                   </div>
                 </CardContent>
               </Card>
@@ -375,13 +427,13 @@ const AdminTeacherDiaries: React.FC = () => {
                   <div className="space-y-3">
                     {filteredEntries.map((entry) => (
                       <div
-                        key={entry.id}
+                        key={entry.diary_id}
                         className="p-4 border border-border rounded-lg space-y-3"
                       >
                         <div className="flex items-start justify-between">
                           <div>
-                            <div className="font-medium text-foreground">{entry.subject}</div>
-                            <div className="text-sm text-muted-foreground">{entry.teacherName}</div>
+                            <div className="font-medium text-foreground">{entry.subject_name}</div>
+                            <div className="text-sm text-muted-foreground">{entry.teacher_name}</div>
                           </div>
                           <Badge
                             variant={entry.status === 'submitted' ? 'default' : 'secondary'}
@@ -420,7 +472,7 @@ const AdminTeacherDiaries: React.FC = () => {
                         <ArrowLeft className="w-4 h-4" />
                       </Button>
                       <h2 className="text-lg font-semibold text-foreground">
-                        {selectedEntry.className} {selectedEntry.section} - {selectedEntry.subject}
+                        {selectedEntry.className} {selectedEntry.section} - {selectedEntry.subject_name}
                       </h2>
                     </div>
 
@@ -433,7 +485,7 @@ const AdminTeacherDiaries: React.FC = () => {
                         <h3 className="font-medium text-foreground">Class Notes</h3>
                       </div>
                       <div className="p-4 bg-muted rounded-md min-h-[100px]">
-                        {selectedEntry.classNotes || <span className="text-muted-foreground">No notes added yet</span>}
+                        {selectedEntry.notes || <span className="text-muted-foreground">No notes added yet</span>}
                       </div>
                     </div>
 
@@ -446,7 +498,7 @@ const AdminTeacherDiaries: React.FC = () => {
                         <h3 className="font-medium text-foreground">Homework Assignment</h3>
                       </div>
                       <div className="p-4 bg-muted rounded-md min-h-[100px]">
-                        {selectedEntry.homework || <span className="text-muted-foreground">No homework assigned yet</span>}
+                        {selectedEntry.homework_assigned || <span className="text-muted-foreground">No homework assigned yet</span>}
                       </div>
                     </div>
 
