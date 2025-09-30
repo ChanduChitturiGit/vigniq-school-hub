@@ -51,6 +51,7 @@ import ComingSoon from './pages/ComingSoon';
 import SupportDetails from './pages/SupportRequest';
 import ExcalidrawApp from './pages/ExcalidrawApp';
 import TeacherDiaries from './pages/TeacherDiaries';
+import AdminTeacherDiaries from './pages/AdminTeacherDiaries';
 
 function App() {
   return (
@@ -245,6 +246,7 @@ function App() {
           <Route path="/attendance/reports" element={<ProtectedRoute allowedRoles={['teacher']}><AttendanceReports /></ProtectedRoute>} />
           
           <Route path="/teacher-diaries" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDiaries /></ProtectedRoute>} />
+          <Route path="/admin-teacher-diaries" element={<ProtectedRoute allowedRoles={['admin']}><AdminTeacherDiaries /></ProtectedRoute>} />
 
 
           <Route path="/support" element={<Support />} />

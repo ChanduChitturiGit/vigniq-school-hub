@@ -862,7 +862,7 @@ const ChapterDetails: React.FC = () => {
                               Cancel
                             </Button>
                             <Button
-                              onClick={() => handleSavePrerequisiteEdit(prerequisite.prerequisite_id)}
+                              onClick={() => handleSavePrerequisiteEdit()}
                               className="bg-green-600 hover:bg-green-700"
                             >
                               <Save className="w-4 h-4 mr-2" />

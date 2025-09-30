@@ -146,6 +146,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
             { path: '/students', label: 'students', icon: Users }
           ]
         },
+        { path: '/admin-teacher-diaries', icon: Notebook, label: 'Teacher-Diaries', roles: ['admin'] },
         { path: '/view-ebooks', icon: BookOpen, label: 'E-Books', roles: ['admin'] }
       ],
       'teacher': [

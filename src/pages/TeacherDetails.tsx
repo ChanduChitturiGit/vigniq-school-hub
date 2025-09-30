@@ -34,8 +34,8 @@ const TeacherDetails: React.FC = () => {
     experience: '',
     qualification: '',
     joining_date: '',
-    current_address: '',      // <-- added
-    permanent_address: '',    // <-- added
+    current_address: '',      
+    permanent_address: '',    
     emergencyContact: '',
     subject_assignments: [],
     school_id: null,

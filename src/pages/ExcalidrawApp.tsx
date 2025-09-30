@@ -9,7 +9,7 @@ import { useSnackbar } from '../components/snackbar/SnackbarContext';
 import { getLessonPlanDataByDay, getWhiteboardData } from '../services/grades';
 import styles from "./ExcalidrawApp.module.css";
 import { jsPDF } from "jspdf";
-import { exportToPdf } from "@excalidraw/excalidraw";
+// import { exportToPdf } from "@excalidraw/excalidraw";
 
 
 
