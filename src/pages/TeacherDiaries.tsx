@@ -30,7 +30,7 @@ const TeacherDiaries: React.FC = () => {
   const { showSnackbar } = useSnackbar();
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const navigate = useNavigate();
-  
+
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs());
   const [selectedEntry, setSelectedEntry] = useState<DiaryEntry | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -122,14 +122,14 @@ const TeacherDiaries: React.FC = () => {
 
   const handleSave = () => {
     if (selectedEntry) {
-      const updatedEntries = diaryEntries.map(entry => 
-        entry.id === selectedEntry.id 
-          ? { 
-              ...entry, 
-              classNotes: editedNotes, 
-              homework: editedHomework,
-              status: (editedNotes || editedHomework) ? 'complete' as const : 'pending' as const
-            } 
+      const updatedEntries = diaryEntries.map(entry =>
+        entry.id === selectedEntry.id
+          ? {
+            ...entry,
+            classNotes: editedNotes,
+            homework: editedHomework,
+            status: (editedNotes || editedHomework) ? 'complete' as const : 'pending' as const
+          }
           : entry
       );
       setDiaryEntries(updatedEntries);
@@ -140,7 +140,7 @@ const TeacherDiaries: React.FC = () => {
         status: (editedNotes || editedHomework) ? 'complete' : 'pending'
       });
       setIsEditing(false);
-      
+
       showSnackbar({
         title: "✅ Success",
         description: "Diary entry saved successfully",
@@ -206,10 +206,11 @@ const TeacherDiaries: React.FC = () => {
           </CardContent>
         </Card>
 
+
         {/* Main Content - Desktop */}
         <div className="hidden lg:grid lg:grid-cols-12 gap-6">
           {/* Left Side - Class List */}
-          <Card className="lg:col-span-5 border-border">
+          <Card className={selectedEntry ? "lg:col-span-5 border-border" : "lg:col-span-12 border-border"}>
             <CardContent className="p-6">
               <div className="space-y-4">
                 <h2 className="text-lg font-semibold text-foreground mb-4">Class & Subject</h2>
@@ -223,7 +224,7 @@ const TeacherDiaries: React.FC = () => {
                   </TableHeader>
                   <TableBody>
                     {diaryEntries.map((entry) => (
-                      <TableRow 
+                      <TableRow
                         key={entry.id}
                         className={selectedEntry?.id === entry.id ? 'bg-blue-50' : ''}
                       >
@@ -234,7 +235,7 @@ const TeacherDiaries: React.FC = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge 
+                          <Badge
                             variant={entry.status === 'complete' ? 'default' : 'secondary'}
                             className={entry.status === 'complete' ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-gray-100 text-gray-600 hover:bg-gray-100'}
                           >
@@ -260,115 +261,115 @@ const TeacherDiaries: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Right Side - Entry Details */}
-          <Card className="lg:col-span-7 border-border">
-            <CardContent className="p-6">
-              {selectedEntry ? (
-                <div className="space-y-6">
-                  {/* Header */}
-                  <div className="flex items-center justify-between border-b border-border pb-4">
-                    <h2 className="text-lg font-semibold text-foreground">
-                      {selectedEntry.className} {selectedEntry.section} - {selectedEntry.subject}
-                    </h2>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setSelectedEntry(null)}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-
-                  {/* Class Notes */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <BookOpen className="w-4 h-4 text-blue-600" />
-                        <h3 className="font-medium text-foreground">Class Notes</h3>
-                      </div>
-                      {!isEditing && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setIsEditing(true)}
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                    {isEditing ? (
-                      <Textarea
-                        value={editedNotes}
-                        onChange={(e) => setEditedNotes(e.target.value)}
-                        placeholder="Add class notes..."
-                        rows={5}
-                        className="w-full"
-                      />
-                    ) : (
-                      <div className="p-4 bg-muted rounded-md min-h-[100px]">
-                        {selectedEntry.classNotes || <span className="text-muted-foreground">No notes added yet</span>}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Homework Assignment */}
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <BookOpen className="w-4 h-4 text-purple-600" />
-                      <h3 className="font-medium text-foreground">Homework Assignment</h3>
-                    </div>
-                    {isEditing ? (
-                      <Textarea
-                        value={editedHomework}
-                        onChange={(e) => setEditedHomework(e.target.value)}
-                        placeholder="Add homework assignment..."
-                        rows={5}
-                        className="w-full"
-                      />
-                    ) : (
-                      <div className="p-4 bg-muted rounded-md min-h-[100px]">
-                        {selectedEntry.homework || <span className="text-muted-foreground">No homework assigned yet</span>}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Administrative Review */}
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
-                        <div className="w-2 h-2 bg-white rounded-full"></div>
-                      </div>
-                      <h3 className="font-medium text-foreground">Administrative Review</h3>
-                    </div>
-                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-                      <p className="text-yellow-800 text-sm">
-                        ⚠️ Pending Administrative Review
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Save Button */}
-                  {isEditing && (
-                    <div className="flex justify-end pt-4">
+          {/* Right Side - Entry Details (only show if selectedEntry exists) */}
+          <div
+            className={`transition-all duration-500 ease-in-out 
+    ${selectedEntry ? "lg:col-span-7 opacity-100 translate-x-0" : "lg:col-span-0 opacity-0 translate-x-full pointer-events-none"}`}
+          >
+            {selectedEntry && (
+              <Card className="h-full border-border">
+                <CardContent className="p-6">
+                  <div className="space-y-6">
+                    {/* Header with Close Button */}
+                    <div className="flex items-center justify-between border-b border-border pb-4">
+                      <h2 className="text-lg font-semibold text-foreground">
+                        {selectedEntry.className} {selectedEntry.section} - {selectedEntry.subject}
+                      </h2>
                       <Button
-                        onClick={handleSave}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedEntry(null)} // 👈 closes panel
                       >
-                        <Save className="w-4 h-4 mr-2" />
-                        Save Changes
+                        <X className="w-4 h-4" />
                       </Button>
                     </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full py-12 text-muted-foreground">
-                  <Eye className="w-12 h-12 mb-4 opacity-50" />
-                  <p>Select a class to view and edit diary entry</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+
+                    {/* --- Class Notes --- */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <BookOpen className="w-4 h-4 text-blue-600" />
+                          <h3 className="font-medium text-foreground">Class Notes</h3>
+                        </div>
+                        {!isEditing && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setIsEditing(true)}
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                      {isEditing ? (
+                        <Textarea
+                          value={editedNotes}
+                          onChange={(e) => setEditedNotes(e.target.value)}
+                          placeholder="Add class notes..."
+                          rows={5}
+                          className="w-full"
+                        />
+                      ) : (
+                        <div className="p-4 bg-muted rounded-md min-h-[100px]">
+                          {selectedEntry.classNotes || <span className="text-muted-foreground">No notes added yet</span>}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* --- Homework Assignment --- */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <BookOpen className="w-4 h-4 text-purple-600" />
+                        <h3 className="font-medium text-foreground">Homework Assignment</h3>
+                      </div>
+                      {isEditing ? (
+                        <Textarea
+                          value={editedHomework}
+                          onChange={(e) => setEditedHomework(e.target.value)}
+                          placeholder="Add homework assignment..."
+                          rows={5}
+                          className="w-full"
+                        />
+                      ) : (
+                        <div className="p-4 bg-muted rounded-md min-h-[100px]">
+                          {selectedEntry.homework || <span className="text-muted-foreground">No homework assigned yet</span>}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* --- Administrative Review --- */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
+                          <div className="w-2 h-2 bg-white rounded-full"></div>
+                        </div>
+                        <h3 className="font-medium text-foreground">Administrative Review</h3>
+                      </div>
+                      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                        <p className="text-yellow-800 text-sm">⚠️ Pending Administrative Review</p>
+                      </div>
+                    </div>
+
+                    {/* --- Save Button --- */}
+                    {isEditing && (
+                      <div className="flex justify-end pt-4">
+                        <Button
+                          onClick={handleSave}
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          Save Changes
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
         </div>
+
 
         {/* Mobile/Tablet View */}
         <div className="lg:hidden">
@@ -388,7 +389,7 @@ const TeacherDiaries: React.FC = () => {
                             <div className="font-medium text-foreground">{entry.className} {entry.section}</div>
                             <div className="text-sm text-muted-foreground">{entry.subject}</div>
                           </div>
-                          <Badge 
+                          <Badge
                             variant={entry.status === 'complete' ? 'default' : 'secondary'}
                             className={entry.status === 'complete' ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-gray-100 text-gray-600 hover:bg-gray-100'}
                           >
