@@ -9,7 +9,6 @@ import { useSnackbar } from '../components/snackbar/SnackbarContext';
 import { getLessonPlanDataByDay, getWhiteboardData } from '../services/grades';
 import styles from "./ExcalidrawApp.module.css";
 import { jsPDF } from "jspdf";
-import { exportToPdf } from "@excalidraw/excalidraw";
 
 
 
@@ -331,17 +330,17 @@ export default function ExcalidrawApp() {
   const slideEntries = Object.entries(slides);
 
   for (let i = 0; i < slideEntries.length; i++) {
-    const [pageIndex, scene] = slideEntries[i];
+    const [pageIndex, scene] = slideEntries[i] as [string, any];
     if (!scene) continue;
 
     const safeAppState = {
-      ...scene.appState,
+      ...(scene.appState || {}),
       collaborators: new Map(),
     };
 
     // ✅ Remove deleted/undone elements
     const filteredElements = (scene.elements || []).filter(
-      (el) => !el.isDeleted
+      (el: any) => !el.isDeleted
     );
 
     // Render canvas for this slide
@@ -482,9 +481,7 @@ export default function ExcalidrawApp() {
       <div style={{ width: "100vw", height: "100vh" }}
         className={`relative  excalidraw ${styles.excalidrawFix} ${styles.myExcalidrawWrapper}`}>
         <Excalidraw
-         ref={excalidrawRef}
           excalidrawAPI={(api) => (excalidrawApiRef.current = api)}
-          style={{ height: "100%", width: "100%" }}
           theme="light"
           UIOptions={{
             canvasActions: {
@@ -502,7 +499,12 @@ export default function ExcalidrawApp() {
           onChange={handleSceneChange}
           initialData={{
             appState: {
-              activeTool: { type: "freedraw", locked: true },
+              activeTool: { 
+                type: "freedraw" as const,
+                customType: null,
+                locked: true,
+                lastActiveTool: null
+              },
             },
           }}
           renderTopRightUI={() => (
