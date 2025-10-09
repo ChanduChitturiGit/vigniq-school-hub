@@ -252,7 +252,7 @@ export const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ onCanvasChan
     });
 
     const buffer = await Packer.toBuffer(doc);
-    saveAs(new Blob([buffer]), 'whiteboard-content.docx');
+    saveAs(new Blob([new Uint8Array(buffer)]), 'whiteboard-content.docx');
     toast.success('Word document exported successfully!');
   };
 
