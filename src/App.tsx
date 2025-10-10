@@ -52,6 +52,10 @@ import SupportDetails from './pages/SupportRequest';
 import ExcalidrawApp from './pages/ExcalidrawApp';
 import TeacherDiaries from './pages/TeacherDiaries';
 import AdminTeacherDiaries from './pages/AdminTeacherDiaries';
+import SyllabusProgress from './pages/SyllabusProgress';
+import ClassSubjectsProgress from './pages/ClassSubjectsProgress';
+import SubjectChaptersProgress from './pages/SubjectChaptersProgress';
+import TeacherSubjectsProgress from './pages/TeacherSubjectsProgress';
 
 function App() {
   return (
@@ -195,7 +199,7 @@ function App() {
 
           <Route path="/support-details/:requestId" element={
             <ProtectedRoute allowedRoles={['admin', 'student', 'teacher', 'superadmin']}>
-            <SupportDetails />
+              <SupportDetails />
               {/* <ComingSoon /> */}
             </ProtectedRoute>
           } />
@@ -228,7 +232,7 @@ function App() {
           <Route path="/grades/syllabus/lesson-plan/day/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}><DayLessonPlan /></ProtectedRoute>} />
           <Route path="/grades/syllabus/lesson-plan/whiteboard/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}>
             {/* <WhiteboardTeaching /> */}
-            <ExcalidrawApp/>
+            <ExcalidrawApp />
           </ProtectedRoute>} />
           <Route path="/grades/syllabus/lesson-plan/ai-chat/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}><AIChatLessonPlan /></ProtectedRoute>} />
           <Route path="/grades/exams/:subjectId" element={<ProtectedRoute><Exams /></ProtectedRoute>} />
@@ -244,9 +248,14 @@ function App() {
 
           <Route path="/attendance" element={<ProtectedRoute allowedRoles={['teacher']}><Attendance /></ProtectedRoute>} />
           <Route path="/attendance/reports" element={<ProtectedRoute allowedRoles={['teacher']}><AttendanceReports /></ProtectedRoute>} />
-          
+
           <Route path="/teacher-diaries" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDiaries /></ProtectedRoute>} />
           <Route path="/admin-teacher-diaries" element={<ProtectedRoute allowedRoles={['admin']}><AdminTeacherDiaries /></ProtectedRoute>} />
+          <Route path="/syllabus-progress" element={<ProtectedRoute allowedRoles={['admin']}><SyllabusProgress /></ProtectedRoute>} />
+          <Route path="/syllabus-progress/class/:classId" element={<ProtectedRoute allowedRoles={['admin']}><ClassSubjectsProgress /></ProtectedRoute>} />
+          <Route path="/syllabus-progress/class/:classId/subject/:subjectId" element={<ProtectedRoute allowedRoles={['admin']}><SubjectChaptersProgress /></ProtectedRoute>} />
+          <Route path="/syllabus-progress/teacher/:teacherId" element={<ProtectedRoute allowedRoles={['admin']}><TeacherSubjectsProgress /></ProtectedRoute>} />
+          <Route path="/syllabus-progress/teacher/:teacherId/class/:classId/subject/:subjectId" element={<ProtectedRoute allowedRoles={['admin']}><SubjectChaptersProgress /></ProtectedRoute>} />
 
 
           <Route path="/support" element={<Support />} />
