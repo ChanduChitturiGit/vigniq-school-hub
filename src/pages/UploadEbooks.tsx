@@ -717,7 +717,7 @@ const UploadEbooks: React.FC = () => {
                 )}
 
                 {/* check box */}
-                {/* <div>
+                <div>
                     <input
                       type="checkbox"
                       id="sameAddress"
@@ -740,7 +740,7 @@ const UploadEbooks: React.FC = () => {
                     <label htmlFor="sameAddress" className="text-sm text-gray-700">
                       Upload to all schools
                     </label>
-                </div> */}
+                </div>
 
                 {/* Action Buttons */}
                 <div className="flex justify-end space-x-4 pt-6">

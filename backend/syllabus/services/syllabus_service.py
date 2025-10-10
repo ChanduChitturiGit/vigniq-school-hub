@@ -20,6 +20,7 @@ from syllabus.models import (
 from core.common_modules.common_functions import CommonFunctions
 from core import s3_client
 from core.lang_chain.lang_chain import LangChainService
+from core.lang_chain.queries import LangchainQueries
 
 from teacher.models import TeacherSubjectAssignment
 
@@ -419,6 +420,7 @@ class SyllabusService:
                 "taxonomy_alignment": lesson_plan_day.taxonomy_alignment,
                 "session_id": whiteboard_session,
                 "status": lesson_plan_day.status,
+                'updated_at': lesson_plan_day.updated_at,
                 "topics": [
                     {
                         "topic_id": topic.id,
@@ -722,7 +724,7 @@ class SyllabusService:
             
             ebook_instance = SchoolSyllabusEbooks.objects.filter(
                 id=chapter.ebook_id
-            ).first()
+            ).select_related('subject').first()
 
             if not ebook_instance:
                 logger.error("Ebook not found for the chapter.")
@@ -744,13 +746,17 @@ class SyllabusService:
             pdf_content = pdf_bytes_io
             if is_text_file:
                 pdf_content = pdf_bytes_io.read().decode("utf-8")
+            
+            subject_instructions = getattr(LangchainQueries, f"{ebook_instance.subject.name.upper()}_SUBJECT", "OTHER_SUBJECT").value
             lesson_plan = lang_chain_service.generate_lesson_plan(
                 chapter_number=chapter.chapter_number,
                 chapter_title=chapter.chapter_name,
                 num_days=num_days,
                 time_period=time_period,
                 teacher_instructions=teacher_instructions,
-                pdf_file_content=pdf_content
+                pdf_file_content=pdf_content,
+                subject=ebook_instance.subject.name,
+                subject_instructions=subject_instructions
             )
 
             normalized = CommonFunctions.normalize_keys(lesson_plan)

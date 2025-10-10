@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'classes',
     'academics',
     'syllabus',
-    'subscriptions'
+    'subscriptions',
+    'reports'
 ]
 
 MIDDLEWARE = [

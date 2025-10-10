@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -7,6 +7,10 @@ import {
 } from './ui/dialog';
 import { Clock, X } from 'lucide-react';
 import { Button } from './ui/button';
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
+import { SpinnerOverlay } from '../pages/SpinnerOverlay';
+import { getLessonPlanByChapter } from '../services/syllabusProgress';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 interface Topic {
   id: string;
@@ -19,6 +23,7 @@ interface LessonPlanDialogProps {
   isOpen: boolean;
   onClose: () => void;
   chapterName: string;
+  chapterId: string;
 }
 
 // Sample lesson plan data
@@ -49,8 +54,49 @@ const sampleTopics: Topic[] = [
   },
 ];
 
-const LessonPlanDialog: React.FC<LessonPlanDialogProps> = ({ isOpen, onClose, chapterName }) => {
+const LessonPlanDialog: React.FC<LessonPlanDialogProps> = ({ isOpen, onClose, chapterName, chapterId }) => {
+  const { classId, subjectId } = useParams();
+  const [searchParams] = useSearchParams();
+  const { showSnackbar } = useSnackbar();
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user") || '{}');
+  const [loader, setLoader] = useState(true);
+  const className = searchParams.get('className') || '';
+  const subjectName = searchParams.get('subjectName') || '';
+  const teacherName = searchParams.get('teacherName') || '';
+  const progress = searchParams.get('progress') || '0';
   const totalMinutes = sampleTopics.reduce((sum, topic) => sum + topic.duration, 0);
+
+
+  const getLessonPlanByChapterData = async () => {
+    try {
+      const schoolId = userData.school_id;
+      const payload = { school_id: schoolId, class_section_id: classId, subject_id: subjectId, chapter_id: chapterId };
+      const response = await getLessonPlanByChapter(payload);
+      if (response && response.data) {
+        setLoader(false);
+        //setChaptersData(response.data.chapters);
+      }
+      else {
+        showSnackbar({
+          title: "⛔ Error",
+          description: "Something went wrong",
+          status: "error"
+        });
+        setLoader(false);
+      }
+    } catch (error) {
+      setLoader(false);
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
+  useEffect(() => {
+    getLessonPlanByChapterData();
+  }, []);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

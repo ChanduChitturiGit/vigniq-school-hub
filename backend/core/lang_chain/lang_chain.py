@@ -39,12 +39,13 @@ class LangChainService:
 
         return response
 
-    def get_topics_and_prerequisites(self,pdf_file):
+    def get_topics_and_prerequisites(self,pdf_file,upload_type_prompt):
         chapter_parser = PydanticOutputParser(pydantic_object=ChapterInfo)
         prompt = PromptTemplate(
             template=LangchainQueries.EXTRACT_TOPICS_PREREQUISITES.value,
             input_variables=["input"],
-            partial_variables={"format_instructions": chapter_parser.get_format_instructions()}
+            partial_variables={"format_instructions": chapter_parser.get_format_instructions(),
+                               "additional_instructions": upload_type_prompt}
         )
 
         pdf_text = CommonFunctions.extract_text_from_pdf(pdf_file=pdf_file)
@@ -56,12 +57,12 @@ class LangChainService:
         return parsed.model_dump()['result'], pdf_text
 
     def generate_lesson_plan(self, chapter_number, chapter_title, num_days, time_period,
-                             teacher_instructions, pdf_file_content):
+                             teacher_instructions, pdf_file_content,subject,subject_instructions):
         lesson_plan_parser = PydanticOutputParser(pydantic_object=LessonPlan)
         prompt = PromptTemplate(
             template=LangchainQueries.GENERATE_LESSON_PLAN.value,
             input_variables=["chapter_number", "chapter_title", "num_days",
-                             "text", "time_period", "teacher_instructions"],
+                             "text", "time_period", "teacher_instructions","subject",'subject_instructions'],
             partial_variables={"format_instructions": lesson_plan_parser.get_format_instructions()}
         )
 
@@ -78,7 +79,10 @@ class LangChainService:
         "num_days": num_days,
         "time_period": time_period,
         "teacher_instructions": teacher_instructions,
-        "text": pdf_text
+        "text": pdf_text,
+        "subject":subject,
+        'subject_instructions':subject_instructions
+
         })
         parsed = lesson_plan_parser.parse(response)
 
