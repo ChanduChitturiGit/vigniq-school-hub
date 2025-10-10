@@ -55,6 +55,7 @@ import AdminTeacherDiaries from './pages/AdminTeacherDiaries';
 import SyllabusProgress from './pages/SyllabusProgress';
 import ClassSubjectsProgress from './pages/ClassSubjectsProgress';
 import SubjectChaptersProgress from './pages/SubjectChaptersProgress';
+import TeacherSubjectsProgress from './pages/TeacherSubjectsProgress';
 
 function App() {
   return (
@@ -250,9 +251,11 @@ function App() {
           
           <Route path="/teacher-diaries" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDiaries /></ProtectedRoute>} />
           <Route path="/admin-teacher-diaries" element={<ProtectedRoute allowedRoles={['admin']}><AdminTeacherDiaries /></ProtectedRoute>} />
-          <Route path="/syllabus-progress" element={<ProtectedRoute allowedRoles={['admin']}><SyllabusProgress /></ProtectedRoute>} />
-          <Route path="/syllabus-progress/class/:classId" element={<ProtectedRoute allowedRoles={['admin']}><ClassSubjectsProgress /></ProtectedRoute>} />
-          <Route path="/syllabus-progress/class/:classId/subject/:subjectId" element={<ProtectedRoute allowedRoles={['admin']}><SubjectChaptersProgress /></ProtectedRoute>} />
+        <Route path="/syllabus-progress" element={<ProtectedRoute allowedRoles={['admin']}><SyllabusProgress /></ProtectedRoute>} />
+        <Route path="/syllabus-progress/class/:classId" element={<ProtectedRoute allowedRoles={['admin']}><ClassSubjectsProgress /></ProtectedRoute>} />
+        <Route path="/syllabus-progress/class/:classId/subject/:subjectId" element={<ProtectedRoute allowedRoles={['admin']}><SubjectChaptersProgress /></ProtectedRoute>} />
+        <Route path="/syllabus-progress/teacher/:teacherId" element={<ProtectedRoute allowedRoles={['admin']}><TeacherSubjectsProgress /></ProtectedRoute>} />
+        <Route path="/syllabus-progress/teacher/:teacherId/class/:classId/subject/:subjectId" element={<ProtectedRoute allowedRoles={['admin']}><SubjectChaptersProgress /></ProtectedRoute>} />
 
 
           <Route path="/support" element={<Support />} />
