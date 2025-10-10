@@ -58,6 +58,10 @@ const SyllabusProgress: React.FC = () => {
     navigate(`/syllabus-progress/class/${classId}?className=${className}`);
   };
 
+  const handleTeacherClick = (teacherId: string, teacherName: string, subject: string, progress: number) => {
+    navigate(`/syllabus-progress/teacher/${teacherId}?teacherName=${teacherName}&subject=${subject}&progress=${progress}`);
+  };
+
   return (
     <MainLayout pageTitle="Syllabus Progress">
       <div className="space-y-6">
@@ -90,16 +94,16 @@ const SyllabusProgress: React.FC = () => {
                 >
                   <CardContent className="p-6">
                     <div className="flex flex-col items-center space-y-4">
-                      <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center">
-                        <span className="text-2xl font-bold text-primary-foreground">{cls.name}</span>
+                      <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center">
+                        <span className="text-2xl font-bold text-white">{cls.name}</span>
                       </div>
 
                       <div className="w-full space-y-2">
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-muted-foreground">Progress</span>
-                          <span className="font-semibold text-primary">{cls.progress}%</span>
+                          <span className="font-semibold text-blue-600">{cls.progress}%</span>
                         </div>
-                        <Progress value={cls.progress} className="h-2" />
+                        <Progress value={cls.progress} className="h-2 bg-blue-100 [&>div]:bg-blue-600" />
                         <p className="text-sm text-center text-muted-foreground">
                           {cls.completedSubjects} of {cls.totalSubjects} subjects completed
                         </p>
@@ -115,12 +119,16 @@ const SyllabusProgress: React.FC = () => {
           <TabsContent value="teacher" className="mt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredTeachers.map((teacher) => (
-                <Card key={teacher.id} className="border hover:shadow-lg transition-shadow">
+                <Card 
+                  key={teacher.id} 
+                  className="border hover:shadow-lg transition-shadow cursor-pointer"
+                  onClick={() => handleTeacherClick(teacher.id, teacher.name, teacher.subject, teacher.progress)}
+                >
                   <CardContent className="p-6">
                     <div className="space-y-4">
                       <div className="flex items-start gap-4">
-                        <div className="w-14 h-14 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
-                          <User className="w-7 h-7 text-primary-foreground" />
+                        <div className="w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                          <User className="w-7 h-7 text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-lg text-foreground truncate">{teacher.name}</h3>
@@ -131,9 +139,9 @@ const SyllabusProgress: React.FC = () => {
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-muted-foreground">Overall Progress</span>
-                          <span className="font-semibold text-primary">{teacher.progress}%</span>
+                          <span className="font-semibold text-blue-600">{teacher.progress}%</span>
                         </div>
-                        <Progress value={teacher.progress} className="h-2" />
+                        <Progress value={teacher.progress} className="h-2 bg-blue-100 [&>div]:bg-blue-600" />
                       </div>
 
                       <div>
@@ -142,7 +150,7 @@ const SyllabusProgress: React.FC = () => {
                           {teacher.classes.map((cls, index) => (
                             <span
                               key={index}
-                              className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-xs font-medium"
+                              className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium"
                             >
                               {cls}
                             </span>

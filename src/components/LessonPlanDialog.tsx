@@ -59,7 +59,7 @@ const LessonPlanDialog: React.FC<LessonPlanDialogProps> = ({ isOpen, onClose, ch
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <DialogTitle className="text-xl font-bold text-foreground">Lesson Plan Activities</DialogTitle>
-              <div className="flex items-center gap-2 text-sm text-primary mt-2">
+              <div className="flex items-center gap-2 text-sm text-blue-600 mt-2">
                 <Clock className="w-4 h-4" />
                 <span>Total: {totalMinutes} minutes</span>
               </div>
@@ -78,10 +78,10 @@ const LessonPlanDialog: React.FC<LessonPlanDialogProps> = ({ isOpen, onClose, ch
         <div className="flex-1 overflow-y-auto px-6 py-4">
           <div className="space-y-4">
             {sampleTopics.map((topic, index) => (
-              <div key={topic.id} className="flex gap-4 p-4 bg-muted/50 rounded-lg border">
+              <div key={topic.id} className="flex gap-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
                 <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-                    <span className="text-primary-foreground font-bold">{index + 1}</span>
+                  <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold">{index + 1}</span>
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
