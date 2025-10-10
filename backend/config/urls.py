@@ -32,6 +32,7 @@ urlpatterns = [
     path('academics/', include('academics.urls')),
     path('syllabus/', include('syllabus.urls')),
     path('subscriptions/', include('subscriptions.urls')),
+    path('reports/', include('reports.urls')),
     path('auth/login/', CustomTokenObtainPairView.as_view(), name='login'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
