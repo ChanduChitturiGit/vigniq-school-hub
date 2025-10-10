@@ -26,6 +26,7 @@ from syllabus.models import SchoolChapter, SchoolClassPrerequisite, SchoolClassS
 from classes.models import SchoolClass, SchoolSection
 from core import s3_client
 from core.lang_chain.lang_chain import LangChainService
+from core.lang_chain.queries import LangchainQueries
 from core.common_modules.common_functions import CommonFunctions
 
 logger = logging.getLogger(__name__)
@@ -134,16 +135,22 @@ class EbookService:
                         file_path=s3_key,
                         syllabus_year=syllabus_year
                     )
+                    upload_type_prompt = LangchainQueries.SINGLE_WISE_PROMPT.value
+                    upload_type_prompt = upload_type_prompt.format(subject=subject_obj.name, class_num=class_obj.class_number)
+
                     if upload_type == 'chapter_wise':
                         ebook.chapter_number = int(chapter_number)
                         ebook.save()
+                        upload_type_prompt = LangchainQueries.CHAPTER_WISE_PROMPT.value
+                        upload_type_prompt = upload_type_prompt.format(chapter_num=chapter_number, subject=subject_obj.name, class_num=class_obj.class_number)
                     extract_status, pdf_text = self.extract_topics_and_prerequisites(
                         BytesIO(file_bytes), ebook,
                         previously_uploaded_ebook_id,
                         board_id=board_id, class_id=class_id,
                         subject_id=subject_id, chapter_number=chapter_number,
                         upload_type=upload_type,
-                        apply_to_all_schools=apply_to_all_schools
+                        apply_to_all_schools=apply_to_all_schools,
+                        upload_type_prompt=upload_type_prompt
                     )
                     pdf_text_file = BytesIO()
                     pdf_text_file.write(pdf_text.encode("utf-8"))
@@ -316,12 +323,12 @@ class EbookService:
     def extract_topics_and_prerequisites(self, pdf_file, ebook, previously_uploaded_ebook_id,
             board_id=None, class_id=None, subject_id=None,
             chapter_number=None, upload_type=None,
-            apply_to_all_schools=False):
+            apply_to_all_schools=False,upload_type_prompt=None):
         """Extract topics and prerequisites from the provided PDF file."""
 
         lang_chain_service = LangChainService()
 
-        chapters_obj,pdf_text = lang_chain_service.get_topics_and_prerequisites(pdf_file)
+        chapters_obj,pdf_text = lang_chain_service.get_topics_and_prerequisites(pdf_file,upload_type_prompt)
 
         with transaction.atomic():
             Chapter.objects.filter(ebook_id=previously_uploaded_ebook_id).delete()
@@ -332,7 +339,7 @@ class EbookService:
                     chapter_name=chapter_item['chapter_name']
                 )
 
-                for sub_topic in chapter_item['sub_topics']:
+                for sub_topic in set(chapter_item['sub_topics']):
                     sub_topic_obj = SubTopic.objects.create(
                         chapter=chapter,
                         name=sub_topic
