@@ -331,24 +331,24 @@ export default function ExcalidrawApp() {
   const slideEntries = Object.entries(slides);
 
   for (let i = 0; i < slideEntries.length; i++) {
-    const [pageIndex, scene] = slideEntries[i];
+    const [pageIndex, scene] = slideEntries[i] as [string, any];
     if (!scene) continue;
 
     const safeAppState = {
-      ...scene.appState,
+      ...(scene.appState || {}),
       collaborators: new Map(),
     };
 
     // ✅ Remove deleted/undone elements
-    const filteredElements = (scene.elements || []).filter(
-      (el) => !el.isDeleted
+    const filteredElements = ((scene.elements || []) as any[]).filter(
+      (el: any) => !el.isDeleted
     );
 
     // Render canvas for this slide
     const canvas = await exportToCanvas({
       elements: filteredElements,
       appState: safeAppState,
-      files: scene.files || {},
+      files: (scene.files || {}) as any,
     });
 
     const imageData = canvas.toDataURL("image/png");
@@ -482,9 +482,7 @@ export default function ExcalidrawApp() {
       <div style={{ width: "100vw", height: "100vh" }}
         className={`relative  excalidraw ${styles.excalidrawFix} ${styles.myExcalidrawWrapper}`}>
         <Excalidraw
-         ref={excalidrawRef}
           excalidrawAPI={(api) => (excalidrawApiRef.current = api)}
-          style={{ height: "100%", width: "100%" }}
           theme="light"
           UIOptions={{
             canvasActions: {
@@ -502,7 +500,12 @@ export default function ExcalidrawApp() {
           onChange={handleSceneChange}
           initialData={{
             appState: {
-              activeTool: { type: "freedraw", locked: true },
+              activeTool: { 
+                type: "freedraw" as const,
+                customType: null,
+                lastActiveTool: null,
+                locked: true 
+              },
             },
           }}
           renderTopRightUI={() => (
