@@ -44,8 +44,6 @@ const TeacherDiaries: React.FC = () => {
   const [isMobileDetailView, setIsMobileDetailView] = useState(false);
 
 
-
-  // Sample data - replace with actual API call
   const [diaryEntries, setDiaryEntries] = useState([]);
 
   const diaryData = async () => {
