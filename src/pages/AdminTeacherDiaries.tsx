@@ -248,7 +248,7 @@ const AdminTeacherDiaries: React.FC = () => {
               </div>
 
               {/* Class Selector */}
-              <div className="flex items-center justify-center gap-2 w-full md:w-64">
+              <div className="flex flex-col md:flex-row items-center justify-center gap-2 w-full md:w-64">
                 <label className="text-sm font-medium text-muted-foreground mb-2 block">Class:</label>
                 <Select value={selectedClass?.className} onValueChange={handleClassChange}>
                   <SelectTrigger className="w-full">
@@ -322,7 +322,7 @@ const AdminTeacherDiaries: React.FC = () => {
                       <div className="w-full flex items-center justify-center space-y-4 pt-4 border-t border-border ">
 
                         <Button
-                          onClick={saveDiaryData}
+                          onClick={handleMarkAsReviewed}
                           disabled={allReviewed}
                           className="w-[50%] bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-300 disabled:text-gray-500"
                         >
@@ -414,13 +414,11 @@ const AdminTeacherDiaries: React.FC = () => {
               </Card>
             )
           }
-
-
         </div>
 
         {/* Mobile/Tablet View */}
         <div className="lg:hidden">
-          {!isMobileDetailView ? (
+          {!isMobileDetailView && filteredEntries && filteredEntries.length > 0 && (
             <Card className="border-border">
               <CardContent className="p-4">
                 <div className="space-y-4">
@@ -431,7 +429,7 @@ const AdminTeacherDiaries: React.FC = () => {
                         key={entry.diary_id}
                         className="p-4 border border-border rounded-lg space-y-3"
                       >
-                        <div className="flex items-start justify-between">
+                        <div className="flex flex-wrap items-start justify-between">
                           <div>
                             <div className="font-medium text-foreground">{entry.subject_name}</div>
                             <div className="text-sm text-muted-foreground">{entry.teacher_name}</div>
@@ -454,11 +452,21 @@ const AdminTeacherDiaries: React.FC = () => {
                         </Button>
                       </div>
                     ))}
+
+                    <Button
+                      onClick={handleMarkAsReviewed}
+                      disabled={allReviewed}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-300 disabled:text-gray-500"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      {allReviewed ? 'Reviewed' : 'Mark as Reviewed'}
+                    </Button>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          ) : (
+          )}
+          {isMobileDetailView && filteredEntries && filteredEntries.length > 0 && (
             <Card className="border-border">
               <CardContent className="p-4">
                 {selectedEntry && (
@@ -473,7 +481,7 @@ const AdminTeacherDiaries: React.FC = () => {
                         <ArrowLeft className="w-4 h-4" />
                       </Button>
                       <h2 className="text-lg font-semibold text-foreground">
-                        {selectedEntry.className} {selectedEntry.section} - {selectedEntry.subject_name}
+                        {selectedClass.className} {selectedEntry.section} - {selectedEntry.subject_name}
                       </h2>
                     </div>
 
@@ -515,20 +523,39 @@ const AdminTeacherDiaries: React.FC = () => {
                         </div>
                       </div>
 
-                      <Button
-                        onClick={handleMarkAsReviewed}
-                        disabled={allReviewed}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-300 disabled:text-gray-500"
-                      >
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        {allReviewed ? 'Reviewed' : 'Mark as Reviewed'}
-                      </Button>
+
                     </div>
                   </div>
                 )}
               </CardContent>
             </Card>
           )}
+
+          {!(filteredEntries && filteredEntries.length > 0 && selectedClass && !isLoading) &&
+            <Card className='lg:col-span-12 border-border'>
+              <CardContent className="p-8 text-center">
+                {selectedClass && selectedClass.class_section_id && !isLoading &&
+                  <>
+                    <AlertCircle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
+                    <h2 className="text-2xl font-bold mb-2">No Data Found</h2>
+                    {!isSunday(selectedDate.toDate()) && <span className="text-gray-600">No records for <span className='font-bold'>{`${format(selectedDate.toDate(), "EEE, dd MMM yyyy")}. `}</span> Try choosing another date.</span>}
+                    {isSunday(selectedDate.toDate()) && <span className="text-gray-600"><span className='font-bold'>{`${format(selectedDate.toDate(), "EEE, dd MMM yyyy")}`}</span> is Holiday. Try choosing another date.</span>}
+                  </>
+                }
+                {!selectedClass?.class_section_id &&
+                  <>
+                    <AlertCircle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
+                    <h2 className="text-2xl font-bold mb-2">Class not Selected.</h2>
+                  </>
+                }
+                {isLoading &&
+                  <>
+                    <Loader2 className="w-10 h-10 mx-auto text-blue animate-spin" />
+                  </>
+                }
+              </CardContent>
+            </Card>
+          }
         </div>
       </div>
     </MainLayout>

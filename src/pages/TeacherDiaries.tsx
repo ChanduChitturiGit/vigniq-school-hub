@@ -14,7 +14,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
 import '../pages/styles/datepicker.scss';
 import { getTeacherDiaries, saveTeacherDiary } from '../services/diaries'
-import { format,isSunday,isToday } from 'date-fns';
+import { format, isSunday, isToday } from 'date-fns';
 import { selectClasses } from '@mui/material/Select';
 
 
@@ -92,6 +92,7 @@ const TeacherDiaries: React.FC = () => {
           description: response.message,
           status: "success"
         });
+        diaryData();
       } else {
         showSnackbar({
           title: "⛔ Error",
@@ -109,6 +110,9 @@ const TeacherDiaries: React.FC = () => {
   }
 
   useEffect(() => {
+    setIsMobileDetailView(false);
+    setSelectedEntry(null);
+    setIsEditing(false);
     diaryData();
   }, [selectedDate])
 
@@ -137,9 +141,9 @@ const TeacherDiaries: React.FC = () => {
     <MainLayout pageTitle="Teacher Diaries">
       <div className="space-y-6 p-4 md:p-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        {/* <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">Teacher Diaries</h1>
-        </div>
+        </div> */}
 
         {/* Date Picker and Stats */}
         <Card className="border-border">
@@ -211,7 +215,7 @@ const TeacherDiaries: React.FC = () => {
                             >
                               <TableCell>
                                 <div>
-                                  <div className="font-medium text-foreground">{'Class ' + entry.class_number + ' - ' + entry.class_section}</div>
+                                  <div className="font-medium text-foreground">{'Class ' + entry.class_number + ' - ' + entry.class_section + '(' + entry.board_name + ')'}</div>
                                   <div className="text-sm text-muted-foreground">{entry.subject_name}</div>
                                 </div>
                               </TableCell>
@@ -262,16 +266,16 @@ const TeacherDiaries: React.FC = () => {
           {/* Right Side - Entry Details (only show if selectedEntry exists) */}
           <div
             className={`transition-all duration-500 ease-in-out 
-    ${selectedEntry &&  diaryEntries && diaryEntries.length > 0 ? "lg:col-span-7 opacity-100 translate-x-0" : "lg:col-span-0 opacity-0 translate-x-full pointer-events-none"}`}
+    ${selectedEntry && diaryEntries && diaryEntries.length > 0 ? "lg:col-span-7 opacity-100 translate-x-0" : "lg:col-span-0 opacity-0 translate-x-full pointer-events-none"}`}
           >
-            {selectedEntry &&  diaryEntries && diaryEntries.length > 0 && (
+            {selectedEntry && diaryEntries && diaryEntries.length > 0 && (
               <Card className="h-full border-border">
                 <CardContent className="p-6">
                   <div className="space-y-6">
                     {/* Header with Close Button */}
                     <div className="flex items-center justify-between border-b border-border pb-4">
                       <h2 className="text-lg font-semibold text-foreground">
-                        {'Class ' + selectedEntry.class_number + ' - ' + selectedEntry.class_section} - {selectedEntry.subject_name}
+                        {'Class ' + selectedEntry.class_number + ' - ' + selectedEntry.class_section} - {selectedEntry.subject_name} {'(' + selectedEntry.board_name + ')'}
                       </h2>
                       <Button
                         variant="ghost"
@@ -385,20 +389,20 @@ const TeacherDiaries: React.FC = () => {
 
         {/* Mobile/Tablet View */}
         <div className="lg:hidden">
-          {!isMobileDetailView ? (
+          {!isMobileDetailView && diaryEntries && diaryEntries.length > 0 && (
             <Card className="border-border">
               <CardContent className="p-4">
                 <div className="space-y-4">
                   <h2 className="text-lg font-semibold text-foreground">Class & Subject</h2>
                   <div className="space-y-3">
-                    {diaryEntries.map((entry) => (
+                    {diaryEntries && diaryEntries.map((entry) => (
                       <div
                         key={entry.diary_id}
                         className="p-4 border border-border rounded-lg space-y-3"
                       >
                         <div className="flex flex-wrap items-start justify-between">
                           <div>
-                            <div className="font-medium text-foreground">{'Class ' + entry.class_number + ' - ' + entry.class_section}</div>
+                            <div className="font-medium text-foreground">{'Class ' + entry.class_number + ' - ' + entry.class_section + '(' + entry.board_name + ')'}</div>
                             <div className="text-sm text-muted-foreground">{entry.subject_name}</div>
                           </div>
                           <Badge
@@ -423,7 +427,8 @@ const TeacherDiaries: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-          ) : (
+          )}
+          {isMobileDetailView && diaryEntries && diaryEntries.length > 0 && (
             <Card className="border-border">
               <CardContent className="p-4">
                 {selectedEntry && (
@@ -438,7 +443,7 @@ const TeacherDiaries: React.FC = () => {
                         <ArrowLeft className="w-4 h-4" />
                       </Button>
                       <h2 className="text-lg font-semibold text-foreground">
-                        {'Class ' + selectedEntry.class_number + ' - ' + selectedEntry.class_section} - {selectedEntry.subject_name}
+                        {'Class ' + selectedEntry.class_number + ' - ' + selectedEntry.class_section} - {selectedEntry.subject_name} {'(' + selectedEntry.board_name + ')'}
                       </h2>
                     </div>
 
@@ -534,6 +539,22 @@ const TeacherDiaries: React.FC = () => {
               </CardContent>
             </Card>
           )}
+          {
+            diaryEntries && diaryEntries.length == 0 && (
+              <Card className='lg:col-span-12 border-border'>
+                <CardContent className="p-8 text-center">
+                  <AlertCircle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
+                  {
+                    <>
+                      <h2 className="text-2xl font-bold mb-2">No Data Found</h2>
+                      {!isSunday(selectedDate.toDate()) && <span className="text-gray-600">No records for <span className='font-bold'>{`${format(selectedDate.toDate(), "EEE, dd MMM yyyy")}. `}</span> Try choosing another date.</span>}
+                      {isSunday(selectedDate.toDate()) && <span className="text-gray-600"><span className='font-bold'>{`${format(selectedDate.toDate(), "EEE, dd MMM yyyy")}`}</span> is Holiday. Try choosing another date.</span>}
+                    </>
+                  }
+                </CardContent>
+              </Card>
+            )
+          }
         </div>
       </div>
     </MainLayout>
