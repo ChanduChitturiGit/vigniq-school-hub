@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { Progress } from '../components/ui/progress';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import { SpinnerOverlay } from '../pages/SpinnerOverlay';
-import { getSyllabusProgressByClass } from '../services/syllabusProgress';
+import { getSyllabusProgressByClass,getSyllabusProgressByTeacher } from '../services/syllabusProgress';
 
 interface ClassProgress {
   class_section_id: string;
@@ -23,11 +23,11 @@ interface ClassProgress {
 }
 
 interface TeacherProgress {
-  id: string;
-  name: string;
-  subject: string;
-  progress: number;
-  classes: string[];
+  teacher_id: string;
+  teacher_name: string;
+  subject_name: string;
+  completion_percentage?: number;
+  classes_assigned: string[];
 }
 
 
@@ -44,20 +44,14 @@ const SyllabusProgress: React.FC = () => {
   // Sample data
   const [classesData, setClassesData] = useState<ClassProgress[]>([]);
 
-  const teachersData: TeacherProgress[] = [
-    { id: '1', name: 'Sunitha', subject: 'Telugu', progress: 65, classes: ['10A', '10B', '9A'] },
-    { id: '2', name: 'Mamatha', subject: 'Hindi', progress: 58, classes: ['10A', '10C', '9B'] },
-    { id: '3', name: 'Archana', subject: 'English', progress: 72, classes: ['10B', '10C', '8A'] },
-    { id: '4', name: 'Chandrika', subject: 'Mathematics', progress: 80, classes: ['10A', '9A', '8A'] },
-    { id: '5', name: 'Satish', subject: 'Physics', progress: 55, classes: ['10B', '10C'] },
-  ];
+  const [teachersData,setTeachersData] =  useState<TeacherProgress[]>([]);
 
   const filteredClasses = classesData.filter(cls =>
     ('Class ' + cls?.class_number + ' - ' + cls?.class_section).toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const filteredTeachers = teachersData.filter(teacher =>
-    teacher.name.toLowerCase().includes(searchQuery.toLowerCase())
+    teacher.teacher_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleClassClick = (classId: string, className: string) => {
@@ -95,8 +89,35 @@ const SyllabusProgress: React.FC = () => {
     }
   }
 
+  const getSyllabusProgressTeachersData = async () => {
+    try {
+      const schoolId = userData.school_id;
+      const response = await getSyllabusProgressByTeacher({ school_id: schoolId });
+      if (response && response.data) {
+        setLoader(false);
+        setTeachersData(response.data);
+      }
+      else {
+        showSnackbar({
+          title: "⛔ Error",
+          description: "Something went wrong",
+          status: "error"
+        });
+        setLoader(false);
+      }
+    } catch (error) {
+      setLoader(false);
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong",
+        status: "error"
+      });
+    }
+  }
+
   useEffect(() => {
     getSyllabusProgressData();
+    getSyllabusProgressTeachersData();
   }, []);
 
   return (
@@ -138,6 +159,10 @@ const SyllabusProgress: React.FC = () => {
 
                         <div className="w-full space-y-2">
                           <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">Board:</span>
+                            <span className="font-semibold text-blue-600">{cls.board_name}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">Progress</span>
                             <span className="font-semibold text-blue-600">{cls.progress}%</span>
                           </div>
@@ -158,9 +183,9 @@ const SyllabusProgress: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredTeachers.map((teacher) => (
                   <Card
-                    key={teacher.id}
+                    key={teacher.teacher_id}
                     className="border hover:shadow-lg transition-shadow cursor-pointer"
-                    onClick={() => handleTeacherClick(teacher.id, teacher.name, teacher.subject, teacher.progress)}
+                    onClick={() => handleTeacherClick(teacher.teacher_id, teacher.teacher_name, teacher.subject_name, teacher.completion_percentage)}
                   >
                     <CardContent className="p-6">
                       <div className="space-y-4">
@@ -169,23 +194,23 @@ const SyllabusProgress: React.FC = () => {
                             <User className="w-7 h-7 text-white" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-lg text-foreground truncate">{teacher.name}</h3>
-                            <p className="text-sm text-muted-foreground">{teacher.subject}</p>
+                            <h3 className="font-semibold text-lg text-foreground truncate">{teacher.teacher_name}</h3>
+                            <p className="text-sm text-muted-foreground">{teacher.subject_name}</p>
                           </div>
                         </div>
 
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">Overall Progress</span>
-                            <span className="font-semibold text-blue-600">{teacher.progress}%</span>
+                            <span className="font-semibold text-blue-600">{teacher.completion_percentage}%</span>
                           </div>
-                          <Progress value={teacher.progress} className="h-2 bg-blue-100 [&>div]:bg-blue-600" />
+                          <Progress value={teacher.completion_percentage} className="h-2 bg-blue-100 [&>div]:bg-blue-600" />
                         </div>
 
                         <div>
                           <p className="text-sm text-muted-foreground mb-2">Classes:</p>
                           <div className="flex flex-wrap gap-2">
-                            {teacher.classes.map((cls, index) => (
+                            {teacher.classes_assigned && teacher.classes_assigned.map((cls, index) => (
                               <span
                                 key={index}
                                 className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium"

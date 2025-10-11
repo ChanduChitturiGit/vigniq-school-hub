@@ -29,3 +29,9 @@ export const getLessonPlanByChapter = async (data : any) => {
   const response = await api.get(baseurl+suburl+'/getLessonPlanByChapter',{params : data});
   return response.data;
 }
+
+//getSyllabusProgressByTeacher
+export const getSyllabusProgressByTeacher = async (data : any) => {
+  const response = await api.get(baseurl+suburl+'/getSyllabusProgressByTeacher',{params : data});
+  return response.data;
+}
