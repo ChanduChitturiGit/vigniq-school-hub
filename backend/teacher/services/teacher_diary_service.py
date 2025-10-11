@@ -262,3 +262,35 @@ class TeacherDiaryService:
             logger.exception("Error marking diary as reviewed: %s", e)
             return JsonResponse({"error": "Internal server error"}, status=500)
 
+
+    def mark_all_diary_as_reviewed_by_class_section_id(self):
+        """Mark all diary entries for a specific date and class section as reviewed by admin."""
+        try:
+            data = self.request.data
+            class_section_id = data.get("class_section_id")
+            date = data.get("date")
+            school_id = data.get("school_id")
+
+            if not class_section_id or not date or not school_id:
+                return JsonResponse({"error": "Missing Required Fields"}, status=400)
+
+            school_db_name = CommonFunctions().get_school_db_name(school_id)
+            if not school_db_name:
+                return JsonResponse({"error": "Invalid school ID"}, status=400)
+
+            academic_year_obj = CommonFunctions().get_latest_academic_year(school_db_name)
+            if not academic_year_obj:
+                return JsonResponse({"error": "No academic year found for the school"}, status=400)
+
+            updated_count = TeacherDiary.objects.using(
+                school_db_name
+            ).filter(
+                school_class_section_id=class_section_id,
+                date=date,
+                academic_year=academic_year_obj
+            ).update(is_admin_reviewed=True)
+
+            return JsonResponse({"message": f"{updated_count} diary entries marked as reviewed"}, status=200)
+        except Exception as e:  
+            logger.exception("Error marking all diaries as reviewed: %s", e)
+            return JsonResponse({"error": "Internal server error"}, status=500)

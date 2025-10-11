@@ -141,7 +141,7 @@ class TeacherDiaryActionView(APIView):
     
     def post(self, request, action=None):
         if action == "markDiaryAsReviewed":
-            return TeacherDiaryService(request).mark_diary_as_reviewed()
+            return TeacherDiaryService(request).mark_all_diary_as_reviewed_by_class_section_id()
         elif action == 'saveTeacherDiary':
             return TeacherDiaryService(request).save_or_update_diary()
         return Response({"error": "Invalid POST action"}, status=status.HTTP_400_BAD_REQUEST)
