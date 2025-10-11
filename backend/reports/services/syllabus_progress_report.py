@@ -1,6 +1,7 @@
 """Syllabus progress report service"""
 
 import logging
+from collections import defaultdict
 from django.http import JsonResponse
 from django.db.models import Count, Q, F, Max, Prefetch
 
@@ -415,3 +416,171 @@ class SyllabusProgressReportService:
                 class_section_id, chapter_id, e
             )
             return JsonResponse({"error": "Failed to fetch lesson plan details"}, status=500)
+    
+    def get_teacher_subject_progress(self):
+        """
+        Returns teacher-wise subject progress grouped by subject and board,
+        listing all classes assigned with accurate weighted averages based on chapters.
+        """
+        try:
+            school_id = self.request.GET.get('school_id')
+            if not school_id:
+                return JsonResponse({"error": "Missing school_id"}, status=400)
+
+            school_db_name = CommonFunctions.get_school_db_name(school_id)
+            if not school_db_name:
+                return JsonResponse({"error": "Invalid school ID"}, status=400)
+
+            latest_academic_year = CommonFunctions().get_latest_academic_year(school_db_name)
+            boards_dict = CommonFunctions().get_boards_dict()
+
+            # 1️⃣ Get all teacher–subject–class assignments (with board info)
+            assignments = (
+                TeacherSubjectAssignment.objects.using(school_db_name)
+                .filter(academic_year=latest_academic_year)
+                .values(
+                    'teacher_id',
+                    'subject__id',
+                    'subject__name',
+                    'school_class_id',
+                    'school_class__board_id',
+                )
+            )
+
+            if not assignments:
+                return JsonResponse({"data": []}, status=200)
+
+            # Map teacher IDs to names
+            teacher_ids = list({a['teacher_id'] for a in assignments})
+            teacher_map = {
+                t['id']: f"{t['first_name']} {t['last_name']}".strip()
+                for t in User.objects.filter(id__in=teacher_ids).values('id', 'first_name', 'last_name')
+            }
+
+            # Map class_section IDs to names
+            section_ids = list({a['school_class_id'] for a in assignments})
+            section_map = {
+                s['id']: f"{s['class_instance__class_number']}-{s['section']}"
+                for s in SchoolSection.objects.using(school_db_name)
+                .filter(id__in=section_ids)
+                .values('id', 'section', 'class_instance__class_number')
+            }
+
+            # 2️⃣ Get total chapters per class-section + subject
+            chapters_qs = (
+                SchoolChapter.objects.using(school_db_name)
+                .filter(
+                    academic_year=latest_academic_year,
+                    class_number_id__in=[SchoolSection.objects.using(school_db_name).get(id=sec_id).class_instance_id for sec_id in section_ids],
+                    subject_id__in=[a['subject__id'] for a in assignments]
+                )
+                .values('subject_id', 'class_number_id','school_board_id')
+                .annotate(total_chapters=Count('id'))
+            )
+
+            # Map: (subject_id, class_number_id) -> total_chapters
+            total_chapters_map = {}
+            for ch in chapters_qs:
+                total_chapters_map[(ch['subject_id'], ch['class_number_id'], ch['school_board_id'])] = ch['total_chapters']
+
+            # 3️⃣ Get completed chapters per class-section + subject
+            chapter_progress_qs = (
+                SchoolLessonPlanDay.objects.using(school_db_name)
+                .filter(
+                    chapter__academic_year=latest_academic_year,
+                    class_section_id__in=section_ids,
+                    chapter__subject_id__in=[a['subject__id'] for a in assignments],
+                )
+                .values('chapter_id', 'chapter__subject_id', 'class_section_id')
+                .annotate(
+                    total_lessons=Count('id'),
+                    completed_lessons=Count('id', filter=Q(status='completed'))
+                )
+            )
+
+
+            # Map class_section_id -> class_number_id
+            class_number_map = {
+                s['id']: s['class_instance_id'] for s in SchoolSection.objects.using(school_db_name)
+                .filter(id__in=section_ids)
+                .values('id', 'class_instance_id')
+            }
+
+            # Map: (subject_id, class_section_id) -> completed chapters count
+            completed_map = {}
+            for cp in chapter_progress_qs:
+                section_id = cp['class_section_id']
+                subject_id = cp['chapter__subject_id']
+                total = cp['total_lessons']
+                completed = cp['completed_lessons']
+
+                # Chapter is considered completed if all its lessons are completed
+                chapter_completed = 1 if total > 0 and completed == total else 0
+
+                if (subject_id, section_id) in completed_map:
+                    completed_map[(subject_id, section_id)] += chapter_completed
+                else:
+                    completed_map[(subject_id, section_id)] = chapter_completed
+
+            # 4️⃣ Aggregate per teacher + subject + board
+            data_map = {}
+            for a in assignments:
+                t_id = a['teacher_id']
+                s_id = a['subject__id']
+                subj_name = a['subject__name']
+                section_id = a['school_class_id']
+                board_id = a['school_class__board_id']
+                class_number_id = class_number_map.get(section_id)
+
+                key = (t_id, s_id, board_id)
+                if key not in data_map:
+                    data_map[key] = {
+                        "teacher_id": t_id,
+                        "teacher_name": teacher_map.get(t_id, "Unknown"),
+                        "subject_id": s_id,
+                        "subject_name": subj_name,
+                        "board_id": board_id,
+                        "board_name": boards_dict.get(board_id, "Unknown Board"),
+                        "classes_assigned": [],
+                        "total_chapters": 0,
+                        "completed_chapters": 0
+                    }
+
+                # Add class name
+                class_name = section_map.get(section_id, "Unknown")
+                if class_name not in data_map[key]["classes_assigned"]:
+                    data_map[key]["classes_assigned"].append(class_name)
+
+                # Add chapter counts
+                total_chapters = total_chapters_map.get((s_id, class_number_id, board_id), 0)
+                completed_chapters = completed_map.get((s_id, section_id), 0)
+                data_map[key]["total_chapters"] += total_chapters
+                data_map[key]["completed_chapters"] += completed_chapters
+
+            # 5️⃣ Finalize response
+            result = []
+            for val in data_map.values():
+                total_ch = val["total_chapters"]
+                completed_ch = val["completed_chapters"]
+                completion_percentage = round((completed_ch / total_ch) * 100, 2) if total_ch > 0 else 0.0
+                result.append({
+                    "teacher_id": val["teacher_id"],
+                    "teacher_name": val["teacher_name"],
+                    "subject_id": val["subject_id"],
+                    "subject_name": val["subject_name"],
+                    "board_id": val["board_id"],
+                    "board_name": val["board_name"],
+                    "completion_percentage": completion_percentage,
+                    "classes_assigned": val["classes_assigned"]
+                })
+
+            return JsonResponse({"data": result}, status=200)
+
+        except Exception as e:
+            logger.error("Error generating teacher subject progress: %s", e, exc_info=True)
+            return JsonResponse({"error": "Failed to generate teacher subject progress"}, status=500)
+
+
+
+
+
