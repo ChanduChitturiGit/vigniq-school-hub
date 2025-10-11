@@ -1,7 +1,6 @@
 """Syllabus progress report service"""
 
 import logging
-from collections import defaultdict
 from django.http import JsonResponse
 from django.db.models import Count, Q, F, Max, Prefetch
 
@@ -582,5 +581,127 @@ class SyllabusProgressReportService:
 
 
 
+    def get_teacher_subject_classes_progress(self):
+        """
+        Optimized: Returns all classes assigned to a teacher for a given subject (and board) with progress.
+        Reduces database hits by aggregating chapter & lesson plan info in fewer queries.
+        """
+        try:
+            school_id = self.request.GET.get('school_id')
+            teacher_id = self.request.GET.get('teacher_id')
+            subject_id = self.request.GET.get('subject_id')
+            board_id = self.request.GET.get('board_id')
+            if not (teacher_id and subject_id and school_id and board_id):
+                return JsonResponse({"error": "Missing parameters"}, status=400)
 
+            school_db_name = CommonFunctions.get_school_db_name(school_id)
+            if not school_db_name:
+                return JsonResponse({"error": "Invalid school ID"}, status=400)
 
+            latest_academic_year = CommonFunctions().get_latest_academic_year(school_db_name)
+
+            # 1️⃣ Get teacher-subject-class assignments
+            assignments = (
+                TeacherSubjectAssignment.objects.using(school_db_name)
+                .filter(
+                    academic_year=latest_academic_year,
+                    teacher_id=teacher_id,
+                    subject_id=subject_id,
+                    school_class__board_id=board_id
+                )
+                .select_related('school_class')
+            )
+
+            if not assignments:
+                return JsonResponse({"data": []}, status=200)
+
+            # 2️⃣ Get all relevant class_section_ids and class_instance_ids
+            section_ids = [a.school_class_id for a in assignments]
+            class_instance_ids = [a.school_class.class_instance_id for a in assignments]
+
+            # 3️⃣ Fetch all relevant chapters (once)
+            chapters = (
+                SchoolChapter.objects.using(school_db_name)
+                .filter(
+                    class_number_id__in=class_instance_ids,
+                    subject_id=subject_id,
+                    school_board_id=board_id
+                )
+                .values('id', 'class_number_id')
+            )
+
+            chapter_ids = [c['id'] for c in chapters]
+            if not chapter_ids:
+                return JsonResponse({"data": []}, status=200)
+
+            # 4️⃣ Aggregate lesson plan days in one query
+            lesson_day_data = (
+                SchoolLessonPlanDay.objects.using(school_db_name)
+                .filter(chapter_id__in=chapter_ids, class_section_id__in=section_ids)
+                .values('chapter_id', 'class_section_id')
+                .annotate(
+                    total_days=Count('id'),
+                    completed_days=Count('id', filter=Q(status='completed'))
+                )
+            )
+
+            # 5️⃣ Organize data by section_id
+            progress_map = {}
+            for item in lesson_day_data:
+                sec_id = item['class_section_id']
+                if sec_id not in progress_map:
+                    progress_map[sec_id] = []
+                progress_map[sec_id].append(item)
+
+            # 6️⃣ Build response
+            result = []
+            for a in assignments:
+                section_id = a.school_class_id
+                class_instance_id = a.school_class.class_instance_id
+                class_name = f"{a.school_class.class_instance_id}-{a.school_class.section}"
+
+                # Filter chapters for this class
+                class_chapters = [c for c in chapters if c['class_number_id'] == class_instance_id]
+                total_chapters = len(class_chapters)
+
+                if total_chapters == 0:
+                    result.append({
+                        "class_section_id": section_id,
+                        "class_name": class_name,
+                        "class_instance_id": class_instance_id,
+                        "completion_percentage": 0,
+                        "total_chapters": 0,
+                        "completed_chapters": 0
+                    })
+                    continue
+
+                total_progress = 0
+                completed_chapters = 0
+                chapter_weight = 100 / total_chapters
+
+                for c in class_chapters:
+                    chapter_days = next(
+                        (d for d in progress_map.get(section_id, []) if d['chapter_id'] == c['id']), None
+                    )
+                    if not chapter_days or chapter_days['total_days'] == 0:
+                        continue
+
+                    chapter_progress = (chapter_days['completed_days'] / chapter_days['total_days']) * chapter_weight
+                    total_progress += chapter_progress
+                    if chapter_days['completed_days'] == chapter_days['total_days']:
+                        completed_chapters += 1
+
+                result.append({
+                    "class_section_id": section_id,
+                    "class_name": class_name,
+                    "class_instance_id": class_instance_id,
+                    "completion_percentage": round(total_progress, 2),
+                    "total_chapters": total_chapters,
+                    "completed_chapters": completed_chapters,
+                })
+
+            return JsonResponse({"data": result}, status=200)
+
+        except Exception as e:
+            logger.error("Error fetching assignments: %s", e, exc_info=True)
+            return JsonResponse({"error": "Failed to fetch assignments"}, status=500)
