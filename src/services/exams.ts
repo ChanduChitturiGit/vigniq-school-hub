@@ -35,3 +35,15 @@ export const submitMarks = async (data: any): Promise<any> => {
   const response = await api.post<any>(baseurl+suburl+'/assignExamMarks', data);
   return response.data;
 }
+
+//getChapterExams
+export const getChapterExams = async (data: any): Promise<any> => {
+  const response = await api.get<any>(baseurl+suburl+'/getChapterExams', {params: data});
+  return response.data;
+}
+
+//createChapterExam
+export const createChapterExam = async (data: any): Promise<any> => {
+  const response = await api.post<any>(baseurl+suburl+'/createChapterExam', data);
+  return response.data;
+}
