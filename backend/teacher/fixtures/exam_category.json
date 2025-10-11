@@ -13,7 +13,10 @@
   { "model": "teacher.examcategory", "pk": 12, "fields": { "name": "Open Book Test" } },
   { "model": "teacher.examcategory", "pk": 13, "fields": { "name": "Practical Exam" } },
   { "model": "teacher.examcategory", "pk": 14, "fields": { "name": "Oral Exam" } },
-  { "model": "teacher.examcategory", "pk": 15, "fields": { "name": "Project/Assignment" } },
+  { "model": "teacher.examcategory", "pk": 15, "fields": { "name": "Project" } },
   { "model": "teacher.examcategory", "pk": 16, "fields": { "name": "Surprise Test" } },
-  { "model": "teacher.examcategory", "pk": 17, "fields": { "name": "Other" } }
+  { "model": "teacher.examcategory", "pk": 17, "fields": { "name": "Other" } },
+  { "model": "teacher.examcategory", "pk": 18, "fields": { "name": "Dictation" } },
+  { "model": "teacher.examcategory", "pk": 19, "fields": { "name": "Presentation" } },
+  { "model": "teacher.examcategory", "pk": 20, "fields": { "name": "Assignment" } }
 ]
