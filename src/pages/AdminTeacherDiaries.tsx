@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Users, Clock, CheckCircle, Eye, X, ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
+import { Users, Clock, CheckCircle, Eye, X, ArrowLeft, AlertCircle, Loader2, Trash2 } from 'lucide-react';
 import MainLayout from '@/components/Layout/MainLayout';
 import { useSnackbar } from "@/components/snackbar/SnackbarContext";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -15,6 +15,17 @@ import '../pages/styles/datepicker.scss';
 import { getTeacherDiariesByAdmin, markDiaryAsReviewed } from '../services/diaries'
 import { format, isSunday } from 'date-fns';
 import { getClassesBySchoolId } from '@/services/class';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../components/ui/alert-dialog';
 
 interface DiaryEntry {
   diary_id: string;
@@ -26,7 +37,7 @@ interface DiaryEntry {
   status: 'submitted' | 'pending';
   notes: string;
   homework_assigned: string;
-  reviewed: boolean;
+  is_admin_reviewed: boolean;
 }
 
 const AdminTeacherDiaries: React.FC = () => {
@@ -119,11 +130,12 @@ const AdminTeacherDiaries: React.FC = () => {
     try {
       const payload = {
         school_id: userData.school_id,
-        diary_id: selectedEntry.diary_id
+        class_section_id: selectedClass.class_section_id,
+        date: format(selectedDate.toDate(), 'yyyy-MM-dd')
       }
       const response = await markDiaryAsReviewed(payload);
       if (response && response.message) {
-        setIsMobileDetailView(!isMobileDetailView);
+        setIsMobileDetailView(false);
         setSelectedEntry(null);
         diaryData({ class_section_id: selectedClass.class_section_id });
         showSnackbar({
@@ -134,7 +146,7 @@ const AdminTeacherDiaries: React.FC = () => {
       } else {
         showSnackbar({
           title: "⛔ Error",
-          description: "Something went wrong with classes list",
+          description: "Something went wrong",
           status: "error"
         });
       }
@@ -176,7 +188,41 @@ const AdminTeacherDiaries: React.FC = () => {
     setSelectedEntry(null);
   };
 
-  const allReviewed = filteredEntries.length > 0 && filteredEntries.every(e => e.reviewed);
+  const allReviewed = filteredEntries.length > 0 && filteredEntries.every(e => e.is_admin_reviewed);
+
+
+  const ConfirmModal = () => {
+    return (
+      <>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              disabled={allReviewed}
+              className="w-[50%] bg-green-600 hover:bg-green-700 text-white "
+            >
+              <CheckCircle className="w-4 h-4 mr-2" />
+              {allReviewed ? 'Reviewed' : 'Mark as Reviewed'}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              {/* <AlertDialogTitle>Mark as Reviewed</AlertDialogTitle> */}
+              <AlertDialogDescription className='text-gray-700'>
+                <p>Are you sure you want to mark the diary entry for <span className='font-bold'>{selectedClass?.className}</span> on <span className='font-bold'>{`${format(selectedDate.toDate(), "EEE, dd MMM yyyy")}`}</span> Dairy as Reviewed?</p>
+                <p className='text-sm text-muted-foreground mt-2'>This action cannot be undone.</p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => saveDiaryData()} className="bg-orange-600 hover:bg-orange-700">
+                Mark as Reviewed
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
+    )
+  }
 
   return (
     <MainLayout pageTitle="Teacher Diaries">
@@ -320,15 +366,7 @@ const AdminTeacherDiaries: React.FC = () => {
                       </Table>
                       {/* Administrative Review Section */}
                       <div className="w-full flex items-center justify-center space-y-4 pt-4 border-t border-border ">
-
-                        <Button
-                          onClick={handleMarkAsReviewed}
-                          disabled={allReviewed}
-                          className="w-[50%] bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-300 disabled:text-gray-500"
-                        >
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          {allReviewed ? 'Reviewed' : 'Mark as Reviewed'}
-                        </Button>
+                        {ConfirmModal()}
                       </div>
                     </div>
                   </CardContent>
@@ -453,14 +491,9 @@ const AdminTeacherDiaries: React.FC = () => {
                       </div>
                     ))}
 
-                    <Button
-                      onClick={handleMarkAsReviewed}
-                      disabled={allReviewed}
-                      className="w-full bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-300 disabled:text-gray-500"
-                    >
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      {allReviewed ? 'Reviewed' : 'Mark as Reviewed'}
-                    </Button>
+                    <div className="w-full flex items-center justify-center space-y-4 pt-4 border-t border-border ">
+                      {ConfirmModal()}
+                    </div>
                   </div>
                 </div>
               </CardContent>

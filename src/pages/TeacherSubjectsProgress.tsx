@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import MainLayout from '../components/Layout/MainLayout';
 import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { ArrowLeft, Eye, User } from 'lucide-react';
 import { Progress } from '../components/ui/progress';
+import { useSnackbar } from "../components/snackbar/SnackbarContext";
+import { SpinnerOverlay } from '../pages/SpinnerOverlay';
+import { getSyllabusProgressByTeacherSubject } from '../services/syllabusProgress';
 
 interface ClassSubjectProgress {
   id: string;
@@ -13,24 +16,59 @@ interface ClassSubjectProgress {
   progress: number;
 }
 
-// Sample data
-const classSubjectsData: ClassSubjectProgress[] = [
-  { id: '1', className: '10A', subject: 'Telugu', progress: 83 },
-  { id: '2', className: '10B', subject: 'Telugu', progress: 98 },
-  { id: '3', className: '9A', subject: 'Telugu', progress: 88 },
-];
+
 
 const TeacherSubjectsProgress: React.FC = () => {
   const { teacherId } = useParams();
+  const { showSnackbar } = useSnackbar();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const teacherName = searchParams.get('teacherName') || '';
   const subject = searchParams.get('subject') || '';
   const progress = parseInt(searchParams.get('progress') || '0');
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user") || '{}');
+  const [loader, setLoader] = useState(true);
+
+  // Sample data
+  const classSubjectsData: ClassSubjectProgress[] = [
+    { id: '1', className: '10A', subject: 'Telugu', progress: 83 },
+    { id: '2', className: '10B', subject: 'Telugu', progress: 98 },
+    { id: '3', className: '9A', subject: 'Telugu', progress: 88 },
+  ];
 
   const handleViewDetails = (classId: string, className: string, subjectName: string, subjectProgress: number) => {
     navigate(`/syllabus-progress/teacher/${teacherId}/class/${classId}/subject/1?className=${className}&subjectName=${subjectName}&teacherName=${teacherName}&progress=${subjectProgress}`);
   };
+
+   const getSyllabusProgressByTeacherSubjectData = async () => {
+      try {
+        const schoolId = userData.school_id;
+        const response = await getSyllabusProgressByTeacherSubject({ school_id: schoolId, teacher_id: teacherId });
+        if (response && response.data) {
+          setLoader(false);
+          //setSubjectsData(response.data);
+        }
+        else {
+          showSnackbar({
+            title: "⛔ Error",
+            description: "Something went wrong",
+            status: "error"
+          });
+          setLoader(false);
+        }
+      } catch (error) {
+        setLoader(false);
+        showSnackbar({
+          title: "⛔ Error",
+          description: error?.response?.data?.error || "Something went wrong",
+          status: "error"
+        });
+      }
+    }
+  
+    useEffect(() => {
+      getSyllabusProgressByTeacherSubjectData();
+    }, []);
 
   return (
     <MainLayout pageTitle="Teacher Class-wise Progress">
