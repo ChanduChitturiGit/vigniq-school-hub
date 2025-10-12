@@ -32,13 +32,20 @@ const CreateExam: React.FC = () => {
   const [creationDate, setCreationDate] = React.useState<Dayjs | null>(null);
   const pathData = `${subjectId}?class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`
 
+  const sessions = [
+    { value: 'm', label: 'Morning Session' },
+    { value: 'a', label: 'Afternoon Session' }
+  ];
+
   const [examData, setExamData] = useState({
     name: '',
     category: '',
     category_id: null,
     date: '',
     totalMarks: '',
-    passMarks: ''
+    passMarks: '',
+    exam_session: '',
+    exam_session_name:''
   });
 
 
@@ -102,6 +109,14 @@ const CreateExam: React.FC = () => {
       ...prev,
       [field]: value
     }));
+
+    if (field == 'exam_session_name') {
+      setExamData(prev => ({
+        ...prev,
+        [field]: value,
+        'exam_session': value.charAt(0).toLowerCase()
+      }));
+    }
   };
 
   // const handleCreateExam = () => {
@@ -210,11 +225,32 @@ const CreateExam: React.FC = () => {
                         setCreationDate(newValue);
                         examData.date = newValue ? newValue.format("DD-MM-YYYY") : null;
                       }}
-                      format="DD/MM/YYYY"   // 👈 force display format
+                      format="DD/MM/YYYY"
                     />
                   </LocalizationProvider>
                 </div>
                 <p className="text-sm text-gray-500">When was this exam conducted?</p>
+
+
+                <div className="space-y-2">
+                  <Label htmlFor="session">Session</Label>
+                  <Select
+                    value={examData.exam_session_name}
+                    onValueChange={(value) => handleInputChange('exam_session_name', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select session" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sessions.map((session) => (
+                        <SelectItem key={session.value} value={session.value}>
+                          {session.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <p className="text-sm text-gray-500">Exam Session Morning / Afternoon?</p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
