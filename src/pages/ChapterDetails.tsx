@@ -433,22 +433,22 @@ const ChapterDetails: React.FC = () => {
 
         {/* Tabs */}
         <Tabs defaultValue={tab && tab.length > 0 ? tab : `topics`} className="space-y-6">
-          <TabsList className="grid md:w-[70%] xl:w-[50%] grid-cols-4 bg-gray-100">
+          <TabsList className="grid md:w-[80%] xl:w-[50%] grid-cols-4 bg-gray-100">
             <TabsTrigger value="topics" className="flex items-center gap-1 md:gap-2">
               <BookOpen className="w-4 h-4" />
-              Topics
+              <span className='hidden md:block'>Topics</span>
             </TabsTrigger>
             <TabsTrigger value="lesson-plan" className="flex items-center gap-1 md:gap-2">
               <FileText className="w-4 h-4" />
-              Lesson Plan
+              <span className='hidden md:block'>Lesson Plan</span>
             </TabsTrigger>
             <TabsTrigger value="prerequisites" className="flex items-center gap-1 md:gap-2">
               <Lightbulb className="w-4 h-4" />
-              Prerequisites
+              <span className='hidden md:block'>Prerequisites</span>
             </TabsTrigger>
             <TabsTrigger value="exams" className="flex items-center gap-1 md:gap-2">
               <FileCheck className="w-4 h-4" />
-              Exams
+              <span className='hidden md:block'>Exams</span>
             </TabsTrigger>
           </TabsList>
 

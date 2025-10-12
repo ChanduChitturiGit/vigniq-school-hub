@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Eye, Calendar, Clock, Users, Loader2 } from 'lucide-react';
+import { Plus, Eye, Calendar, Clock, Users, Loader2, Edit } from 'lucide-react';
 import { getExamsList, createExam, getExamCategoriesForChapterwise } from '@/services/exams';
 import { useSnackbar } from '@/components/snackbar/SnackbarContext';
 
@@ -37,6 +37,8 @@ interface ChapterExamsProps {
 }
 
 interface ExamData {
+  exam_session: string;
+  pass_percentage: number;
   student_count: any;
   exam_id: number;
   exam_name: string;
@@ -46,9 +48,9 @@ interface ExamData {
   total_marks: number;
   pass_marks: number;
   average_marks: number;
-  pass_rate: number;
   total_students: number;
   appeared_students: number;
+  is_submitted: boolean;
 }
 
 const ChapterExams: React.FC<ChapterExamsProps> = ({
@@ -139,9 +141,17 @@ const ChapterExams: React.FC<ChapterExamsProps> = ({
     }
   };
 
-  const handleViewResults = (examId: number) => {
-    const pathData = `class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`;
-    navigate(`/grades/exams/exam-results/${examId}?${pathData}`);
+  const handleViewResults = (exam : any) => {
+    const pathData = `class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}&tab=exams`;
+    // navigate(`/grades/exams/exam-results/${exam.exam_id}?${pathData}`);
+
+     if (exam.is_submitted) {
+      // Navigate to view results
+      navigate(`/grades/exams/exam-results/${exam.exam_id}?${pathData}`);
+    } else {
+      // Navigate to submit marks (which is the exam results page with editing enabled by default)
+      navigate(`/grades/exams/exam-results/${exam.exam_id}?edit=true&${pathData}`);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -237,12 +247,12 @@ const ChapterExams: React.FC<ChapterExamsProps> = ({
       'Quiz': 'bg-purple-100 text-purple-700 border-purple-200',
       'Unit Test': 'bg-orange-100 text-orange-700 border-orange-200',
     };
-    return colors[category] || 'bg-blue-100 text-blue-700 border-blue-200';
+    return 'bg-blue-100 text-blue-700 border-blue-200';
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row items-start items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Chapter Exams</h2>
           <p className="text-gray-600">Manage assessments and track student performance</p>
@@ -283,7 +293,7 @@ const ChapterExams: React.FC<ChapterExamsProps> = ({
                         <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
                           <div className="flex items-center gap-1">
                             <Calendar className="w-4 h-4" />
-                            {exam.exam_date}
+                            {exam.exam_date + ' - ' + (exam.exam_session == 'm' ? 'Morning' : 'Afternoon')}
                           </div>
                           <div className="flex items-center gap-1">
                             <Clock className="w-4 h-4" />
@@ -296,13 +306,34 @@ const ChapterExams: React.FC<ChapterExamsProps> = ({
                         </div>
                       </div>
                     </div>
-                    <Button
+                    {/* <Button
                       onClick={() => handleViewResults(exam.exam_id)}
                       variant="outline"
                       className="flex items-center gap-2 border-blue-200 text-blue-600 hover:bg-blue-50"
                     >
                       <Eye className="w-4 h-4" />
                       View Results
+                    </Button> */}
+
+                    <Button
+                      onClick={() => handleViewResults(exam)}
+                      className={`${exam.is_submitted
+                        ? 'bg-green-500 hover:bg-green-600'
+                        : 'bg-blue-500 hover:bg-blue-600'
+                        } text-white`}
+                      size="sm"
+                    >
+                      {exam.is_submitted ? (
+                        <>
+                          <Eye className="w-4 h-4 mr-1" />
+                          View Results
+                        </>
+                      ) : (
+                        <>
+                          <Edit className="w-4 h-4 mr-1" />
+                          Submit Marks
+                        </>
+                      )}
                     </Button>
                   </div>
 
@@ -322,7 +353,7 @@ const ChapterExams: React.FC<ChapterExamsProps> = ({
                     </div>
                     <div>
                       <div className="text-sm text-gray-500">Pass Rate</div>
-                      <div className="text-xl font-bold text-green-600">{exam.pass_rate}%</div>
+                      <div className="text-xl font-bold text-green-600">{exam.pass_percentage && exam.pass_percentage>=0 ? exam.pass_percentage : 0}%</div>
                     </div>
                   </div>
 
@@ -339,139 +370,139 @@ const ChapterExams: React.FC<ChapterExamsProps> = ({
                       <div
                         className={`bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500`}
                         style={{
-                          width: `${Number(exam.pass_rate) >= 0 ? Number(exam.pass_rate) : 0}%`
+                          width: `${Number(exam.pass_percentage) >= 0 ? Number(exam.pass_percentage) : 0}%`
                         }}
                       />
                     </div>
 
+                  </div>
                 </div>
-              </div>
-            </CardContent>
+              </CardContent>
             </Card>
-      ))}
-      {
-        loading && (
-          <Loader2 className="w-10 h-10 mx-auto text-blue animate-spin" />
-        )
+          ))}
+          {
+            loading && (
+              <Loader2 className="w-10 h-10 mx-auto text-blue animate-spin" />
+            )
+          }
+        </div>
+      )
       }
-    </div>
-  )
-}
 
-{/* Add Exam Dialog */ }
-<Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-  <DialogContent className="sm:max-w-[500px]">
-    <DialogHeader>
-      <DialogTitle>Create New Exam</DialogTitle>
-      <p className="text-sm text-gray-500">
-        Fill in the exam details below. You'll be able to enter student marks after creating the exam.
-      </p>
-    </DialogHeader>
+      {/* Add Exam Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Create New Exam</DialogTitle>
+            <p className="text-sm text-gray-500">
+              Fill in the exam details below. You'll be able to enter student marks after creating the exam.
+            </p>
+          </DialogHeader>
 
-    <div className="space-y-4 py-4">
-      <div className="space-y-2">
-        <Label htmlFor="exam_category">Exam Category</Label>
-        <Select
-          value={formData.exam_category}
-          onValueChange={(value) => handleInputChange('exam_category', value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select category" />
-          </SelectTrigger>
-          <SelectContent>
-            {examCategories.map((category) => (
-              <SelectItem key={category.id} value={category.name}>
-                {category.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="exam_category">Exam Category</Label>
+              <Select
+                value={formData.exam_category}
+                onValueChange={(value) => handleInputChange('exam_category', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {examCategories.map((category) => (
+                    <SelectItem key={category.id} value={category.name}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="exam_name">Exam Name</Label>
-        <Input
-          ref={inputRef}
-          id="exam_name"
-          placeholder="Enter exam name"
-          value={formData.exam_name}
-          onChange={(e) => handleInputChange('exam_name', e.target.value)}
-        />
-      </div>
+            <div className="space-y-2">
+              <Label htmlFor="exam_name">Exam Name</Label>
+              <Input
+                ref={inputRef}
+                id="exam_name"
+                placeholder="Enter exam name"
+                value={formData.exam_name}
+                onChange={(e) => handleInputChange('exam_name', e.target.value)}
+              />
+            </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="exam_date">Date Conducted</Label>
-        <Input
-          id="exam_date"
-          type="date"
-          value={formData.exam_date}
-          onChange={(e) => handleInputChange('exam_date', e.target.value)}
-        />
-      </div>
+            <div className="space-y-2">
+              <Label htmlFor="exam_date">Date Conducted</Label>
+              <Input
+                id="exam_date"
+                type="date"
+                value={formData.exam_date}
+                onChange={(e) => handleInputChange('exam_date', e.target.value)}
+              />
+            </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="session">Session</Label>
-        <Select
-          value={formData.session}
-          onValueChange={(value) => handleInputChange('session', value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select session" />
-          </SelectTrigger>
-          <SelectContent>
-            {sessions.map((session) => (
-              <SelectItem key={session.value} value={session.value}>
-                {session.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+            <div className="space-y-2">
+              <Label htmlFor="session">Session</Label>
+              <Select
+                value={formData.session}
+                onValueChange={(value) => handleInputChange('session', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select session" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sessions.map((session) => (
+                    <SelectItem key={session.value} value={session.value}>
+                      {session.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="total_marks">Total Marks</Label>
-          <Input
-            id="total_marks"
-            type="number"
-            placeholder="20"
-            value={formData.total_marks}
-            onChange={(e) => handleInputChange('total_marks', e.target.value)}
-          />
-        </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="total_marks">Total Marks</Label>
+                <Input
+                  id="total_marks"
+                  type="number"
+                  placeholder="20"
+                  value={formData.total_marks}
+                  onChange={(e) => handleInputChange('total_marks', e.target.value)}
+                />
+              </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="pass_marks">Pass Marks</Label>
-          <Input
-            id="pass_marks"
-            type="number"
-            placeholder="12"
-            value={formData.pass_marks}
-            onChange={(e) => handleInputChange('pass_marks', e.target.value)}
-          />
-        </div>
-      </div>
-    </div>
+              <div className="space-y-2">
+                <Label htmlFor="pass_marks">Pass Marks</Label>
+                <Input
+                  id="pass_marks"
+                  type="number"
+                  placeholder="12"
+                  value={formData.pass_marks}
+                  onChange={(e) => handleInputChange('pass_marks', e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
 
-    <DialogFooter>
-      <Button
-        variant="outline"
-        onClick={() => {
-          setShowAddDialog(false);
-          resetForm();
-        }}
-      >
-        Cancel
-      </Button>
-      <Button
-        onClick={handleCreateExam}
-        className="bg-blue-600 hover:bg-blue-700"
-      >
-        Create Exam
-      </Button>
-    </DialogFooter>
-  </DialogContent>
-</Dialog>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowAddDialog(false);
+                resetForm();
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateExam}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Create Exam
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div >
   );
 };

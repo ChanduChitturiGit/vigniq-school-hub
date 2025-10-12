@@ -294,7 +294,7 @@ const ExamResults: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div
-                onClick={() => navigate(-1)}
+                onClick={() => {navigate(-1)}}
                 className="flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
               >
                 <ArrowLeft className="w-5 h-5" />
@@ -403,7 +403,9 @@ const ExamResults: React.FC = () => {
                       </div>
                       <div className='flex gap-1 items-center'>
                         <Calendar className="w-5 h-5" />
-                        {examDetails.exam_date}
+                        {examDetails.exam_date+' '}
+                        -
+                        {examDetails.exam_session == 'm' ? ' Morning' : ' Afternoon'}
                       </div>
                       <div className='flex gap-1 items-center'>
                         Total marks :
