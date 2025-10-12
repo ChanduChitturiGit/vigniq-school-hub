@@ -67,7 +67,7 @@ interface LessonPlanDay {
   status: string;
 }
 
-type LessonPlan = LessonPlanDay[];
+type LessonPlan = LessonPlanDay[]; 
 
 const ChapterDetails: React.FC = () => {
   const { showSnackbar } = useSnackbar();
@@ -103,40 +103,6 @@ const ChapterDetails: React.FC = () => {
     { label: `${subject} - ${className}`, path: `/grades/syllabus?class=${className}&section=${section}&subject=${subject}` },
     { label: `Chapter ${chapterNumber}: ${chapterName}` }
   ];
-
-  // const sampleTopics: Topic[] = [
-  //   { sub_topic_id: 1, sub_topic: 'Introduction to Real Numbers', completed: true },
-  //   { sub_topic_id: 2, sub_topic: 'Rational and Irrational Numbers', completed: true },
-  //   { sub_topic_id: 3, sub_topic: 'Decimal Representation', completed: false },
-  //   { sub_topic_id: 4, sub_topic: 'Operations on Real Numbers', completed: false },
-  //   { sub_topic_id: 5, sub_topic: 'Laws of Exponents', completed: false }
-  // ];
-
-  // const samplePrerequisites: Prerequisite[] = [
-  //   {
-  //     prerequisite_id: 1,
-  //     topic: 'Basic Algebra and Squaring',
-  //     explanation: 'Understanding basic algebraic manipulation and the concept of squaring a number is crucial for following the proofs in this chapter. **Basic Algebra:** This involves working with variables (like \'a\' or \'b\'), performing operations (addition, subtraction, multiplication, division) with them, and solving simple equations. **Squaring:** Multiplying a number by itself. For example, \'a squared\' (a²) means a × a. Example: - If a = 5, then a² = 5 × 5 = 25. - If you have an equation like b² = 2c², you should understand that if 2 divprerequisite_ides b², it implies something about b.'
-  //   },
-  //   {
-  //     prerequisite_id: 2,
-  //     topic: 'Coprime Numbers (Relatively Prime)',
-  //     explanation: 'Two numbers are coprime if their greatest common divisor (GCD) is 1. This concept is fundamental in proofs involving rational numbers.'
-  //   },
-  //   {
-  //     prerequisite_id: 3,
-  //     topic: 'Highest Common Factor (HCF) and Least Common Multiple (LCM)',
-  //     explanation: 'Understanding HCF and LCM is essential for simplifying fractions and understanding rational number properties.'
-  //   }
-  // ];
-
-  // const sampleLessonPlan: LessonPlan = [
-  //   { lesson_plan_day_id: 1, day: 1, status: "not_started" },
-  //   { lesson_plan_day_id: 2, day: 2, status: "not_started" },
-  //   { lesson_plan_day_id: 3, day: 3, status: "not_started" },
-  //   { lesson_plan_day_id: 4, day: 4, status: "not_started" },
-  //   { lesson_plan_day_id: 5, day: 5, status: "not_started" }
-  // ];
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -946,7 +912,7 @@ const ChapterDetails: React.FC = () => {
               </Accordion>
             </div>
           </TabsContent>
-
+ 
           <TabsContent value="exams" className="space-y-6">
             <ChapterExams
               chapterId={chapterId || ''}

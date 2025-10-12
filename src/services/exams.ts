@@ -18,6 +18,13 @@ export const getExamCategories = async (data) => {
   return response.data;
 }
 
+//getExamCategoriesForChapterwise
+export const getExamCategoriesForChapterwise = async (data) => {
+  const response = await api.get(baseurl+suburl+'/getExamCategoriesForChapterwise',{params : data});
+  return response.data;
+}
+
+
 //getExamsList
 export const getExamsList = async (data) => {
   const response = await api.get(baseurl+suburl+'/getExamsList',{params : data});
