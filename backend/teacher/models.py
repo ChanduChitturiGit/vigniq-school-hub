@@ -88,6 +88,7 @@ class ExamResult(models.Model):
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE)
     student = models.ForeignKey('student.Student', on_delete=models.CASCADE)
     marks_obtained = models.DecimalField(max_digits=20, decimal_places=10,default=0)
+    is_absent = models.BooleanField(default=False)
     created_by_teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='exam_results_created')
     updated_by_teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, null=True, blank=True, related_name='exam_results_updated')
     created_at = models.DateTimeField(auto_now_add=True)
