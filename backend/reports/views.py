@@ -23,8 +23,8 @@ class SyllabusProgressReportView(APIView):
         elif action == 'getLessonPlanByChapter':
             return service.get_lesson_plan_details()
         elif action == 'getSyllabusProgressByTeacher':
-            return service.get_teacher_subject_progress()
+            return service.get_teacher_progress()
         elif action == 'getSyllabusProgressByTeacherSubject':
-            return service.get_teacher_subject_classes_progress()
+            return service.get_teacher_subject_progress()
         else:
             return JsonResponse({"error": "Invalid action"}, status=400)
