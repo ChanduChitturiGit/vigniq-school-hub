@@ -79,13 +79,13 @@ const SubjectChaptersProgress: React.FC = () => {
     <>
       <MainLayout pageTitle="Chapter Progress">
         <div className="space-y-6">
-          <Link
-            to={`/syllabus-progress/class/${classId}?className=${className}`}
+          <div
+            onClick={() => window.history.back()}
             className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             <span className="font-medium">Back to Subjects</span>
-          </Link>
+          </div>
 
           <Card className="bg-blue-50 border border-blue-200">
             <CardContent className="p-6">
