@@ -7,6 +7,7 @@ from django.http import JsonResponse
 from django.db import transaction
 from psycopg2 import IntegrityError
 
+from student.models import StudentClassAssignment, StudentAttendanceData
 from teacher.models import Exam, ExamCategory, ExamType,ExamResult
 from core.common_modules.common_functions import CommonFunctions
 from core.models import User, SessionTypes
@@ -76,9 +77,37 @@ class OfflineExamsService:
                 class_section_id=class_section_id,
                 created_by_teacher_id=self.user.id,
                 updated_by_teacher_id=self.user.id,
-                exam_session=exam_session,
+                session=exam_session,
                 chapter_id=chapter_id
             )
+
+            students_list = StudentClassAssignment.objects.using(self.school_db_name).filter(
+                class_instance_id=class_section_id,
+                academic_year_id=academic_year_id,
+            ).values_list('student_id', flat=True)
+
+            attendance = StudentAttendanceData.objects.using(self.school_db_name).filter(
+                attendance__class_section_id=class_section_id,
+                attendance__academic_year_id=academic_year_id,
+                attendance__date=exam_date,
+                attendance__is_holiday=False,
+                attendance__session=exam_session
+            )
+
+            attendance_mapping = {att.student_id: att.is_present for att in attendance}
+
+            exams_results_objs = [
+                ExamResult(
+                    exam=exam,
+                    student_id=student,
+                    marks_obtained=0,
+                    is_absent=not attendance_mapping.get(student, True),
+                    created_by_teacher_id=self.user.id,
+                    updated_by_teacher_id=self.user.id
+                )
+                for student in students_list
+            ]
+            ExamResult.objects.using(self.school_db_name).bulk_create(exams_results_objs)
 
             logger.info("Offline exam created successfully with ID %s", exam.id)
             return JsonResponse({"message": "Offline exam created successfully"}, status=201)
@@ -206,7 +235,7 @@ class OfflineExamsService:
 
             marks = ExamResult.objects.using(self.school_db_name).filter(
                 exam=exam
-            ).values("student_id", "student__roll_number", "marks_obtained")
+            ).values("student_id", "student__roll_number", "marks_obtained","is_absent")
 
             marks_data = []
 
@@ -229,6 +258,7 @@ class OfflineExamsService:
                     "roll_number": mark["student__roll_number"],
                     "marks_obtained": round(mark["marks_obtained"], 2),
                     "student_name": students_map.get(mark["student_id"], ""),
+                    "is_absent": mark.get("is_absent", False),
                 }
                 for mark in marks
             ]
@@ -247,6 +277,7 @@ class OfflineExamsService:
                 "marks": marks_data,
                 "exam_session": exam.session,
                 "chapter_id": exam.chapter_id,
+
             }
             logger.info("Fetched exam details successfully for exam ID %s", exam_id)
             return JsonResponse({"data": exam_data}, status=200)
