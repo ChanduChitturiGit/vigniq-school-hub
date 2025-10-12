@@ -295,6 +295,7 @@ class OfflineExamsService:
             class_section_id = data.get("class_section_id")
             subject_id = data.get("subject_id")
             academic_year_id = data.get("academic_year_id", 1)
+            chapter_id = data.get("chapter_id", None)
 
             if not any([class_section_id, subject_id, academic_year_id]):
                 return JsonResponse({"error": "Mandatory fields are required"}, status=400)
@@ -303,7 +304,8 @@ class OfflineExamsService:
                 class_section_id=class_section_id,
                 subject_id=subject_id,
                 academic_year_id=academic_year_id,
-                is_active=True
+                is_active=True,
+                chapter_id=chapter_id
             ).select_related('exam_category').order_by('-created_at')
 
             if not exams.exists():
