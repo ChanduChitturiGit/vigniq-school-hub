@@ -9,7 +9,7 @@ from psycopg2 import IntegrityError
 
 from teacher.models import Exam, ExamCategory, ExamType,ExamResult
 from core.common_modules.common_functions import CommonFunctions
-from core.models import User
+from core.models import User, SessionTypes
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +35,17 @@ class OfflineExamsService:
         except Exception as e:
             logger.error("Error fetching exam categories: %s", e)
             return JsonResponse({"error": "Unable to fetch exam categories"}, status=500)
+    
+    def get_exam_categories_for_chapterwise(self):
+        """Get Exam Categories for chapterwise"""
+        try:
+            categories = ExamCategory.objects.using(self.school_db_name).filter(
+                id__in=[1,15,17,18,19,20]
+            ).order_by('name','id')
+            return JsonResponse({"data": [{"id": cat.id, "name": cat.name} for cat in categories]})
+        except Exception as e:
+            logger.error("Error fetching chapterwise exam categories: %s", e)
+            return JsonResponse({"error": "Unable to fetch chapterwise exam categories"}, status=500)
 
     def create_offline_exam(self):
         """Create Offline Exam"""
@@ -50,6 +61,8 @@ class OfflineExamsService:
             subject_id = data.get("subject_id")
             academic_year_id = data.get("academic_year_id", 1)
             class_section_id = data.get("class_section_id")
+            exam_session = data.get("exam_session", SessionTypes.MORNING)
+            chapter_id = data.get("chapter_id", None)
 
             exam = Exam.objects.using(self.school_db_name).create(
                 name=exam_name,
@@ -62,7 +75,9 @@ class OfflineExamsService:
                 academic_year_id=academic_year_id,
                 class_section_id=class_section_id,
                 created_by_teacher_id=self.user.id,
-                updated_by_teacher_id=self.user.id
+                updated_by_teacher_id=self.user.id,
+                exam_session=exam_session,
+                chapter_id=chapter_id
             )
 
             logger.info("Offline exam created successfully with ID %s", exam.id)
@@ -229,7 +244,9 @@ class OfflineExamsService:
                 "subject_name": exam.subject.name,
                 "created_by": exam.created_by_teacher.full_name,
                 "updated_by": exam.updated_by_teacher.full_name if exam.updated_by_teacher else None,
-                "marks": marks_data
+                "marks": marks_data,
+                "exam_session": exam.session,
+                "chapter_id": exam.chapter_id,
             }
             logger.info("Fetched exam details successfully for exam ID %s", exam_id)
             return JsonResponse({"data": exam_data}, status=200)
@@ -293,6 +310,8 @@ class OfflineExamsService:
                     "exam_type": exam.exam_type,
                     "exam_date": exam.exam_date,
                     "exam_category": exam.exam_category.name,
+                    "exam_session": exam.session if exam.session else None,
+                    "chapter_id": exam.chapter_id,
                     "total_marks": round(exam.max_marks, 2),
                     "pass_marks": round(exam.pass_marks, 2),
                     "average_marks": round(res.get("average_marks", 0), 2),

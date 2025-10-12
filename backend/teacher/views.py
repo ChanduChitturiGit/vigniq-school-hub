@@ -100,6 +100,8 @@ class OfflineExamActionView(APIView):
 
         if action == "getExamCategories":
             return OfflineExamsService(request).get_exam_categories()
+        elif action == "getExamCategoriesForChapterwise":
+            return OfflineExamsService(request).get_exam_categories_for_chapterwise()
         elif action == "getExamDetailsById":
             return OfflineExamsService(request).get_exam_details_by_id()
         elif action == "getExamsList":

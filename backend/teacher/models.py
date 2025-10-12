@@ -3,7 +3,7 @@ from django.db import models
 from classes.models import SchoolSection
 from academics.models import SchoolAcademicYear
 
-from core.models import User,AbstractSubject
+from core.models import User,AbstractSubject, SessionTypes
 
 class Subject(AbstractSubject):
     class Meta:
@@ -61,6 +61,10 @@ class Exam(models.Model):
     academic_year = models.ForeignKey(
         'academics.SchoolAcademicYear', on_delete=models.CASCADE
     )
+    session = models.CharField(
+        max_length=1, choices=SessionTypes.choices, default=SessionTypes.MORNING
+    )
+    chapter = models.ForeignKey("syllabus.SchoolChapter", on_delete=models.CASCADE, null=True, blank=True)
     class_section = models.ForeignKey(
         'classes.SchoolSection', on_delete=models.CASCADE
     )

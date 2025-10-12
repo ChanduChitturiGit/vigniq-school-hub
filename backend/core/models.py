@@ -136,7 +136,11 @@ class TicketResponse(models.Model):
     def __str__(self):
         return f"Response by {self.responder} on {self.ticket}"
 
+###### Common Choices
 
+class SessionTypes(models.TextChoices):
+    MORNING = "m","M"
+    AFTERNOON = "a","A"
 
 ###### Abstract models for Chapter, SubTopic, and Prerequisite
 class AbstractChapter(models.Model):
