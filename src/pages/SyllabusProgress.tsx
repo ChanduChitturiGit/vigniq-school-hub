@@ -11,6 +11,7 @@ import { SpinnerOverlay } from '../pages/SpinnerOverlay';
 import { getSyllabusProgressByClass,getSyllabusProgressByTeacher } from '../services/syllabusProgress';
 
 interface ClassProgress {
+  completion_percentage: any;
   class_section_id: string;
   name: string;
   progress: number;
