@@ -73,6 +73,7 @@ class Exam(models.Model):
     pass_marks = models.DecimalField(max_digits=20, decimal_places=10)
     exam_date = models.DateField(null=True)
     is_active = models.BooleanField(default=True)
+    is_submitted = models.BooleanField(default=False)
     created_by_teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='exams_created')
     updated_by_teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, null=True, blank=True, related_name='exams_updated')
     created_at = models.DateTimeField(auto_now_add=True)
