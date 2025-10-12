@@ -528,7 +528,8 @@ class SyllabusProgressReportService:
 
         except Exception as e:
             logger.error("Error generating teacher subject progress: %s", e, exc_info=True)
-            return JsonResponse({"error": "Failed to generate teacher subject progress"}, status=500)
+            return JsonResponse({"error": "Failed to generate teacher subject progress"},
+                                status=500)
 
     def get_teacher_subject_progress(self):
         """
