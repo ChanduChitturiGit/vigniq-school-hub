@@ -128,8 +128,6 @@ const ChapterExams: React.FC<ChapterExamsProps> = ({
       });
       setExams(response.data);
 
-      // Using sample data for now
-      //setExams(sampleExams);
       setLoading(false);
     } catch (error) {
       setLoading(false);
