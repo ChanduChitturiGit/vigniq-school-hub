@@ -296,7 +296,7 @@ const TeacherDiaries: React.FC = () => {
                           <BookOpen className="w-4 h-4 text-blue-600" />
                           <h3 className="font-medium text-foreground">Class Notes*</h3>
                         </div>
-                        {!isEditing && isToday(selectedDate.toDate()) && (
+                        {!isEditing && isToday(selectedDate.toDate()) && !selectedEntry.is_admin_reviewed && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -349,17 +349,17 @@ const TeacherDiaries: React.FC = () => {
                         <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
                           <div className="w-2 h-2 bg-white rounded-full"></div>
                         </div>
-                        <h3 className="font-medium text-foreground">Principel Review</h3>
+                        <h3 className="font-medium text-foreground">Principal Review</h3>
                       </div>
                       {/* is_admin_reviewed */}
                       {
                         !selectedEntry.is_admin_reviewed ? (
                           <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-                            <p className="text-yellow-800 text-sm">⚠️ Pending Principel Review</p>
+                            <p className="text-yellow-800 text-sm">⚠️ Pending Principal Review</p>
                           </div>
                         ) : (
                           <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-                            <p className="text-yellow-800 text-sm">✅ Principel Reviewed</p>
+                            <p className="text-yellow-800 text-sm">✅ Principal Reviewed</p>
                           </div>
                         )
                       }
@@ -454,7 +454,7 @@ const TeacherDiaries: React.FC = () => {
                           <BookOpen className="w-4 h-4 text-blue-600" />
                           <h3 className="font-medium text-foreground">Class Notes</h3>
                         </div>
-                        {!isEditing && (
+                        {!isEditing && !selectedEntry.is_admin_reviewed && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -501,19 +501,17 @@ const TeacherDiaries: React.FC = () => {
                     </div>
 
                     {/* Administrative Review */}
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
-                          <div className="w-2 h-2 bg-white rounded-full"></div>
-                        </div>
-                        <h3 className="font-medium text-foreground">Administrative Review</h3>
-                      </div>
-                      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-                        <p className="text-yellow-800 text-sm">
-                          ⚠️ Pending Administrative Review
-                        </p>
-                      </div>
-                    </div>
+                    {
+                        !selectedEntry.is_admin_reviewed ? (
+                          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                            <p className="text-yellow-800 text-sm">⚠️ Pending Principal Review</p>
+                          </div>
+                        ) : (
+                          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                            <p className="text-yellow-800 text-sm">✅ Principal Reviewed</p>
+                          </div>
+                        )
+                      }
 
                     {/* Save Button */}
                     {isEditing && (

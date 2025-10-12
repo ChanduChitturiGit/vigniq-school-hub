@@ -35,3 +35,9 @@ export const getSyllabusProgressByTeacher = async (data : any) => {
   const response = await api.get(baseurl+suburl+'/getSyllabusProgressByTeacher',{params : data});
   return response.data;
 }
+
+//getSyllabusProgressByTeacherSubject
+export const getSyllabusProgressByTeacherSubject = async (data : any) => {
+  const response = await api.get(baseurl+suburl+'/getSyllabusProgressByTeacherSubject',{params : data});
+  return response.data;
+}
