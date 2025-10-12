@@ -20,9 +20,12 @@ class SyllabusProgressReportService:
 
     
     def get_report_by_class(self):
-        """Generate syllabus progress report by class (uses class_section_id correctly)"""
+        """Generate syllabus progress report by class using fewer queries."""
         try:
             school_id = self.request.GET.get('school_id')
+            if not school_id:
+                return JsonResponse({"error": "Missing school_id"}, status=400)
+
             school_db_name = CommonFunctions.get_school_db_name(school_id)
             if not school_db_name:
                 return JsonResponse({"error": "Invalid school ID"}, status=400)
@@ -30,29 +33,27 @@ class SyllabusProgressReportService:
             latest_academic_year = CommonFunctions().get_latest_academic_year(school_db_name)
             boards_dict = CommonFunctions().get_boards_dict()
 
-            # 1) classes that have at least one subject (school_class_id is SchoolSection.id)
+            # 1) Get all class sections with subjects
             classes_with_subjects = list(
                 TeacherSubjectAssignment.objects.using(school_db_name)
                 .filter(academic_year=latest_academic_year)
                 .values(
-                    'school_class_id',                                  # SchoolSection.id (class_section_id)
-                    'school_class__class_instance__id',                 # SchoolClass.id (class_instance_id)
-                    'school_class__class_instance__class_number',       # class number (display)
+                    'school_class_id',
+                    'school_class__class_instance__id',
+                    'school_class__class_instance__class_number',
                     'school_class__section',
                     'school_class__board_id',
                 )
                 .annotate(number_of_subjects=Count('subject', distinct=True))
                 .order_by('school_class__class_instance__class_number', 'school_class__section')
             )
-
             if not classes_with_subjects:
                 return JsonResponse({"data": []}, status=200)
 
-            # build helper maps and lists
             class_section_ids = [c['school_class_id'] for c in classes_with_subjects]
             class_instance_ids = list({c['school_class__class_instance__id'] for c in classes_with_subjects})
 
-            # map: class_section_id -> (class_instance_id, board_id)
+            # Map class_section_id -> (class_instance_id, board_id)
             class_section_info = {
                 c['school_class_id']: {
                     'class_instance_id': c['school_class__class_instance__id'],
@@ -61,8 +62,8 @@ class SyllabusProgressReportService:
                 for c in classes_with_subjects
             }
 
-            # 2) Aggregate lesson plans per chapter + class_section to determine chapter completion per section
-            chapter_completion_qs = (
+            # 2) Aggregate lesson plan completion per chapter & class_section
+            chapter_completion = (
                 SchoolLessonPlanDay.objects.using(school_db_name)
                 .filter(
                     class_section_id__in=class_section_ids,
@@ -75,49 +76,81 @@ class SyllabusProgressReportService:
                 )
             )
 
-            # completed_chapters_map: (class_section_id, subject_id) -> number_of_completed_chapters
+            # Build map: (class_section_id, subject_id) -> completed_chapters
             completed_chapters_map = {}
-            for r in chapter_completion_qs:
-                total = r['total_lessons']
-                comp = r['completed_lessons']
-                if total > 0 and total == comp:
+            for r in chapter_completion:
+                if r['total_lessons'] == r['completed_lessons']:
                     key = (r['class_section_id'], r['chapter__subject_id'])
                     completed_chapters_map[key] = completed_chapters_map.get(key, 0) + 1
 
-            # 3) Get total chapters per (class_number_id, school_board_id, subject_id)
+            # 3) Total chapters per class_instance, board, subject
             total_chapters_qs = (
                 SchoolChapter.objects.using(school_db_name)
                 .filter(academic_year=latest_academic_year, class_number_id__in=class_instance_ids)
                 .values('class_number_id', 'school_board_id', 'subject_id')
                 .annotate(total_chapters=Count('id'))
             )
-
-            # map: (class_instance_id, board_id, subject_id) -> total_chapters
             total_chapters_map = {
                 (t['class_number_id'], t['school_board_id'], t['subject_id']): t['total_chapters']
                 for t in total_chapters_qs
             }
 
-            # 4) Compare completed chapters per section to total chapters to determine completed subjects per section
+            # 4) Calculate completed subjects per section
             completed_subjects_per_section = {}
             for (class_section_id, subject_id), completed_ch_count in completed_chapters_map.items():
                 info = class_section_info.get(class_section_id)
                 if not info:
                     continue
-                class_instance_id = info['class_instance_id']
-                board_id = info['board_id']
-                total_ch_count = total_chapters_map.get((class_instance_id, board_id, subject_id), 0)
-
-                # subject is complete for that section if all chapters for that subject are completed
+                total_ch_count = total_chapters_map.get((info['class_instance_id'], info['board_id'], subject_id), 0)
                 if total_ch_count > 0 and completed_ch_count == total_ch_count:
-                    completed_subjects_per_section[class_section_id] = (
-                        completed_subjects_per_section.get(class_section_id, 0) + 1
-                    )
+                    completed_subjects_per_section[class_section_id] = completed_subjects_per_section.get(class_section_id, 0) + 1
 
-            # 5) Build final report using class_section_id as the identifier
+            # 5) Bulk fetch all assignments and chapters to avoid per-class queries
+            assignments_qs = TeacherSubjectAssignment.objects.using(school_db_name).filter(
+                academic_year=latest_academic_year,
+                school_class_id__in=class_section_ids
+            ).select_related('subject', 'school_class')
+
+            chapters_qs = SchoolChapter.objects.using(school_db_name).filter(
+                academic_year=latest_academic_year,
+                class_number_id__in=class_instance_ids
+            )
+
+            # Build maps for fast access
+            chapters_map = {}
+            for ch in chapters_qs:
+                key = (ch.class_number_id, ch.school_board_id, ch.subject_id)
+                chapters_map.setdefault(key, []).append(ch.id)
+
+            lesson_plan_map = {}
+            lesson_plan_qs = SchoolLessonPlanDay.objects.using(school_db_name).filter(
+                class_section_id__in=class_section_ids,
+                chapter_id__in=[ch.id for ch in chapters_qs]
+            ).values('chapter_id', 'class_section_id', 'status')
+
+            for lp in lesson_plan_qs:
+                key = (lp['class_section_id'], lp['chapter_id'])
+                lesson_plan_map.setdefault(key, []).append(lp['status'])
+
+            # 6) Build final report
             report_data = []
             for c in classes_with_subjects:
                 cs_id = c['school_class_id']
+                # Assignments for this section
+                assignments = [a for a in assignments_qs if a.school_class_id == cs_id]
+                total_progress = 0
+                weight = 100 / len(assignments) if assignments else 0
+                for a in assignments:
+                    ch_ids = chapters_map.get((a.school_class.class_instance_id, a.school_class.board_id, a.subject_id), [])
+                    chapter_count = len(ch_ids)
+                    chapter_weight = weight / chapter_count if chapter_count else 0
+                    for ch_id in ch_ids:
+                        statuses = lesson_plan_map.get((cs_id, ch_id), [])
+                        if statuses:
+                            completed = statuses.count('completed')
+                            chapter_progress = (completed / len(statuses)) * chapter_weight
+                            total_progress += chapter_progress
+
                 report_data.append({
                     "class_number": c['school_class__class_instance__class_number'],
                     "class_section": c['school_class__section'],
@@ -126,6 +159,7 @@ class SyllabusProgressReportService:
                     "total_subjects": c['number_of_subjects'],
                     "class_section_id": cs_id,
                     "completed_subjects": completed_subjects_per_section.get(cs_id, 0),
+                    "completion_percentage": round(total_progress,2)
                 })
 
             return JsonResponse({"data": report_data}, status=200)
@@ -133,6 +167,7 @@ class SyllabusProgressReportService:
         except Exception as e:
             logger.error("Error generating report by class: %s", e)
             return JsonResponse({"error": "Failed to generate report"}, status=500)
+
     
 
     def get_subject_progress_by_class_section(self):

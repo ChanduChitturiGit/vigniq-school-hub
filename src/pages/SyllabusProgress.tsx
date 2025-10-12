@@ -164,9 +164,9 @@ const SyllabusProgress: React.FC = () => {
                           </div>
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">Progress</span>
-                            <span className="font-semibold text-blue-600">{cls.progress}%</span>
+                            <span className="font-semibold text-blue-600">{cls.completion_percentage}%</span>
                           </div>
-                          <Progress value={cls.progress} className="h-2 bg-blue-100 [&>div]:bg-blue-600" />
+                          <Progress value={cls.completion_percentage} className="h-2 bg-blue-100 [&>div]:bg-blue-600" />
                           <p className="text-sm text-center text-muted-foreground">
                             {cls.completed_subjects} of {cls.total_subjects} subjects completed
                           </p>

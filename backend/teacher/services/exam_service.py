@@ -214,6 +214,8 @@ class OfflineExamsService:
                     ExamResult.objects.using(self.school_db_name).bulk_update(
                         to_update, ["marks_obtained", "updated_by_teacher"]
                     )
+                exam.is_submitted = True
+                exam.save(using=self.school_db_name)
 
             logger.info("Marks assigned successfully for exam ID %s", exam.id)
             return JsonResponse({"message": "Marks assigned successfully"}, status=200)
@@ -300,12 +302,16 @@ class OfflineExamsService:
             if not any([class_section_id, subject_id, academic_year_id]):
                 return JsonResponse({"error": "Mandatory fields are required"}, status=400)
 
-            exams = Exam.objects.using(self.school_db_name).filter(
+            filters = dict(
                 class_section_id=class_section_id,
                 subject_id=subject_id,
                 academic_year_id=academic_year_id,
                 is_active=True,
-                chapter_id=chapter_id
+            )
+            if chapter_id:
+                filters["chapter_id"] = chapter_id
+            exams = Exam.objects.using(self.school_db_name).filter(
+                **filters
             ).select_related('exam_category').order_by('-created_at')
 
             if not exams.exists():
@@ -351,7 +357,7 @@ class OfflineExamsService:
                     "student_count": res.get("student_count", 0),
                     "passed_students": res.get("passed_students", 0),
                     "pass_percentage": round(res.get("pass_percentage", 0), 2),
-                    "is_submitted": True if res else False,
+                    "is_submitted": exam.is_submitted
                 })
 
             return JsonResponse({"data": output}, status=200)
