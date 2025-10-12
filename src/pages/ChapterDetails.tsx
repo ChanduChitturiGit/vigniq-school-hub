@@ -35,6 +35,7 @@ import { deleteSubTopicById,deletePrerequisiteById, saveTopicByLesson, editTopic
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import ChapterExams from '../components/ChapterExams';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -466,7 +467,7 @@ const ChapterDetails: React.FC = () => {
 
         {/* Tabs */}
         <Tabs defaultValue={tab && tab.length > 0 ? tab : `topics`} className="space-y-6">
-          <TabsList className="grid md:w-[60%] xl:w-[40%] grid-cols-3 bg-gray-100">
+          <TabsList className="grid md:w-[70%] xl:w-[50%] grid-cols-4 bg-gray-100">
             <TabsTrigger value="topics" className="flex items-center gap-1 md:gap-2">
               <BookOpen className="w-4 h-4" />
               Topics
@@ -478,6 +479,10 @@ const ChapterDetails: React.FC = () => {
             <TabsTrigger value="prerequisites" className="flex items-center gap-1 md:gap-2">
               <Lightbulb className="w-4 h-4" />
               Prerequisites
+            </TabsTrigger>
+            <TabsTrigger value="exams" className="flex items-center gap-1 md:gap-2">
+              <FileCheck className="w-4 h-4" />
+              Exams
             </TabsTrigger>
           </TabsList>
 
@@ -940,6 +945,19 @@ const ChapterDetails: React.FC = () => {
                 ))}
               </Accordion>
             </div>
+          </TabsContent>
+
+          <TabsContent value="exams" className="space-y-6">
+            <ChapterExams
+              chapterId={chapterId || ''}
+              classId={classId}
+              subjectId={subjectId}
+              schoolId={schoolId}
+              boardId={boardId}
+              className={className}
+              section={section}
+              subject={subject}
+            />
           </TabsContent>
 
         </Tabs>
