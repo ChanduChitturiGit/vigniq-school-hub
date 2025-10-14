@@ -77,7 +77,7 @@ class SchoolLessonPlanDay(models.Model):
         choices=STATUS_CHOICES,
         default='not_started'
     )
-    
+    completed_by = models.ForeignKey('teacher.Teacher', null=True, blank=True, on_delete=models.SET_NULL)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
