@@ -60,16 +60,20 @@ const LessonPlanDialog: React.FC<LessonPlanDialogProps> = ({ isOpen, onClose, ch
       const schoolId = userData.school_id;
       const payload = { school_id: schoolId, class_section_id: classId, subject_id: subjectId, chapter_id: chapterId };
       const response = await getLessonPlanByChapter(payload);
+      // Consider an empty array a valid response and show empty state in UI
       if (response && response.data) {
-        setLessonPlans(response.data);
+        setLessonPlans(Array.isArray(response.data) ? response.data : []);
+        setSelectedDay(0); // reset selection when new data arrives
         setLoader(false);
-      }
-      else {
+      } else {
+        // If response is missing or malformed, show an error snackbar
         showSnackbar({
           title: "⛔ Error",
           description: "Something went wrong",
           status: "error"
         });
+        setLessonPlans([]);
+        setSelectedDay(0);
         setLoader(false);
       }
     } catch (error: any) {
@@ -98,9 +102,7 @@ const LessonPlanDialog: React.FC<LessonPlanDialogProps> = ({ isOpen, onClose, ch
     }
   };
 
-  if (!currentDayPlan) {
-    return null;
-  }
+  // Render dialog even when there is no currentDayPlan so we can show an empty-state message
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -114,27 +116,48 @@ const LessonPlanDialog: React.FC<LessonPlanDialogProps> = ({ isOpen, onClose, ch
                   <Clock className="w-4 h-4" />
                   <span>Total: {totalMinutes} minutes</span>
                 </div>
-                {lessonPlans.length > 1 && (
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={handlePrevDay}
-                      disabled={selectedDay === 0}
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </Button>
-                    <span className="text-sm font-medium">Day {currentDayPlan.day}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={handleNextDay}
-                      disabled={selectedDay === lessonPlans.length - 1}
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
+                {lessonPlans.length > 0 && (
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      {lessonPlans.length > 1 && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={handlePrevDay}
+                            disabled={selectedDay === 0}
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </Button>
+                          <span className="text-sm font-medium">Day {currentDayPlan?.day}</span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={handleNextDay}
+                            disabled={selectedDay === lessonPlans.length - 1}
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </Button>
+                        </>
+                      )}
+                      {lessonPlans.length === 1 && (
+                        <span className="text-sm font-medium">Day {currentDayPlan?.day}</span>
+                      )}
+                    </div>
+
+                    {/* Show completed date if present on the current day plan */}
+                    {currentDayPlan?.completed_date ? (
+                      <div className="text-sm text-green-700 bg-green-50 px-3 py-1 rounded-full border border-green-200">
+                        Completed on {new Date(currentDayPlan.completed_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-500 bg-gray-50 px-3 py-1 rounded-full border border-gray-200">
+                        Not Completed
+                      </div>
+                    )
+                  }
                   </div>
                 )}
               </div>
@@ -151,63 +174,77 @@ const LessonPlanDialog: React.FC<LessonPlanDialogProps> = ({ isOpen, onClose, ch
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-4">
-          <div className="space-y-6">
-            {/* Topics Section */}
-            <div className="space-y-4">
-              {currentDayPlan.topics.map((topic, index) => (
-                <div key={index} className="flex gap-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
-                  <div className="flex-shrink-0">
-                    <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                      <span className="text-white font-bold">{index + 1}</span>
-                    </div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-4 mb-2">
-                      <h3 className="font-semibold text-foreground flex-1">{topic.title}</h3>
-                      <div className="flex items-center gap-1 text-sm text-blue-600 bg-white px-3 py-1 rounded-full border flex-shrink-0">
-                        <Clock className="w-3 h-3" />
-                        {topic.time_minutes} min
+          {loader ? (
+            <div className="flex items-center justify-center h-64">
+              <SpinnerOverlay />
+            </div>
+          ) : lessonPlans.length === 0 ? (
+            <div className="h-64 flex flex-col items-center justify-center text-center text-sm text-muted-foreground">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <div className="font-medium text-foreground">No lesson plan found</div>
+              <div className="text-xs text-gray-500 mt-1">There are no lesson plans available for this chapter.</div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Topics Section */}
+              <div className="space-y-4">
+                {currentDayPlan?.topics.map((topic, index) => (
+                  <div key={index} className="flex gap-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                        <span className="text-white font-bold">{index + 1}</span>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{topic.summary}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-4 mb-2">
+                        <h3 className="font-semibold text-foreground flex-1">{topic.title}</h3>
+                        <div className="flex items-center gap-1 text-sm text-blue-600 bg-white px-3 py-1 rounded-full border flex-shrink-0">
+                          <Clock className="w-3 h-3" />
+                          {topic.time_minutes} min
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{topic.summary}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Learning Outcomes, Real World Applications, and Taxonomy Alignment */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center gap-2 mb-3">
+                    <BookOpen className="w-5 h-5 text-green-700" />
+                    <h3 className="font-semibold text-green-800">Learning Outcomes</h3>
+                  </div>
+                  <div className="text-sm text-green-700 leading-relaxed prose prose-sm prose-green max-w-none">
+                    <ReactMarkdown>{currentDayPlan?.learning_outcomes}</ReactMarkdown>
                   </div>
                 </div>
-              ))}
-            </div>
 
-            {/* Learning Outcomes, Real World Applications, and Taxonomy Alignment */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                <div className="flex items-center gap-2 mb-3">
-                  <BookOpen className="w-5 h-5 text-green-700" />
-                  <h3 className="font-semibold text-green-800">Learning Outcomes</h3>
+                <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Lightbulb className="w-5 h-5 text-purple-700" />
+                    <h3 className="font-semibold text-purple-800">Real World Applications</h3>
+                  </div>
+                  <div className="text-sm text-purple-700 leading-relaxed prose prose-sm prose-purple max-w-none">
+                    <ReactMarkdown>{currentDayPlan?.real_world_applications}</ReactMarkdown>
+                  </div>
                 </div>
-                <div className="text-sm text-green-700 leading-relaxed prose prose-sm prose-green max-w-none">
-                  <ReactMarkdown>{currentDayPlan.learning_outcomes}</ReactMarkdown>
-                </div>
-              </div>
 
-              <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-                <div className="flex items-center gap-2 mb-3">
-                  <Lightbulb className="w-5 h-5 text-purple-700" />
-                  <h3 className="font-semibold text-purple-800">Real World Applications</h3>
-                </div>
-                <div className="text-sm text-purple-700 leading-relaxed prose prose-sm prose-purple max-w-none">
-                  <ReactMarkdown>{currentDayPlan.real_world_applications}</ReactMarkdown>
-                </div>
-              </div>
-
-              <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
-                <div className="flex items-center gap-2 mb-3">
-                  <Target className="w-5 h-5 text-orange-700" />
-                  <h3 className="font-semibold text-orange-800">Taxonomy Alignment</h3>
-                </div>
-                <div className="text-sm text-orange-700 leading-relaxed prose prose-sm prose-orange max-w-none">
-                  <ReactMarkdown>{currentDayPlan.taxonomy_alignment}</ReactMarkdown>
+                <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Target className="w-5 h-5 text-orange-700" />
+                    <h3 className="font-semibold text-orange-800">Taxonomy Alignment</h3>
+                  </div>
+                  <div className="text-sm text-orange-700 leading-relaxed prose prose-sm prose-orange max-w-none">
+                    <ReactMarkdown>{currentDayPlan?.taxonomy_alignment}</ReactMarkdown>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

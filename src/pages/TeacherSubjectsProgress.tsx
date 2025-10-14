@@ -89,7 +89,7 @@ const TeacherSubjectsProgress: React.FC = () => {
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-foreground">{teacherName}</h1>
-                  <p className="text-muted-foreground mt-1">Subject: {subject}</p>
+                  {/* <p className="text-muted-foreground mt-1">Subject: {subject}</p> */}
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -99,9 +99,9 @@ const TeacherSubjectsProgress: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-card border rounded-lg p-6">
+          {/* <div className="bg-card border rounded-lg p-6">
             <h2 className="text-xl font-bold text-foreground mb-4">Class-wise Subject Progress</h2>
-          </div>
+          </div> */}
 
           <Card className="border">
             <CardContent className="p-0">

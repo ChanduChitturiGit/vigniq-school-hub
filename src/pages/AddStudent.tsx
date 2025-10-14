@@ -12,6 +12,7 @@ import dayjs, { Dayjs } from "dayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import '../pages/styles/datepicker.scss';
 
 const AddStudent: React.FC = () => {
   const [value, setValue] = React.useState<Dayjs | null>(null);

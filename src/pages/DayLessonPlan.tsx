@@ -36,6 +36,7 @@ import {
 } from '../components/ui/alert-dialog';
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
+import { format, isSunday } from 'date-fns';
 
 
 interface Topic {
@@ -46,6 +47,7 @@ interface Topic {
 }
 
 interface LessonPlanDay {
+  updated_at: any;
   lesson_plan_day_id: number;
   day: number;
   learning_outcomes: string;
@@ -336,7 +338,7 @@ const DayLessonPlan: React.FC = () => {
               >
                 <BadgeCheck className="w-4 h-4" />
                 {
-                  lessonData.status === 'completed' ? 'Completed' : 'Mark as Completed'
+                  lessonData.status === 'completed' ? `Completed on ${format(lessonData.updated_at, "dd MMM yyyy")}` : 'Mark as Completed'
                 }
               </button>
             </AlertDialogTrigger>
@@ -384,7 +386,7 @@ const DayLessonPlan: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 no-pdf no-print">
+                <div className="flex flex-wrap items-center gap-3 no-pdf no-print">
                   <Button variant="outline" size="sm" className="text-blue-600 hover:text-blue-800 border-blue-300"
                     onClick={() => handlePrint('printArea')}>
                     <Printer className="w-4 h-4 mr-2" />

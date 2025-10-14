@@ -1,17 +1,17 @@
 .MuiInputBase-root.MuiOutlinedInput-root {
-  height: 40px !important;
+  height: 30px !important;
 }
 
 /* Target the wrapper input */
 .MuiInputBase-root {
-  height: 40px; // set overall height
+  height: 30px; // set overall height
   font-size: 14px; // text-sm like Tailwind
 }
 
 /* Target the actual <input> inside */
 .MuiInputBase-input {
   padding: 8px 12px !important; // override MUI default
-  height: 100% !important;
+  height: 80% !important;
   box-sizing: border-box;
 }
 
@@ -21,7 +21,7 @@
 }
 
 .css-vycme6-MuiPickersInputBase-root-MuiPickersOutlinedInput-root{
-    padding : 5px 14px !important;
+    padding : 3px 12px !important;
 }
 
 .css-1fb7els-MuiPickersSectionList-root-MuiPickersInputBase-sectionsContainer-MuiPickersOutlinedInput-sectionsContainer

@@ -176,7 +176,7 @@ const TeacherDiaries: React.FC = () => {
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600">{completeEntries}</div>
-                  <div className="text-sm text-muted-foreground">submitted</div>
+                  <div className="text-sm text-muted-foreground">Submitted</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-yellow-600">{pendingEntries}</div>
@@ -197,7 +197,7 @@ const TeacherDiaries: React.FC = () => {
                 <Card className={selectedEntry ? "lg:col-span-5 border-border" : "lg:col-span-12 border-border"}>
                   <CardContent className="p-6">
                     <div className="space-y-4">
-                      <h2 className="text-lg font-semibold text-foreground mb-4">Class & subject_name</h2>
+                      {/* <h2 className="text-lg font-semibold text-foreground mb-4">Class & subject_name</h2> */}
                       <Table>
                         <TableHeader>
                           <TableRow>

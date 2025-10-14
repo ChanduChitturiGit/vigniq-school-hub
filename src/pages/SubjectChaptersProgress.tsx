@@ -39,10 +39,10 @@ const SubjectChaptersProgress: React.FC = () => {
   const [chaptersData, setChaptersData] = useState<ChapterProgress[]>([]);
 
   const handleViewLessonPlan = (chapter: ChapterProgress) => {
-    if (chapter.completed_date) {
+    // if (chapter.completed_date) {
       setSelectedChapter(chapter);
       setIsDialogOpen(true);
-    }
+    // }
   };
 
   const getSyllabusProgressDataByClassSubject = async () => {
@@ -150,7 +150,7 @@ const SubjectChaptersProgress: React.FC = () => {
                               size="sm"
                               variant="outline"
                               className="border-blue-300 text-blue-600 hover:bg-blue-600 hover:text-white"
-                              disabled={!chapter.completed_date}
+                              // disabled={!chapter.completed_date}
                               onClick={() => handleViewLessonPlan(chapter)}
                             >
                               <FileText className="w-4 h-4 mr-2" />

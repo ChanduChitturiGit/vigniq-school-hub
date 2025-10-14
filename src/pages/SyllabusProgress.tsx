@@ -28,7 +28,7 @@ interface TeacherProgress {
   teacher_name: string;
   subject_name: string;
   completion_percentage?: number;
-  classes_assigned: string[];
+  classes: string[];
 }
 
 
@@ -211,7 +211,7 @@ const SyllabusProgress: React.FC = () => {
                         <div>
                           <p className="text-sm text-muted-foreground mb-2">Classes:</p>
                           <div className="flex flex-wrap gap-2">
-                            {teacher.classes_assigned && teacher.classes_assigned.map((cls, index) => (
+                            {teacher.classes && teacher.classes.map((cls, index) => (
                               <span
                                 key={index}
                                 className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium"

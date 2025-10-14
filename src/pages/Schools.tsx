@@ -152,9 +152,9 @@ const Schools: React.FC = () => {
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>In Active School</AlertDialogTitle>
+              <AlertDialogTitle>Inactive School</AlertDialogTitle>
               <AlertDialogDescription className='text-gray-700'>
-                <p>Are you sure you want to In Active the School :  <span className='font-bold'>{school.school_name}</span>?</p>
+                <p>Are you sure you want to Inactive the School :  <span className='font-bold'>{school.school_name}</span>?</p>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -190,7 +190,7 @@ const Schools: React.FC = () => {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={() => reactiveSchool(school.school_id)} className="bg-orange-600 hover:bg-orange-700">
-                Confirm Active
+                Confirm
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -222,7 +222,7 @@ const Schools: React.FC = () => {
                     <SelectValue placeholder="Select a board" />
                   </SelectTrigger>
                   <SelectContent>
-                    {['Active', 'In Active'].map((val, index) => (
+                    {['Active', 'Inactive'].map((val, index) => (
                       <SelectItem key={index} value={val}>
                         {val}
                       </SelectItem>

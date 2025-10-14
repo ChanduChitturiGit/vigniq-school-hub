@@ -23,6 +23,10 @@ import {
 import { Plus, Eye, Calendar, Clock, Users, Loader2, Edit } from 'lucide-react';
 import { getExamsList, createExam, getExamCategoriesForChapterwise } from '@/services/exams';
 import { useSnackbar } from '@/components/snackbar/SnackbarContext';
+import dayjs, { Dayjs } from 'dayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 
 interface ChapterExamsProps {
@@ -81,6 +85,8 @@ const ChapterExams: React.FC<ChapterExamsProps> = ({
     pass_marks: '',
     exam_category_id: null
   });
+
+  const [examDate, setExamDate] = useState<Dayjs | null>(null);
 
   const SampleExamCategories = [
     { value: 'slip_test', label: 'Slip Test' },
@@ -366,14 +372,14 @@ const ChapterExams: React.FC<ChapterExamsProps> = ({
                       </span>
                     </div>
 
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    {/* <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
                         className={`bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500`}
                         style={{
                           width: `${Number(exam.pass_percentage) >= 0 ? Number(exam.pass_percentage) : 0}%`
                         }}
                       />
-                    </div>
+                    </div> */}
 
                   </div>
                 </div>
@@ -391,15 +397,16 @@ const ChapterExams: React.FC<ChapterExamsProps> = ({
 
       {/* Add Exam Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+          {/* sticky top-0 bg-white z-10 pb-2 */}
+          <DialogHeader >
             <DialogTitle>Create New Exam</DialogTitle>
             <p className="text-sm text-gray-500">
               Fill in the exam details below. You'll be able to enter student marks after creating the exam.
             </p>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="exam_category">Exam Category</Label>
               <Select
@@ -432,12 +439,25 @@ const ChapterExams: React.FC<ChapterExamsProps> = ({
 
             <div className="space-y-2">
               <Label htmlFor="exam_date">Date Conducted</Label>
-              <Input
-                id="exam_date"
-                type="date"
-                value={formData.exam_date}
-                onChange={(e) => handleInputChange('exam_date', e.target.value)}
-              />
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  className="date-div w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  label={''}
+                  value={examDate}
+                  onChange={(newValue) => {
+                    setExamDate(newValue);
+                    setFormData((prev) => ({ ...prev, exam_date: newValue ? newValue.format('YYYY-MM-DD') : '' }));
+                  }}
+                  maxDate={dayjs()}
+                  slotProps={{
+                      textField: {
+                        size: 'small',
+                        fullWidth: true,
+                      },
+                    }}
+                  format="DD/MM/YYYY"
+                />
+              </LocalizationProvider>
             </div>
 
             <div className="space-y-2">
