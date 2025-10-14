@@ -291,6 +291,8 @@ class SyllabusProgressReportService:
                     if teacher_name not in subject_progress_data[subj_id]["teacher_name"]:
                         subject_progress_data[subj_id]["teacher_name"].append(teacher_name)
 
+            for subj_data in subject_progress_data.values():
+                subj_data["teacher_name"] = ", ".join(subj_data["teacher_name"])
             final_output = list(subject_progress_data.values())
 
             return JsonResponse({"data": final_output}, status=200)
