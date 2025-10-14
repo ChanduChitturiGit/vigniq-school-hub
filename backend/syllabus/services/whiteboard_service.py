@@ -195,13 +195,14 @@ class WhiteboardService:
                                 status=status.HTTP_404_NOT_FOUND)
 
             school_lesson_plan_day.status = lesson_status
+            school_lesson_plan_day.completed_by = request.user.id if lesson_status == 'completed' else None
             school_lesson_plan_day.save(using=school_name)
 
-            logger.info("Whiteboard session status updated with lesson_plan_day_id: %s", lesson_plan_day_id)
-            return Response({"message": "Whiteboard session status updated successfully"},
+            logger.info("Lesson plan day status updated with lesson_plan_day_id: %s", lesson_plan_day_id)
+            return Response({"message": "The lesson plan for the day has been updated successfully."},
                             status=status.HTTP_200_OK)
 
         except Exception as e:
-            logger.exception("Unexpected error updating whiteboard session status")
-            return Response({"error": "Failed to update whiteboard session status"},
+            logger.exception("Unexpected error updating lesson plan day status")
+            return Response({"error": "Failed to update lesson plan day status"},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)

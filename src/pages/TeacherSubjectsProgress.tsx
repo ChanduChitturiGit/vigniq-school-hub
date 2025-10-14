@@ -110,6 +110,7 @@ const TeacherSubjectsProgress: React.FC = () => {
                   <thead className="bg-muted">
                     <tr>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Class</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Board</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Subject</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Progress</th>
                       <th className="px-6 py-4 text-center text-sm font-semibold text-foreground">Action</th>
@@ -120,6 +121,9 @@ const TeacherSubjectsProgress: React.FC = () => {
                       <tr key={item.class_section_id} className="hover:bg-muted/50 transition-colors">
                         <td className="px-6 py-4">
                           <span className="font-medium text-foreground">{item.class_number + ' - ' + item.class_section}</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="font-medium text-foreground">{item.board_name}</span>
                         </td>
                         <td className="px-6 py-4 text-foreground">{item.subject_name}</td>
                         <td className="px-6 py-4">
