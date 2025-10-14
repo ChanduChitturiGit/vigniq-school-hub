@@ -1,12 +1,14 @@
 """Teacher Diary Service"""
 
 import logging
+from datetime import date
 from datetime import datetime
 from django.http import JsonResponse
 from teacher.models import TeacherDiary, TeacherSubjectAssignment
 
 from core.models import User
 from core.common_modules.common_functions import CommonFunctions
+from classes.models import SchoolSection
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +18,94 @@ class TeacherDiaryService:
 
     def __init__(self, request):
         self.request = request
+
+    def get_teacher_diary_kpis(self):
+        """Retrieve key performance indicators for teacher diaries."""
+        try:
+            school_id = self.request.GET.get('school_id')
+            if not school_id:
+                return JsonResponse({"error": "Missing school_id"}, status=400)
+
+            # Get DB name
+            school_db_name = CommonFunctions().get_school_db_name(school_id)
+            if not school_db_name:
+                return JsonResponse({"error": "Invalid school ID"}, status=400)
+
+            # Get latest academic year
+            academic_year_obj = CommonFunctions().get_latest_academic_year(school_db_name)
+            if not academic_year_obj:
+                return JsonResponse({"error": "No academic year found for the school"}, status=400)
+
+            today = date.today()
+
+            # All teacher assignments for this academic year
+            all_assignments = TeacherSubjectAssignment.objects.using(school_db_name).filter(
+                academic_year=academic_year_obj
+            ).select_related("teacher", "school_class", "subject")
+
+            # Group assignments per teacher
+            teacher_assignments = {}
+            for assign in all_assignments:
+                teacher_id = assign.teacher.teacher_id
+                teacher_assignments.setdefault(teacher_id, []).append(assign)
+
+            board_dict = CommonFunctions().get_boards_dict()
+            total_teachers = len(teacher_assignments)
+            submitted_teachers = 0
+            pending_teachers = 0
+            pending_teacher_list = {}
+
+            # Iterate over each teacher and check diary submission
+            for teacher_id, assignments in teacher_assignments.items():
+                # Group assignments per class-section for the teacher
+                class_subject_map = {}
+                for a in assignments:
+                    class_subject_map.setdefault(a.school_class.id, []).append(a.subject.id)
+
+                # Get all diary entries of this teacher for today
+                diaries_today = TeacherDiary.objects.using(school_db_name).filter(
+                    teacher_id=teacher_id,
+                    academic_year=academic_year_obj,
+                    date=today
+                )
+
+                # Map submitted subjects per class-section
+                submitted_map = {}
+                for d in diaries_today.filter(status='submitted'):
+                    submitted_map.setdefault(d.school_class_section_id, set()).add(d.subject_id)
+
+                pending_classes = []
+                for class_id, assigned_subjects in class_subject_map.items():
+                    submitted_subjects = submitted_map.get(class_id, set())
+                    # If not all assigned subjects are submitted, class is pending
+                    if set(assigned_subjects) - submitted_subjects:
+                        pending_classes.append(class_id)
+
+                if not pending_classes:
+                    submitted_teachers += 1
+                else:
+                    pending_teachers += 1
+                    pending_teacher_list[teacher_id] = [
+                        f"{section.class_instance_id} - {section.section} ({board_dict.get(section.board_id, 'Unknown')})"
+                        for section in SchoolSection.objects.using(school_db_name).filter(id__in=pending_classes)
+                    ]
+            teacher_objs = User.objects.filter(id__in=pending_teacher_list.keys()).values("id", "first_name", "last_name")
+            teacher_name_map = {t["id"]: f"{t['first_name']} {t['last_name']}" for t in teacher_objs}
+            pending_teacher_list = {teacher_name_map[tid]: classes for tid, classes in pending_teacher_list.items()}
+
+            kpis = {
+                "total_teachers": total_teachers,
+                "submitted_teachers": submitted_teachers,
+                "pending_teachers": pending_teachers,
+                "pending_teacher_list": pending_teacher_list
+            }
+
+            return JsonResponse({"data": kpis}, status=200)
+
+        except Exception as e:
+            logger.exception(f"Error retrieving diary KPIs: {e}")
+            return JsonResponse({"error": "Internal server error"}, status=500)
+
     
     def get_diary_by_class_section_and_date(self):
         """Retrieve diary entries for a specific class section and date (optimized)."""

@@ -135,7 +135,9 @@ class TeacherDiaryActionView(APIView):
     permission_classes = [IsAuthenticated, IsSuperAdminOrAdminOrTeacher]
 
     def get(self, request, action=None):
-        if action == "getTeacherDiaryByClassSectionAndDate":
+        if action == "getTeacherDiaryKPIs":
+            return TeacherDiaryService(request).get_teacher_diary_kpis()
+        elif action == "getTeacherDiaryByClassSectionAndDate":
             return TeacherDiaryService(request).get_diary_by_class_section_and_date()
         elif action == "getTeacherDiaryByTeacherAndDate":
             return TeacherDiaryService(request).get_diary_by_teacher_and_date()
