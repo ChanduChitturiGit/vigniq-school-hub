@@ -12,6 +12,12 @@ export const getTeacherDiaries = async (data : any) => {
   return response.data;
 }
 
+//getTeacherDiaryKPIs
+export const getTeacherDiaryKPIs = async (data : any) => {
+  const response = await api.get(baseurl+suburl+'/getTeacherDiaryKPIs',{params : data});
+  return response.data;
+}
+
 //saveTeacherDiary
 export const saveTeacherDiary = async (data : any) => {
   const response = await api.post(baseurl+suburl+'/saveTeacherDiary',data);

@@ -12,7 +12,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import dayjs, { Dayjs } from "dayjs";
 import '../pages/styles/datepicker.scss';
-import { getTeacherDiariesByAdmin, markDiaryAsReviewed } from '../services/diaries'
+import { getTeacherDiariesByAdmin, markDiaryAsReviewed, getTeacherDiaryKPIs } from '../services/diaries'
 import { format, isSunday } from 'date-fns';
 import { getClassesBySchoolId } from '@/services/class';
 import {
@@ -26,6 +26,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '../components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '../components/ui/dialog';
 
 interface DiaryEntry {
   diary_id: string;
@@ -49,17 +57,17 @@ const AdminTeacherDiaries: React.FC = () => {
   const [isMobileDetailView, setIsMobileDetailView] = useState(false);
   const [classes, setClasses] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [kpiData, setKpiData] = useState<any>({});
+  const [isPendingDialogOpen, setIsPendingDialogOpen] = useState(false);
+
+  // sample pending teachers data (used when opening the View List dialog)
+  const [pendingTeachers, setPendingTeachers] = useState<Array<any>>([]);
 
   // Sample data for diary entries
   const [diaryEntries, setDiaryEntries] = useState<DiaryEntry[]>([]);
 
   // Filter entries by selected class
   const filteredEntries = [...diaryEntries];
-
-  // Calculate stats for selected class
-  const totalTeachers = diaryEntries.length;
-  const submittedCount = diaryEntries.filter(e => e.status === 'submitted').length;
-  const pendingCount = diaryEntries.filter(e => e.status === 'pending').length;
 
   //classes list api
   const getClasses = async () => {
@@ -114,8 +122,36 @@ const AdminTeacherDiaries: React.FC = () => {
     }
   }
 
+  const fetchKPIData = async (data: any) => {
+    try {
+      const payload = {
+        school_id: userData.school_id,
+        date: format(selectedDate.toDate(), 'yyyy-MM-dd'),
+        class_section_id: data.class_section_id
+      }
+      const response = await getTeacherDiaryKPIs(payload);
+      if (response && response.data) {
+        setKpiData(response.data);
+      } else {
+        showSnackbar({
+          title: "⛔ Error",
+          description: "Something went wrong with classes list",
+          status: "error"
+        });
+      }
+    } catch (error) {
+      showSnackbar({
+        title: "⛔ Error",
+        description: error?.response?.data?.error || "Something went wrong with classes list",
+        status: "error"
+      });
+    }
+  }
+
+
   useEffect(() => {
     getClasses();
+    fetchKPIData({ class_section_id: selectedClass.class_section_id });
   }, [])
 
   useEffect(() => {
@@ -239,7 +275,7 @@ const AdminTeacherDiaries: React.FC = () => {
                     <Users className="w-5 h-5 text-green-600" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-foreground">{submittedCount} / {totalTeachers}</div>
+                    <div className="text-2xl font-bold text-foreground">{kpiData.submitted_teachers} / {kpiData.total_teachers}</div>
                     <div className="text-sm text-muted-foreground">Teachers Submitted</div>
                     <div className="text-xs text-muted-foreground mt-1">Diaries submitted today</div>
                   </div>
@@ -257,14 +293,44 @@ const AdminTeacherDiaries: React.FC = () => {
                     <Clock className="w-5 h-5 text-orange-600" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-foreground">{pendingCount} teachers</div>
+                    <div className="text-2xl font-bold text-foreground">{kpiData.pending_teachers} teachers</div>
                     <div className="text-sm text-muted-foreground">Pending Submissions</div>
                     <div className="text-xs text-muted-foreground mt-1">Awaiting diary submissions</div>
                   </div>
                 </div>
-                {/* <Button variant="outline" size="sm" className="text-orange-600 border-orange-300">
-                  View List
-                </Button> */}
+                <Dialog open={isPendingDialogOpen} onOpenChange={setIsPendingDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="text-orange-600 border-orange-300">
+                      View List
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-xl">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-3">
+                        <Clock className="w-5 h-5 text-orange-600" />
+                        <span>Pending Teachers</span>
+                      </DialogTitle>
+                      <DialogDescription className="text-sm text-muted-foreground mt-2">{pendingTeachers.length} teachers haven't submitted their diaries for {format(selectedDate.toDate(), 'EEEE, MMMM dd, yyyy')}</DialogDescription>
+                    </DialogHeader>
+
+                    <div className="py-4 space-y-3">
+                      {kpiData?.pending_teacher_list && Object.keys(kpiData?.pending_teacher_list).map((t,index) => (
+                        <div key={index} className="flex items-center justify-between bg-muted/60 p-4 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-semibold">{t[0]}</div>
+                            <div>
+                              <div className="font-medium text-foreground">{t}</div>
+                              <div className="text-sm text-muted-foreground">Classes: {kpiData?.pending_teacher_list[t].join(",")}</div>
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-sm bg-orange-100 text-orange-700 px-3 py-1 rounded-full">Pending</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
             </CardContent>
           </Card>
