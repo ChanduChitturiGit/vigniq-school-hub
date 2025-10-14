@@ -214,43 +214,52 @@ const DayLessonPlan: React.FC = () => {
   };
 
   const handleDownload = async () => {
-    if (!printRef.current) return;
+  if (!printRef.current) return;
 
-    // Hide elements with .no-pdf
-    const hiddenEls = printRef.current.querySelectorAll(".no-pdf");
-    hiddenEls.forEach(el => (el as HTMLElement).style.display = "none");
+  // Hide elements with .no-pdf
+  const hiddenEls = printRef.current.querySelectorAll(".no-pdf");
+  hiddenEls.forEach((el : any) => (el.style.display = "none"));
 
-    // Capture screenshot of the div
-    const canvas = await html2canvas(printRef.current, { scale: 2 });
-    const imgData = canvas.toDataURL("image/png");
+  // Capture the element
+  const canvas = await html2canvas(printRef.current, {
+    scale: 2, // Higher quality
+    useCORS: true, // Prevent CORS issues for external images
+    scrollX: 0,
+    scrollY: 0,
+    windowWidth: document.documentElement.offsetWidth,
+    windowHeight: document.documentElement.scrollHeight,
+  });
 
-    // Restore hidden elements
-    hiddenEls.forEach(el => (el as HTMLElement).style.display = "");
+  // Restore hidden elements
+  hiddenEls.forEach((el : any) => (el.style.display = ""));
 
-    // Create PDF
-    const pdf = new jsPDF("p", "mm", "a4");
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
+  const imgData = canvas.toDataURL("image/png");
+  const pdf = new jsPDF("p", "mm", "a4");
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
 
-    const imgWidth = pageWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  // Convert pixel dimensions to mm
+  const imgWidth = pageWidth;
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-    if (imgHeight <= pageHeight) {
-      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-    } else {
-      let heightLeft = imgHeight;
-      let y = 0;
+  let heightLeft = imgHeight;
+  let position = 0;
 
-      while (heightLeft > 0) {
-        pdf.addImage(imgData, "PNG", 0, y, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-        y -= pageHeight;
-        if (heightLeft > 0) pdf.addPage();
-      }
-    }
+  // Add first page
+  pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+  heightLeft -= pageHeight;
 
-    pdf.save("download.pdf");
-  };
+  // Add remaining pages
+  while (heightLeft > 0) {
+    position -= pageHeight;
+    pdf.addPage();
+    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+  }
+
+  pdf.save("download.pdf");
+};
+
 
   // const handlePrint = () => {
   //   window.print();
@@ -318,14 +327,14 @@ const DayLessonPlan: React.FC = () => {
 
   return (
     <MainLayout pageTitle={`Chapter ${chapterNumber}: ${chapterName} - Day ${lessonData.day}`}>
-      <div className="space-y-8">
+      <div ref={printRef} className="space-y-8">
         {/* <Breadcrumb items={breadcrumbItems} /> */}
-        <div className='no-print w-full flex flex-col md:flex-row items-start md:items-center justify-between gap-4'>
+        <div className='no-pdf no-print w-full flex flex-col md:flex-row items-start md:items-center justify-between gap-4'>
           <Link
             to={`/grades/syllabus/chapter/${chapterId}?${pathData}&tab=lesson-plan`}
             className=" max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5 " />
             <span className="font-medium">Back</span>
           </Link>
 
@@ -364,7 +373,7 @@ const DayLessonPlan: React.FC = () => {
         </div>
 
         {/* Topics Section */}
-        <Card className="shadow-lg border-0 " ref={printRef} id="pdf-content">
+        <Card className="shadow-lg border-0 "  id="pdf-content">
           <CardHeader>
             <CardTitle className={`${window.innerWidth >= 768 ? 'flex ' : 'flex-col '} items-center justify-between`}>
               <div className='w-full flex flex-wrap items-center justify-between gap-6 mb-4 md:mb-0'>
