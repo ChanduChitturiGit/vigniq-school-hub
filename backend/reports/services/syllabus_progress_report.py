@@ -133,11 +133,16 @@ class SyllabusProgressReportService:
                 lesson_plan_map.setdefault(key, []).append(lp['status'])
 
             # 6) Build final report
+            progress_recorded_mapping = []
             report_data = []
             for c in classes_with_subjects:
                 cs_id = c['school_class_id']
                 # Assignments for this section
-                assignments = [a for a in assignments_qs if a.school_class_id == cs_id]
+                assignments = []
+                for a in assignments_qs:
+                    if a.school_class_id == cs_id and a.subject_id not in progress_recorded_mapping:
+                        assignments.append(a)
+                        progress_recorded_mapping.append(a.subject_id)
                 total_progress = 0
                 weight = 100 / len(assignments) if assignments else 0
                 for a in assignments:
@@ -262,24 +267,33 @@ class SyllabusProgressReportService:
                     completed_chapters_map[subj_id] = completed_chapters_map.get(subj_id, 0) + 1
 
             # 5) Build final response
-            subject_progress_data = []
+            subject_progress_data = {}
+
             for s in subjects_qs:
                 subj_id = s['subject__id']
                 subj_name = s['subject__name']
                 total_ch = total_chapters_map.get(subj_id, 0)
                 completed_ch = completed_chapters_map.get(subj_id, 0)
                 completion_pct = round((completed_ch / total_ch) * 100, 2) if total_ch > 0 else 0.0
+                teacher_name = teacher_names_map.get(s['teacher_id'], 'Unknown Teacher')
 
-                subject_progress_data.append({
-                    "subject_id": subj_id,
-                    "subject_name": subj_name,
-                    "total_chapters": total_ch,
-                    "completed_chapters": completed_ch,
-                    "completion_percentage": completion_pct,
-                    "teacher_name": teacher_names_map.get(s['teacher_id'], 'Unknown Teacher')
-                })
+                if subj_id not in subject_progress_data:
+                    subject_progress_data[subj_id] = {
+                        "subject_id": subj_id,
+                        "subject_name": subj_name,
+                        "total_chapters": total_ch,
+                        "completed_chapters": completed_ch,
+                        "completion_percentage": completion_pct,
+                        "teacher_name": [teacher_name],
+                    }
+                else:
+                    # Append teacher only if not already added (avoid duplicates)
+                    if teacher_name not in subject_progress_data[subj_id]["teacher_name"]:
+                        subject_progress_data[subj_id]["teacher_name"].append(teacher_name)
 
-            return JsonResponse({"data": subject_progress_data}, status=200)
+            final_output = list(subject_progress_data.values())
+
+            return JsonResponse({"data": final_output}, status=200)
 
         except Exception as e:
             logger.error("Error generating subject progress for class_section %s: %s", class_section_id, e)
