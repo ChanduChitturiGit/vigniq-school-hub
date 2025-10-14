@@ -313,7 +313,7 @@ const ClassDetails: React.FC = () => {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={() => handleStudentReactivate(student.student_id)} className="bg-orange-600 hover:bg-orange-700">
-                Confirm Active
+                Confirm
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -461,7 +461,7 @@ const ClassDetails: React.FC = () => {
                 <SelectValue placeholder="Select a board" />
               </SelectTrigger>
               <SelectContent>
-                {['Active', 'In Active'].map((val, index) => (
+                {['Active', 'Inactive'].map((val, index) => (
                   <SelectItem key={index} value={val}>
                     {val}
                   </SelectItem>
@@ -522,7 +522,7 @@ const ClassDetails: React.FC = () => {
                   <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between "
                     onClick={(e) => e.stopPropagation()}>
                     <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                      {student.is_active ? 'Active' : 'In Active'}
+                      {student.is_active ? 'Active' : 'Inactive'}
                     </span>
                     {
                       (student.is_active ? deleteModal(student) : reActiveModal(student))

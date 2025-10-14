@@ -714,8 +714,8 @@ const Attendance: React.FC = () => {
             <div className="flex flex-col gap-4 w-full md:flex-row md:flex-wrap lg:flex-nowrap  md:items-center md:w-auto">
               {/* Date Selection */}
               <div className="flex flex-col gap-2 w-full md:flex-row md:items-center md:w-auto">
-                <div className='flex gap-1 w-full md:w-auto'>
-                  <Clock className="w-4 h-4 text-muted-foreground" />
+                <div className='flex items-center justify-center gap-1 w-full md:w-auto'>
+                  <Clock className="w-4 h-4 text-muted-foreground pt-[2px]" />
                   <span className="text-sm font-medium">Select Date</span>
                 </div>
                 <div className='w-full md:w-auto'>
@@ -736,8 +736,8 @@ const Attendance: React.FC = () => {
               </div>
               {/* Class Selection */}
               <div className="flex flex-col gap-2 w-full md:flex-row md:items-center md:w-auto min-w-fit">
-                <div className='flex gap-1 w-full md:w-auto'>
-                  <Users className="w-4 h-4 text-muted-foreground" />
+                <div className='flex items-center justify-center gap-1 w-full md:w-auto'>
+                  <Users className="w-4 h-4 text-muted-foreground pt-[2px]" />
                   <span className="text-sm font-medium">Select Class</span>
                 </div>
                 <div className='w-full md:w-auto'>

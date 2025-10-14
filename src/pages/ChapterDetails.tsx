@@ -410,7 +410,7 @@ const ChapterDetails: React.FC = () => {
             className="max-w-fit flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
-            <span className="font-medium">Back to Subject</span>
+            <span className="font-medium">Back to Chapters</span>
           </Link>
           <div className="text-right">
             <div className="text-sm text-gray-500">Progress</div>

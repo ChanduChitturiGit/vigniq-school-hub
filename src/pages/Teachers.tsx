@@ -202,7 +202,7 @@ const Teachers: React.FC = () => {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={() => handleTeacherReactivate(teacher.teacher_id)} className="bg-orange-600 hover:bg-orange-700">
-                Confirm Active
+                Confirm
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -271,7 +271,7 @@ const Teachers: React.FC = () => {
           <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between"
             onClick={(e) => e.stopPropagation()} >
             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${teacher.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-              {teacher.is_active ? 'Active' : 'In Active'}
+              {teacher.is_active ? 'Active' : 'Inactive'}
             </span>
             {(userData?.role === 'admin' || userData?.role === 'superadmin') &&
               (teacher.is_active ? deleteModal(teacher) : reActiveModal(teacher))
@@ -314,7 +314,7 @@ const Teachers: React.FC = () => {
                 <TableCell>{teacher.phone_number}</TableCell>
                 <TableCell>
                   <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                     {teacher.is_active ? 'Active' : 'In Active'}
+                     {teacher.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </TableCell>
                 <TableCell>
@@ -368,7 +368,7 @@ const Teachers: React.FC = () => {
                   <SelectValue placeholder="Select a board" />
                 </SelectTrigger>
                 <SelectContent>
-                  {['Active', 'In Active'].map((val, index) => (
+                  {['Active', 'Inactive'].map((val, index) => (
                     <SelectItem key={index} value={val}>
                       {val}
                     </SelectItem>

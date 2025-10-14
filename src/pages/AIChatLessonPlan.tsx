@@ -173,7 +173,7 @@ const AIChatLessonPlan: React.FC = () => {
   const [firstMessage, setFirstMessage] = useState({
     id: '999',
     role: 'assistant',
-    content: `Hello! I'm your AI teaching assistant for Chapter ${chapterNumber}: ${chapterName}, Day ${dayCount}. I can help you with lesson planning, teaching strategies, and answer questions about the curriculum. How can I assist you today?`,
+    content: `Hello! How can I assist you today?`,
     created_at: new Date()
   });
   const [loader, setLoader] = useState(false);
@@ -414,7 +414,7 @@ const AIChatLessonPlan: React.FC = () => {
       <>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <button className="flex items-center gap-2 text-red-500 hover:text-red-600 transition-colors">
+            <button className="flex items-center gap-2 text-red-500 hover:text-red-600 transition-colors" title="Clear Chat">
               <RefreshCcw className="w-4 h-4" />
               {/* Reset Password */}
             </button>
