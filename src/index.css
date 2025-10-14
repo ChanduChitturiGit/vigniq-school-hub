@@ -113,3 +113,23 @@ All colors MUST be HSL.
   }
 }
 
+/* Utility to hide native scroll arrows / spinner controls and ensure consistent sizing */
+@layer utilities {
+  .no-scroll-arrows {
+    box-sizing: border-box;
+    /* Remove IE/Edge scrollbar */
+    -ms-overflow-style: none; /* IE and Edge */
+    /* Remove Firefox scrollbar */
+    scrollbar-width: none; /* Firefox */
+    resize: none;
+    overflow: auto;
+  }
+
+  /* Hide scrollbar entirely in WebKit browsers (Chrome, Edge, Safari) */
+  .no-scroll-arrows::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+}
+

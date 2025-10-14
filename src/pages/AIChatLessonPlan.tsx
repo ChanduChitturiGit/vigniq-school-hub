@@ -630,18 +630,18 @@ const AIChatLessonPlan: React.FC = () => {
 
                 {/* Input Area */}
                 <div className="flex-shrink-0 border-t px-6 py-4">
-                  <div className="flex items-center justify-center gap-2">
-                    <textarea
+                  <div className="flex items-center gap-2">
+                      <textarea
                       value={inputMessage}
                       onChange={(e) => setInputMessage(e.target.value)}
                       onKeyPress={handleKeyPress}
                       placeholder="Type your message here..."
-                      className="flex-1 resize-none rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[2.5rem]"
+                        className="flex-1 min-w-0 box-border resize-none rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[2.5rem] overflow-y-auto no-scroll-arrows"
                       rows={2}
                     />
                     <Button
                       onClick={handleSendMessage}
-                      className="bg-blue-600 hover:bg-blue-700 px-6 self-end"
+                        className="bg-blue-600 hover:bg-blue-700 px-6 self-end"
                       disabled={!inputMessage.trim()}
                     >
                       <Send className="w-4 h-4" />
