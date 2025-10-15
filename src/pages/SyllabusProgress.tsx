@@ -155,7 +155,7 @@ const SyllabusProgress: React.FC = () => {
                     <CardContent className="p-6">
                       <div className="flex flex-col items-center space-y-4">
                         <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center">
-                          <span className="text-2xl font-bold text-white">{cls.class_number + ' - ' + cls.class_section}</span>
+                          <span className="text-2xl font-bold text-white">{cls.class_number + cls.class_section}</span>
                         </div>
 
                         <div className="w-full space-y-2">

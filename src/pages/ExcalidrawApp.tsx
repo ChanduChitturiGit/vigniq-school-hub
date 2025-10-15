@@ -107,6 +107,20 @@ export default function ExcalidrawApp() {
             appState: safeAppState,
             files: currentScene.files || {},
           });
+
+          // Force a layout refresh after loading the scene while fullscreen.
+          // In some browsers Excalidraw UI may be mis-sized when the document
+          // enters fullscreen; nudging a resize and calling refresh/scroll helps.
+          requestAnimationFrame(() => {
+            try {
+              excalidrawApiRef.current?.refresh?.();
+              excalidrawApiRef.current?.scrollToContent?.();
+            } catch (e) {
+              // methods are optional on some builds; ignore failures
+            }
+            // dispatch a window resize to force any layout recalculations
+            window.dispatchEvent(new Event('resize'));
+          });
         }
 
         // setPages([...(scene && Object.values(scene))]);
@@ -415,13 +429,65 @@ export default function ExcalidrawApp() {
   };
 
   const addPage = () => {
-    //setPages((prev) => [...prev, []]);
-    setCurrentPage(Object.keys(slides).length);
+    // compute next index from slides length to avoid stale currentPage
+    const nextIndex = Object.keys(slides).length;
     setSlides((prev: any) => ({
       ...prev,
-      [currentPage + 1]: []
+      [nextIndex]: []
     }));
-    excalidrawApiRef.current.updateScene({ elements: [] });
+    setCurrentPage(nextIndex);
+    excalidrawApiRef.current?.updateScene({ elements: [] });
+  };
+
+  const removePage = (index: number | null = null) => {
+    const total = Object.keys(slides).length;
+    // do not allow removing the last remaining slide
+    if (total <= 1) return;
+
+    const removeIndex = index !== null ? index : currentPage;
+
+    // if out of bounds, do nothing
+    if (removeIndex < 0 || removeIndex >= total) return;
+
+    // Build a new slides object without the removed index and reindex to 0..n-2
+    const entries = Object.entries(slides)
+      .map(([k, v]) => v)
+      .filter((_, i) => i !== removeIndex);
+
+    const newSlides: any = {};
+    entries.forEach((val, idx) => {
+      newSlides[idx] = val;
+    });
+
+    setSlides(newSlides);
+
+    // determine new current page
+    let newPage = removeIndex === 0 ? 0 : removeIndex - 1;
+    if (newPage >= Object.keys(newSlides).length) {
+      newPage = Math.max(0, Object.keys(newSlides).length - 1);
+    }
+
+    setCurrentPage(newPage);
+
+    // update Excalidraw scene to the new page (or empty if none)
+    const scene = newSlides[newPage] || { elements: [], appState: {}, files: {} };
+    if (excalidrawApiRef.current) {
+      const safeAppState = {
+        ...(scene.appState || {}),
+        collaborators: new Map(),
+      };
+
+      excalidrawApiRef.current.updateScene({
+        elements: scene.elements || [],
+        appState: safeAppState,
+        files: scene.files || {},
+      });
+    }
+
+    // send updated slides via websocket so server/peers know about the deletion
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(newSlides));
+    }
   };
 
   const reorderObject = (obj: any) => {
@@ -550,9 +616,15 @@ export default function ExcalidrawApp() {
         <div className="absolute bottom-4 right-1/4 z-50  flex items-center gap-2 bg-gray-200 rounded-lg shadow px-3 py-1">
 
           {/* Remove page */}
-          {/* <Button size="sm" variant="outline" onClick={() => removePage(currentPage)}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => removePage()}
+            disabled={Object.keys(slides).length <= 1}
+            title={Object.keys(slides).length <= 1 ? 'Cannot remove the last page' : 'Remove current page'}
+          >
             <Minus className="w-4 h-4" />
-          </Button> */}
+          </Button>
 
           <Button
             size="sm"
