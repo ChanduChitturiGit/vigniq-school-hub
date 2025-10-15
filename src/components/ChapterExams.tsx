@@ -279,7 +279,8 @@ const ChapterExams: React.FC<ChapterExamsProps> = ({
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        // Grid: 1 column on small screens, 2 columns on md and up
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {!loading && exams.map((exam) => (
             <Card key={exam.exam_id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
@@ -301,10 +302,10 @@ const ChapterExams: React.FC<ChapterExamsProps> = ({
                             <Calendar className="w-4 h-4" />
                             {exam.exam_date + ' - ' + (exam.exam_session == 'm' ? 'Morning' : 'Afternoon')}
                           </div>
-                          <div className="flex items-center gap-1">
+                          {/* <div className="flex items-center gap-1">
                             <Clock className="w-4 h-4" />
                             {exam.session}
-                          </div>
+                          </div> */}
                           <div className="flex items-center gap-1">
                             <Users className="w-4 h-4" />
                             {exam.total_marks} marks
@@ -347,15 +348,15 @@ const ChapterExams: React.FC<ChapterExamsProps> = ({
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
                     <div>
                       <div className="text-sm text-gray-500">Total Marks</div>
-                      <div className="text-xl font-bold text-gray-900">{exam.total_marks}</div>
+                      <div className="text-xl font-bold text-gray-600">{exam.total_marks}</div>
                     </div>
                     <div>
                       <div className="text-sm text-gray-500">Pass Marks</div>
-                      <div className="text-xl font-bold text-gray-900">{exam.pass_marks}</div>
+                      <div className="text-xl font-bold text-gray-600">{exam.pass_marks}</div>
                     </div>
                     <div>
                       <div className="text-sm text-gray-500">Average Marks</div>
-                      <div className="text-xl font-bold text-gray-900">{exam.average_marks}</div>
+                      <div className="text-xl font-bold text-gray-600">{exam.average_marks}</div>
                     </div>
                     <div>
                       <div className="text-sm text-gray-500">Pass Rate</div>
@@ -388,7 +389,10 @@ const ChapterExams: React.FC<ChapterExamsProps> = ({
           ))}
           {
             loading && (
-              <Loader2 className="w-10 h-10 mx-auto text-blue animate-spin" />
+              // Make loader span full width of the grid
+              <div className="col-span-1 md:col-span-2 py-6">
+                <Loader2 className="w-10 h-10 mx-auto text-blue animate-spin" />
+              </div>
             )
           }
         </div>
