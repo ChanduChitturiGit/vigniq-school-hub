@@ -210,11 +210,20 @@ const TeacherDetails: React.FC = () => {
     }
   }
 
+
+
   //classes list api
   const getTeacherClasses = async () => {
     const classesData = await getClassesWithoutClassTeacher(userData.role == 'superadmin' ? schoolId : userData.school_id);
     if (classesData && classesData.classes) {
-      setTeacherClasses(classesData.classes);
+      setTeacherClasses(
+        [
+          ...classesData.classes,
+          ...(formData.class_assignment ? [formData.class_assignment] : [])
+        ]
+      );
+      console.log([ ...classesData.classes,
+          ...(formData.class_assignment ? [formData.class_assignment] : [])]);
     }
   }
 
@@ -228,6 +237,7 @@ const TeacherDetails: React.FC = () => {
     if (!isEditing) {
       setBreadCrumb();
     }
+    getTeacherClasses();
   }, [formData])
 
   useEffect(() => {
