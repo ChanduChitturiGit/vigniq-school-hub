@@ -15,6 +15,7 @@ import { jsPDF } from "jspdf";
 
 export default function ExcalidrawApp() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const lastSlideActionRef = useRef<{ type: 'add' | 'remove'; ts: number } | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(true);
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -54,6 +55,53 @@ export default function ExcalidrawApp() {
   const [currentPage, setCurrentPage] = useState(0);
 
   const [slides, setSlides] = useState<any>({});
+
+  // Simple slide-level history (optional, used to restore slides when undoing)
+  const [slideHistory, setSlideHistory] = useState<any[]>([]);
+  const [historyPos, setHistoryPos] = useState<number>(-1);
+
+  const pushHistory = () => {
+    try {
+      const snap = { slides: JSON.parse(JSON.stringify(slides)), currentPage };
+      const next = slideHistory.slice(0, historyPos + 1);
+      next.push(snap);
+      setSlideHistory(next);
+      setHistoryPos(next.length - 1);
+    } catch (e) {
+      console.error('pushHistory failed', e);
+    }
+  };
+
+  const restoreSnapshot = (snap: any) => {
+    if (!snap) return;
+    setSlides(snap.slides || {});
+    setCurrentPage(typeof snap.currentPage === 'number' ? snap.currentPage : 0);
+    const scene = snap.slides && snap.slides[snap.currentPage] ? snap.slides[snap.currentPage] : { elements: [], appState: {}, files: {} };
+    if (excalidrawApiRef.current) {
+      const safeAppState = { ...(scene.appState || {}), collaborators: new Map() };
+      excalidrawApiRef.current.updateScene({ elements: scene.elements || [], appState: safeAppState, files: scene.files || {} });
+    }
+  };
+
+  const undo = () => {
+    if (historyPos <= 0) return;
+    const prev = historyPos - 1;
+    const snap = slideHistory[prev];
+    if (snap) {
+      setHistoryPos(prev);
+      restoreSnapshot(snap);
+    }
+  };
+
+  const redo = () => {
+    if (historyPos >= slideHistory.length - 1) return;
+    const nextPos = historyPos + 1;
+    const snap = slideHistory[nextPos];
+    if (snap) {
+      setHistoryPos(nextPos);
+      restoreSnapshot(snap);
+    }
+  };
 
   // // check center-bottom stack
   // const x = Math.round(window.innerWidth * 0.5);
@@ -111,16 +159,16 @@ export default function ExcalidrawApp() {
           // Force a layout refresh after loading the scene while fullscreen.
           // In some browsers Excalidraw UI may be mis-sized when the document
           // enters fullscreen; nudging a resize and calling refresh/scroll helps.
-          requestAnimationFrame(() => {
-            try {
-              excalidrawApiRef.current?.refresh?.();
-              excalidrawApiRef.current?.scrollToContent?.();
-            } catch (e) {
-              // methods are optional on some builds; ignore failures
-            }
-            // dispatch a window resize to force any layout recalculations
-            window.dispatchEvent(new Event('resize'));
-          });
+          // requestAnimationFrame(() => {
+          //   try {
+          //     excalidrawApiRef.current?.refresh?.();
+          //     excalidrawApiRef.current?.scrollToContent?.();
+          //   } catch (e) {
+          //     // methods are optional on some builds; ignore failures
+          //   }
+          //   // dispatch a window resize to force any layout recalculations
+          //   window.dispatchEvent(new Event('resize'));
+          // });
         }
 
         // setPages([...(scene && Object.values(scene))]);
@@ -223,6 +271,42 @@ export default function ExcalidrawApp() {
   useEffect(() => {
     goFullScreen();
   }, []);
+
+  // Intercept toolbar Undo clicks when there was a recent slide remove action.
+  // Excalidraw may apply its internal undo which restores elements into the current canvas;
+  // we prevent that by stopping propagation when appropriate so only slide-level undo runs.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const onCaptureClick = (e: MouseEvent) => {
+      try {
+        const target = e.target as HTMLElement | null;
+        if (!target) return;
+
+        const btn = target.closest ? (target.closest('button') as HTMLElement | null) : null;
+        if (!btn) return;
+
+        const label = ((btn.getAttribute('title') || btn.getAttribute('aria-label') || btn.textContent) || '').toLowerCase();
+        // only intercept undo click shortly after a slide remove
+        const last = lastSlideActionRef.current;
+        if (last && last.type === 'remove' && Date.now() - last.ts < 2000 && label.includes('undo')) {
+          // stop Excalidraw's internal undo from running and instead run slide-level undo
+          e.stopPropagation();
+          e.preventDefault();
+          // run slide-level undo
+          undo();
+          // clear the flag
+          lastSlideActionRef.current = null;
+        }
+      } catch (err) {
+        // ignore
+      }
+    };
+
+    container.addEventListener('click', onCaptureClick, true); // useCapture=true
+    return () => container.removeEventListener('click', onCaptureClick, true);
+  }, [containerRef.current]);
 
 
   useEffect(() => {
@@ -443,6 +527,8 @@ export default function ExcalidrawApp() {
     const total = Object.keys(slides).length;
     // do not allow removing the last remaining slide
     if (total <= 1) return;
+    // mark last slide action (used to intercept Excalidraw toolbar undo)
+    lastSlideActionRef.current = { type: 'remove', ts: Date.now() };
 
     const removeIndex = index !== null ? index : currentPage;
 
