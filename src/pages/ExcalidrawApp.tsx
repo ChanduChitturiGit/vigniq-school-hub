@@ -159,16 +159,16 @@ export default function ExcalidrawApp() {
           // Force a layout refresh after loading the scene while fullscreen.
           // In some browsers Excalidraw UI may be mis-sized when the document
           // enters fullscreen; nudging a resize and calling refresh/scroll helps.
-          requestAnimationFrame(() => {
-            try {
-              excalidrawApiRef.current?.refresh?.();
-              excalidrawApiRef.current?.scrollToContent?.();
-            } catch (e) {
-              // methods are optional on some builds; ignore failures
-            }
-            // dispatch a window resize to force any layout recalculations
-            window.dispatchEvent(new Event('resize'));
-          });
+          // requestAnimationFrame(() => {
+          //   try {
+          //     excalidrawApiRef.current?.refresh?.();
+          //     excalidrawApiRef.current?.scrollToContent?.();
+          //   } catch (e) {
+          //     // methods are optional on some builds; ignore failures
+          //   }
+          //   // dispatch a window resize to force any layout recalculations
+          //   window.dispatchEvent(new Event('resize'));
+          // });
         }
 
         // setPages([...(scene && Object.values(scene))]);
