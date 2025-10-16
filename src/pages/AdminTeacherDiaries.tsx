@@ -304,7 +304,7 @@ const AdminTeacherDiaries: React.FC = () => {
                       View List
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-xl">
+                  <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle className="flex items-center gap-3">
                         <Clock className="w-5 h-5 text-orange-600" />

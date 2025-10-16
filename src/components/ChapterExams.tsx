@@ -27,6 +27,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { set } from 'date-fns';
 
 
 interface ChapterExamsProps {
@@ -75,6 +76,7 @@ const ChapterExams: React.FC<ChapterExamsProps> = ({
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const [examCategories, setExamCategories] = useState([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isDisabled, setIsDisabled] = useState(false);
 
   const [formData, setFormData] = useState({
     exam_category: '',
@@ -177,8 +179,10 @@ const ChapterExams: React.FC<ChapterExamsProps> = ({
 
   const handleCreateExam = async () => {
     try {
+      setIsDisabled(true);
       if (!formData.exam_category || !formData.exam_name || !formData.exam_date ||
         !formData.session || !formData.total_marks || !formData.pass_marks) {
+        setIsDisabled(false);
         showSnackbar({
           title: '⚠️ Warning',
           description: 'Please fill all fields',
@@ -207,6 +211,7 @@ const ChapterExams: React.FC<ChapterExamsProps> = ({
       // Uncomment when API is ready
       const response = await createExam(payload);
       if (response && response.message) {
+        setIsDisabled(false);
         showSnackbar({
           title: '✅ Success',
           description: response.message,
@@ -225,7 +230,9 @@ const ChapterExams: React.FC<ChapterExamsProps> = ({
       });
       setShowAddDialog(false);
       resetForm();
+      setIsDisabled(false);
     } catch (error) {
+      setIsDisabled(false);
       showSnackbar({
         title: '⛔ Error',
         description: 'Failed to create exam',
@@ -526,6 +533,7 @@ const ChapterExams: React.FC<ChapterExamsProps> = ({
             </Button>
             <Button
               onClick={handleCreateExam}
+              disabled={isDisabled}
               className="bg-blue-600 hover:bg-blue-700"
             >
               Create Exam
