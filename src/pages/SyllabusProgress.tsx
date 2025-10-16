@@ -4,7 +4,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs'
 import { Card, CardContent } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Search, User } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Progress } from '../components/ui/progress';
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import { SpinnerOverlay } from '../pages/SpinnerOverlay';
@@ -36,7 +36,9 @@ interface TeacherProgress {
 const SyllabusProgress: React.FC = () => {
   const navigate = useNavigate();
   const { showSnackbar } = useSnackbar();
-  const [activeTab, setActiveTab] = useState('class');
+  const [searchParams] = useSearchParams();
+  const tab = searchParams.get('tab') || '';
+  const [activeTab, setActiveTab] = useState(tab ? tab : 'class');
   const [searchQuery, setSearchQuery] = useState('');
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user") || '{}');
   const [loader, setLoader] = useState(true);

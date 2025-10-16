@@ -10,6 +10,7 @@ import { SpinnerOverlay } from '../pages/SpinnerOverlay';
 import { getSyllabusProgressByTeacherSubject } from '../services/syllabusProgress';
 
 interface ClassSubjectProgress {
+  board_name: any;
   subject_id(class_section_id: string, arg1: string, subject_id: any, subject_name: string, completion_percentage: number): void;
   class_section: string;
   class_number: string;
@@ -74,7 +75,7 @@ const TeacherSubjectsProgress: React.FC = () => {
       <MainLayout pageTitle="Teacher Class-wise Progress">
         <div className="space-y-6">
           <Link
-            to="/syllabus-progress"
+            to="/syllabus-progress?tab=teacher"
             className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
