@@ -458,6 +458,12 @@ const ChapterExams: React.FC<ChapterExamsProps> = ({
                         size: 'small',
                         fullWidth: true,
                       },
+                      popper: {
+                        // Render the popper into document.body so it is outside the Radix dialog DOM
+                        // and ensure it's clickable (pointer events) and above overlays.
+                        container: typeof document !== 'undefined' ? document.body : undefined,
+                        style: { zIndex: 9999, pointerEvents: 'auto' },
+                      },
                     }}
                   format="DD/MM/YYYY"
                 />
