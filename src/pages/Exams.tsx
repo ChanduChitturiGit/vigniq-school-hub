@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Calendar, Users, TrendingUp, Plus, Eye, Edit, Award, BookCheckIcon, Notebook, BookOpenCheck } from 'lucide-react';
+import { Calendar, Users, TrendingUp, Plus, Eye, Edit, Award, BookCheckIcon, Notebook, BookOpenCheck, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MainLayout from '@/components/Layout/MainLayout';
@@ -9,6 +9,7 @@ import { getExamsList } from '../services/exams'
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import { SpinnerOverlay } from '../pages/SpinnerOverlay';
 import { FILE } from 'dns';
+import { Input } from '@/components/ui/input';
 
 interface Exam {
   exam_id: string;
@@ -39,6 +40,7 @@ const Exams: React.FC = () => {
   const pathParams = `class=${className}&class_id=${classId}&section=${section}&subject=${subject}&subject_id=${subjectId}&school_board_id=${boardId}&school_id=${schoolId}`;
   const pathData = `${subjectId}?${pathParams}`
   const [loader, setLoader] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
 
   // Sample exam data with is_submitted  field
@@ -46,6 +48,16 @@ const Exams: React.FC = () => {
 
   const offlineExams = exams.filter(exam => exam.exam_type === 'offline');
   const onlineExams = exams.filter(exam => exam.exam_type === 'online');
+  
+  const filteredOfflineExams = offlineExams.filter(exam =>
+    (exam.exam_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (exam.exam_category || '').toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredOnlineExams = onlineExams.filter(exam =>
+    (exam.exam_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (exam.exam_category || '').toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleExamAction = (exam: Exam) => {
     if (exam.is_submitted) {
@@ -182,7 +194,7 @@ const Exams: React.FC = () => {
           </div> */}
 
           <Tabs defaultValue="offline" className="w-full">
-            <div className="flex flex-col md:flex-row  items-center justify-between">
+            <div className="flex flex-col md:flex-row  items-center justify-between gap-4 w-full">
               <TabsList className="grid w-full max-w-md grid-cols-2">
                 <TabsTrigger value="offline" className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -194,24 +206,36 @@ const Exams: React.FC = () => {
                   <span className="bg-gray-200 text-gray-600 px-2 py-1 rounded text-xs">Soon</span>
                 </TabsTrigger>
               </TabsList>
-              <Button
-                onClick={() => navigate(`/grades/exams/create-exam/${pathData}`)}
-                className="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add New Exam
-              </Button>
+              <div className="flex flex-col md:flex-row items-center gap-3 ml-auto w-full md:w-auto">
+                <div className="relative w-full md:w-64">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <Input
+                    placeholder="Search exams or categories..."
+                    value={searchQuery}
+                    onChange={(e: any) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+
+                <Button
+                  onClick={() => navigate(`/grades/exams/create-exam/${pathData}`)}
+                  className="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2 whitespace-nowrap"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add New Exam
+                </Button>
+              </div>
             </div>
 
             <TabsContent value="offline" className="mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {offlineExams.map(renderExamCard)}
+                {filteredOfflineExams.map(renderExamCard)}
               </div>
             </TabsContent>
 
             <TabsContent value="online" className="mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {onlineExams.map(renderExamCard)}
+                {filteredOnlineExams.map(renderExamCard)}
               </div>
             </TabsContent>
             {
