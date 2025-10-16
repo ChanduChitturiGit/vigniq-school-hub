@@ -91,7 +91,7 @@ class OfflineExamsService:
                 attendance__academic_year_id=academic_year_id,
                 attendance__date=exam_date,
                 attendance__is_holiday=False,
-                attendance__session=exam_session
+                attendance__session=exam_session.upper(),
             )
 
             attendance_mapping = {att.student_id: att.is_present for att in attendance}
