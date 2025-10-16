@@ -40,7 +40,8 @@ class TeacherDiaryService:
 
             # All teacher assignments for this academic year
             all_assignments = TeacherSubjectAssignment.objects.using(school_db_name).filter(
-                academic_year=academic_year_obj
+                academic_year=academic_year_obj,
+                teacher__is_active=True
             ).select_related("teacher", "school_class", "subject")
 
             # Group assignments per teacher
