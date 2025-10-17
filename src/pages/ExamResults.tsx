@@ -69,7 +69,15 @@ const ExamResults: React.FC = () => {
   const lowestScore = studentResults.length ? Math.min(...studentResults.map(s => Number(s.marks_obtained) || 0)) : 0;
 
   const handleMarksChange = (studentId, newMarks, max_marks) => {
-    const marks = Number(newMarks) || 0;
+    // Only allow integer values for marks
+    let marks = Math.round(Number(newMarks)) || 0;
+    // Prevent decimals in input
+    if (String(newMarks).includes('.') || /[^0-9]/.test(String(newMarks))) {
+      setErrorMessage('Decimals are not allowed. Please enter a whole number.');
+      setIsDisabled(true);
+      setFieldIndex(prev => [...prev, studentId]);
+      return;
+    }
     const percentage = Math.round((marks / examDetails.max_marks) * 100);
     const result = marks >= examDetails.pass_marks ? 'PASS' : 'FAIL';
 
@@ -83,7 +91,7 @@ const ExamResults: React.FC = () => {
       })
     );
 
-    if (Number(newMarks) > Number(max_marks)) {
+    if (marks > Number(max_marks)) {
       setIsDisabled(true);
       setErrorMessage(`Marks should not exceed ${max_marks}`);
       setFieldIndex(prev => [...prev, studentId]);
@@ -204,14 +212,14 @@ const ExamResults: React.FC = () => {
         "school_id": userData.school_id,
         "exam_id": Number(examId),
         "student_marks": studentResults.map((val) => {
-            // Priority: use explicit `marks` (edited value) if present -> else use marks_obtained -> if absent and no marks, send 0
-            const computedMarks = (val?.marks !== undefined && val?.marks !== null && val?.marks !== '') ? Number(val.marks) : (val?.marks_obtained !== undefined && val?.marks_obtained !== null && val?.marks_obtained !== '' ? Number(val.marks_obtained) : null);
-            return {
-              student_id: val.student_id,
-              student_name: val.student_name,
-              marks: computedMarks !== null ? computedMarks : (val.is_absent ? 0 : 0)
-            }
-          })
+          // Priority: use explicit `marks` (edited value) if present -> else use marks_obtained -> if absent and no marks, send 0
+          const computedMarks = (val?.marks !== undefined && val?.marks !== null && val?.marks !== '') ? Number(val.marks) : (val?.marks_obtained !== undefined && val?.marks_obtained !== null && val?.marks_obtained !== '' ? Number(val.marks_obtained) : null);
+          return {
+            student_id: val.student_id,
+            student_name: val.student_name,
+            marks: computedMarks !== null ? computedMarks : (val.is_absent ? 0 : 0)
+          }
+        })
       };
       const response = await submitMarks(payload);
       if (response && response.message) {
@@ -324,7 +332,7 @@ const ExamResults: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div
-                onClick={() => {navigate(-1)}}
+                onClick={() => { navigate(-1) }}
                 className="flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
               >
                 <ArrowLeft className="w-5 h-5" />
@@ -433,7 +441,7 @@ const ExamResults: React.FC = () => {
                       </div>
                       <div className='flex gap-1 items-center'>
                         <Calendar className="w-5 h-5" />
-                        {examDetails.exam_date+' '}
+                        {examDetails.exam_date + ' '}
                         -
                         {examDetails.exam_session == 'm' ? ' Morning' : ' Afternoon'}
                       </div>
@@ -475,41 +483,59 @@ const ExamResults: React.FC = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                            {/* If student is absent and per-row absent edit is not open, show '-' */}
-                            {student.is_absent && !absentEditIds.includes(student.student_id) ? (
+                            {/* Treat absent students with marks as present for editing */}
+                            {(isEditing && (Number(student.marks_obtained) > 0 || student.marks_obtained === 0)) || (isEditing && (!student.is_absent || absentEditIds.includes(student.student_id))) ? (
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <Input
+                                    type="number"
+                                    inputMode="numeric"
+                                    step="1"
+                                    pattern="[0-9]*"
+                                    value={
+                                      student.marks_obtained === undefined || student.marks_obtained === null || isNaN(Number(student.marks_obtained))
+                                        ? ''
+                                        : Math.round(Number(student.marks_obtained)).toString()
+                                    }
+                                    onChange={(e) => handleMarksChange(student.student_id, e.target.value, Number(examDetails.max_marks).toFixed(0))}
+                                    className={`w-20`}
+                                    min="0"
+                                    max={examDetails.max_marks}
+                                    autoFocus={index === 0}
+                                  />
+                                  <span className="text-sm text-gray-500">/ {Number(examDetails.max_marks).toFixed(0)}</span>
+                                </div>
+                                <div>
+                                  {isDisabled && (fieldndex.includes(student.student_id)) && (
+                                    <span className="text-xs text-red-600">{errorMessage}</span>
+                                  )}
+                                </div>
+                              </div>
+                            ) : student.is_absent && !absentEditIds.includes(student.student_id) && !(Number(student.marks_obtained) > 0 || student.marks_obtained === 0) ? (
                               <div className="flex items-center gap-2">
                                 <span>-</span>
                               </div>
                             ) : (
-                              /* Either not absent or absent edit opened */
-                              isEditing || absentEditIds.includes(student.student_id) ? (
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <Input
-                                      type="number"
-                                      value={(student.marks_obtained)}
-                                      onChange={(e) => handleMarksChange(student.student_id, e.target.value, Number(examDetails.max_marks).toFixed(0))}
-                                      className={`w-20`}
-                                      min="0"
-                                      max={examDetails.max_marks}
-                                      autoFocus={index === 0}
-                                    />
-                                    <span className="text-sm text-gray-500">/ {Number(examDetails.max_marks).toFixed(0)}</span>
-                                  </div>
-                                  <div>
-                                    {isDisabled && (fieldndex.includes(student.student_id)) && (
-                                      <span className="text-xs text-red-600">{errorMessage}</span>
-                                    )}
-                                  </div>
-                                </div>
-                              ) : (
-                                <span>{Number(student.marks_obtained)} / {Number(examDetails.max_marks).toFixed(0)}</span>
-                              )
+                              <span>{Number(student.marks_obtained)} / {Number(examDetails.max_marks).toFixed(0)}</span>
                             )}
                           </TableCell>
                           <TableCell>
-                            {/* Show '-' for absent students */}
-                            {student.is_absent ? (
+                            {/* Show percentage for absent students with marks, treat as present */}
+                            {student.is_absent && !absentEditIds.includes(student.student_id) && (Number(student.marks_obtained) > 0 || student.marks_obtained === 0) ? (
+                              <span className={student.percentage >= 80 ? 'text-green-600 font-medium' :
+                                student.percentage >= 60 ? 'text-blue-600 font-medium' :
+                                  student.percentage >= 40 ? 'text-yellow-600 font-medium' :
+                                    'text-red-600 font-medium'}>
+                                {Number(student.percentage).toFixed(2)}%
+                              </span>
+                            ) : student.is_absent && absentEditIds.includes(student.student_id) ? (
+                              <span className={student.percentage >= 80 ? 'text-green-600 font-medium' :
+                                student.percentage >= 60 ? 'text-blue-600 font-medium' :
+                                  student.percentage >= 40 ? 'text-yellow-600 font-medium' :
+                                    'text-red-600 font-medium'}>
+                                {Number(student.percentage).toFixed(2)}%
+                              </span>
+                            ) : student.is_absent ? (
                               <span>-</span>
                             ) : (
                               student.percentage && (
@@ -527,16 +553,30 @@ const ExamResults: React.FC = () => {
                           </TableCell>
                           <TableCell className="flex items-center gap-2">
                             {
-                              /* If student is marked absent and not editing that row, show 'Absent' with edit button */
+                              /* If student is marked absent and not editing that row, show result if marks present, else 'Absent' with edit button */
                               student.is_absent && !absentEditIds.includes(student.student_id) ? (
-                                <>
-                                  <span className={`px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-800`}>
-                                    Absent
-                                  </span>
-                                  <Button size="sm" variant="outline" onClick={() => openAbsentEdit(student)}>
-                                    Edit
-                                  </Button>
-                                </>
+                                Number(student.marks_obtained) > 0 || student.marks_obtained === 0 ? (
+                                  student.result ? (
+                                    <span className={`px-2 py-1 rounded text-xs font-medium ${student.result === 'PASS' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                      {student.result}
+                                    </span>
+                                  ) : (
+                                    <span>-</span>
+                                  )
+                                ) : (
+                                  <>
+                                    <span className={`px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-800`}>
+                                      Absent
+                                    </span>
+                                    {
+                                      isEditing && (
+                                        <Button size="sm" variant="outline" onClick={() => openAbsentEdit(student)}>
+                                          Edit
+                                        </Button>
+                                      )
+                                    }
+                                  </>
+                                )
                               ) : (
                                 /* If per-row absent edit is open, show input (handled in marks cell) and Cancel button */
                                 absentEditIds.includes(student.student_id) ? (
@@ -549,9 +589,13 @@ const ExamResults: React.FC = () => {
                                     ) : (
                                       <span>-</span>
                                     )}
-                                    <Button size="sm" variant="ghost" onClick={() => cancelAbsentEdit(student.student_id)}>
-                                      Cancel
-                                    </Button>
+                                    {
+                                      isEditing && (
+                                        <Button size="sm" variant="ghost" onClick={() => cancelAbsentEdit(student.student_id)}>
+                                          Cancel
+                                        </Button>
+                                      )
+                                    }
                                   </>
                                 ) : (
                                   /* Normal display for result when not absent */

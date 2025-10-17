@@ -298,39 +298,43 @@ const AdminTeacherDiaries: React.FC = () => {
                     <div className="text-xs text-muted-foreground mt-1">Awaiting diary submissions</div>
                   </div>
                 </div>
-                <Dialog open={isPendingDialogOpen} onOpenChange={setIsPendingDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="text-orange-600 border-orange-300">
-                      View List
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle className="flex items-center gap-3">
-                        <Clock className="w-5 h-5 text-orange-600" />
-                        <span>Pending Teachers</span>
-                      </DialogTitle>
-                      <DialogDescription className="text-sm text-muted-foreground mt-2">{pendingTeachers.length} teachers haven't submitted their diaries for {format(selectedDate.toDate(), 'EEEE, MMMM dd, yyyy')}</DialogDescription>
-                    </DialogHeader>
+                {
+                  ( kpiData?.pending_teachers > 0) && (
+                    <Dialog open={isPendingDialogOpen} onOpenChange={setIsPendingDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="text-orange-600 border-orange-300">
+                          View List
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle className="flex items-center gap-3">
+                            <Clock className="w-5 h-5 text-orange-600" />
+                            <span>Pending Teachers</span>
+                          </DialogTitle>
+                          <DialogDescription className="text-sm text-muted-foreground mt-2">{kpiData.pending_teachers == 1 ? `${kpiData.pending_teachers} teacher` : `${kpiData.pending_teachers} teachers`} haven't submitted their diaries for {format(selectedDate.toDate(), 'EEEE, MMMM dd, yyyy')}</DialogDescription>
+                        </DialogHeader>
 
-                    <div className="py-4 space-y-3">
-                      {kpiData?.pending_teacher_list && Object.keys(kpiData?.pending_teacher_list).map((t,index) => (
-                        <div key={index} className="flex items-center justify-between bg-muted/60 p-4 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-semibold">{t[0]}</div>
-                            <div>
-                              <div className="font-medium text-foreground">{t}</div>
-                              <div className="text-sm text-muted-foreground">Classes: {kpiData?.pending_teacher_list[t].join(",")}</div>
+                        <div className="py-4 space-y-3">
+                          {kpiData?.pending_teacher_list && Object.keys(kpiData?.pending_teacher_list).map((t, index) => (
+                            <div key={index} className="flex items-center justify-between bg-muted/60 p-4 rounded-lg">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-semibold">{t[0]}</div>
+                                <div>
+                                  <div className="font-medium text-foreground">{t}</div>
+                                  <div className="text-sm text-muted-foreground">Classes: {kpiData?.pending_teacher_list[t].join(",")}</div>
+                                </div>
+                              </div>
+                              <div>
+                                <span className="text-sm bg-orange-100 text-orange-700 px-3 py-1 rounded-full">Pending</span>
+                              </div>
                             </div>
-                          </div>
-                          <div>
-                            <span className="text-sm bg-orange-100 text-orange-700 px-3 py-1 rounded-full">Pending</span>
-                          </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                      </DialogContent>
+                    </Dialog>
+                  )
+                }
               </div>
             </CardContent>
           </Card>

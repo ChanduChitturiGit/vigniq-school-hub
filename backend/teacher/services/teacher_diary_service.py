@@ -129,12 +129,10 @@ class TeacherDiaryService:
             if datetime.strptime(date, "%Y-%m-%d").date() == datetime.today().date():
                 assignments = list(
                     TeacherSubjectAssignment.objects.using(school_db_name)
-                    .filter(school_class_id=class_section_id, academic_year=academic_year_obj)
+                    .filter(school_class_id=class_section_id, academic_year=academic_year_obj,teacher__is_active=True)
                     .select_related("teacher", "subject")
                 )
 
-                if not assignments:
-                    return JsonResponse({"data": [], "message": "No subject assignments found for this class section."}, status=200)
 
 
                 existing_diaries = TeacherDiary.objects.using(school_db_name).filter(
