@@ -257,7 +257,7 @@ const DayLessonPlan: React.FC = () => {
     heightLeft -= pageHeight;
   }
 
-  pdf.save("download.pdf");
+  pdf.save(`${subject}_Chapter_${chapterNumber}_Day_${day}_Lesson_Plan.pdf`);
 };
 
 
