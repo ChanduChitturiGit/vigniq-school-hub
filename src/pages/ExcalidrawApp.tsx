@@ -656,7 +656,7 @@ export default function ExcalidrawApp() {
                 type: "freedraw" as const,
                 customType: null,
                 lastActiveTool: null,
-                locked: true 
+                locked: false 
               },
             },
           }}
