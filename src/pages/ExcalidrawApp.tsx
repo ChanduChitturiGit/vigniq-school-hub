@@ -103,29 +103,7 @@ export default function ExcalidrawApp() {
     }
   };
 
-  // // check center-bottom stack
-  // const x = Math.round(window.innerWidth * 0.5);
-  // const y = window.innerHeight - 6; // 6px above bottom, adjust if needed
-  // console.log('point', x, y);
-  // document.elementsFromPoint(x, y).forEach((el, i) => {
-  //   console.log(i, el.tagName, el.className, getComputedStyle(el).position, getComputedStyle(el).backgroundColor);
-  // });
 
-//   useEffect(() => {
-//     const handleResize = () => {
-//       excalidrawRef.current?.refresh?.(); // some builds support refresh()
-//       excalidrawRef.current?.scrollToContent?.(); // force redraw
-//     };
-
-//     window.addEventListener("resize", handleResize);
-//     handleResize(); // trigger once on mount
-
-//     return () => window.removeEventListener("resize", handleResize);
-//   }, []);
-
-//   useEffect(() => {
-//   setTimeout(() => window.dispatchEvent(new Event("resize")), 100);
-// }, []);
 
 
 
@@ -156,19 +134,16 @@ export default function ExcalidrawApp() {
             files: currentScene.files || {},
           });
 
-          // Force a layout refresh after loading the scene while fullscreen.
-          // In some browsers Excalidraw UI may be mis-sized when the document
-          // enters fullscreen; nudging a resize and calling refresh/scroll helps.
-          // requestAnimationFrame(() => {
-          //   try {
-          //     excalidrawApiRef.current?.refresh?.();
-          //     excalidrawApiRef.current?.scrollToContent?.();
-          //   } catch (e) {
-          //     // methods are optional on some builds; ignore failures
-          //   }
-          //   // dispatch a window resize to force any layout recalculations
-          //   window.dispatchEvent(new Event('resize'));
-          // });
+
+          setTimeout(() => {
+            try {
+              excalidrawApiRef.current?.refresh?.();
+            } catch (e) {
+              // ignore
+            }
+            window.dispatchEvent(new Event('resize'));
+          }, 100);
+
         }
 
         // setPages([...(scene && Object.values(scene))]);
@@ -422,53 +397,53 @@ export default function ExcalidrawApp() {
 
   // Download as PDF
   const handleDownloadPDF = async () => {
-  if (!excalidrawApiRef.current) return;
+    if (!excalidrawApiRef.current) return;
 
-  const pdf = new jsPDF("l", "pt"); // landscape, points
+    const pdf = new jsPDF("l", "pt"); // landscape, points
 
-  const slideEntries = Object.entries(slides);
+    const slideEntries = Object.entries(slides);
 
-  for (let i = 0; i < slideEntries.length; i++) {
-    const [pageIndex, scene] = slideEntries[i] as [string, any];
-    if (!scene) continue;
+    for (let i = 0; i < slideEntries.length; i++) {
+      const [pageIndex, scene] = slideEntries[i] as [string, any];
+      if (!scene) continue;
 
-    const safeAppState = {
-      ...(scene.appState || {}),
-      collaborators: new Map(),
-    };
+      const safeAppState = {
+        ...(scene.appState || {}),
+        collaborators: new Map(),
+      };
 
-    // ✅ Remove deleted/undone elements
-    const filteredElements = ((scene.elements || []) as any[]).filter(
-      (el: any) => !el.isDeleted
-    );
+      // ✅ Remove deleted/undone elements
+      const filteredElements = ((scene.elements || []) as any[]).filter(
+        (el: any) => !el.isDeleted
+      );
 
-    // Render canvas for this slide
-    const canvas = await exportToCanvas({
-      elements: filteredElements,
-      appState: safeAppState,
-      files: (scene.files || {}) as any,
-    });
+      // Render canvas for this slide
+      const canvas = await exportToCanvas({
+        elements: filteredElements,
+        appState: safeAppState,
+        files: (scene.files || {}) as any,
+      });
 
-    const imageData = canvas.toDataURL("image/png");
+      const imageData = canvas.toDataURL("image/png");
 
-    const pageWidth = canvas.width;
-    const pageHeight = canvas.height;
+      const pageWidth = canvas.width;
+      const pageHeight = canvas.height;
 
-    if (i === 0) {
-      pdf.deletePage(1); // remove the auto-added blank page
-      pdf.addPage([pageWidth, pageHeight], "l");
-    } else {
-      pdf.addPage([pageWidth, pageHeight], "l");
+      if (i === 0) {
+        pdf.deletePage(1); // remove the auto-added blank page
+        pdf.addPage([pageWidth, pageHeight], "l");
+      } else {
+        pdf.addPage([pageWidth, pageHeight], "l");
+      }
+
+      pdf.setPage(i + 1);
+      pdf.addImage(imageData, "PNG", 0, 0, pageWidth, pageHeight);
     }
 
-    pdf.setPage(i + 1);
-    pdf.addImage(imageData, "PNG", 0, 0, pageWidth, pageHeight);
-  }
-
-  pdf.save("slides.pdf");
-  exitFullScreen();
-  setIsFullscreen(false);
-};
+    pdf.save("slides.pdf");
+    exitFullScreen();
+    setIsFullscreen(false);
+  };
 
 
 
@@ -652,11 +627,11 @@ export default function ExcalidrawApp() {
           onChange={handleSceneChange}
           initialData={{
             appState: {
-              activeTool: { 
+              activeTool: {
                 type: "freedraw" as const,
                 customType: null,
                 lastActiveTool: null,
-                locked: false 
+                locked: true
               },
             },
           }}
