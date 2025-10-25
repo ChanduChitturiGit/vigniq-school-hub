@@ -132,6 +132,11 @@ class TeacherDiaryActionView(APIView):
     """
     View to handle teacher diary-related actions.
     """
+
+    def get_permissions(self):
+        if self.kwargs.get('action') in ['getDiariesForStudent']:
+            return [IsAuthenticated()]
+        return [IsAuthenticated(), IsSuperAdminOrAdminOrTeacher()]
     permission_classes = [IsAuthenticated, IsSuperAdminOrAdminOrTeacher]
 
     def get(self, request, action=None):
@@ -141,6 +146,8 @@ class TeacherDiaryActionView(APIView):
             return TeacherDiaryService(request).get_diary_by_class_section_and_date()
         elif action == "getTeacherDiaryByTeacherAndDate":
             return TeacherDiaryService(request).get_diary_by_teacher_and_date()
+        elif action == "getDiariesForStudent":
+            return TeacherDiaryService(request).get_diaries_for_student()
         return Response({"error": "Invalid GET action"}, status=status.HTTP_400_BAD_REQUEST)
     
     def post(self, request, action=None):
