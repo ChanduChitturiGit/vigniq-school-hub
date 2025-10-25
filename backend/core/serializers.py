@@ -30,8 +30,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         # Check active status before authenticating
         if not user_obj.is_active:
             raise AuthenticationFailed("Your account is inactive. Contact admin.")
-        if user_obj.role and user_obj.role_id ==4:  # Student
-            raise AuthenticationFailed("Students features are under development.")
+        # if user_obj.role and user_obj.role_id ==4:  # Student
+        #     raise AuthenticationFailed("Students features are under development.")
 
         # Now authenticate credentials
         user = authenticate(
