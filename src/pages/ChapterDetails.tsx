@@ -31,7 +31,7 @@ import {
   FileCheck,
   Trash2
 } from 'lucide-react';
-import { deleteSubTopicById,deletePrerequisiteById, saveTopicByLesson, editTopicByLesson, savePrerequisite, editPrerequisiteByLesson, getChapterDetailsById } from '../services/grades'
+import { deleteSubTopicById, deletePrerequisiteById, saveTopicByLesson, editTopicByLesson, savePrerequisite, editPrerequisiteByLesson, getChapterDetailsById } from '../services/grades'
 import { useSnackbar } from "../components/snackbar/SnackbarContext";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -47,6 +47,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '../components/ui/alert-dialog';
+import { set } from 'date-fns';
 
 
 interface Topic {
@@ -67,7 +68,7 @@ interface LessonPlanDay {
   status: string;
 }
 
-type LessonPlan = LessonPlanDay[]; 
+type LessonPlan = LessonPlanDay[];
 
 const ChapterDetails: React.FC = () => {
   const { showSnackbar } = useSnackbar();
@@ -97,6 +98,7 @@ const ChapterDetails: React.FC = () => {
   const [newTopicTitle, setNewTopicTitle] = useState('');
   const [newPrerequisiteTitle, setNewPrerequisiteTitle] = useState('');
   const [newPrerequisiteExplanation, setNewPrerequisiteExplanation] = useState('');
+  const [isStatus, setIsStatus] = useState(false);
 
   const breadcrumbItems = [
     { label: 'Grades', path: '/grades' },
@@ -142,6 +144,11 @@ const ChapterDetails: React.FC = () => {
         setPrerequisites(response.data.prerequisites);
         setLessonPlan(response.data.lesson_plan_days);
         setProgress(response.data.progress);
+        setIsStatus(
+          Array.isArray(response?.data?.lesson_plan_days) &&
+          response.data.lesson_plan_days.every(val => val.status == 'completed')
+        );
+
       }
     } catch (error) {
       showSnackbar({
@@ -151,6 +158,10 @@ const ChapterDetails: React.FC = () => {
       });
     }
   }
+
+  useEffect(()=>{
+    console.log("isStatus",isStatus);
+  },[isStatus])
 
 
   //save topic by lesson
@@ -374,7 +385,7 @@ const ChapterDetails: React.FC = () => {
   //handlePrerequisteDelete
   const handlePrerequisteDelete = async (id: number) => {
     try {
-      const response = await deletePrerequisiteById({ "prerequisite_id" : id, chapter_id: chapterId });
+      const response = await deletePrerequisiteById({ "prerequisite_id": id, chapter_id: chapterId });
       if (response && response.message) {
         getGradesData();
         showSnackbar({
@@ -433,7 +444,7 @@ const ChapterDetails: React.FC = () => {
 
         {/* Tabs */}
         <Tabs defaultValue={tab && tab.length > 0 ? tab : `topics`} className="space-y-6">
-          <TabsList className="grid md:w-[80%] xl:w-[50%] grid-cols-4 bg-gray-100">
+          <TabsList className="grid md:w-[80%] xl:w-[60%] grid-cols-4 bg-gray-100">
             <TabsTrigger value="topics" className="flex items-center gap-1 md:gap-2">
               <BookOpen className="w-4 h-4" />
               <span className='hidden md:block'>Topics</span>
@@ -617,31 +628,27 @@ const ChapterDetails: React.FC = () => {
                 <h2 className="text-2xl font-bold text-gray-900">Lesson Plan</h2>
                 <p className="text-gray-600">Create and manage lesson plans for this chapter</p>
               </div>
-              <div className='flex flex-col md:flex-row gap-2'>
-                {lessonPlan && lessonPlan.length > 0 ? (
-                  <Link to={`/grades/syllabus/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`}>
-                    <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
-                      <RefreshCw className="w-4 h-4" />
-                      Re-generate Lesson Plan
-                    </Button>
-                  </Link>
-                ) : (
-                  <Link to={`/grades/syllabus/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`}>
-                    <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
-                      <Plus className="w-4 h-4" />
-                      Generate Lesson Plan
-                    </Button>
-                  </Link>
-                )}
-                {/* <Link
-                  to={`/grades/syllabus/lesson-plan/customize/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapterName=${encodeURIComponent(chapterName)}&${pathData}`}
-                >
-                  <Button className="bg-purple-600 hover:bg-purple-700">
-                    <FileCheck className="w-4 h-4 mr-2" />
-                    Customize Lesson Plan
-                  </Button>
-                </Link> */}
-              </div>
+              {
+                !isStatus && (
+                  <div className='flex flex-col md:flex-row gap-2'>
+                    {lessonPlan && lessonPlan.length > 0 ? (
+                      <Link to={`/grades/syllabus/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`}>
+                        <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
+                          <RefreshCw className="w-4 h-4" />
+                          Re-generate Lesson Plan
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Link to={`/grades/syllabus/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`}>
+                        <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
+                          <Plus className="w-4 h-4" />
+                          Generate Lesson Plan
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                )
+              }
             </div>
 
             {lessonPlan && lessonPlan.length > 0 ? (
@@ -912,7 +919,7 @@ const ChapterDetails: React.FC = () => {
               </Accordion>
             </div>
           </TabsContent>
- 
+
           <TabsContent value="exams" className="space-y-6">
             <ChapterExams
               chapterId={chapterId || ''}

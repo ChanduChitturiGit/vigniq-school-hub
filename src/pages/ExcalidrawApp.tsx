@@ -19,6 +19,30 @@ export default function ExcalidrawApp() {
   const [isFullscreen, setIsFullscreen] = useState(true);
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(320); // px, initial width
+  const minSidebarWidth = 320; // px
+  const maxSidebarWidth = Math.floor(window.innerWidth * 0.7); // 60% of screen
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const isDraggingRef = useRef(false);
+  // Sidebar drag logic
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDraggingRef.current) return;
+      let newWidth = window.innerWidth - e.clientX;
+  newWidth = Math.max(minSidebarWidth, Math.min(newWidth, Math.floor(window.innerWidth * 0.7)));
+      setSidebarWidth(newWidth);
+    };
+    const handleMouseUp = () => {
+      isDraggingRef.current = false;
+      document.body.style.cursor = '';
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, []);
   const baseurl = environment.baseurl;
   const { showSnackbar } = useSnackbar();
   const { chapterId, day } = useParams();
@@ -440,7 +464,7 @@ export default function ExcalidrawApp() {
       pdf.addImage(imageData, "PNG", 0, 0, pageWidth, pageHeight);
     }
 
-    pdf.save("slides.pdf");
+    pdf.save(`${subject}_Chapter_${chapterNumber}_Day_${lessonData?.day}_notes.pdf`);
     exitFullScreen();
     setIsFullscreen(false);
   };
@@ -729,11 +753,51 @@ export default function ExcalidrawApp() {
 
         {/* Overlay Left Sidebar */}
         <div
-          className={`absolute right-0 top-0 h-full z-30 bg-background/95 backdrop-blur-sm border-l border-border shadow-lg flex flex-col transition-transform duration-300 ease-in-out 
-${isSidebarOpen ? "translate-x-0 w-80" : "translate-x-full w-0"}
-
-            }`}
+          ref={sidebarRef}
+          style={{
+            position: 'absolute',
+            right: 0,
+            top: 0,
+            height: '100%',
+            zIndex: 30,
+            background: 'white',
+            backdropFilter: 'blur(4px)',
+            borderLeft: '1px solid var(--border)',
+            boxShadow: '0 0 10px rgba(0,0,0,0.08)',
+            display: 'flex',
+            flexDirection: 'column',
+            transition: 'transform 0.3s ease-in-out',
+            width: isSidebarOpen ? sidebarWidth : 0,
+            transform: isSidebarOpen ? 'translateX(0)' : 'translateX(100%)',
+            overflow: 'hidden',
+            minWidth: isSidebarOpen ? minSidebarWidth : 0,
+            maxWidth: isSidebarOpen ? Math.floor(window.innerWidth * 0.7) : 0,
+          }}
         >
+          {/* Drag handle */}
+          {isSidebarOpen && (
+            <div
+              style={{
+                position: 'absolute',
+                left: '-6px',
+                top: 0,
+                width: '12px',
+                height: '100%',
+                cursor: 'ew-resize',
+                zIndex: 100,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              onMouseDown={(e) => {
+                isDraggingRef.current = true;
+                document.body.style.cursor = 'ew-resize';
+                e.preventDefault();
+              }}
+            >
+              <div style={{ width: '4px', height: '40px', background: '#ccc', borderRadius: '2px' }} />
+            </div>
+          )}
           {/* Header */}
           <div className="p-4 border-b border-border">
             <div className="w-full flex items-center justify-start my-3">
