@@ -93,8 +93,10 @@ class SubjectActionView(APIView):
 
 class OfflineExamActionView(APIView):
     """Offline Exam Management"""
-
-    permission_classes = [IsAuthenticated, IsSuperAdminOrAdminOrTeacher]
+    def get_permissions(self):
+        if self.kwargs.get('action') in ['getExamsForStudent']:
+            return [IsAuthenticated()]
+        return [IsAuthenticated(), IsSuperAdminOrAdminOrTeacher()]
 
     def get(self, request, action=None):
 
@@ -106,6 +108,8 @@ class OfflineExamActionView(APIView):
             return OfflineExamsService(request).get_exam_details_by_id()
         elif action == "getExamsList":
             return OfflineExamsService(request).get_exams_list()
+        elif action == "getExamsForStudent":
+            return OfflineExamsService(request).get_exams_for_student()
         return Response({"error": "Invalid GET action"}, status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request, action=None):
