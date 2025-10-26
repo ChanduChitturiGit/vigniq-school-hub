@@ -19,6 +19,30 @@ export default function ExcalidrawApp() {
   const [isFullscreen, setIsFullscreen] = useState(true);
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(320); // px, initial width
+  const minSidebarWidth = 320; // px
+  const maxSidebarWidth = Math.floor(window.innerWidth * 0.7); // 60% of screen
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const isDraggingRef = useRef(false);
+  // Sidebar drag logic
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDraggingRef.current) return;
+      let newWidth = window.innerWidth - e.clientX;
+  newWidth = Math.max(minSidebarWidth, Math.min(newWidth, Math.floor(window.innerWidth * 0.7)));
+      setSidebarWidth(newWidth);
+    };
+    const handleMouseUp = () => {
+      isDraggingRef.current = false;
+      document.body.style.cursor = '';
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, []);
   const baseurl = environment.baseurl;
   const { showSnackbar } = useSnackbar();
   const { chapterId, day } = useParams();
@@ -103,29 +127,7 @@ export default function ExcalidrawApp() {
     }
   };
 
-  // // check center-bottom stack
-  // const x = Math.round(window.innerWidth * 0.5);
-  // const y = window.innerHeight - 6; // 6px above bottom, adjust if needed
-  // console.log('point', x, y);
-  // document.elementsFromPoint(x, y).forEach((el, i) => {
-  //   console.log(i, el.tagName, el.className, getComputedStyle(el).position, getComputedStyle(el).backgroundColor);
-  // });
 
-//   useEffect(() => {
-//     const handleResize = () => {
-//       excalidrawRef.current?.refresh?.(); // some builds support refresh()
-//       excalidrawRef.current?.scrollToContent?.(); // force redraw
-//     };
-
-//     window.addEventListener("resize", handleResize);
-//     handleResize(); // trigger once on mount
-
-//     return () => window.removeEventListener("resize", handleResize);
-//   }, []);
-
-//   useEffect(() => {
-//   setTimeout(() => window.dispatchEvent(new Event("resize")), 100);
-// }, []);
 
 
 
@@ -156,19 +158,16 @@ export default function ExcalidrawApp() {
             files: currentScene.files || {},
           });
 
-          // Force a layout refresh after loading the scene while fullscreen.
-          // In some browsers Excalidraw UI may be mis-sized when the document
-          // enters fullscreen; nudging a resize and calling refresh/scroll helps.
-          // requestAnimationFrame(() => {
-          //   try {
-          //     excalidrawApiRef.current?.refresh?.();
-          //     excalidrawApiRef.current?.scrollToContent?.();
-          //   } catch (e) {
-          //     // methods are optional on some builds; ignore failures
-          //   }
-          //   // dispatch a window resize to force any layout recalculations
-          //   window.dispatchEvent(new Event('resize'));
-          // });
+
+          setTimeout(() => {
+            try {
+              excalidrawApiRef.current?.refresh?.();
+            } catch (e) {
+              // ignore
+            }
+            window.dispatchEvent(new Event('resize'));
+          }, 100);
+
         }
 
         // setPages([...(scene && Object.values(scene))]);
@@ -422,53 +421,53 @@ export default function ExcalidrawApp() {
 
   // Download as PDF
   const handleDownloadPDF = async () => {
-  if (!excalidrawApiRef.current) return;
+    if (!excalidrawApiRef.current) return;
 
-  const pdf = new jsPDF("l", "pt"); // landscape, points
+    const pdf = new jsPDF("l", "pt"); // landscape, points
 
-  const slideEntries = Object.entries(slides);
+    const slideEntries = Object.entries(slides);
 
-  for (let i = 0; i < slideEntries.length; i++) {
-    const [pageIndex, scene] = slideEntries[i] as [string, any];
-    if (!scene) continue;
+    for (let i = 0; i < slideEntries.length; i++) {
+      const [pageIndex, scene] = slideEntries[i] as [string, any];
+      if (!scene) continue;
 
-    const safeAppState = {
-      ...(scene.appState || {}),
-      collaborators: new Map(),
-    };
+      const safeAppState = {
+        ...(scene.appState || {}),
+        collaborators: new Map(),
+      };
 
-    // ✅ Remove deleted/undone elements
-    const filteredElements = ((scene.elements || []) as any[]).filter(
-      (el: any) => !el.isDeleted
-    );
+      // ✅ Remove deleted/undone elements
+      const filteredElements = ((scene.elements || []) as any[]).filter(
+        (el: any) => !el.isDeleted
+      );
 
-    // Render canvas for this slide
-    const canvas = await exportToCanvas({
-      elements: filteredElements,
-      appState: safeAppState,
-      files: (scene.files || {}) as any,
-    });
+      // Render canvas for this slide
+      const canvas = await exportToCanvas({
+        elements: filteredElements,
+        appState: safeAppState,
+        files: (scene.files || {}) as any,
+      });
 
-    const imageData = canvas.toDataURL("image/png");
+      const imageData = canvas.toDataURL("image/png");
 
-    const pageWidth = canvas.width;
-    const pageHeight = canvas.height;
+      const pageWidth = canvas.width;
+      const pageHeight = canvas.height;
 
-    if (i === 0) {
-      pdf.deletePage(1); // remove the auto-added blank page
-      pdf.addPage([pageWidth, pageHeight], "l");
-    } else {
-      pdf.addPage([pageWidth, pageHeight], "l");
+      if (i === 0) {
+        pdf.deletePage(1); // remove the auto-added blank page
+        pdf.addPage([pageWidth, pageHeight], "l");
+      } else {
+        pdf.addPage([pageWidth, pageHeight], "l");
+      }
+
+      pdf.setPage(i + 1);
+      pdf.addImage(imageData, "PNG", 0, 0, pageWidth, pageHeight);
     }
 
-    pdf.setPage(i + 1);
-    pdf.addImage(imageData, "PNG", 0, 0, pageWidth, pageHeight);
-  }
-
-  pdf.save("slides.pdf");
-  exitFullScreen();
-  setIsFullscreen(false);
-};
+    pdf.save(`${subject}_Chapter_${chapterNumber}_Day_${lessonData?.day}_notes.pdf`);
+    exitFullScreen();
+    setIsFullscreen(false);
+  };
 
 
 
@@ -652,11 +651,11 @@ export default function ExcalidrawApp() {
           onChange={handleSceneChange}
           initialData={{
             appState: {
-              activeTool: { 
+              activeTool: {
                 type: "freedraw" as const,
                 customType: null,
                 lastActiveTool: null,
-                locked: false 
+                locked: true
               },
             },
           }}
@@ -754,11 +753,51 @@ export default function ExcalidrawApp() {
 
         {/* Overlay Left Sidebar */}
         <div
-          className={`absolute right-0 top-0 h-full z-30 bg-background/95 backdrop-blur-sm border-l border-border shadow-lg flex flex-col transition-transform duration-300 ease-in-out 
-${isSidebarOpen ? "translate-x-0 w-80" : "translate-x-full w-0"}
-
-            }`}
+          ref={sidebarRef}
+          style={{
+            position: 'absolute',
+            right: 0,
+            top: 0,
+            height: '100%',
+            zIndex: 30,
+            background: 'white',
+            backdropFilter: 'blur(4px)',
+            borderLeft: '1px solid var(--border)',
+            boxShadow: '0 0 10px rgba(0,0,0,0.08)',
+            display: 'flex',
+            flexDirection: 'column',
+            transition: 'transform 0.3s ease-in-out',
+            width: isSidebarOpen ? sidebarWidth : 0,
+            transform: isSidebarOpen ? 'translateX(0)' : 'translateX(100%)',
+            overflow: 'hidden',
+            minWidth: isSidebarOpen ? minSidebarWidth : 0,
+            maxWidth: isSidebarOpen ? Math.floor(window.innerWidth * 0.7) : 0,
+          }}
         >
+          {/* Drag handle */}
+          {isSidebarOpen && (
+            <div
+              style={{
+                position: 'absolute',
+                left: '-6px',
+                top: 0,
+                width: '12px',
+                height: '100%',
+                cursor: 'ew-resize',
+                zIndex: 100,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              onMouseDown={(e) => {
+                isDraggingRef.current = true;
+                document.body.style.cursor = 'ew-resize';
+                e.preventDefault();
+              }}
+            >
+              <div style={{ width: '4px', height: '40px', background: '#ccc', borderRadius: '2px' }} />
+            </div>
+          )}
           {/* Header */}
           <div className="p-4 border-b border-border">
             <div className="w-full flex items-center justify-start my-3">

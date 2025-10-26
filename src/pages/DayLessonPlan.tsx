@@ -257,7 +257,7 @@ const DayLessonPlan: React.FC = () => {
     heightLeft -= pageHeight;
   }
 
-  pdf.save(`${subject}_Chapter_${chapterNumber}_Day_${day}_Lesson_Plan.pdf`);
+  pdf.save(`${subject}_Chapter_${chapterNumber}_Day_${lessonData?.day}_Lesson_Plan.pdf`);
 };
 
 
@@ -317,7 +317,7 @@ const DayLessonPlan: React.FC = () => {
 
   if (!lessonData) {
     return (
-      <MainLayout pageTitle={`Chapter ${chapterNumber}: ${chapterName} - Day ${day}`}>
+      <MainLayout pageTitle={`Chapter ${chapterNumber}: ${chapterName} - Day ${lessonData?.day}`}>
         <div className="flex items-center justify-center h-64">
           <div className="text-lg text-gray-500">Loading lesson plan...</div>
         </div>
