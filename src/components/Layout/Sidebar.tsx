@@ -170,6 +170,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
       'student': [
         { path: '/grades', icon: Award, label: 'Subjects', roles: ['student'] },
         { path: '/attendance', icon: ClipboardCheck, label: 'Attendance', roles: ['student'] },
+        { path: '/student-teacher-diaries', icon: Notebook, label: 'Teacher-Diaries', roles: ['student'] },
         { path: '/profile', icon: User, label: 'My Profile', roles: ['student'] },
         { path: '/view-ebooks', icon: BookOpen, label: 'E-Books', roles: ['student'] }
       ]

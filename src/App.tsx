@@ -58,6 +58,7 @@ import SubjectChaptersProgress from './pages/SubjectChaptersProgress';
 import TeacherSubjectsProgress from './pages/TeacherSubjectsProgress';
 import GradesStudent from './pages/GradesStudent';
 import { AttendanceView } from './pages/AttendanceView';
+import { TeacherDiariesView } from './pages/TeacherDiariesView';
 
 function App() {
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user") || '{}');
@@ -282,6 +283,7 @@ function App() {
 
           <Route path="/teacher-diaries" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDiaries /></ProtectedRoute>} />
           <Route path="/admin-teacher-diaries" element={<ProtectedRoute allowedRoles={['admin']}><AdminTeacherDiaries /></ProtectedRoute>} />
+          <Route path="/student-teacher-diaries" element={<ProtectedRoute allowedRoles={['student']}><TeacherDiariesView /></ProtectedRoute>} />
           <Route path="/syllabus-progress" element={<ProtectedRoute allowedRoles={['admin']}><SyllabusProgress /></ProtectedRoute>} />
           <Route path="/syllabus-progress/class/:classId" element={<ProtectedRoute allowedRoles={['admin']}><ClassSubjectsProgress /></ProtectedRoute>} />
           <Route path="/syllabus-progress/class/:classId/subject/:subjectId" element={<ProtectedRoute allowedRoles={['admin']}><SubjectChaptersProgress /></ProtectedRoute>} />

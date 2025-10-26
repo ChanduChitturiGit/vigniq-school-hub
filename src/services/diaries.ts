@@ -35,3 +35,12 @@ export const markDiaryAsReviewed = async (data : any) => {
   const response = await api.post(baseurl+suburl+'/markDiaryAsReviewed',data);
   return response.data;
 }
+
+
+//Student Diary APIs
+
+//getDiariesForStudent
+export const getDiariesForStudent = async (data : any) => {
+  const response = await api.get(baseurl+suburl+'/getDiariesForStudent',{params : data});
+  return response.data;
+}
