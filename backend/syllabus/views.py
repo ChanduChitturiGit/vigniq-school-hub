@@ -39,7 +39,14 @@ class SyllabusView(APIView):
     """View for managing syllabus."""
 
     def get_permissions(self):
-        if self.kwargs.get('action') in ['getChaptersTopicsBySubject', 'getChaptersProgressBySubject', 'getSubjectsByStudentId']:
+        if self.kwargs.get('action') in [
+            'getChaptersTopicsBySubject',
+            'getChaptersProgressBySubject',
+            'getSubjectsByStudentId',
+            'getSyllabusBySubject',
+            'getChapterDetailsById',
+            'getLessonDayPlan'
+        ]:
             return [IsAuthenticated()]
         return [IsAuthenticated(), IsSuperAdminOrAdminOrTeacher()]
 

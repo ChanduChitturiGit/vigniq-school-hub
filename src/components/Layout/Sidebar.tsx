@@ -168,6 +168,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
         { path: '/view-ebooks', icon: BookOpen, label: 'E-Books', roles: ['teacher'] }
       ],
       'student': [
+        { path: '/grades', icon: Award, label: 'Subjects', roles: ['student'] },
+        { path: '/attendance', icon: ClipboardCheck, label: 'Attendance', roles: ['student'] },
         { path: '/profile', icon: User, label: 'My Profile', roles: ['student'] },
         { path: '/view-ebooks', icon: BookOpen, label: 'E-Books', roles: ['student'] }
       ]

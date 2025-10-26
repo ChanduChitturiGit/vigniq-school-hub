@@ -42,3 +42,13 @@ export const saveStudentRemarks = async (data: any): Promise<any> => {
   const response = await api.post<any>(baseurl+suburl+'/saveRemarks', data);
   return response.data;
 };
+
+
+
+//Student APIs
+
+//get attendence by Student
+export const getAttendanceByStudent = async (data) => {
+  const response = await api.get(baseurl+suburl+'/getAttendanceByStudent',{params : data});
+  return response.data;
+}

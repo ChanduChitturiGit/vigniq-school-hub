@@ -107,18 +107,6 @@ const Attendance: React.FC = () => {
   const [tempRemarks, setTempRemarks] = useState<string>('');
 
 
-  // Sample data - in real app this would come from API
-  const sampleStudents: Student[] = [
-    { student_id: '1', student_name: 'Aarav Sharma', roll_number: '001', morningPresent: false, afternoonPresent: false },
-    { student_id: '2', student_name: 'Priya Patel', roll_number: '002', morningPresent: false, afternoonPresent: false },
-    { student_id: '3', student_name: 'Rohit Kumar', roll_number: '003', morningPresent: false, afternoonPresent: false },
-    { student_id: '4', student_name: 'Sneha Reddy', roll_number: '004', morningPresent: false, afternoonPresent: false },
-    { student_id: '5', student_name: 'Arjun Singh', roll_number: '005', morningPresent: false, afternoonPresent: false },
-    { student_id: '6', student_name: 'Kavya Iyer', roll_number: '006', morningPresent: false, afternoonPresent: false },
-    { student_id: '7', student_name: 'Vikram Joshi', roll_number: '007', morningPresent: false, afternoonPresent: false },
-    { student_id: '8', student_name: 'Ananya Gupta', roll_number: '008', morningPresent: false, afternoonPresent: false },
-  ];
-
   // Sample attendance records for past dates
   const [sampleAttendanceRecords, setSampleAttendanceRecords]: any = useState([]);
 

@@ -94,7 +94,13 @@ class SubjectActionView(APIView):
 class OfflineExamActionView(APIView):
     """Offline Exam Management"""
 
-    permission_classes = [IsAuthenticated, IsSuperAdminOrAdminOrTeacher]
+    def get_permissions(self):
+        if self.kwargs.get('action') in [
+            'getExamsList',
+            'getExamDetailsById'
+        ]:
+            return [IsAuthenticated()]
+        return [IsAuthenticated(), IsSuperAdminOrAdminOrTeacher()]
 
     def get(self, request, action=None):
 
