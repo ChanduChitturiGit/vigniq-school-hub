@@ -9,6 +9,7 @@ from teacher.models import TeacherDiary, TeacherSubjectAssignment
 from core.models import User
 from core.common_modules.common_functions import CommonFunctions
 from classes.models import SchoolSection
+from student.models import StudentClassAssignment
 
 logger = logging.getLogger(__name__)
 
@@ -382,4 +383,67 @@ class TeacherDiaryService:
             return JsonResponse({"message": f"{updated_count} diary entries marked as reviewed"}, status=200)
         except Exception as e:  
             logger.exception("Error marking all diaries as reviewed: %s", e)
+            return JsonResponse({"error": "Internal server error"}, status=500)
+    
+    def get_diaries_for_student(self):
+        """Retrieve diary entries relevant to a specific student."""
+        try:
+            student_id = self.request.GET.get('student_id') or getattr(self.request.user, 'id', None)
+            school_id = self.request.GET.get('school_id') or getattr(self.request.user, 'school_id', None)
+            date = self.request.GET.get('date')
+
+            if not student_id or not school_id or not date:
+                return JsonResponse({"error": "Required parameters are missing"}, status=400)
+
+            school_db_name = CommonFunctions().get_school_db_name(school_id)
+            if not school_db_name:
+                return JsonResponse({"error": "Invalid school ID"}, status=400)
+
+            academic_year_obj = CommonFunctions().get_latest_academic_year(school_db_name)
+            if not academic_year_obj:
+                return JsonResponse({"error": "No academic year found for the school"}, status=400)
+
+
+            class_section = StudentClassAssignment.objects.using(school_db_name).select_related("class_instance").get(
+                student_id=student_id,
+                academic_year=academic_year_obj
+            )
+
+
+            diaries = TeacherDiary.objects.using(school_db_name).filter(
+                school_class_section=class_section.class_instance,
+                academic_year=academic_year_obj,
+                date=date
+            ).select_related("subject", "teacher", "school_class_section").order_by("-date")
+
+            teacher_ids = [diary.teacher_id for diary in diaries]
+            teacher_user_objs = User.objects.filter(id__in=teacher_ids).values("id", "first_name", "last_name")
+            teacher_dict = {user["id"]: f"{user['first_name']} {user['last_name']}" for user in teacher_user_objs}
+            output = [
+                {
+                    "diary_id": d.id,
+                    "teacher_id": d.teacher_id,
+                    "teacher_name": teacher_dict.get(d.teacher_id, "Unknown"),
+                    "subject_id": d.subject_id,
+                    "subject_name": d.subject.name,
+                    "class_section_id": d.school_class_section_id,
+                    "class_section": d.school_class_section.section,
+                    "class_number": d.school_class_section.class_instance_id,
+                    "date": d.date,
+                    "notes": d.notes,
+                    "homework_assigned": d.homework_assigned,
+                    "status": d.status,
+                    "is_admin_reviewed": d.is_admin_reviewed,
+                    "created_at": d.created_at,
+                    "updated_at": d.updated_at,
+                }
+                for d in diaries
+            ]
+
+            return JsonResponse({"data": output}, status=200)
+
+        except StudentClassAssignment.DoesNotExist:
+            return JsonResponse({"error": "Student not found"}, status=404)
+        except Exception as e:
+            logger.exception(f"Error retrieving diaries for student: {e}")
             return JsonResponse({"error": "Internal server error"}, status=500)

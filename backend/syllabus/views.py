@@ -39,7 +39,7 @@ class SyllabusView(APIView):
     """View for managing syllabus."""
 
     def get_permissions(self):
-        if self.kwargs.get('action') in ['getChaptersTopicsBySubject', 'getChaptersProgressBySubject']:
+        if self.kwargs.get('action') in ['getChaptersTopicsBySubject', 'getChaptersProgressBySubject', 'getSubjectsByStudentId']:
             return [IsAuthenticated()]
         return [IsAuthenticated(), IsSuperAdminOrAdminOrTeacher()]
 
@@ -57,6 +57,8 @@ class SyllabusView(APIView):
             return SyllabusService().get_lesson_plan_by_chapter_id(request)
         elif action == "getLessonDayPlan":
             return SyllabusService().get_lesson_plan_day_by_id(request)
+        elif action == 'getSubjectsByStudentId':
+            return SyllabusService().get_subjects_by_student_id(request)
         return Response({"error": f"GET request not found for action: {action}"}, status=400)
 
     def post(self, request, action=None):

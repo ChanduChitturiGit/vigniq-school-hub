@@ -2,6 +2,7 @@
 
 import logging
 from io import BytesIO
+from collections import defaultdict
 
 from django.db.models import Prefetch, Q, Count
 
@@ -23,6 +24,7 @@ from core.lang_chain.lang_chain import LangChainService
 from core.lang_chain.queries import LangchainQueries
 
 from teacher.models import TeacherSubjectAssignment
+from student.models import StudentClassAssignment
 
 from classes.models import SchoolSection
 
@@ -185,6 +187,147 @@ class SyllabusService:
             total_progress += chapter_progress
 
         return round(total_progress, 2), total_chapters
+
+    def get_subjects_by_student_id(self, request):
+        """Fetch subjects, chapters, and progress in minimal queries."""
+        try:
+            logger.info("Fetching subjects by student ID...")
+
+            school_id = request.GET.get("school_id") or getattr(request.user, 'school_id', None)
+            student_id = request.GET.get('student_id') or request.user.id
+
+            if not all([school_id, student_id]):
+                return Response({"error": "Missing required parameters."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            school_db_name = CommonFunctions.get_school_db_name(school_id)
+            if not school_db_name:
+                return Response({"error": "Invalid school database."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            academic_year = CommonFunctions().get_latest_academic_year(school_db_name)
+
+            # Get student's class and section
+            student_class_section = (
+                StudentClassAssignment.objects.using(school_db_name)
+                .select_related('class_instance')
+                .get(student_id=student_id, academic_year=academic_year)
+            )
+
+            class_id = student_class_section.class_instance_id
+            board_id = student_class_section.class_instance.board_id
+
+            # Get all subjects for this class (1 query)
+            teacher_assignments = (
+                TeacherSubjectAssignment.objects.using(school_db_name)
+                .filter(school_class=student_class_section.class_instance,
+                        academic_year=academic_year)
+                .select_related('subject')
+            )
+
+            subject_ids = [ta.subject_id for ta in teacher_assignments]
+            subject_ids = list(set(subject_ids))
+
+            if not subject_ids:
+                return Response({"data": []}, status=status.HTTP_200_OK)
+
+            # Get all chapters for these subjects (1 query)
+            chapters = list(
+                SchoolChapter.objects.using(school_db_name)
+                .filter(class_number_id=student_class_section.class_instance.class_instance_id,
+                        subject_id__in=subject_ids,
+                        school_board_id=board_id)
+                .values('id', 'subject_id')
+            )
+
+            if not chapters:
+                final_data = {
+                    "class_id": class_id,
+                    "section": student_class_section.class_instance.section,
+                    "class_number": student_class_section.class_instance.class_instance_id,
+                    "subjects": [],
+                    "subjects_count": 0,
+                }
+                return Response({"data": final_data}, status=status.HTTP_200_OK)
+
+            chapter_map = defaultdict(list)
+            for ch in chapters:
+                chapter_map[ch['subject_id']].append(ch['id'])
+
+            # Get all lesson plan days (1 query)
+            lesson_days = list(
+                SchoolLessonPlanDay.objects.using(school_db_name)
+                .filter(class_section_id=class_id,
+                        chapter_id__in=[ch['id'] for ch in chapters])
+                .values('chapter_id')
+                .annotate(
+                    total_days=Count('id'),
+                    completed_days=Count('id', filter=Q(status='completed'))
+                )
+            )
+
+            # Map progress data
+            chapter_progress_map = defaultdict(lambda: {'total_days': 0, 'completed_days': 0})
+            for ld in lesson_days:
+                cid = ld['chapter_id']
+                chapter_progress_map[cid] = {
+                    'total_days': ld['total_days'],
+                    'completed_days': ld['completed_days'],
+                }
+
+            # Compute subject-wise progress
+            subjects = []
+            subjects_track = set()
+            for assignment in teacher_assignments:
+                sid = assignment.subject_id
+                if sid in subjects_track:
+                    continue
+                subjects_track.add(sid)
+                chapter_ids = chapter_map.get(sid, [])
+                total_chapters = len(chapter_ids)
+
+                if total_chapters == 0:
+                    subjects.append({
+                        "subject_id": sid,
+                        "subject_name": assignment.subject.name,
+                        "total_chapters": 0,
+                        "progress": 0,
+                    })
+                    continue
+
+                chapter_weight = 100 / total_chapters
+                total_progress = 0
+                for cid in chapter_ids:
+                    stat = chapter_progress_map[cid]
+                    if stat['total_days'] > 0:
+                        total_progress += (stat['completed_days'] / stat['total_days']) * chapter_weight
+
+                subjects.append({
+                    "subject_id": sid,
+                    "subject_name": assignment.subject.name,
+                    "total_chapters": total_chapters,
+                    "progress": round(total_progress, 2),
+                })
+
+            final_data = {
+                "class_id": class_id,
+                "section": student_class_section.class_instance.section,
+                "class_number": student_class_section.class_instance.class_instance_id,
+                "subjects": subjects,
+                "subjects_count": len(subjects)
+            }
+
+            logger.info("Subjects fetched successfully.")
+            return Response({"data": final_data}, status=status.HTTP_200_OK)
+
+        except StudentClassAssignment.DoesNotExist:
+            logger.error("Student class assignment not found.")
+            return Response({"error": "Student class assignment not found."},
+                            status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.exception(f"Error fetching subjects by student ID: {e}")
+            return Response({"error": "Failed to fetch subjects."},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def get_syllabus_subject(self, request):
         """Fetch syllabus by subject."""

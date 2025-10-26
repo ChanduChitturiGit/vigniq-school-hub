@@ -387,5 +387,77 @@ class AttendanceService:
             logger.error("Error unmarking holiday: %s", e)
             return Response({"error": "Failed to unmark holiday"},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+    def get_attendance_by_student(self, request):
+        """Retrieve attendance records for a specific student."""
+        try:
+            student_id = request.GET.get('student_id') or getattr(request.user, 'id', None)
+            school_id = request.GET.get('school_id') or getattr(request.user, 'school_id', None)
+            year = request.GET.get('year')
+            month = request.GET.get('month')
+
+            if not all([student_id, school_id]):
+                logger.error("Missing required parameters.")
+                return Response({"error": "Missing required parameters."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            school_db_name = CommonFunctions.get_school_db_name(school_id)
+
+            attendance_records = StudentAttendanceData.objects.using(school_db_name).filter(
+                student_id=student_id,
+                attendance__date__year=year,
+                attendance__date__month=month
+            ).select_related('attendance').order_by('attendance__date')
+
+            attendance_list = {}
+            for record in attendance_records:
+                attendance_date = record.attendance.date.strftime("%Y-%m-%d")
+                if attendance_date not in attendance_list:
+                    attendance_list[attendance_date] = {
+                        "morning_session": None,
+                        "morning_remarks": None,
+                        "afternoon_session": None,
+                        "afternoon_remarks": None,
+                    }
+
+                if record.attendance.session == 'M':
+                    attendance_list[attendance_date]["morning_session"] = record.is_present
+                    attendance_list[attendance_date]["morning_remarks"] = record.remarks
+                elif record.attendance.session == 'A':
+                    attendance_list[attendance_date]["afternoon_session"] = record.is_present
+                    attendance_list[attendance_date]["afternoon_remarks"] = record.remarks
+
+            total_days = len(attendance_list)
+            total_possible_sessions = total_days * 2
+            present_sessions = 0
+
+            for date, sessions in attendance_list.items():
+                if sessions["morning_session"] is True:
+                    present_sessions += 1
+                if sessions["afternoon_session"] is True:
+                    present_sessions += 1
+
+            attendance_percentage = (
+                (present_sessions / total_possible_sessions) * 100 if total_possible_sessions > 0 else 0
+            )
+
+            final_output = {
+                "student_id": student_id,
+                "year": year,
+                "month": month,
+                "attendance_data": attendance_list,
+                "total_days": total_days,
+                "attendance_percentage": round(attendance_percentage, 2)
+            }
+
+            logger.info("Successfully retrieved student attendance.")
+            return Response({"data": final_output}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error("Error retrieving student attendance: %s", e)
+            return Response({"error": "Failed to retrieve student attendance"},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
