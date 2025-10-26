@@ -68,16 +68,20 @@ class AttendanceView(APIView):
     """
     View to handle attendance-related operations.
     """
-    permission_classes = [IsAuthenticated, IsSuperAdminOrAdminOrTeacher]
+
+    def get_permissions(self):
+        if self.kwargs.get('action') in ['getAttendanceByStudent']:
+            return [IsAuthenticated()]
+        return [IsAuthenticated(), IsSuperAdminOrAdminOrTeacher()]
 
     def get(self, request, action=None):
         """
         Handle GET requests to retrieve attendance data.
         """
 
-        # if action == "getAttendanceByStudent":
-        #     return AttendanceService().get_attendance(request)
-        if action == "getAttendanceByClassSection":
+        if action == "getAttendanceByStudent":
+            return AttendanceService().get_attendance_by_student(request)
+        elif action == "getAttendanceByClassSection":
             return AttendanceService().get_attendance_by_class_section(request)
         elif action == "getPastAttendance":
             return AttendanceService().get_past_attendance(request)
