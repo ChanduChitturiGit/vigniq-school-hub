@@ -59,6 +59,8 @@ import TeacherSubjectsProgress from './pages/TeacherSubjectsProgress';
 import GradesStudent from './pages/GradesStudent';
 import { AttendanceView } from './pages/AttendanceView';
 import { TeacherDiariesView } from './pages/TeacherDiariesView';
+import { ExamsView } from './pages/ExamsView';
+import { ExamsPage } from './pages/ExamsPage';
 
 function App() {
   const userData = JSON.parse(localStorage.getItem("vigniq_current_user") || '{}');
@@ -239,7 +241,13 @@ function App() {
             <ExcalidrawApp />
           </ProtectedRoute>} />
           <Route path="/grades/syllabus/lesson-plan/ai-chat/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher', 'student']}><AIChatLessonPlan /></ProtectedRoute>} />
-          <Route path="/grades/exams/:subjectId" element={<ProtectedRoute allowedRoles={['teacher', 'student']}><Exams /></ProtectedRoute>} />
+          {
+            userData.role === 'teacher' ? (
+              <Route path="/grades/exams/:subjectId" element={<ProtectedRoute allowedRoles={['teacher']}><Exams /></ProtectedRoute>} />
+            ) : (
+              <Route path="/grades/exams/:subjectId" element={<ProtectedRoute allowedRoles={['student']}><ExamsPage /></ProtectedRoute>} />
+            )
+          }
           <Route path="/grades/exams/create-exam/:subjectId" element={<ProtectedRoute allowedRoles={['teacher', 'student']}><CreateExam /></ProtectedRoute>} />
           <Route path="/grades/exams/exam-results/:examId" element={<ProtectedRoute allowedRoles={['teacher', 'student']}><ExamResults /></ProtectedRoute>} />
 

@@ -97,7 +97,8 @@ class OfflineExamActionView(APIView):
     def get_permissions(self):
         if self.kwargs.get('action') in [
             'getExamsList',
-            'getExamDetailsById'
+            'getExamDetailsById',
+            'getExamsForStudent'
         ]:
             return [IsAuthenticated()]
         return [IsAuthenticated(), IsSuperAdminOrAdminOrTeacher()]

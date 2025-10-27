@@ -48,6 +48,7 @@ import {
   AlertDialogTrigger,
 } from '../components/ui/alert-dialog';
 import { set } from 'date-fns';
+import { ExamsView } from './ExamsView';
 
 
 interface Topic {
@@ -72,6 +73,7 @@ type LessonPlan = LessonPlanDay[];
 
 const ChapterDetails: React.FC = () => {
   const { showSnackbar } = useSnackbar();
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const { chapterId } = useParams();
   const [searchParams] = useSearchParams();
   const className = searchParams.get('class') || '';
@@ -159,9 +161,9 @@ const ChapterDetails: React.FC = () => {
     }
   }
 
-  useEffect(()=>{
-    console.log("isStatus",isStatus);
-  },[isStatus])
+  useEffect(() => {
+    console.log("isStatus", isStatus);
+  }, [isStatus])
 
 
   //save topic by lesson
@@ -921,16 +923,33 @@ const ChapterDetails: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="exams" className="space-y-6">
-            <ChapterExams
-              chapterId={chapterId || ''}
-              classId={classId}
-              subjectId={subjectId}
-              schoolId={schoolId}
-              boardId={boardId}
-              className={className}
-              section={section}
-              subject={subject}
-            />
+            {
+              userData?.role == 'teacher' && (
+                <ChapterExams
+                  chapterId={chapterId || ''}
+                  classId={classId}
+                  subjectId={subjectId}
+                  schoolId={schoolId}
+                  boardId={boardId}
+                  className={className}
+                  section={section}
+                  subject={subject}
+                />
+              )
+            }
+            {
+              userData?.role == 'student' && (
+                <ExamsView 
+                  chapterId={chapterId || ''}
+                  classId={classId}
+                  subjectId={subjectId}
+                  schoolId={schoolId}
+                  boardId={boardId}
+                  className={className}
+                  section={section}
+                  subject={subject}  />
+              )
+            }
           </TabsContent>
 
         </Tabs>
