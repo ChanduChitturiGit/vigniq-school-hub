@@ -256,7 +256,7 @@ function App() {
             <Route
               path="/grades"
               element={
-                <ProtectedRoute allowedRoles={['teacher', 'student']}>
+                <ProtectedRoute allowedRoles={['teacher']}>
                   <Grades />
                 </ProtectedRoute>
               }
@@ -265,7 +265,7 @@ function App() {
             <Route
               path="/grades"
               element={
-                <ProtectedRoute allowedRoles={['teacher', 'student']}>
+                <ProtectedRoute allowedRoles={['student']}>
                   <GradesStudent />
                 </ProtectedRoute>
               }
