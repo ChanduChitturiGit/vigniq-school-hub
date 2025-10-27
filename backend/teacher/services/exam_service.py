@@ -365,3 +365,61 @@ class OfflineExamsService:
         except Exception as e:
             logger.error("Error fetching exams list: %s", e)
             return JsonResponse({"error": "Unable to fetch exams list"}, status=500)
+
+    def get_exams_for_student(self):
+        """Get Offline Exams for Student"""
+        try:
+            data = self.request.GET
+            student_id = self.user.id
+
+            if not student_id:
+                return JsonResponse({"error": "Student ID is required"}, status=400)
+
+            latest_academic_year = CommonFunctions().get_latest_academic_year(
+                self.school_db_name
+            )
+            class_assignment = StudentClassAssignment.objects.using(self.school_db_name).filter(
+                student_id=student_id,
+                academic_year=latest_academic_year
+            ).first()
+
+            if not class_assignment:
+                return JsonResponse({"data": []}, status=200)
+
+            exams = Exam.objects.using(self.school_db_name).filter(
+                class_section_id=class_assignment.class_instance_id,
+                academic_year=latest_academic_year,
+                is_active=True
+            ).select_related('exam_category','chapter').order_by('-created_at')
+
+            if not exams.exists():
+                return JsonResponse({"data": []}, status=200)
+
+            exam_results = ExamResult.objects.using(self.school_db_name).filter(
+                exam_id__in=exams.values_list("id", flat=True),
+                student_id=student_id
+            )
+
+
+            output = []
+            for exam in exams:
+                res = exam_results.filter(exam_id=exam.id).first()
+                output.append({
+                    "exam_id": exam.id,
+                    "exam_name": exam.name,
+                    "exam_type": exam.exam_type,
+                    "exam_date": exam.exam_date,
+                    "exam_category": exam.exam_category.name,
+                    "total_marks": round(exam.max_marks, 2),
+                    "pass_marks": round(exam.pass_marks, 2),
+                    "marks_obtained": round(res.marks_obtained, 2) if res else 0,
+                    "is_absent": res.is_absent if res else False,
+                    "session": exam.session if exam.session else None,
+                    "chapter_name": exam.chapter.chapter_name if exam.chapter else None,
+                })
+
+            return JsonResponse({"data": output}, status=200)
+
+        except Exception as e:
+            logger.error("Error fetching exams for student: %s", e)
+            return JsonResponse({"error": "Unable to fetch exams for student"}, status=500)

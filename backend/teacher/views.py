@@ -112,6 +112,8 @@ class OfflineExamActionView(APIView):
             return OfflineExamsService(request).get_exam_details_by_id()
         elif action == "getExamsList":
             return OfflineExamsService(request).get_exams_list()
+        elif action == "getExamsForStudent":
+            return OfflineExamsService(request).get_exams_for_student()
         return Response({"error": "Invalid GET action"}, status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request, action=None):
