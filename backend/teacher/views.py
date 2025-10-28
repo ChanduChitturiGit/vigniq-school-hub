@@ -93,8 +93,13 @@ class SubjectActionView(APIView):
 
 class OfflineExamActionView(APIView):
     """Offline Exam Management"""
+
     def get_permissions(self):
-        if self.kwargs.get('action') in ['getExamsForStudent']:
+        if self.kwargs.get('action') in [
+            'getExamsList',
+            'getExamDetailsById',
+            'getExamsForStudent'
+        ]:
             return [IsAuthenticated()]
         return [IsAuthenticated(), IsSuperAdminOrAdminOrTeacher()]
 

@@ -54,3 +54,12 @@ export const createChapterExam = async (data: any): Promise<any> => {
   const response = await api.post<any>(baseurl+suburl+'/createChapterExam', data);
   return response.data;
 }
+
+
+//student api handler
+
+//getExamsForStudent
+export const getExamsForStudent = async (data: any): Promise<any> => {
+  const response = await api.get<any>(baseurl+suburl+'/getExamsForStudent', {params: data});
+  return response.data;
+}

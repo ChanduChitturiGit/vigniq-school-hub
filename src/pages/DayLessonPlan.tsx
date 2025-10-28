@@ -62,6 +62,7 @@ const DayLessonPlan: React.FC = () => {
   const { chapterId, day } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
 
   const className = searchParams.get('class') || '';
   const section = searchParams.get('section') || '';
@@ -214,51 +215,51 @@ const DayLessonPlan: React.FC = () => {
   };
 
   const handleDownload = async () => {
-  if (!printRef.current) return;
+    if (!printRef.current) return;
 
-  // Hide elements with .no-pdf
-  const hiddenEls = printRef.current.querySelectorAll(".no-pdf");
-  hiddenEls.forEach((el : any) => (el.style.display = "none"));
+    // Hide elements with .no-pdf
+    const hiddenEls = printRef.current.querySelectorAll(".no-pdf");
+    hiddenEls.forEach((el: any) => (el.style.display = "none"));
 
-  // Capture the element
-  const canvas = await html2canvas(printRef.current, {
-    scale: 2, // Higher quality
-    useCORS: true, // Prevent CORS issues for external images
-    scrollX: 0,
-    scrollY: 0,
-    windowWidth: document.documentElement.offsetWidth,
-    windowHeight: document.documentElement.scrollHeight,
-  });
+    // Capture the element
+    const canvas = await html2canvas(printRef.current, {
+      scale: 2, // Higher quality
+      useCORS: true, // Prevent CORS issues for external images
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: document.documentElement.offsetWidth,
+      windowHeight: document.documentElement.scrollHeight,
+    });
 
-  // Restore hidden elements
-  hiddenEls.forEach((el : any) => (el.style.display = ""));
+    // Restore hidden elements
+    hiddenEls.forEach((el: any) => (el.style.display = ""));
 
-  const imgData = canvas.toDataURL("image/png");
-  const pdf = new jsPDF("p", "mm", "a4");
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  const pageHeight = pdf.internal.pageSize.getHeight();
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
 
-  // Convert pixel dimensions to mm
-  const imgWidth = pageWidth;
-  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    // Convert pixel dimensions to mm
+    const imgWidth = pageWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-  let heightLeft = imgHeight;
-  let position = 0;
+    let heightLeft = imgHeight;
+    let position = 0;
 
-  // Add first page
-  pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-  heightLeft -= pageHeight;
-
-  // Add remaining pages
-  while (heightLeft > 0) {
-    position -= pageHeight;
-    pdf.addPage();
+    // Add first page
     pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
     heightLeft -= pageHeight;
-  }
 
-  pdf.save(`${subject}_Chapter_${chapterNumber}_Day_${lessonData?.day}_Lesson_Plan.pdf`);
-};
+    // Add remaining pages
+    while (heightLeft > 0) {
+      position -= pageHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+
+    pdf.save(`${subject}_Chapter_${chapterNumber}_Day_${lessonData?.day}_Lesson_Plan.pdf`);
+  };
 
 
   // const handlePrint = () => {
@@ -373,7 +374,7 @@ const DayLessonPlan: React.FC = () => {
         </div>
 
         {/* Topics Section */}
-        <Card className="shadow-lg border-0 "  id="pdf-content">
+        <Card className="shadow-lg border-0 " id="pdf-content">
           <CardHeader>
             <CardTitle className={`${window.innerWidth >= 768 ? 'flex ' : 'flex-col '} items-center justify-between`}>
               <div className='w-full flex flex-wrap items-center justify-between gap-6 mb-4 md:mb-0'>
@@ -396,11 +397,15 @@ const DayLessonPlan: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 no-pdf no-print">
-                  <Button variant="outline" size="sm" className="text-blue-600 hover:text-blue-800 border-blue-300"
-                    onClick={() => handlePrint('printArea')}>
-                    <Printer className="w-4 h-4 mr-2" />
-                    Print
-                  </Button>
+                  {
+                    userData.role === 'teacher' && (
+                      <Button variant="outline" size="sm" className="text-blue-600 hover:text-blue-800 border-blue-300"
+                        onClick={() => handlePrint('printArea')}>
+                        <Printer className="w-4 h-4 mr-2" />
+                        Print
+                      </Button>
+                    )
+                  }
                   <Button variant="outline" size="sm" className="text-green-600 hover:text-green-800 border-green-300"
                     onClick={handleDownload}>
                     <Download className="w-4 h-4 mr-2" />

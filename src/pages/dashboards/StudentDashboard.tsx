@@ -33,14 +33,14 @@ const StudentDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">Student Dashboard</h1>
-        <div className="text-sm text-gray-500">
-          Track your academic progress
-        </div>
+        <h1 className="text-2xl font-bold text-gray-800">Welcome Back!</h1>
+        {/* <div className="text-sm text-gray-500">
+          Track your academic progress 
+        </div> */}
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -57,10 +57,10 @@ const StudentDashboard: React.FC = () => {
             </div>
           );
         })}
-      </div>
+      </div> */}
 
       {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-800">Upcoming Assignments</h2>
@@ -102,7 +102,7 @@ const StudentDashboard: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

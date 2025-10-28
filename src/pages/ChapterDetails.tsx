@@ -48,6 +48,7 @@ import {
   AlertDialogTrigger,
 } from '../components/ui/alert-dialog';
 import { set } from 'date-fns';
+import { ExamsView } from './ExamsView';
 
 
 interface Topic {
@@ -72,6 +73,7 @@ type LessonPlan = LessonPlanDay[];
 
 const ChapterDetails: React.FC = () => {
   const { showSnackbar } = useSnackbar();
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user"));
   const { chapterId } = useParams();
   const [searchParams] = useSearchParams();
   const className = searchParams.get('class') || '';
@@ -159,9 +161,9 @@ const ChapterDetails: React.FC = () => {
     }
   }
 
-  useEffect(()=>{
-    console.log("isStatus",isStatus);
-  },[isStatus])
+  useEffect(() => {
+    console.log("isStatus", isStatus);
+  }, [isStatus])
 
 
   //save topic by lesson
@@ -469,45 +471,49 @@ const ChapterDetails: React.FC = () => {
                 <h2 className="text-2xl font-bold text-gray-900">Chapter Topics</h2>
                 <p className="text-gray-600">Manage topics for this chapter</p>
               </div>
-              <Dialog open={showAddTopic} onOpenChange={setShowAddTopic}>
-                <DialogTrigger asChild>
-                  <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
-                    <Plus className="w-4 h-4" />
-                    Add Topic
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add New Topic</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Topic Title
-                      </label>
-                      <Input
-                        value={newTopicTitle}
-                        onChange={(e) => setNewTopicTitle(e.target.value)}
-                        placeholder="Enter topic title..."
-                      />
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setShowAddTopic(false);
-                          setNewTopicTitle('');
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button onClick={handleAddTopic} className="bg-blue-600 hover:bg-blue-700">
+              {
+                userData.role === 'teacher' && (
+                  <Dialog open={showAddTopic} onOpenChange={setShowAddTopic}>
+                    <DialogTrigger asChild>
+                      <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
+                        <Plus className="w-4 h-4" />
                         Add Topic
                       </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Add New Topic</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Topic Title
+                          </label>
+                          <Input
+                            value={newTopicTitle}
+                            onChange={(e) => setNewTopicTitle(e.target.value)}
+                            placeholder="Enter topic title..."
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setShowAddTopic(false);
+                              setNewTopicTitle('');
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button onClick={handleAddTopic} className="bg-blue-600 hover:bg-blue-700">
+                            Add Topic
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )
+              }
             </div>
 
             {/* Inline topic edit card */}
@@ -570,49 +576,53 @@ const ChapterDetails: React.FC = () => {
                             <h3 className="text-lg font-semibold text-gray-900" title={topic.sub_topic} >{topic.sub_topic}</h3>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-blue-600 hover:text-blue-700"
-                            onClick={() => {
-                              setEditingTopic(topic);
-                              setNewTopicTitle(topic.sub_topic);
-                            }}
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </Button>
+                        {
+                          userData.role === 'teacher' && (
+                            <div className="flex items-center gap-3">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-blue-600 hover:text-blue-700"
+                                onClick={() => {
+                                  setEditingTopic(topic);
+                                  setNewTopicTitle(topic.sub_topic);
+                                }}
+                              >
+                                <Edit3 className="w-4 h-4" />
+                              </Button>
 
-                          <>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <button className="flex items-center gap-2 text-red-500 hover:text-red-600">
-                                  <Trash2 className="w-4 h-4" />
-                                  {/* Reset Password */}
-                                </button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete Topic</AlertDialogTitle>
-                                  <AlertDialogDescription className='text-gray-700'>
-                                    <div className='flex flex-col space-y-4'>
-                                      <div >
-                                        <p className='max-w-[28rem] truncate' title={topic.sub_topic}>Are you sure you want to delete Topic <span className='font-bold'>{topic.sub_topic}</span>?</p>
-                                        This action cannot be undone
-                                      </div>
-                                    </div>
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleTopicDelete(topic.sub_topic_id)} className="bg-red-600 hover:bg-red-700">
-                                    Confirm Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </>
-                        </div>
+                              <>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <button className="flex items-center gap-2 text-red-500 hover:text-red-600">
+                                      <Trash2 className="w-4 h-4" />
+                                      {/* Reset Password */}
+                                    </button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Delete Topic</AlertDialogTitle>
+                                      <AlertDialogDescription className='text-gray-700'>
+                                        <div className='flex flex-col space-y-4'>
+                                          <div >
+                                            <p className='max-w-[28rem] truncate' title={topic.sub_topic}>Are you sure you want to delete Topic <span className='font-bold'>{topic.sub_topic}</span>?</p>
+                                            This action cannot be undone
+                                          </div>
+                                        </div>
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => handleTopicDelete(topic.sub_topic_id)} className="bg-red-600 hover:bg-red-700">
+                                        Confirm Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </>
+                            </div>
+                          )
+                        }
                       </div>
                     )}
                   </CardContent>
@@ -629,7 +639,7 @@ const ChapterDetails: React.FC = () => {
                 <p className="text-gray-600">Create and manage lesson plans for this chapter</p>
               </div>
               {
-                !isStatus && (
+                !isStatus && userData.role == 'teacher' && (
                   <div className='flex flex-col md:flex-row gap-2'>
                     {lessonPlan && lessonPlan.length > 0 ? (
                       <Link to={`/grades/syllabus/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`}>
@@ -704,14 +714,20 @@ const ChapterDetails: React.FC = () => {
                 <CardContent className="p-8 text-center">
                   <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No Lesson Plan Available</h3>
-                  <p className="text-gray-500 mb-4">
-                    Generate a lesson plan for this chapter to get started with structured teaching.
-                  </p>
-                  <Link to={`/grades/syllabus/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`}>
-                    <Button className="bg-blue-600 hover:bg-blue-700">
-                      Create Lesson Plan
-                    </Button>
-                  </Link>
+                  {
+                    userData.role === 'teacher' && (
+                      <>
+                        <p className="text-gray-500 mb-4">
+                          Generate a lesson plan for this chapter to get started with structured teaching.
+                        </p>
+                        <Link to={`/grades/syllabus/lesson-plan/create/${chapterId}?subject=${subject}&class=${className}&section=${section}&chapter_name=${encodeURIComponent(chapterName)}&${pathData}`}>
+                          <Button className="bg-blue-600 hover:bg-blue-700">
+                            Create Lesson Plan
+                          </Button>
+                        </Link>
+                      </>
+                    )
+                  }
                 </CardContent>
               </Card>
             )}
@@ -723,61 +739,65 @@ const ChapterDetails: React.FC = () => {
                 <h2 className="text-2xl font-bold text-gray-900">Prerequisites</h2>
                 <p className="text-gray-600">Define prerequisites for this chapter</p>
               </div>
-              <Dialog open={showAddPrerequisite} onOpenChange={setShowAddPrerequisite}>
-                <DialogTrigger asChild>
-                  <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
-                    <Plus className="w-4 h-4" />
-                    Add Prerequisite
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Add New Prerequisite</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Prerequisite Title
-                      </label>
-                      <Input
-                        value={newPrerequisiteTitle}
-                        onChange={(e) => setNewPrerequisiteTitle(e.target.value)}
-                        placeholder="Enter prerequisite title..."
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Explanation
-                      </label>
-                      <Textarea
-                        value={newPrerequisiteExplanation}
-                        onChange={(e) => setNewPrerequisiteExplanation(e.target.value)}
-                        placeholder="Enter detailed explanation..."
-                        rows={4}
-                      />
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setShowAddPrerequisite(false);
-                          setNewPrerequisiteTitle('');
-                          setNewPrerequisiteExplanation('');
-                        }}
-                      >
-                        Cancel
+              {
+                userData.role === 'teacher' && (
+                  <Dialog open={showAddPrerequisite} onOpenChange={setShowAddPrerequisite}>
+                    <DialogTrigger asChild>
+                      <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
+                        <Plus className="w-4 h-4" />
+                        Add Prerequisite
                       </Button>
-                      <Button
-                        onClick={handleAddPrerequisite}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <Save className="w-4 h-4 mr-2" />
-                        Save
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle>Add New Prerequisite</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Prerequisite Title
+                          </label>
+                          <Input
+                            value={newPrerequisiteTitle}
+                            onChange={(e) => setNewPrerequisiteTitle(e.target.value)}
+                            placeholder="Enter prerequisite title..."
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Explanation
+                          </label>
+                          <Textarea
+                            value={newPrerequisiteExplanation}
+                            onChange={(e) => setNewPrerequisiteExplanation(e.target.value)}
+                            placeholder="Enter detailed explanation..."
+                            rows={4}
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setShowAddPrerequisite(false);
+                              setNewPrerequisiteTitle('');
+                              setNewPrerequisiteExplanation('');
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={handleAddPrerequisite}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            <Save className="w-4 h-4 mr-2" />
+                            Save
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )
+              }
             </div>
 
             {/* 🔹 Accordion list */}
@@ -858,51 +878,55 @@ const ChapterDetails: React.FC = () => {
                               <Lightbulb className="w-5 h-5 text-blue-600" />
                               <span className="font-medium text-left">{prerequisite.topic}</span>
                             </div>
-                            <div className='flex flex-row'>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-blue-600 hover:text-blue-700 mr-2"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingPrerequisite(prerequisite);
-                                  setNewPrerequisiteTitle(prerequisite.topic);
-                                  setNewPrerequisiteExplanation(prerequisite.explanation);
-                                }}
-                              >
-                                <Edit3 className="w-4 h-4" />
-                              </Button>
+                            {
+                              userData.role === 'teacher' && (
+                                <div className='flex flex-row'>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-blue-600 hover:text-blue-700 mr-2"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingPrerequisite(prerequisite);
+                                      setNewPrerequisiteTitle(prerequisite.topic);
+                                      setNewPrerequisiteExplanation(prerequisite.explanation);
+                                    }}
+                                  >
+                                    <Edit3 className="w-4 h-4" />
+                                  </Button>
 
-                              <>
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <button className="flex items-center gap-2 text-red-500 hover:text-red-600 me-2">
-                                      <Trash2 className="w-4 h-4" />
-                                      {/* Reset Password */}
-                                    </button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Delete prerequisite</AlertDialogTitle>
-                                      <AlertDialogDescription className='text-gray-700'>
-                                        <div className='flex flex-col space-y-4'>
-                                          <div >
-                                            <p className='max-w-[28rem] truncate' title={prerequisite.topic}>Are you sure you want to delete prerequisite <span className='font-bold'>{prerequisite.topic}</span>?</p>
-                                            This action cannot be undone
-                                          </div>
-                                        </div>
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction onClick={() => handlePrerequisteDelete(prerequisite.prerequisite_id)} className="bg-red-600 hover:bg-red-700">
-                                        Confirm Delete
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </>
-                            </div>
+                                  <>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <button className="flex items-center gap-2 text-red-500 hover:text-red-600 me-2">
+                                          <Trash2 className="w-4 h-4" />
+                                          {/* Reset Password */}
+                                        </button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Delete prerequisite</AlertDialogTitle>
+                                          <AlertDialogDescription className='text-gray-700'>
+                                            <div className='flex flex-col space-y-4'>
+                                              <div >
+                                                <p className='max-w-[28rem] truncate' title={prerequisite.topic}>Are you sure you want to delete prerequisite <span className='font-bold'>{prerequisite.topic}</span>?</p>
+                                                This action cannot be undone
+                                              </div>
+                                            </div>
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction onClick={() => handlePrerequisteDelete(prerequisite.prerequisite_id)} className="bg-red-600 hover:bg-red-700">
+                                            Confirm Delete
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  </>
+                                </div>
+                              )
+                            }
                           </div>
                         </AccordionTrigger>
                         <AccordionContent className="px-4 pb-4">
@@ -921,16 +945,33 @@ const ChapterDetails: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="exams" className="space-y-6">
-            <ChapterExams
-              chapterId={chapterId || ''}
-              classId={classId}
-              subjectId={subjectId}
-              schoolId={schoolId}
-              boardId={boardId}
-              className={className}
-              section={section}
-              subject={subject}
-            />
+            {
+              userData?.role == 'teacher' && (
+                <ChapterExams
+                  chapterId={chapterId || ''}
+                  classId={classId}
+                  subjectId={subjectId}
+                  schoolId={schoolId}
+                  boardId={boardId}
+                  className={className}
+                  section={section}
+                  subject={subject}
+                />
+              )
+            }
+            {
+              userData?.role == 'student' && (
+                <ExamsView
+                  chapterId={chapterId || ''}
+                  classId={classId}
+                  subjectId={subjectId}
+                  schoolId={schoolId}
+                  boardId={boardId}
+                  className={className}
+                  section={section}
+                  subject={subject} />
+              )
+            }
           </TabsContent>
 
         </Tabs>

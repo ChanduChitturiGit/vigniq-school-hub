@@ -90,16 +90,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
     const examsPath = `/grades/exams/${pathData}`;
 
     return [
-      { path: '/grades', icon: Award, label: 'Home', roles: ['teacher'] },
-      { path: baseSubjectPath, icon: BookOpen, label: 'Syllabus', roles: ['teacher'] },
-      { path: progressPath, icon: TrendingUp, label: 'Progress', roles: ['teacher'] },
+      { path: '/grades', icon: Award, label: 'Home', roles: ['teacher','student'] },
+      { path: baseSubjectPath, icon: BookOpen, label: 'Syllabus', roles: ['teacher','student'] },
+      { path: progressPath, icon: TrendingUp, label: 'Progress', roles: ['teacher','student'] },
       { path: examsPath, icon: FileCheck, label: 'Exams', roles: ['teacher'] },
+      { path: examsPath, icon: FileCheck, label: 'Exams', roles: ['student'] },
     ];
   };
 
   const getMenuItems = (): MenuItem[] => {
     // If we're in subject context, show subject-specific menu
-    if (isInSubjectContext && user?.role === 'teacher') {
+    if (isInSubjectContext && (user?.role === 'teacher' || user?.role === 'student')) {
       return getSubjectSpecificMenuItems();
     }
 
@@ -168,6 +169,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
         { path: '/view-ebooks', icon: BookOpen, label: 'E-Books', roles: ['teacher'] }
       ],
       'student': [
+        { path: '/grades', icon: Award, label: 'Subjects', roles: ['student'] },
+        { path: '/attendance', icon: ClipboardCheck, label: 'Attendance', roles: ['student'] },
+        { path: '/student-teacher-diaries', icon: Notebook, label: 'Teacher-Diaries', roles: ['student'] },
         { path: '/profile', icon: User, label: 'My Profile', roles: ['student'] },
         { path: '/view-ebooks', icon: BookOpen, label: 'E-Books', roles: ['student'] }
       ]

@@ -120,3 +120,13 @@ export const getWhiteboardData = async (data: any): Promise<any> => {
   const response = await api.get<any>(baseurl+socketurl+'/getWhiteboardData',{params : data});
   return response.data;
 } 
+
+
+
+//Student APIs
+
+//get grades by student id
+export const getSubjectsByStudentId = async (schoolId : Number,teacherId : Number) => {
+  const response = await api.get(baseurl+suburl+'/getSubjectsByStudentId',{params : {school_id : schoolId,teacher_id : teacherId}});
+  return response.data;
+}

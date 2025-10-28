@@ -56,8 +56,14 @@ import SyllabusProgress from './pages/SyllabusProgress';
 import ClassSubjectsProgress from './pages/ClassSubjectsProgress';
 import SubjectChaptersProgress from './pages/SubjectChaptersProgress';
 import TeacherSubjectsProgress from './pages/TeacherSubjectsProgress';
+import GradesStudent from './pages/GradesStudent';
+import { AttendanceView } from './pages/AttendanceView';
+import { TeacherDiariesView } from './pages/TeacherDiariesView';
+import { ExamsView } from './pages/ExamsView';
+import { ExamsPage } from './pages/ExamsPage';
 
 function App() {
+  const userData = JSON.parse(localStorage.getItem("vigniq_current_user") || '{}');
   return (
     <AuthProvider>
       <Router>
@@ -226,31 +232,66 @@ function App() {
           {/* <Route path="/grades" element={<ProtectedRoute allowedRoles={['teacher']}><Grades /></ProtectedRoute>} />
           <Route path="/grades/syllabus/:subjectId" element={<ProtectedRoute allowedRoles={['teacher']}><Syllabus /></ProtectedRoute>} />
           <Route path="/grades/progress/:subjectId" element={<ProtectedRoute allowedRoles={['teacher']}><GradesProgress /></ProtectedRoute>} /> */}
-          <Route path="/grades/syllabus/lesson-plan/create/:chapterId" element={<ProtectedRoute allowedRoles={['teacher']}><CreateLessonPlan /></ProtectedRoute>} />
+          <Route path="/grades/syllabus/lesson-plan/create/:chapterId" element={<ProtectedRoute allowedRoles={['teacher', 'student']}><CreateLessonPlan /></ProtectedRoute>} />
           {/* <Route path="/grades/lesson-plan/view/:chapterId/:lessonPlanId" element={<ProtectedRoute allowedRoles={['teacher']}><ViewLessonPlan /></ProtectedRoute>} /> */}
-          <Route path="/grades/syllabus/lesson-plan/customize/:chapterId" element={<ProtectedRoute allowedRoles={['teacher']}><CustomizeLessonPlan /></ProtectedRoute>} />
-          <Route path="/grades/syllabus/lesson-plan/day/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}><DayLessonPlan /></ProtectedRoute>} />
-          <Route path="/grades/syllabus/lesson-plan/whiteboard/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}>
+          <Route path="/grades/syllabus/lesson-plan/customize/:chapterId" element={<ProtectedRoute allowedRoles={['teacher', 'student']}><CustomizeLessonPlan /></ProtectedRoute>} />
+          <Route path="/grades/syllabus/lesson-plan/day/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher', 'student']}><DayLessonPlan /></ProtectedRoute>} />
+          <Route path="/grades/syllabus/lesson-plan/whiteboard/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher', 'student']}>
             {/* <WhiteboardTeaching /> */}
             <ExcalidrawApp />
           </ProtectedRoute>} />
-          <Route path="/grades/syllabus/lesson-plan/ai-chat/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher']}><AIChatLessonPlan /></ProtectedRoute>} />
-          <Route path="/grades/exams/:subjectId" element={<ProtectedRoute><Exams /></ProtectedRoute>} />
-          <Route path="/grades/exams/create-exam/:subjectId" element={<ProtectedRoute><CreateExam /></ProtectedRoute>} />
-          <Route path="/grades/exams/exam-results/:examId" element={<ProtectedRoute><ExamResults /></ProtectedRoute>} />
+          <Route path="/grades/syllabus/lesson-plan/ai-chat/:chapterId/:day" element={<ProtectedRoute allowedRoles={['teacher', 'student']}><AIChatLessonPlan /></ProtectedRoute>} />
+          {
+            userData.role === 'teacher' ? (
+              <Route path="/grades/exams/:subjectId" element={<ProtectedRoute allowedRoles={['teacher']}><Exams /></ProtectedRoute>} />
+            ) : (
+              <Route path="/grades/exams/:subjectId" element={<ProtectedRoute allowedRoles={['student']}><ExamsPage /></ProtectedRoute>} />
+            )
+          }
+          <Route path="/grades/exams/create-exam/:subjectId" element={<ProtectedRoute allowedRoles={['teacher', 'student']}><CreateExam /></ProtectedRoute>} />
+          <Route path="/grades/exams/exam-results/:examId" element={<ProtectedRoute allowedRoles={['teacher', 'student']}><ExamResults /></ProtectedRoute>} />
 
-          <Route path="/grades" element={<ProtectedRoute><Grades /></ProtectedRoute>} />
-          <Route path="/grades/syllabus/:subjectId" element={<ProtectedRoute><Syllabus /></ProtectedRoute>} />
-          <Route path="/grades/progress/:subjectId" element={<ProtectedRoute><GradesProgress /></ProtectedRoute>} />
-          <Route path="/grades/syllabus/chapter/:chapterId" element={<ProtectedRoute><ChapterDetails /></ProtectedRoute>} />
+
+          {userData.role === 'teacher' ? (
+            <Route
+              path="/grades"
+              element={
+                <ProtectedRoute allowedRoles={['teacher']}>
+                  <Grades />
+                </ProtectedRoute>
+              }
+            />
+          ) : (
+            <Route
+              path="/grades"
+              element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <GradesStudent />
+                </ProtectedRoute>
+              }
+            />
+          )}
 
 
 
-          <Route path="/attendance" element={<ProtectedRoute allowedRoles={['teacher']}><Attendance /></ProtectedRoute>} />
+          <Route path="/grades/syllabus/:subjectId" element={<ProtectedRoute allowedRoles={['teacher', 'student']}><Syllabus /></ProtectedRoute>} />
+          <Route path="/grades/progress/:subjectId" element={<ProtectedRoute allowedRoles={['teacher', 'student']}><GradesProgress /></ProtectedRoute>} />
+          <Route path="/grades/syllabus/chapter/:chapterId" element={<ProtectedRoute allowedRoles={['teacher', 'student']}><ChapterDetails /></ProtectedRoute>} />
+
+
+
+          
           <Route path="/attendance/reports" element={<ProtectedRoute allowedRoles={['teacher']}><AttendanceReports /></ProtectedRoute>} />
+
+          {userData.role === 'teacher' ? (
+            <Route path="/attendance" element={<ProtectedRoute allowedRoles={['teacher']}><Attendance /></ProtectedRoute>} />
+          ) : (
+            <Route path="/attendance" element={<ProtectedRoute allowedRoles={['student']}><AttendanceView /></ProtectedRoute>} />
+          )}
 
           <Route path="/teacher-diaries" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDiaries /></ProtectedRoute>} />
           <Route path="/admin-teacher-diaries" element={<ProtectedRoute allowedRoles={['admin']}><AdminTeacherDiaries /></ProtectedRoute>} />
+          <Route path="/student-teacher-diaries" element={<ProtectedRoute allowedRoles={['student']}><TeacherDiariesView /></ProtectedRoute>} />
           <Route path="/syllabus-progress" element={<ProtectedRoute allowedRoles={['admin']}><SyllabusProgress /></ProtectedRoute>} />
           <Route path="/syllabus-progress/class/:classId" element={<ProtectedRoute allowedRoles={['admin']}><ClassSubjectsProgress /></ProtectedRoute>} />
           <Route path="/syllabus-progress/class/:classId/subject/:subjectId" element={<ProtectedRoute allowedRoles={['admin']}><SubjectChaptersProgress /></ProtectedRoute>} />
