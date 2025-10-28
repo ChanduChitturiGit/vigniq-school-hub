@@ -119,7 +119,7 @@ class WhiteboardView(APIView):
     """View for managing whiteboard sessions."""
 
     def get_permissions(self):
-        if self.kwargs.get('action') in ['getWhiteboardsByChapter']:
+        if self.kwargs.get('action') in ['getWhiteboardsByChapter','getWhiteboardData']:
             return [IsAuthenticated()]
         return [IsAuthenticated(), IsSuperAdminOrAdminOrTeacher()]
 
