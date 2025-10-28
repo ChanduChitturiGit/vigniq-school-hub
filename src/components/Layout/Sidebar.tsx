@@ -92,7 +92,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onMobi
     return [
       { path: '/grades', icon: Award, label: 'Home', roles: ['teacher','student'] },
       { path: baseSubjectPath, icon: BookOpen, label: 'Syllabus', roles: ['teacher','student'] },
-      { path: progressPath, icon: TrendingUp, label: 'Progress', roles: ['teacher','student'] },
+      { path: progressPath, icon: TrendingUp, label: 'Progress', roles: ['teacher'] },
       { path: examsPath, icon: FileCheck, label: 'Exams', roles: ['teacher'] },
       { path: examsPath, icon: FileCheck, label: 'Exams', roles: ['student'] },
     ];
