@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.db.models import Count, Q, F, Max, Prefetch
 
 from core.models import User
-from teacher.models import TeacherSubjectAssignment
+from teacher.models import TeacherSubjectAssignment, Exam, ExamType
 from syllabus.models import SchoolLessonPlanDay, SchoolChapter, SchoolSection, Topic
 from core.common_modules.common_functions import CommonFunctions
 
@@ -363,6 +363,12 @@ class SyllabusProgressReportService:
                 )
             )
 
+            offline_exams = Exam.objects.using(school_db_name).filter(
+                chapter_id__in=chapter_ids,
+                class_section_id=class_section_id,
+                subject_id=subject_id,
+                exam_type=ExamType.OFFLINE
+            )
             # Map: chapter_id -> info
             lessonplans_map = {l['chapter_id']: l for l in lessonplans_qs}
 
@@ -390,7 +396,7 @@ class SyllabusProgressReportService:
                     "status": status,
                     "completed_date": last_completed_date,
                     'chaper_number': c['chapter_number'],
-                    "offline_exams_conducted": 0
+                    "offline_exams_conducted": offline_exams.filter(chapter_id=chap_id).count()
                 })
 
             total_chapters = len(chapters_qs)
