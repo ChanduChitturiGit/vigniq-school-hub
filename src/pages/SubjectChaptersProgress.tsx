@@ -132,11 +132,11 @@ const SubjectChaptersProgress: React.FC = () => {
                         <td className="px-6 py-4">
                           {chapter.completed_date ? (
                             <div className="flex items-center gap-2 text-foreground">
-                              <Calendar className="w-4 h-4 text-green-500" />
+                              <Calendar className="hidden lg:block w-4 h-4 text-green-500" />
                               {format(chapter.completed_date, 'MMM dd, yyyy')}
                             </div>
                           ) : (
-                            <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm">Not Completed</span>
+                            <span className="px-1 py-1 bg-gray-100 text-gray-600 rounded-full text-sm">Pending</span>
                           )}
                         </td>
                         <td className="px-6 py-4 text-center">

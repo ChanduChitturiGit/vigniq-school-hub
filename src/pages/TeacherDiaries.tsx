@@ -224,7 +224,7 @@ const TeacherDiaries: React.FC = () => {
                                   variant={entry.status === 'submitted' ? 'default' : 'secondary'}
                                   className={entry.status === 'submitted' ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-gray-100 text-gray-600 hover:bg-gray-100'}
                                 >
-                                  {entry.status === 'submitted' ? '✓ submitted' : '○ Pending'}
+                                  {entry.status === 'submitted' ? 'submitted' : 'Pending'}
                                 </Badge>
                               </TableCell>
                               <TableCell>
